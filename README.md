@@ -52,7 +52,7 @@ Pour garder un code propre et ne pas répéter la connexion à la base de donné
 
 ## Liens utiles
 
-l'api : http://localhost:8080/
+l'api : http://localhost:8082/
 phpmyadmin : http://localhost:8081/
 serv apache : http://localhost/
 
