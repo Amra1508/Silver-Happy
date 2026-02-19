@@ -23,18 +23,19 @@ func register(response http.ResponseWriter, request *http.Request) {
 	}
 
 	query := `INSERT INTO utilisateur (prenom, nom, email, mdp, num_telephone) VALUES (?, ?, ?, ?, ?)`
-	res, err := DB.Exec(query, user.Prenom, user.Nom, user.Email, string(hashedPassword), user.NumTelephone)
+    res, err := DB.Exec(query, user.Prenom, user.Nom, user.Email, string(hashedPassword), user.NumTelephone)
 
 	if err != nil {
-		http.Error(response, "Erreur d'inscription (L'email existe peut-être déjà)", http.StatusBadRequest)
-		return
-	}
+        http.Error(response, "Erreur d'inscription", http.StatusBadRequest)
+        return
+    }
 
-	user.ID, _ = res.LastInsertId()
-	user.Mdp = "" 
-	response.WriteHeader(http.StatusCreated)
-	response.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(user)
+    user.ID, _ = res.LastInsertId()
+    user.Mdp = "" 
+    
+    response.Header().Set("Content-Type", "application/json")
+    response.WriteHeader(http.StatusCreated)
+    json.NewEncoder(response).Encode(user)
 }
 
 func login(response http.ResponseWriter, request *http.Request) {
