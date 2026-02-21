@@ -36,7 +36,7 @@
                 class="absolute inset-0 w-full h-full object-cover opacity-60">
 
             <div class="absolute inset-0 flex flex-col items-start px-16 pt-40">
-                <h2 class="text-4xl font-semibold text-[#1C5B8F] leading-tight mb-8">
+                <h2 class="big-text leading-tight mb-8">
                     Bien vivre après 60 ans,<br>
                     c’est possible chez Silver Happy !
                 </h2>
@@ -52,54 +52,54 @@
             </div>
         </div>
         <div class="w-full px-16 mt-7 bg-white">
-            <h2 class="text-4xl font-semibold text-[#1C5B8F] mb-8">
+            <h2 class="big-text mb-8">
                 Nos prestataires
             </h2>
         </div>
         <div class="w-full px-16 bg-white">
-            <h2 class="text-xl font-semibold text-[#1C5B8F]">
+            <h2 class="small-text">
                 Afin de vous proposer des activités, services et évènements à la hauteur de vos attentes, nos prestataires sont
                 rigoureusement sélectionnés. <br>
                 Pour garantir votre sérénité, chaque prestataire fait l'objet d'un contrôle approfondi
                 avant d'intégrer notre société :
             </h2>
         </div>
-        <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-between text-[#1C5B8F] font-semibold">
-            <div class="flex-1 min-w-[400px] max-w-full md:max-w-[600px] bg-white border border-gray-100 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-blue-900/10">
-                <h3 class="text-4xl md:text-3xl mb-4">
+        <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-between">
+            <div class="md:max-w-[600px] bg-white index-components">
+                <h3 class="big-text md:text-3xl mb-4">
                     Diplômes & Certifications
                 </h3>
-                <p class="text-xl md:text-lg leading-relaxed">
+                <p class="small-text md:text-lg leading-relaxed">
                     Vérification systématique des diplômes<br>
                     et des certifications professionnelles.
                 </p>
             </div>
-            <div class="flex-1 min-w-[400px] max-w-full md:max-w-[600px] bg-white border border-gray-100 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-blue-900/10">
-                <h3 class="text-4xl md:text-3xl font-bold mb-4">
+            <div class="md:max-w-[600px] bg-white index-components">
+                <h3 class="big-text md:text-3xl font-bold mb-4">
                     Contrôle des antécédents
                 </h3>
-                <p class="text-xl md:text-lg leading-relaxed">
+                <p class="small-text md:text-lg leading-relaxed">
                     Contrôle rigoureux incluant l'extrait de casier judiciaire pour assurer votre sécurité et tranquillité d'esprit.
                 </p>
             </div>
         </div>
-        <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-start text-[#1C5B8F] font-semibold">
-            <div class="flex-1 min-w-[400px] max-w-full bg-[#E1AB2B]/60 border border-gray-100 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-blue-900/10">
-                <h3 class="text-center text-4xl text-[#1C5B8F] font-semibold md:text-3xl mb-4">
+        <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-start">
+            <div class="bg-[#E1AB2B]/60 index-components">
+                <h3 class="text-center big-text md:text-3xl mb-4">
                     Chez Silver Happy, nous ne laissons rien au hasard.
                 </h3>
-                <p class="text-center text-xl text-[#1C5B8F] font-semibold md:text-lg leading-relaxed">
+                <p class="text-center small-text md:text-lg leading-relaxed">
                     Cette exigence nous permet de vous offrir un accompagnement humain de qualité, sécurisé<br>
                     et totalement adapté à vos besoins spécifiques, pour que votre seule priorité reste votre plaisir et votre confort.
                 </p>
             </div>
         </div>
-        <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-between items-center text-[#1C5B8F] font-semibold">
-            <div class="flex-1 min-w-[400px] max-w-full md:max-w-[900px] bg-white border border-gray-100 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-blue-900/10">
-                <h3 class="text-4xl md:text-3xl font-bold mb-4">
+        <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-between items-center">
+            <div class="md:max-w-[900px] bg-white index-components">
+                <h3 class="big-text md:text-3xl font-bold mb-4">
                     Vous avez aimé votre première expérience ?
                 </h3>
-                <p class="text-xl md:text-lg leading-relaxed">
+                <p class="small-text md:text-lg leading-relaxed">
                     Partagez votre ressenti avec la communauté Silver Happy !
                     Votre avis compte et aide d'autres seniors à découvrir nos services.
                 </p>
