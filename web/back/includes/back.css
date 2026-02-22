@@ -1,0 +1,26 @@
+@layer components {
+  .form-input {
+    @apply w-full rounded-md bg-[#D4D4D4]/40 px-3 py-1.5 
+            focus:outline-none focus:outline-2 focus:-outline-offset-2 focus:outline-[#E1AB2B]/60;
+  }
+  .header-button {
+    @apply border border-[#1C5B8F] text-[#1C5B8F] px-4 py-1 rounded-full 
+    text-xl font-semibold hover:bg-[#1C5B8F] hover:text-white;
+  }
+  .menu-text {
+    @apply text-[#1C5B8F] font-medium text-2xl lg:text-3xl hover:text-[#E1AB2B] transition-colors;
+  }
+  .small-text {
+    @apply text-xl font-semibold text-[#1C5B8F];
+  }
+  .big-text {
+    @apply text-4xl font-semibold text-[#1C5B8F];
+  }
+  .button-blue {
+    @apply bg-[#1C5B8F] text-white py-2 font-semibold text-xl 
+    hover:bg-[#E1AB2B]/60 transition shadow-md;
+  }
+  .sidebar-links {
+    @apply flex items-center px-2 py-4 hover:bg-[#1C5B8F] border border-white text-lg font-medium;
+  }
+}

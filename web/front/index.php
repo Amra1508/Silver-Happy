@@ -45,7 +45,7 @@
                     class="absolute bottom-2 w-60 h-60 object-contain">
 
                 <div class="absolute bottom-10 right-10">
-                    <a href="#" class="bg-[#1C5B8F] text-white px-4 py-2 rounded-full font-semibold text-xl hover:bg-[#E1AB2B]/60 transition shadow-md">
+                    <a href="#" class="rounded-full px-6 button-blue">
                         Découvrez nos services
                     </a>
                 </div>
@@ -105,7 +105,7 @@
                 </p>
             </div>
             <div class="py-10 flex flex-col items-center gap-2 pr-4 md:pr-16 md:pl-16">
-                <a href="#" class="bg-[#1C5B8F] text-white px-6 py-2 rounded-full font-semibold text-xl hover:bg-[#E1AB2B]/60 transition shadow-md whitespace-nowrap">
+                <a href="#" class="rounded-full px-6 button-blue whitespace-nowrap">
                     Laissez mon avis
                 </a>
                 <div class="flex gap-4 text-[#E1AB2B] text-5xl">

@@ -54,7 +54,7 @@ Pour garder un code propre et ne pas répéter la connexion à la base de donné
 
 l'api : http://localhost:8082/
 phpmyadmin : http://localhost:8081/
-serv apache : http://localhost/
+serv apache : http://localhost/front
 
 ---
 

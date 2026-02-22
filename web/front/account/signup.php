@@ -33,75 +33,75 @@
 
             <div class="border border-[#1C5B8F] rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6">
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Prénom</label>
+                    <label class="small-text">Prénom</label>
                     <div class="mt-2">
                         <input id="first_name" type="text" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Nom</label>
+                    <label class="small-text">Nom</label>
                     <div class="mt-2">
-                        <input id="last_name" type="text" autocomplete="family-name" class="form-input" required />
+                        <input id="last_name" type="text" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Date de naissance</label>
+                    <label class="small-text">Date de naissance</label>
                     <div class="mt-2">
                         <input id="birth_date" type="date" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Numéro de téléphone</label>
+                    <label class="small-text">Numéro de téléphone</label>
                     <div class="mt-2">
                         <input id="phone_number" type="tel" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Adresse mail</label>
+                    <label class="small-text">Adresse mail</label>
                     <div class="mt-2">
                         <input id="signup_email" type="email" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Mot de passe</label>
+                    <label class="small-text">Mot de passe</label>
                     <div class="mt-2">
                         <input id="signup_password" type="password" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class=" text-xl font-semibold text-[#1C5B8F]">Pays</label>
+                    <label class="small-text">Pays</label>
                     <div class="mt-2">
                         <input id="country" type="text" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label for="street-address" class=" text-xl font-semibold text-[#1C5B8F]">Adresse</label>
+                    <label class="small-text">Adresse</label>
                     <div class="mt-2">
                         <input id="address" type="text" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Ville</label>
+                    <label class="small-text">Ville</label>
                     <div class="mt-2">
                         <input id="city" type="text" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="text-xl font-semibold text-[#1C5B8F]">Code postal</label>
+                    <label class="small-text">Code postal</label>
                     <div class="mt-2">
                         <input id="zip_code" type="text" class="form-input" required />
                     </div>
                 </div>
-                <button class="sm:col-span-6 justify-self-center border border-[#1C5B8F] text-[#1C5B8F] px-14 py-1 rounded-md text-xl font-semibold hover:bg-[#1C5B8F] hover:text-white">Je m'inscris</button>
+                <button class="sm:col-span-6 justify-self-center px-14 rounded-md button-blue">Je m'inscris</button>
             </div>
         </div>
     </main>

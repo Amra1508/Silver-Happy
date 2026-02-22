@@ -20,7 +20,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./web/front:/var/www/html
+      - ./web:/var/www/html
     environment:
       - DB_HOST=db-silver-happy
       - DB_NAME=${DB_NAME}
