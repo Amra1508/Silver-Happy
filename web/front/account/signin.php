@@ -44,13 +44,64 @@
                         <input id="signup_password" type="password" class="form-input" required />
                     </div>
                 </div>
-                <a href="/back/dashboard.php" class="sm:col-span-6 justify-self-center">
-                    <button class=" px-14 rounded-md button-blue">Je me connecte</button>
+
+                <a class="sm:col-span-6 justify-self-center">
+                    <button id="btn_login" class=" px-14 rounded-md button-blue">Je me connecte</button>
                 </a>
             </div>
         </div>
     </main>
 
     <?php include("../includes/footer.php") ?>
+
+    <script>
+        const btnLogin = document.getElementById('btn_login');
+
+        btnLogin.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const emailInput = document.getElementById('signup_email').value;
+            const passwordInput = document.getElementById('signup_password').value;
+
+            if (!emailInput || !passwordInput) {
+                alert("Veuillez remplir votre email et votre mot de passe.");
+                return;
+            }
+
+            const data = {
+                email: emailInput,
+                mdp: passwordInput
+            };
+
+            try {
+                const response = await fetch('http://localhost:8082/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.statut === "admin") {
+                        window.location.replace("../../back/dashboard.php");
+                    } else if (result.statut === "user" || result.statut === "actif") {
+                        window.location.replace("../index.php"); 
+                    } else {
+                        alert("Statut de compte non reconnu ou banni.");
+                    }
+
+                } else {
+                    const errorText = await response.text();
+                    alert(errorText); 
+                }
+            } catch (error) {
+                console.error("Erreur de connexion :", error);
+                alert("Impossible de joindre le serveur de connexion.");
+            }
+        });
+    </script>
 
 </body>

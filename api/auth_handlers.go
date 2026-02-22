@@ -109,44 +109,53 @@ func register(response http.ResponseWriter, request *http.Request) {
 }
 
 func login(response http.ResponseWriter, request *http.Request) {
-	var creds LoginCredentials
-	if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
-		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-		return
-	}
 
-	var user Utilisateur
-	var hashedPassword string
+	if handleCORS(response, request, "POST") {
+        return
+    }
 
-	row := DB.QueryRow("SELECT id, email, mdp FROM utilisateur WHERE email = ?", creds.Email)
-	err := row.Scan(&user.ID, &user.Email, &hashedPassword)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(response, "Email ou mot de passe incorrect", http.StatusUnauthorized)
-		} else {
-			http.Error(response, "Erreur serveur", http.StatusInternalServerError)
-		}
-		return
-	}
+    var creds LoginCredentials
+    if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(creds.Mdp))
-	if err != nil {
-		http.Error(response, "Email ou mot de passe incorrect", http.StatusUnauthorized)
-		return
-	}
+    var user Utilisateur
+    var hashedPassword string
 
-	cookie := http.Cookie{
-		Name:     "session_token",
-		Value:    "token_actif",
-		Expires:  time.Now().Add(24 * time.Hour), 
-		HttpOnly: true, 
-		Path:     "/",
-	}
-	http.SetCookie(response, &cookie)
+    row := DB.QueryRow("SELECT id, email, mdp, statut FROM utilisateur WHERE email = ?", creds.Email)
+    err := row.Scan(&user.ID, &user.Email, &hashedPassword, &user.Statut)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            http.Error(response, "Email ou mot de passe incorrect", http.StatusUnauthorized)
+        } else {
+            http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+        }
+        return
+    }
 
-	response.WriteHeader(http.StatusOK)
-	response.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(map[string]string{"message": "Connexion réussie"})
+    err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(creds.Mdp))
+    if err != nil {
+        http.Error(response, "Email ou mot de passe incorrect", http.StatusUnauthorized)
+        return
+    }
+
+    cookie := http.Cookie{
+        Name:     "session_token",
+        Value:    "token_actif",
+        Expires:  time.Now().Add(24 * time.Hour), 
+        HttpOnly: true, 
+        Path:     "/",
+    }
+    http.SetCookie(response, &cookie)
+
+    response.Header().Set("Content-Type", "application/json")
+    response.WriteHeader(http.StatusOK)
+    
+    json.NewEncoder(response).Encode(map[string]string{
+        "message": "Connexion réussie",
+        "statut":  user.Statut, 
+    })
 }
 
 func logout(response http.ResponseWriter, request *http.Request) {
