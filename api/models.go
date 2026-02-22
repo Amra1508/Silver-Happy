@@ -5,9 +5,13 @@ type Utilisateur struct {
 	Prenom            string `json:"prenom"`
 	Nom               string `json:"nom"`
 	DateNaissance     string `json:"date_naissance"`
+	NumTelephone      string `json:"num_telephone"`
 	Email             string `json:"email"`
 	Mdp               string `json:"mdp,omitempty"`
-	NumTelephone      string `json:"num_telephone"`
+	Pays              string `json:"pays"`
+	Adresse           string `json:"adresse"`
+	Ville             string `json:"ville"`
+	CodePostal        string `json:"code_postal"`
 	Statut            string `json:"statut"`
 	DateCreation      string `json:"date_creation"`
 	PremiereConnexion bool   `json:"premiere_connexion"`

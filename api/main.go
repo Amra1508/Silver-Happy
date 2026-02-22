@@ -14,9 +14,9 @@ func main() {
 
 	fmt.Println("Démarrage du serveur sur http://localhost:8082")
 
-	http.HandleFunc("POST /register", register)
-	http.HandleFunc("POST /login", login)
-	http.HandleFunc("POST /logout", logout)
+	http.HandleFunc("/register", register)
+	http.HandleFunc("/login", login)
+	http.HandleFunc("/logout", logout)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur lors de la création du serveur :", err)

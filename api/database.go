@@ -42,10 +42,15 @@ func initDB() {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		prenom VARCHAR(100),
 		nom VARCHAR(100),
+		date_naissance DATE,
+		num_telephone VARCHAR(20),
 		email VARCHAR(150) UNIQUE,
 		mdp VARCHAR(255),
-		num_telephone VARCHAR(20),
-		statut VARCHAR(50) DEFAULT 'actif',
+		pays VARCHAR(100),
+		adresse VARCHAR(100),
+		ville VARCHAR(100),
+		code_postal VARCHAR(5),
+		statut VARCHAR(50) DEFAULT 'user',
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
 
@@ -53,5 +58,6 @@ func initDB() {
 	if err != nil {
 		log.Fatal("Erreur création table : ", err)
 	}
+	
 	fmt.Println("Base MariaDB initialisée !")
 }
