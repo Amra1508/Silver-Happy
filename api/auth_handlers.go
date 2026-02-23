@@ -11,7 +11,9 @@ import (
 )
 
 func handleCORS(response http.ResponseWriter, request *http.Request, methode string) bool {
-    response.Header().Set("Access-Control-Allow-Origin", "*")
+    
+    response.Header().Set("Access-Control-Allow-Origin", "http://localhost") 
+    response.Header().Set("Access-Control-Allow-Credentials", "true") 
     response.Header().Set("Access-Control-Allow-Methods", methode + ", OPTIONS")
     response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
@@ -140,11 +142,16 @@ func login(response http.ResponseWriter, request *http.Request) {
         return
     }
 
+    tokenString, err := generateJWT(user)
+    if err != nil {
+        http.Error(response, "Erreur lors de la création de la session", http.StatusInternalServerError)
+        return
+    }
+
     cookie := http.Cookie{
         Name:     "session_token",
-        Value:    "token_actif",
+        Value:    tokenString, 
         Expires:  time.Now().Add(24 * time.Hour), 
-        HttpOnly: true, 
         Path:     "/",
     }
     http.SetCookie(response, &cookie)
