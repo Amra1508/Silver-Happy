@@ -8,13 +8,6 @@ import (
 
 var jwtKey = []byte("ma_cle_secrete_super_robuste_123!")
 
-type Claims struct {
-    UserID int64  `json:"user_id"`
-    Email  string `json:"email"`
-    Statut string `json:"statut"`
-    jwt.RegisteredClaims
-}
-
 func generateJWT(user Utilisateur) (string, error) {
     expirationTime := time.Now().Add(24 * time.Hour)
 

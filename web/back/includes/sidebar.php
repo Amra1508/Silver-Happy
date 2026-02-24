@@ -50,10 +50,36 @@
         </a>
 
     </div>
-
+    
     <div class="">
-        <a href="../front/index.php" class="flex items-center px-6 py-4 hover:bg-[#1C5B8F]">
+        <a id="btn_logout" class="flex items-center px-6 py-4 hover:bg-[#1C5B8F]">
             <span class="text-lg">Déconnexion</span>
         </a>
     </div>
+
+    <script>
+        const btnLogout = document.getElementById('btn_logout');
+
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                try {
+                    const response = await fetch('http://localhost:8082/logout', {
+                        method: 'POST',
+                        credentials: 'include' 
+                    });
+
+                    if (response.ok) {
+                        window.location.replace("/front/index.php");
+                    } else {
+                        alert("Erreur lors de la déconnexion.");
+                    }
+                } catch (error) {
+                    console.error("Erreur réseau :", error);
+                }
+            });
+        }
+    </script>
+
 </aside>

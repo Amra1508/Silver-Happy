@@ -79,15 +79,15 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include',
                     body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    
                     if (result.statut === "admin") {
                         window.location.replace("../../back/dashboard.php");
-                    } else if (result.statut === "user" || result.statut === "actif") {
+                    } else if (result.statut === "user") {
                         window.location.replace("../index.php"); 
                     } else {
                         alert("Statut de compte non reconnu ou banni.");

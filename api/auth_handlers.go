@@ -166,6 +166,11 @@ func login(response http.ResponseWriter, request *http.Request) {
 }
 
 func logout(response http.ResponseWriter, request *http.Request) {
+
+    if handleCORS(response, request, "POST") {
+        return
+    }
+    
 	cookie := http.Cookie{
 		Name:     "session_token",
 		Value:    "",
