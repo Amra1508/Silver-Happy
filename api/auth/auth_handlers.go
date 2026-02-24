@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"database/sql"
@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"main/db"
+	"main/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,13 +28,13 @@ func handleCORS(response http.ResponseWriter, request *http.Request, methode str
     return false
 }
 
-func register(response http.ResponseWriter, request *http.Request) {
+func Register(response http.ResponseWriter, request *http.Request) {
 
 	if handleCORS(response, request, "POST") {
         return
     }
 
-    var user Utilisateur
+    var user models.Utilisateur
     if err := json.NewDecoder(request.Body).Decode(&user); err != nil {
         http.Error(response, "Format JSON invalide", http.StatusBadRequest)
         return
@@ -59,7 +62,7 @@ func register(response http.ResponseWriter, request *http.Request) {
 
 	var count int
     checkQuery := `SELECT COUNT(*) FROM utilisateur WHERE email = ? OR num_telephone = ?`
-    err := DB.QueryRow(checkQuery, user.Email, user.NumTelephone).Scan(&count)
+    err := db.DB.QueryRow(checkQuery, user.Email, user.NumTelephone).Scan(&count)
     if err != nil {
         http.Error(response, "Erreur lors de la vérification des données", http.StatusInternalServerError)
         return
@@ -84,7 +87,7 @@ func register(response http.ResponseWriter, request *http.Request) {
     query := `INSERT INTO utilisateur (prenom, nom, date_naissance, num_telephone, email, mdp, pays, adresse, ville, code_postal) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
               
-    res, err := DB.Exec(query, 
+    res, err := db.DB.Exec(query, 
         user.Prenom, 
         user.Nom, 
         user.DateNaissance, 
@@ -110,22 +113,22 @@ func register(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(user)
 }
 
-func login(response http.ResponseWriter, request *http.Request) {
+func Login(response http.ResponseWriter, request *http.Request) {
 
 	if handleCORS(response, request, "POST") {
         return
     }
 
-    var creds LoginCredentials
+    var creds models.LoginCredentials
     if err := json.NewDecoder(request.Body).Decode(&creds); err != nil {
         http.Error(response, "Format JSON invalide", http.StatusBadRequest)
         return
     }
 
-    var user Utilisateur
+    var user models.Utilisateur
     var hashedPassword string
 
-    row := DB.QueryRow("SELECT id, email, mdp, statut FROM utilisateur WHERE email = ?", creds.Email)
+    row := db.DB.QueryRow("SELECT id, email, mdp, statut FROM utilisateur WHERE email = ?", creds.Email)
     err := row.Scan(&user.ID, &user.Email, &hashedPassword, &user.Statut)
     if err != nil {
         if err == sql.ErrNoRows {
@@ -165,12 +168,12 @@ func login(response http.ResponseWriter, request *http.Request) {
     })
 }
 
-func logout(response http.ResponseWriter, request *http.Request) {
+func Logout(response http.ResponseWriter, request *http.Request) {
 
     if handleCORS(response, request, "POST") {
         return
     }
-    
+
 	cookie := http.Cookie{
 		Name:     "session_token",
 		Value:    "",

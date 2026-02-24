@@ -3,22 +3,23 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"main/auth"
+	"main/db"
 )
 
 func main() {
-	initDB()
+    db.InitDB()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "API Go : Je suis en ligne et je fonctionne sur le port 8082 !")
-	})
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "API Go : En ligne !")
+    })
 
-	fmt.Println("Démarrage du serveur sur http://localhost:8082")
+    http.HandleFunc("/register", auth.Register)
+    http.HandleFunc("/login", auth.Login)
+    http.HandleFunc("/logout", auth.Logout)
 
-	http.HandleFunc("/register", register)
-	http.HandleFunc("/login", login)
-	http.HandleFunc("/logout", logout)
-
-	if err := http.ListenAndServe(":8082", nil); err != nil {
-		fmt.Println("Erreur lors de la création du serveur :", err)
-	}
+    if err := http.ListenAndServe(":8082", nil); err != nil {
+        fmt.Println("Erreur serveur :", err)
+    }
 }

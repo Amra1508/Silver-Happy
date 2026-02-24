@@ -1,6 +1,7 @@
-package main
+package auth
 
 import (
+	"main/models"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -8,10 +9,10 @@ import (
 
 var jwtKey = []byte("ma_cle_secrete_super_robuste_123!")
 
-func generateJWT(user Utilisateur) (string, error) {
+func generateJWT(user models.Utilisateur) (string, error) {
     expirationTime := time.Now().Add(24 * time.Hour)
 
-    claims := &Claims{
+    claims := &models.Claims{
         UserID: user.ID,
         Email:  user.Email,
         Statut: user.Statut,

@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 
 var DB *sql.DB
 
-func initDB() {
+func InitDB() {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
