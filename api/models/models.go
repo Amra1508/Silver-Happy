@@ -32,3 +32,9 @@ type Claims struct {
 	Statut string `json:"statut"`
 	jwt.RegisteredClaims
 }
+
+type Captcha struct {
+	ID int64 `json:"id"`
+	Question string `json:"question"`
+	Reponse string `json:"reponse"`
+}
