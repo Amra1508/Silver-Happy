@@ -44,7 +44,7 @@
             <span>Newsletter</span>
         </a>
 
-        <a href="#" class="border-b-2 sidebar-links">
+        <a href="captcha.php" class="border-b-2 sidebar-links">
             <img src="/back/icons/captcha.png" alt="dashboard" class="w-7 h-7 mx-4">
             <span>Captcha</span>
         </a>
@@ -65,7 +65,7 @@
                 e.preventDefault();
 
                 try {
-                    const response = await fetch('http://localhost:8082/logout', {
+                    const response = await fetch('http://localhost:8082/auth/logout', {
                         method: 'POST',
                         credentials: 'include' 
                     });
