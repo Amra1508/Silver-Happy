@@ -15,7 +15,7 @@ func Read(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	rows, errorFetch := db.DB.Query("SELECT id, question, reponse FROM captcha")
+	rows, errorFetch := db.DB.Query("SELECT id_captcha, question, reponse FROM captcha")
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
@@ -70,7 +70,7 @@ func Read_One(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	var captcha models.Captcha
 
-	err := db.DB.QueryRow("SELECT id, question, reponse FROM captcha WHERE id = ?", id).Scan(&captcha.ID, &captcha.Question, &captcha.Reponse)
+	err := db.DB.QueryRow("SELECT id_captcha, question, reponse FROM captcha WHERE id_captcha = ?", id).Scan(&captcha.ID, &captcha.Question, &captcha.Reponse)
 	
 	if err != nil {
 		http.Error(response, "Captcha non trouvé", http.StatusNotFound)
@@ -89,7 +89,7 @@ func Delete(response http.ResponseWriter, request *http.Request) {
 
 	id := request.PathValue("id")
 
-	_, err := db.DB.Exec("DELETE FROM captcha WHERE id = ?", id)
+	_, err := db.DB.Exec("DELETE FROM captcha WHERE id_captcha = ?", id)
 	if err != nil {
 		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
 		return
@@ -112,7 +112,7 @@ func Update(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    res, err := db.DB.Exec("UPDATE captcha SET question = ?, reponse = ? WHERE id = ?", captcha.Question, captcha.Reponse, id)
+    res, err := db.DB.Exec("UPDATE captcha SET question = ?, reponse = ? WHERE id_captcha = ?", captcha.Question, captcha.Reponse, id)
     
     if err != nil {
         http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
