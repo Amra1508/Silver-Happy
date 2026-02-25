@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"main/db"
@@ -9,7 +10,7 @@ import (
 	"main/utils"
 )
 
-func Read(response http.ResponseWriter, request *http.Request) {
+func Read_Produit(response http.ResponseWriter, request *http.Request) {
 	
 	if utils.HandleCORS(response, request, "GET") {
 		return
@@ -26,6 +27,7 @@ func Read(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var produit models.Produit
 		if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock); err != nil {
+			fmt.Printf("ERREUR SCAN SUR PRODUIT ID %d: %v\n", produit.ID, err)
 			continue
 		}
 		tabProduit = append(tabProduit, produit)
@@ -35,7 +37,7 @@ func Read(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(tabProduit)
 }
 
-func Create(response http.ResponseWriter, request *http.Request) {
+func Create_Produit(response http.ResponseWriter, request *http.Request) {
 
 	if utils.HandleCORS(response, request, "POST") {
 		return
@@ -61,7 +63,7 @@ func Create(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(produit)
 }
 
-func Read_One(response http.ResponseWriter, request *http.Request) {
+func Read_One_Produit(response http.ResponseWriter, request *http.Request) {
 
 	if utils.HandleCORS(response, request, "GET") {
 		return
@@ -81,7 +83,7 @@ func Read_One(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(produit)
 }
 
-func Delete(response http.ResponseWriter, request *http.Request) {
+func Delete_Produit(response http.ResponseWriter, request *http.Request) {
 
 	if utils.HandleCORS(response, request, "DELETE") {
 		return
@@ -98,7 +100,7 @@ func Delete(response http.ResponseWriter, request *http.Request) {
 	response.WriteHeader(http.StatusNoContent)
 }
 
-func Update(response http.ResponseWriter, request *http.Request) {
+func Update_Produit(response http.ResponseWriter, request *http.Request) {
 
     if utils.HandleCORS(response, request, "PUT") {
         return

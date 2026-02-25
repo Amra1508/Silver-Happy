@@ -9,7 +9,7 @@ import (
 	"main/utils"
 )
 
-func Read(response http.ResponseWriter, request *http.Request) {
+func Read_Captcha(response http.ResponseWriter, request *http.Request) {
 	
 	if utils.HandleCORS(response, request, "GET") {
 		return
@@ -35,7 +35,7 @@ func Read(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(tabCaptcha)
 }
 
-func Create(response http.ResponseWriter, request *http.Request) {
+func Create_Captcha(response http.ResponseWriter, request *http.Request) {
 
 	if utils.HandleCORS(response, request, "POST") {
 		return
@@ -61,7 +61,7 @@ func Create(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(captcha)
 }
 
-func Read_One(response http.ResponseWriter, request *http.Request) {
+func Read_One_Captcha(response http.ResponseWriter, request *http.Request) {
 
 	if utils.HandleCORS(response, request, "GET") {
 		return
@@ -81,7 +81,7 @@ func Read_One(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(captcha)
 }
 
-func Delete(response http.ResponseWriter, request *http.Request) {
+func Delete_Captcha(response http.ResponseWriter, request *http.Request) {
 
 	if utils.HandleCORS(response, request, "DELETE") {
 		return
@@ -98,7 +98,7 @@ func Delete(response http.ResponseWriter, request *http.Request) {
 	response.WriteHeader(http.StatusNoContent)
 }
 
-func Update(response http.ResponseWriter, request *http.Request) {
+func Update_Captcha(response http.ResponseWriter, request *http.Request) {
 
     if utils.HandleCORS(response, request, "PUT") {
         return
