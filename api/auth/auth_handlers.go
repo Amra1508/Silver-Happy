@@ -41,22 +41,22 @@ func Register(response http.ResponseWriter, request *http.Request) {
     }
 
 	if strings.ContainsAny(user.Prenom, "0123456789") || strings.ContainsAny(user.Nom, "0123456789") || strings.ContainsAny(user.Pays, "0123456789") || strings.ContainsAny(user.Ville, "0123456789"){
-		http.Error(response, "Les informations que vous avez saisi sont erronées.", http.StatusConflict)
+		http.Error(response, "Les champs Prénom, Nom, Pays et Ville ne peuvent pas contenir de chiffres.", http.StatusConflict)
         return
 	}
 
 	if len(user.Prenom) < 2 || len(user.Prenom) > 50 {
-        http.Error(response, "Le prénom doit contenir entre 2 et 50 caractères", http.StatusConflict)
+        http.Error(response, "Le prénom doit contenir entre 2 et 50 caractères.", http.StatusConflict)
         return
     }
 
 	if len(user.Nom) < 2 || len(user.Nom) > 50 {
-        http.Error(response, "Le nom doit contenir entre 2 et 50 caractères", http.StatusConflict)
+        http.Error(response, "Le nom doit contenir entre 2 et 50 caractères.", http.StatusConflict)
         return
     }
 
 	if len(user.NumTelephone) != 10 {
-		http.Error(response, "Les informations que vous avez saisi sont erronées.", http.StatusConflict)
+		http.Error(response, "Numéro de téléphone incorrect.", http.StatusConflict)
         return
 	}
 
@@ -74,13 +74,13 @@ func Register(response http.ResponseWriter, request *http.Request) {
     }
 
 	if len(user.CodePostal) != 5 {
-		http.Error(response, "Les informations que vous avez saisi sont erronées.", http.StatusConflict)
+		http.Error(response, "Le code postal est incorrect.", http.StatusConflict)
         return
 	}
 
     hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Mdp), bcrypt.DefaultCost)
     if err != nil {
-        http.Error(response, "Erreur lors du hashage du mot de passe", http.StatusInternalServerError)
+        http.Error(response, "Erreur lors du hashage du mot de passe.", http.StatusInternalServerError)
         return
     }
 
@@ -101,7 +101,7 @@ func Register(response http.ResponseWriter, request *http.Request) {
     )
 
     if err != nil {
-        http.Error(response, "Erreur d'inscription dans la base de données", http.StatusBadRequest)
+        http.Error(response, "Erreur d'inscription dans la base de données.", http.StatusBadRequest)
         return
     }
 
@@ -178,7 +178,6 @@ func Logout(response http.ResponseWriter, request *http.Request) {
 		Name:     "session_token",
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
-		HttpOnly: true,
 		Path:     "/",
 	}
 	http.SetCookie(response, &cookie)

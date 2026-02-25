@@ -34,14 +34,14 @@
                 <div class="sm:col-span-6">
                     <label class="small-text">Adresse mail</label>
                     <div class="mt-2">
-                        <input id="signup_email" type="email" class="form-input" required />
+                        <input id="email" type="email" class="form-input" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-6">
                     <label class="small-text">Mot de passe</label>
                     <div class="mt-2">
-                        <input id="signup_password" type="password" class="form-input" required />
+                        <input id="password" type="password" class="form-input" required />
                     </div>
                 </div>
 
@@ -60,8 +60,8 @@
         btnLogin.addEventListener('click', async (e) => {
             e.preventDefault();
 
-            const emailInput = document.getElementById('signup_email').value;
-            const passwordInput = document.getElementById('signup_password').value;
+            const emailInput = document.getElementById('email').value;
+            const passwordInput = document.getElementById('password').value;
 
             if (!emailInput || !passwordInput) {
                 alert("Veuillez remplir votre email et votre mot de passe.");
@@ -88,14 +88,14 @@
                     if (result.statut === "admin") {
                         window.location.replace("../../back/dashboard.php");
                     } else if (result.statut === "user") {
-                        window.location.replace("../index.php"); 
+                        window.location.replace("../index.php");
                     } else {
                         alert("Statut de compte non reconnu ou banni.");
                     }
 
                 } else {
                     const errorText = await response.text();
-                    alert(errorText); 
+                    alert(errorText);
                 }
             } catch (error) {
                 console.error("Erreur de connexion :", error);

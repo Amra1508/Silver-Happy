@@ -127,7 +127,7 @@
             };
 
             if (!data.email || !data.mdp || !data.prenom || !data.nom) {
-                alert("Veuillez remplir au moins les champs principaux (Prénom, Nom, Email, Mot de passe).");
+                alert("Veuillez au moins remplir les champs principaux (Prénom, Nom, Email, Mot de passe).");
                 return;
             }
 

@@ -10,47 +10,47 @@
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/prestataires.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/prestataires.png" alt="prestataire" class="w-7 h-7 mx-4">
             <span>Prestataires</span>
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/seniors.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/seniors.png" alt="seniors" class="w-7 h-7 mx-4">
             <span>Seniors</span>
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/catalogue.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/catalogue.png" alt="catalogue" class="w-7 h-7 mx-4">
             <span>Catalogue des services</span>
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/evenements.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/evenements.png" alt="evenements" class="w-7 h-7 mx-4">
             <span>Évènements & Planning</span>
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/articles.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/articles.png" alt="articles" class="w-7 h-7 mx-4">
             <span>Produits de la boutique</span>
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/messages.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/messages.png" alt="messages" class="w-7 h-7 mx-4">
             <span>Messagerie</span>
         </a>
 
         <a href="#" class="sidebar-links">
-            <img src="/back/icons/newsletter.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/newsletter.png" alt="newsletter" class="w-7 h-7 mx-4">
             <span>Newsletter</span>
         </a>
 
         <a href="#" class="border-b-2 sidebar-links">
-            <img src="/back/icons/captcha.png" alt="dashboard" class="w-7 h-7 mx-4">
+            <img src="/back/icons/captcha.png" alt="captcha" class="w-7 h-7 mx-4">
             <span>Captcha</span>
         </a>
 
     </div>
-    
+
     <div class="">
         <a id="btn_logout" class="flex items-center px-6 py-4 hover:bg-[#1C5B8F]">
             <span class="text-lg">Déconnexion</span>
@@ -67,7 +67,7 @@
                 try {
                     const response = await fetch('http://localhost:8082/logout', {
                         method: 'POST',
-                        credentials: 'include' 
+                        credentials: 'include'
                     });
 
                     if (response.ok) {

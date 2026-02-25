@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Captchas - Silver Happy</title>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
+    </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -19,12 +22,13 @@
 
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
-            if(modal) {
+            if (modal) {
                 modal.classList.toggle('hidden');
             }
         }
     </script>
 </head>
+
 <body>
     <div class="flex min-h-screen">
 
@@ -34,7 +38,7 @@
             <?php include("./includes/header.php"); ?>
 
             <main class="p-8">
-                
+
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="big-text">Gestion des Captchas</h1>
                     <button onclick="toggleModal('add-modal')" class="button-blue px-6 rounded-full" type="button">
@@ -79,7 +83,7 @@
                         <form class="space-y-4">
                             <input type="text" class="form-input" placeholder="Question ou consigne">
                             <input type="text" class="form-input" placeholder="Réponse exacte attendue">
-                            
+
                             <div class="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
                                 <button type="button" onclick="toggleModal('add-modal')" class="header-button">Annuler</button>
                                 <button type="button" class="button-blue px-6 rounded-full">Ajouter</button>
@@ -94,7 +98,7 @@
                         <form class="space-y-4">
                             <input type="text" class="form-input" value="Combien font 3 + 4 ?">
                             <input type="text" class="form-input" value="7">
-                            
+
                             <div class="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="header-button">Annuler</button>
                                 <button type="button" class="button-blue px-6 rounded-full">Sauvegarder</button>
@@ -108,17 +112,18 @@
                         <div class="text-red-500 text-5xl mb-4 font-bold">!</div>
                         <h3 class="small-text text-2xl mb-2">Supprimer le captcha ?</h3>
                         <p class="text-gray-500 mb-8">Cette action est irréversible.</p>
-                        
+
                         <div class="flex justify-center gap-4">
                             <button type="button" onclick="toggleModal('delete-modal')" class="header-button">Annuler</button>
                             <button type="button" class="btn-red">Oui, supprimer</button>
                         </div>
                     </div>
-                </div>           
+                </div>
             </main>
         </div>
     </div>
 
-   
+
 </body>
+
 </html>
