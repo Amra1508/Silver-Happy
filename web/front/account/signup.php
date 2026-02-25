@@ -118,12 +118,6 @@
 
                 const messageBox = document.getElementById('response_message');
 
-<<<<<<< HEAD
-            if (!data.email || !data.mdp || !data.prenom || !data.nom) {
-                alert("Veuillez au moins remplir les champs principaux (Prénom, Nom, Email, Mot de passe).");
-                return;
-            }
-=======
                 const data = {
                     prenom: document.getElementById('first_name').value,
                     nom: document.getElementById('last_name').value,
@@ -136,7 +130,6 @@
                     ville: document.getElementById('city').value,
                     code_postal: document.getElementById('zip_code').value
                 };
->>>>>>> df426ac5824c6369facb4ef7a77f4faed737cbce
 
                 if (!data.prenom || !data.nom || !data.date_naissance || !data.email || !data.mdp || !data.pays || !data.adresse || !data.ville || !data.code_postal) {
                     messageBox.textContent = "Veuillez remplir tous les champs.";

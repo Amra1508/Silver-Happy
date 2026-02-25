@@ -48,7 +48,7 @@ func Register(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var count int
-    checkQuery := `SELECT COUNT(*) FROM utilisateur WHERE email = ? OR num_telephone = ?`
+    checkQuery := `SELECT COUNT(*) FROM UTILISATEUR WHERE email = ? OR num_telephone = ?`
     err := db.DB.QueryRow(checkQuery, user.Email, user.NumTelephone).Scan(&count)
     if err != nil {
         http.Error(response, "Erreur lors de la vérification des données", http.StatusInternalServerError)
@@ -71,30 +71,72 @@ func Register(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    query := `INSERT INTO utilisateur (prenom, nom, date_naissance, num_telephone, email, mdp, pays, adresse, ville, code_postal) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-              
-    res, err := db.DB.Exec(query, 
-        user.Prenom, 
-        user.Nom, 
-        user.DateNaissance, 
-        user.NumTelephone, 
-        user.Email, 
-        string(hashedPassword),
+    tx, err := db.DB.Begin()
+    if err != nil {
+        http.Error(response, "Erreur serveur (Transaction)", http.StatusInternalServerError)
+        return
+    }
+
+    queryAddr := `INSERT INTO ADRESSE (rue, ville, code_postal, pays) VALUES (?, ?, ?, ?)`
+    resAddr, err := tx.Exec(queryAddr, 
+        user.Adresse, 
+        user.Ville, 
+        user.CodePostal, 
         user.Pays,
-        user.Adresse,
-        user.Ville,
-        user.CodePostal,
+    )
+    
+    if err != nil {
+        tx.Rollback()
+        http.Error(response, "Erreur lors de la création de l'adresse", http.StatusInternalServerError)
+        return
+    }
+    idAdresse, _ := resAddr.LastInsertId()
+
+    queryPlan := `INSERT INTO PLANNING (nom, description, date_creation) VALUES (?, ?, NOW())`
+    resPlan, err := tx.Exec(queryPlan, 
+        "Planning de "+user.Prenom, 
+        "Planning personnel", 
     )
 
     if err != nil {
-        http.Error(response, "Erreur d'inscription dans la base de données", http.StatusBadRequest)
+        tx.Rollback()
+        http.Error(response, "Erreur lors de la création du planning", http.StatusInternalServerError)
+        return
+    }
+    idPlanning, _ := resPlan.LastInsertId()
+
+    queryUser := `INSERT INTO UTILISATEUR (prenom, nom, email, mdp, date_naissance, num_telephone, statut, date_creation, id_planning, id_adresse) 
+                VALUES (?, ?, ?, ?, ?, ?, 'user', NOW(), ?, ?)`
+
+    res, err := tx.Exec(queryUser, 
+        user.Prenom, 
+        user.Nom, 
+        user.Email, 
+        string(hashedPassword), 
+        user.DateNaissance, 
+        user.NumTelephone, 
+        idPlanning, 
+        idAdresse,
+    )
+
+    if err != nil {
+        tx.Rollback()
+        if strings.Contains(err.Error(), "Duplicate entry") {
+            http.Error(response, "Cette adresse email est déjà utilisée.", http.StatusConflict)
+        } else {
+            http.Error(response, "Erreur base de données : "+err.Error(), http.StatusBadRequest)
+        }
+        return
+    }
+
+    if err := tx.Commit(); err != nil {
+        http.Error(response, "Erreur lors de la validation finale", http.StatusInternalServerError)
         return
     }
 
     user.ID, _ = res.LastInsertId()
-    user.Mdp = ""
-    
+    user.Mdp = "" 
+
     response.Header().Set("Content-Type", "application/json")
     response.WriteHeader(http.StatusCreated)
     json.NewEncoder(response).Encode(user)
@@ -115,7 +157,7 @@ func Login(response http.ResponseWriter, request *http.Request) {
     var user models.Utilisateur
     var hashedPassword string
 
-    row := db.DB.QueryRow("SELECT id, email, mdp, statut FROM utilisateur WHERE email = ?", creds.Email)
+    row := db.DB.QueryRow("SELECT id_utilisateur, email, mdp, statut FROM UTILISATEUR WHERE email = ?", creds.Email)
     err := row.Scan(&user.ID, &user.Email, &hashedPassword, &user.Statut)
     if err != nil {
         if err == sql.ErrNoRows {
