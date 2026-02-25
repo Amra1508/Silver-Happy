@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Captchas - Silver Happy</title>
+    <title>Captcha</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
     </style>

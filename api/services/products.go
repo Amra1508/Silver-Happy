@@ -1,4 +1,4 @@
-package captcha
+package services
 
 import (
 	"encoding/json"
@@ -15,24 +15,24 @@ func Read(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	rows, errorFetch := db.DB.Query("SELECT id_captcha, question, reponse FROM CAPTCHA")
+	rows, errorFetch := db.DB.Query("SELECT id_produit, nom, description, prix, stock FROM PRODUIT")
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close() 
 
-	var tabCaptcha []models.Captcha
+	var tabProduit []models.Produit
 	for rows.Next() {
-		var captcha models.Captcha
-		if err := rows.Scan(&captcha.ID, &captcha.Question, &captcha.Reponse); err != nil {
+		var produit models.Produit
+		if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock); err != nil {
 			continue
 		}
-		tabCaptcha = append(tabCaptcha, captcha)
+		tabProduit = append(tabProduit, produit)
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(tabCaptcha)
+	json.NewEncoder(response).Encode(tabProduit)
 }
 
 func Create(response http.ResponseWriter, request *http.Request) {
@@ -41,24 +41,24 @@ func Create(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var captcha models.Captcha
-	if err := json.NewDecoder(request.Body).Decode(&captcha); err != nil {
+	var produit models.Produit
+	if err := json.NewDecoder(request.Body).Decode(&produit); err != nil {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
 		return
 	}
 
-	res, errorCreate := db.DB.Exec("INSERT INTO CAPTCHA (question, reponse) VALUES (?, ?)", captcha.Question, captcha.Reponse)
+	res, errorCreate := db.DB.Exec("INSERT INTO PRODUIT (nom, description, prix, stock) VALUES (?, ?, ?, ?)", produit.Nom, produit.Description, produit.Prix, produit.Stock)
 	if errorCreate != nil {
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
 		return
 	}
 
 	id, _ := res.LastInsertId()
-	captcha.ID = id
+	produit.ID = id
 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusCreated)
-	json.NewEncoder(response).Encode(captcha)
+	json.NewEncoder(response).Encode(produit)
 }
 
 func Read_One(response http.ResponseWriter, request *http.Request) {
@@ -68,17 +68,17 @@ func Read_One(response http.ResponseWriter, request *http.Request) {
 	}
 
 	id := request.PathValue("id")
-	var captcha models.Captcha
+	var produit models.Produit
 
-	err := db.DB.QueryRow("SELECT id_captcha, question, reponse FROM CAPTCHA WHERE id_captcha = ?", id).Scan(&captcha.ID, &captcha.Question, &captcha.Reponse)
+	err := db.DB.QueryRow("SELECT id_produit, nom, description, prix, stock FROM PRODUIT WHERE id_produit = ?", id).Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock)
 	
 	if err != nil {
-		http.Error(response, "Captcha non trouvé", http.StatusNotFound)
+		http.Error(response, "Produit non trouvé", http.StatusNotFound)
 		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(captcha)
+	json.NewEncoder(response).Encode(produit)
 }
 
 func Delete(response http.ResponseWriter, request *http.Request) {
@@ -89,7 +89,7 @@ func Delete(response http.ResponseWriter, request *http.Request) {
 
 	id := request.PathValue("id")
 
-	_, err := db.DB.Exec("DELETE FROM CAPTCHA WHERE id_captcha = ?", id)
+	_, err := db.DB.Exec("DELETE FROM PRODUIT WHERE id_produit = ?", id)
 	if err != nil {
 		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
 		return
@@ -106,13 +106,13 @@ func Update(response http.ResponseWriter, request *http.Request) {
 
     id := request.PathValue("id")
 
-    var captcha models.Captcha
-    if err := json.NewDecoder(request.Body).Decode(&captcha); err != nil {
+    var produit models.Produit
+    if err := json.NewDecoder(request.Body).Decode(&produit); err != nil {
         http.Error(response, "Format JSON invalide", http.StatusBadRequest)
         return
     }
 
-    res, err := db.DB.Exec("UPDATE CAPTCHA SET question = ?, reponse = ? WHERE id_captcha = ?", captcha.Question, captcha.Reponse, id)
+    res, err := db.DB.Exec("UPDATE PRODUIT SET nom = ?, description = ?, prix = ?, stock = ? WHERE id_produit = ?", produit.Nom, produit.Description, produit.Prix, produit.Stock, id)
     
     if err != nil {
         http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
@@ -121,11 +121,11 @@ func Update(response http.ResponseWriter, request *http.Request) {
 
     rowsAffected, _ := res.RowsAffected()
     if rowsAffected == 0 {
-        http.Error(response, "Aucun captcha trouvé avec cet ID", http.StatusNotFound)
+        http.Error(response, "Aucun produit trouvé avec cet ID", http.StatusNotFound)
         return
     }
 
     response.Header().Set("Content-Type", "application/json")
     response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Captcha mis à jour avec succès"})
+    json.NewEncoder(response).Encode(map[string]string{"message": "Produit mis à jour avec succès"})
 }

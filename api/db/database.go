@@ -278,6 +278,12 @@ func InitDB() {
 		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service),
 		FOREIGN KEY (id_prestation) REFERENCES PRESTATION(id_prestation),
 		FOREIGN KEY (id_planning) REFERENCES PLANNING(id_planning)
+	);
+	CREATE TABLE IF NOT EXISTS NEWSLETTER(
+  		id_newsletter INT AUTO_INCREMENT PRIMARY KEY,
+  		title VARCHAR(50) NOT NULL,
+  		content VARCHAR(200) NOT NULL,
+  		date_creation DATE NOT NULL
 	);`
 
 	_, err = DB.Exec(creationQuery)
