@@ -16,8 +16,45 @@
             <img src="/back/icons/notifications.png" alt="notifications" class="w-6 h-6 md:w-7 md:h-7 object-contain">
             <div class="flex items-center gap-2 text-[#1C5B8F] font-semibold text-sm md:text-xl">
                 <img src="/back/icons/utilisateur.png" alt="utilisateur" class="w-6 h-6 md:w-7 md:h-7 object-contain">
-                <span class="hidden sm:inline whitespace-nowrap">Prénom NOM</span>
+                <span id="header-user-name" class="hidden sm:inline whitespace-nowrap">Vérification...</span>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('http://localhost:8082/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    console.warn("Non connecté ou session expirée.");
+                    window.location.href = "../../front/index.php";
+                    return;
+                }
+
+                const user = await response.json();
+
+                if (user.statut !== 'admin') {
+                    console.warn("Accès refusé : L'utilisateur n'est pas administrateur.");
+                    window.location.href = "../../front/index.php";
+                    return; 
+                }
+
+                const nameDisplay = document.getElementById('header-user-name');
+                if (nameDisplay) {
+                    nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;
+                }
+
+            } catch (error) {
+                console.error("Erreur lors de la vérification de l'utilisateur:", error);
+                window.location.href = "../../front/index.php";
+            }
+        });
+    </script>
 </header>

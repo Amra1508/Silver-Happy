@@ -1,3 +1,10 @@
+<?php
+if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
+    header("Location: ../login.php");
+    exit();
+}
+?>
+
 <aside class="w-80 min-h-screen bg-[#0F3452] flex flex-col text-white">
     <div class="p-4">
         <img src="/front/images/SilverHappy_logo.png" alt="logo" class="w-full object-contain">

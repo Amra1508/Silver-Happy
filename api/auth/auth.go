@@ -11,6 +11,7 @@ import (
 	"main/models"
 	"main/utils"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -215,4 +216,67 @@ func Logout(response http.ResponseWriter, request *http.Request) {
 	response.WriteHeader(http.StatusOK)
 	response.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]string{"message": "Déconnexion réussie"})
+}
+
+func Me(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	cookie, err := request.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			http.Error(response, "Non authentifié (aucun cookie)", http.StatusUnauthorized)
+			return
+		}
+		http.Error(response, "Erreur serveur", http.StatusBadRequest)
+		return
+	}
+
+	tokenString := cookie.Value
+
+	claims := &models.Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return jwtKey, nil 
+	})
+
+	if err != nil || !token.Valid {
+		http.Error(response, "Session invalide ou expirée", http.StatusUnauthorized)
+		return
+	}
+
+	userID := claims.UserID
+
+	query := `
+		SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
+		       COALESCE(u.num_telephone, ''), COALESCE(u.date_naissance, ''), u.statut, 
+		       COALESCE(u.date_creation, ''), COALESCE(u.motif_bannissement, ''), COALESCE(u.duree_bannissement, 0),
+		       COALESCE(a.rue, ''), COALESCE(a.ville, ''), COALESCE(a.code_postal, ''), COALESCE(a.pays, '')
+		FROM UTILISATEUR u
+		LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
+		WHERE u.id_utilisateur = ?
+	`
+	
+	var user models.Utilisateur
+	errDB := db.DB.QueryRow(query, userID).Scan(
+		&user.ID, &user.Nom, &user.Prenom, &user.Email, &user.NumTelephone, &user.DateNaissance, 
+		&user.Statut, &user.DateCreation, &user.MotifBannissement, &user.DureeBannissement, 
+		&user.Adresse, &user.Ville, &user.CodePostal, &user.Pays,
+	)
+
+	if errDB != nil {
+		if errDB == sql.ErrNoRows {
+			http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
+		} else {
+			http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(user)
 }
