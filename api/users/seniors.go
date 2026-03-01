@@ -10,14 +10,21 @@ import (
 )
 
 func Read_User(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
 
-	rows, errorFetch := db.DB.Query("SELECT id_utilisateur, nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement FROM UTILISATEUR")
-	if errorFetch != nil {
-		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+	query := `
+		SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
+		       COALESCE(u.num_telephone, ''), COALESCE(u.date_naissance, ''), u.statut, 
+		       COALESCE(u.date_creation, ''), COALESCE(u.motif_bannissement, ''), COALESCE(u.duree_bannissement, 0),
+		       COALESCE(a.rue, ''), COALESCE(a.ville, ''), COALESCE(a.code_postal, ''), COALESCE(a.pays, '')
+		FROM UTILISATEUR u
+		LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
+	`
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -25,10 +32,14 @@ func Read_User(response http.ResponseWriter, request *http.Request) {
 	var tabUtilisateur []models.Utilisateur
 	for rows.Next() {
 		var user models.Utilisateur
-		if err := rows.Scan(&user.ID, &user.Nom, &user.Prenom, &user.Email, &user.NumTelephone, &user.DateNaissance, &user.Statut, &user.DateCreation, &user.MotifBannissement, &user.DureeBannissement); err != nil {
-			continue
+		err := rows.Scan(
+			&user.ID, &user.Nom, &user.Prenom, &user.Email, &user.NumTelephone, &user.DateNaissance, 
+			&user.Statut, &user.DateCreation, &user.MotifBannissement, &user.DureeBannissement, 
+			&user.Adresse, &user.Ville, &user.CodePostal, &user.Pays,
+		)
+		if err == nil {
+			tabUtilisateur = append(tabUtilisateur, user)
 		}
-		tabUtilisateur = append(tabUtilisateur, user)
 	}
 
 	response.Header().Set("Content-Type", "application/json")
@@ -36,7 +47,6 @@ func Read_User(response http.ResponseWriter, request *http.Request) {
 }
 
 func Create_User(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "POST") {
 		return
 	}
@@ -47,59 +57,60 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	res, errorCreate := db.DB.Exec("INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, '1234')", user.Nom, user.Prenom, user.Email, user.NumTelephone, user.DateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement)
-	if errorCreate != nil {
-		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
+	resPlan, _ := db.DB.Exec("INSERT INTO PLANNING (nom, description, date_creation) VALUES (?, 'Planning généré automatiquement', NOW())", "Planning de "+user.Prenom)
+	idPlanning, _ := resPlan.LastInsertId()
+
+	resAdr, _ := db.DB.Exec("INSERT INTO ADRESSE (numero, rue, ville, code_postal, pays) VALUES (NULL, ?, ?, ?, ?)", user.Adresse, user.Ville, user.CodePostal, user.Pays)
+	idAdresse, _ := resAdr.LastInsertId()
+
+	res, err := db.DB.Exec(`
+		INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_planning, id_adresse) 
+		VALUES (?, ?, ?, ?, NULLIF(?, ''), ?, NOW(), ?, ?, '1234', ?, ?)`,
+		user.Nom, user.Prenom, user.Email, user.NumTelephone, user.DateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, idPlanning, idAdresse)
+
+	if err != nil {
+		http.Error(response, "Erreur création utilisateur", http.StatusInternalServerError)
 		return
 	}
 
-	id, _ := res.LastInsertId()
-	user.ID = id
-
-	response.Header().Set("Content-Type", "application/json")
+	user.ID, _ = res.LastInsertId()
 	response.WriteHeader(http.StatusCreated)
 	json.NewEncoder(response).Encode(user)
 }
 
-func Read_One_User(response http.ResponseWriter, request *http.Request) {
-
-	if utils.HandleCORS(response, request, "GET") {
+func Update_User(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "PUT") {
 		return
 	}
-
 	id := request.PathValue("id")
 	var user models.Utilisateur
+	json.NewDecoder(request.Body).Decode(&user)
 
-	err := db.DB.QueryRow("SELECT id_utilisateur, nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&user.ID, &user.Nom, &user.Prenom, &user.Email, &user.NumTelephone, &user.DateNaissance, &user.Statut, &user.DateCreation, &user.MotifBannissement, &user.DureeBannissement)
+	db.DB.Exec(`
+		UPDATE UTILISATEUR SET nom = ?, prenom = ?, email = ?, num_telephone = ?, date_naissance = NULLIF(?, ''), statut = ?, motif_bannissement = ?, duree_bannissement = ? 
+		WHERE id_utilisateur = ?`,
+		user.Nom, user.Prenom, user.Email, user.NumTelephone, user.DateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, id)
 
-	if err != nil {
-		http.Error(response, "Utilisateur non trouvé", http.StatusNotFound)
-		return
-	}
+	db.DB.Exec("UPDATE ADRESSE SET rue = ?, ville = ?, code_postal = ?, pays = ? WHERE id_adresse = (SELECT id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?)",
+		user.Adresse, user.Ville, user.CodePostal, user.Pays, id)
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(user)
+	response.WriteHeader(http.StatusOK)
 }
 
 func Delete_User(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "DELETE") {
 		return
 	}
-
 	id := request.PathValue("id")
-
 	_, err := db.DB.Exec("DELETE FROM UTILISATEUR WHERE id_utilisateur = ?", id)
 	if err != nil {
 		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
 		return
 	}
-
 	response.WriteHeader(http.StatusNoContent)
 }
 
-func Update_User(response http.ResponseWriter, request *http.Request) {
-
+func Ban_User(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "PUT") {
 		return
 	}
@@ -112,20 +123,15 @@ func Update_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	res, err := db.DB.Exec("UPDATE UTILISATEUR SET nom = ?, prenom = ?, email = ?, num_telephone = ?, date_naissance = ?, statut = ?, motif_bannissement = ?, duree_bannissement = ? WHERE id_utilisateur = ?", user.Nom, user.Prenom, user.Email, user.NumTelephone, user.DateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, id)
+	_, err := db.DB.Exec("UPDATE UTILISATEUR SET statut = ?, motif_bannissement = ?, duree_bannissement = ? WHERE id_utilisateur = ?",
+		user.Statut, user.MotifBannissement, user.DureeBannissement, id)
 
 	if err != nil {
-		http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
-		return
-	}
-
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
-		http.Error(response, "Aucun utilisateur trouvé avec cet ID", http.StatusNotFound)
+		http.Error(response, "Erreur lors de la mise à jour du statut", http.StatusInternalServerError)
 		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(map[string]string{"message": "Utilisateur mis à jour avec succès"})
+	json.NewEncoder(response).Encode(map[string]string{"message": "Statut mis à jour avec succès"})
 }
