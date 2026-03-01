@@ -1,0 +1,3 @@
+ErrorDocument 404 /front/404.php
+
+RedirectMatch ^/$ /front/index.php
