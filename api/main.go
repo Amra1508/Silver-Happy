@@ -41,6 +41,12 @@ func main() {
 	http.HandleFunc("/seniors/delete/{id}", users.Delete_User)
 	http.HandleFunc("/seniors/ban/{id}", users.Ban_User)
 
+	http.HandleFunc("/service/read", services.Read_Service)
+	http.HandleFunc("/service/create", services.Create_Service)
+	http.HandleFunc("/service/read-one/{id}", services.Read_One_Service)
+	http.HandleFunc("/service/update/{id}", services.Update_Service)
+	http.HandleFunc("/service/delete/{id}", services.Delete_Service)
+
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
 	}

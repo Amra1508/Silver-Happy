@@ -46,3 +46,11 @@ type Produit struct {
 	Prix float64 `json:"prix"`
 	Stock int64 `json:"stock"`
 }
+
+type Service struct {
+    ID           int    `json:"id"`
+    Nom          string `json:"nom"`
+    Description  string `json:"description"`
+    Disponibilite int   `json:"disponibilite"`
+    IdUtilisateur int   `json:"id_utilisateur"`
+}
