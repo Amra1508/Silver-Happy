@@ -6,6 +6,7 @@ import (
 
 	"main/auth"
 	"main/captcha"
+	"main/communication"
 	"main/db"
 	"main/services"
 	"main/users"
@@ -46,6 +47,12 @@ func main() {
 	http.HandleFunc("/service/read-one/{id}", services.Read_One_Service)
 	http.HandleFunc("/service/update/{id}", services.Update_Service)
 	http.HandleFunc("/service/delete/{id}", services.Delete_Service)
+
+	http.HandleFunc("/conseil/read", communication.Read_Conseil)
+	http.HandleFunc("/conseil/create", communication.Create_Conseil)
+	http.HandleFunc("/conseil/read-one/{id}", communication.Read_One_Conseil)
+	http.HandleFunc("/conseil/update/{id}", communication.Update_Conseil)
+	http.HandleFunc("/conseil/delete/{id}", communication.Delete_Conseil)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

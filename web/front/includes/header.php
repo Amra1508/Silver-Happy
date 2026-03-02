@@ -12,11 +12,11 @@
         </a>
         <button class="border border-[#AA1114] text-[#AA1114] px-4 py-1 rounded-full text-xl font-semibold hover:bg-[#AA1114] hover:text-white">Urgence</button>
         <button class="header-button transition-all group">
-            <img src="/front/icons/zoom.png" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
+            <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
         <button class="flex items-center gap-2 header-button transition-all group">
             <img src="/front/icons/france.png" alt="french" class="h-6 w-6 object-contain">
-            <img src="/front/icons/dropdown.png" alt="dropdown" class="w-5 h-5 object-contain transition-all group-hover:brightness-0 group-hover:invert">
+            <img src="/front/icons/dropdown.svg" alt="dropdown" class="w-5 h-5 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
     </div>
 

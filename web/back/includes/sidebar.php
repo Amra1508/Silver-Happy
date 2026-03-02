@@ -7,7 +7,7 @@ if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
 
 <aside class="w-80 min-h-screen bg-[#0F3452] flex flex-col text-white">
     <div class="p-4">
-        <img src="/front/images/SilverHappy_logo.png" alt="logo" class="w-full object-contain">
+        <img src="/back/icons/SilverHappy_logo.png" alt="logo" class="w-full object-contain">
     </div>
 
     <div class="my-2">
@@ -51,15 +51,20 @@ if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
             <span>Newsletter</span>
         </a>
 
-        <a href="/back/captcha.php" class="border-b-2 sidebar-links">
-            <img src="/back/icons/captcha.png" alt="dashboard" class="w-7 h-7 mx-4">
+        <a href="/back/captcha.php" class="sidebar-links">
+            <img src="/back/icons/captcha.png" alt="captcha" class="w-7 h-7 mx-4">
             <span>Captcha</span>
+        </a>
+
+        <a href="/back/communication/advice.php" class="border-b-2 sidebar-links">
+            <img src="/back/icons/conseils.svg" alt="conseils" class="w-7 h-7 mx-4">
+            <span>Conseils</span>
         </a>
 
     </div>
 
     <div class="">
-        <a id="btn_logout" class="flex items-center px-6 py-4 hover:bg-[#1C5B8F]">
+        <a id="btn_logout" class="flex items-center px-6 py-2 hover:bg-[#1C5B8F]">
             <span class="text-lg">Déconnexion</span>
         </a>
     </div>

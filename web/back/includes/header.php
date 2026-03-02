@@ -13,9 +13,9 @@
         </div>
 
         <div class="flex items-center gap-3 md:gap-8 shrink-0">
-            <img src="/back/icons/notifications.png" alt="notifications" class="w-6 h-6 md:w-7 md:h-7 object-contain">
+            <img src="/back/icons/notifications.svg" alt="notifications" class="w-6 h-6 md:w-7 md:h-7 object-contain">
             <div class="flex items-center gap-2 text-[#1C5B8F] font-semibold text-sm md:text-xl">
-                <img src="/back/icons/utilisateur.png" alt="utilisateur" class="w-6 h-6 md:w-7 md:h-7 object-contain">
+                <img src="/back/icons/utilisateur.svg" alt="utilisateur" class="w-6 h-6 md:w-7 md:h-7 object-contain">
                 <span id="header-user-name" class="hidden sm:inline whitespace-nowrap">Vérification...</span>
             </div>
         </div>
@@ -43,7 +43,7 @@
                 if (user.statut !== 'admin') {
                     console.warn("Accès refusé : L'utilisateur n'est pas administrateur.");
                     window.location.href = "../../front/index.php";
-                    return; 
+                    return;
                 }
 
                 const nameDisplay = document.getElementById('header-user-name');

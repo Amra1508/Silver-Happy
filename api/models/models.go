@@ -34,23 +34,31 @@ type Claims struct {
 }
 
 type Captcha struct {
-	ID int64 `json:"id"`
+	ID       int64 `json:"id"`
 	Question string `json:"question"`
-	Reponse string `json:"reponse"`
+	Reponse  string `json:"reponse"`
 }
 
 type Produit struct {
-	ID int64 `json:"id"`
-	Nom string `json:"nom"`
+	ID          int64 `json:"id"`
+	Nom         string `json:"nom"`
 	Description string `json:"description"`
-	Prix float64 `json:"prix"`
-	Stock int64 `json:"stock"`
+	Prix        float64 `json:"prix"`
+	Stock       int64 `json:"stock"`
 }
 
 type Service struct {
-    ID           int    `json:"id"`
-    Nom          string `json:"nom"`
-    Description  string `json:"description"`
+    ID            int    `json:"id"`
+    Nom           string `json:"nom"`
+    Description   string `json:"description"`
     Disponibilite int   `json:"disponibilite"`
     IdUtilisateur int   `json:"id_utilisateur"`
+}
+
+type Conseil struct {
+    ID          int64  `json:"id"`
+    Titre       string `json:"titre"`
+    Description string `json:"description"`
+	Date        string `json:"date"`
+    Categorie   string `json:"categorie"`
 }
