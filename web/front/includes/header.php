@@ -4,12 +4,18 @@
     </style>
 
     <div class="bg-[#E1AB2B]/60 py-2 px-6 flex justify-end gap-4">
-        <a href="/front/account/signin.php">
-            <button class="header-button">Se connecter</button>
-        </a>
-        <a href="/front/account/signup.php">
-            <button class="header-button">S'inscrire</button>
-        </a>
+        <?php if (isset($_COOKIE['session_token'])): ?>
+            <a href="/front/index.php">
+                <button id="btn_logout" class="header-button">Déconnexion</button>
+            </a>
+        <?php else: ?>
+            <a href="/front/account/signin.php">
+                <button class="header-button">Se connecter</button>
+            </a>
+            <a href="/front/account/signup.php">
+                <button class="header-button">S'inscrire</button>
+            </a>
+        <?php endif; ?>
         <button class="border border-[#AA1114] text-[#AA1114] px-4 py-1 rounded-full text-xl font-semibold hover:bg-[#AA1114] hover:text-white">Urgence</button>
         <button class="header-button transition-all group">
             <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
@@ -40,4 +46,29 @@
         </div>
 
     </div>
+    <script>
+        const btnLogout = document.getElementById('btn_logout');
+
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                try {
+                    const response = await fetch('http://localhost:8082/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        window.location.replace("/front/index.php");
+                    } else {
+                        alert("Erreur lors de la déconnexion.");
+                    }
+                } catch (error) {
+                    console.error("Erreur réseau :", error);
+                }
+            });
+        }
+    </script>
+
 </header>
