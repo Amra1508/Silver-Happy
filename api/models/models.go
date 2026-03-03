@@ -45,6 +45,7 @@ type Produit struct {
 	Description string `json:"description"`
 	Prix        float64 `json:"prix"`
 	Stock       int64 `json:"stock"`
+	Image 		string `json:"image"`
 }
 
 type Service struct {

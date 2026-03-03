@@ -19,6 +19,8 @@ func main() {
 		fmt.Fprintf(w, "API Go : En ligne !")
 	})
 
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+
 	http.HandleFunc("/auth/register", auth.Register)
 	http.HandleFunc("/auth/login", auth.Login)
 	http.HandleFunc("/auth/logout", auth.Logout)

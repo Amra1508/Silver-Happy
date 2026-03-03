@@ -53,7 +53,7 @@
                     <table class="w-full text-left">
                         <thead class="bg-[#1C5B8F] text-white">
                             <tr>
-                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Image</th>
                                 <th class="p-4 font-semibold">Nom</th>
                                 <th class="p-4 font-semibold">Description</th>
                                 <th class="p-4 font-semibold">Prix</th>
@@ -78,13 +78,19 @@
                                 <label class="text-sm text-gray-500">Description</label>
                                 <textarea id="add-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
                             </div>
-                            <div>
-                                <label class="text-sm text-gray-500">Prix</label>
-                                <input type="number" id="add-prix" min="1" step="0.01" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Prix (€)</label>
+                                    <input type="number" id="add-prix" min="1" step="0.01" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Stock</label>
+                                    <input type="number" id="add-stock" min="1" step="1" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                </div>
                             </div>
                             <div>
-                                <label class="text-sm text-gray-500">Stock</label>
-                                <input type="number" id="add-stock" min="1" max="100" step="1" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <label class="text-sm text-gray-500">Image du produit</label>
+                                <input type="file" id="add-image" accept="image/*" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
@@ -107,13 +113,19 @@
                                 <label class="text-sm text-gray-500">Description</label>
                                 <textarea id="edit-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
                             </div>
-                            <div>
-                                <label class="text-sm text-gray-500">Prix</label>
-                                <input type="number" id="edit-prix" min="1" step="0.01" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Prix (€)</label>
+                                    <input type="number" id="edit-prix" min="1" step="0.01" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">Stock</label>
+                                    <input type="number" id="edit-stock" min="1" step="1" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                </div>
                             </div>
                             <div>
-                                <label class="text-sm text-gray-500">Stock</label>
-                                <input type="number" id="edit-stock" min="1" max="100" step="1" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <label class="text-sm text-gray-500">Nouvelle image (laisser vide pour conserver l'actuelle)</label>
+                                <input type="file" id="edit-image" accept="image/*" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
@@ -135,12 +147,13 @@
                         </div>
                     </div>
                 </div>
+
             </main>
         </div>
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/produit";
+        const API_BASE = "http://localhost:8082";
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {
@@ -152,27 +165,31 @@
 
         async function fetchProduits() {
             try {
-                const response = await fetch(`${API_BASE}/read`);
+                const response = await fetch(`${API_BASE}/produit/read`);
                 const produits = await response.json();
                 const tbody = document.getElementById('produit-table-body');
                 tbody.innerHTML = '';
 
                 if (!produits || produits.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Aucun produit en base.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Aucun produit en base.</td></tr>';
                     return;
                 }
 
-                produits.forEach(c => {
+                produits.forEach(p => {
+                    const imgSrc = p.image ? `${API_BASE}/${p.image}` : 'https://via.placeholder.com/150';
+                    
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 text-gray-400">#${c.id}</td>
-                            <td class="p-4">${c.nom}</td>
-                            <td class="p-4">${c.description}</td>
-                            <td class="p-4">${c.prix}</td>
-                            <td class="p-4">${c.stock}</td>
-                            <td class="p-4 flex justify-center gap-8">
-                                <button onclick="openEditModal(${c.id}, '${c.nom.replace(/'/g, "\\'")}', '${c.description.replace(/'/g, "\\'")}', '${c.prix}', '${c.stock}')" class="text-[#E1AB2B] font-bold">Modifier</button>
-                                <button onclick="openDeleteModal(${c.id})" class="text-red-500 font-bold">Supprimer</button>
+                            <td class="p-4">
+                                <img src="${imgSrc}" class="w-16 h-16 object-cover rounded-lg border border-gray-200">
+                            </td>
+                            <td class="p-4 font-medium">${p.nom}</td>
+                            <td class="p-4 text-gray-600 text-sm">${p.description}</td>
+                            <td class="p-4 font-bold text-[#1C5B8F]">${p.prix} €</td>
+                            <td class="p-4">${p.stock}</td>
+                            <td class="p-4 flex justify-center gap-4">
+                                <button onclick="openEditModal(${p.id}, '${p.nom.replace(/'/g, "\\'")}', '${p.description.replace(/'/g, "\\'")}', '${p.prix}', '${p.stock}')" class="text-[#E1AB2B] font-bold hover:underline">Modifier</button>
+                                <button onclick="openDeleteModal(${p.id})" class="text-red-500 font-bold hover:underline">Supprimer</button>
                             </td>
                         </tr>
                     `;
@@ -184,28 +201,34 @@
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = {
-                nom: document.getElementById('add-nom').value,
-                description: document.getElementById('add-description').value,
-                prix: parseFloat(document.getElementById('add-prix').value), // Conversion
-                stock: parseInt(document.getElementById('add-stock').value)
-            };
+            
+            const formData = new FormData();
+            formData.append('nom', document.getElementById('add-nom').value);
+            formData.append('description', document.getElementById('add-description').value);
+            formData.append('prix', document.getElementById('add-prix').value);
+            formData.append('stock', document.getElementById('add-stock').value);
+            
+            const fileInput = document.getElementById('add-image');
+            if (fileInput.files[0]) {
+                formData.append('image', fileInput.files[0]);
+            }
+
             try {
-                const response = await fetch(`${API_BASE}/create`, {
+                const response = await fetch(`${API_BASE}/produit/create`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
+                    body: formData
                 });
+
                 if (response.ok) {
                     toggleModal('add-modal');
                     e.target.reset();
-                    showAlert("Produit ajouté !", true);
+                    showAlert("Produit ajouté avec succès !", true);
                     fetchProduits();
+                } else {
+                    showAlert("Erreur serveur lors de l'ajout.", false);
                 }
             } catch (err) {
-                showAlert("Erreur lors de l'envoi", false);
+                showAlert("Erreur de connexion à l'API.", false);
             }
         });
 
@@ -215,33 +238,39 @@
             document.getElementById('edit-description').value = description;
             document.getElementById('edit-prix').value = prix;
             document.getElementById('edit-stock').value = stock;
+            document.getElementById('edit-image').value = '';
             toggleModal('edit-modal');
         }
 
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
-            const data = {
-                nom: document.getElementById('edit-nom').value,
-                description: document.getElementById('edit-description').value,
-                prix: parseFloat(document.getElementById('edit-prix').value), // Conversion
-                stock: parseInt(document.getElementById('edit-stock').value)
-            };
+            
+            const formData = new FormData();
+            formData.append('nom', document.getElementById('edit-nom').value);
+            formData.append('description', document.getElementById('edit-description').value);
+            formData.append('prix', document.getElementById('edit-prix').value);
+            formData.append('stock', document.getElementById('edit-stock').value);
+            
+            const fileInput = document.getElementById('edit-image');
+            if (fileInput.files[0]) {
+                formData.append('image', fileInput.files[0]);
+            }
+
             try {
-                const res = await fetch(`${API_BASE}/update/${id}`, {
+                const res = await fetch(`${API_BASE}/produit/update/${id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
+                    body: formData
                 });
                 if (res.ok) {
                     toggleModal('edit-modal');
                     showAlert("Modifications enregistrées", true);
                     fetchProduits();
+                } else {
+                    showAlert("Erreur lors de la mise à jour", false);
                 }
             } catch (err) {
-                showAlert("Erreur lors de la mise à jour", false);
+                showAlert("Erreur de connexion à l'API", false);
             }
         });
 
@@ -253,7 +282,7 @@
         document.getElementById('confirm-delete').addEventListener('click', async () => {
             const id = document.getElementById('delete-id').value;
             try {
-                const res = await fetch(`${API_BASE}/delete/${id}`, {
+                const res = await fetch(`${API_BASE}/produit/delete/${id}`, {
                     method: 'DELETE'
                 });
                 if (res.ok) {
