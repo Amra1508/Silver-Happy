@@ -41,7 +41,7 @@ func InitDB() {
 	CREATE TABLE IF NOT EXISTS PAIEMENT(
 		id_paiement INT AUTO_INCREMENT PRIMARY KEY,
 		prix DOUBLE,
-		date_paiement DATETIME,
+		date_paiement DATETIME DEFAULT CURRENT_TIMESTAMP,
 		statut ENUM('en_attente', 'valide', 'refuse', 'rembourse'),
 		mode_paiement ENUM('carte', 'cheque', 'prelevement')
 	);
@@ -51,13 +51,14 @@ func InitDB() {
 		description VARCHAR(200),
 		prix DOUBLE,
 		stock INT,
-		date_ajout DATE
+		image VARCHAR(250) DEFAULT NULL,
+		date_ajout DATE DEFAULT (CURRENT_DATE)
 	);
 	CREATE TABLE IF NOT EXISTS NOTIFICATION(
 		id_notification INT AUTO_INCREMENT PRIMARY KEY,
 		destinataire VARCHAR(100),
 		contenu VARCHAR(200),
-		date_envoi DATETIME,
+		date_envoi DATETIME DEFAULT CURRENT_TIMESTAMP,
 		statut ENUM('lu','envoye','en attente') DEFAULT 'en attente',
 		priorite INT
 	);
@@ -65,7 +66,8 @@ func InitDB() {
 		id_conseil INT AUTO_INCREMENT PRIMARY KEY,
 		titre VARCHAR(80),
 		description VARCHAR(200),
-		date_publication DATETIME,
+		image VARCHAR(250) DEFAULT NULL,
+		date_publication DATETIME DEFAULT CURRENT_TIMESTAMP,
 		categorie VARCHAR(80)
 	);
 	CREATE TABLE IF NOT EXISTS ADRESSE(
@@ -82,23 +84,20 @@ func InitDB() {
 		description VARCHAR(200),
 		lieu VARCHAR(100),
 		nombre_place INT NOT NULL,
-		date_ajout DATETIME
+		image VARCHAR(250) DEFAULT NULL,
+		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 	CREATE TABLE IF NOT EXISTS PLANNING(
 		id_planning INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100),
 		description VARCHAR(200),
-		date_creation DATETIME
-	);
-	CREATE TABLE IF NOT EXISTS DOCUMENT(
-		id_document INT AUTO_INCREMENT PRIMARY KEY,
-		type ENUM('CV', 'Lettre de motivation', 'Casier judiciaire', 'Medical')
+		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 	CREATE TABLE IF NOT EXISTS CONTIENT_EVENEMENT(
 		id_occurence INT AUTO_INCREMENT PRIMARY KEY,
 		id_evenement INT,
 		id_planning INT,
-		date_debut DATETIME,
+		date_debut DATETIME DEFAULT CURRENT_TIMESTAMP,
 		date_fin DATETIME,
 		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement),
 		FOREIGN KEY (id_planning) REFERENCES PLANNING(id_planning)
@@ -138,7 +137,7 @@ func InitDB() {
 		date_naissance DATE,
 		num_telephone VARCHAR(20),
 		statut ENUM('user', 'admin', 'banni') DEFAULT 'user',
-		date_creation DATETIME,
+		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		premiere_connexion BOOLEAN DEFAULT true,
 		motif_bannissement VARCHAR(100),
 		duree_bannissement INT,
@@ -152,7 +151,7 @@ func InitDB() {
 	);
 	CREATE TABLE IF NOT EXISTS COMMANDE(
 		id_commande INT AUTO_INCREMENT PRIMARY KEY,
-		date_commande DATETIME,
+		date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
 		total DOUBLE,
 		id_paiement INT NOT NULL,
 		id_utilisateur INT,
@@ -177,17 +176,24 @@ func InitDB() {
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement)
 	);
-	CREATE TABLE IF NOT EXISTS MESSAGE_UTILISATEUR(
+	CREATE TABLE IF NOT EXISTS MESSAGE_ADMIN(
+		id_message INT AUTO_INCREMENT PRIMARY KEY,
 		contenu VARCHAR(250),
-		date DATETIME,
-		id_utilisateur INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
+		date DATETIME DEFAULT CURRENT_TIMESTAMP,
+		id_utilisateur1 INT,
+		id_utilisateur2 INT,
+		statut ENUM('admin', 'user'),
+		FOREIGN KEY (id_utilisateur1) REFERENCES UTILISATEUR(id_utilisateur),
+		FOREIGN KEY (id_utilisateur2) REFERENCES UTILISATEUR(id_utilisateur)
 	);
 	CREATE TABLE IF NOT EXISTS MESSAGE_PRESTATAIRE(
+		id_message INT AUTO_INCREMENT PRIMARY KEY,
 		contenu VARCHAR(250),
-		date DATETIME,
+		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_prestataire INT,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
+		id_utilisateur INT,
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
 	CREATE TABLE IF NOT EXISTS CAPTCHA(
 		id_captcha INT AUTO_INCREMENT PRIMARY KEY,
@@ -209,37 +215,39 @@ func InitDB() {
 		prix DOUBLE,
 		lieu VARCHAR(100),
 		nombre_place INT NOT NULL,
-		date_ajout DATETIME,
+		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_paiement INT NOT NULL,
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
 	);
-	CREATE TABLE IF NOT EXISTS DEPOSE_UTILISATEUR(
+	CREATE TABLE IF NOT EXISTS DOCUMENT_UTILISATEUR(
+		id_document INT AUTO_INCREMENT PRIMARY KEY,
+		type VARCHAR(250),
+		nom VARCHAR(250),
 		id_utilisateur INT,
-		id_document INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_document) REFERENCES DOCUMENT(id_document)
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
-	CREATE TABLE IF NOT EXISTS DEPOSE_PRESTATAIRE(
+	CREATE TABLE IF NOT EXISTS DOCUMENT_PRESTATAIRE(
+		id_document INT AUTO_INCREMENT PRIMARY KEY,
+		type VARCHAR(250),
+		nom VARCHAR(250),
 		id_prestataire INT,
-		id_document INT,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
-		FOREIGN KEY (id_document) REFERENCES DOCUMENT(id_document)
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
 	);
 	CREATE TABLE IF NOT EXISTS AVIS(
 		id_avis INT AUTO_INCREMENT PRIMARY KEY,
 		description VARCHAR(200),
 		titre VARCHAR(100),
 		note INT,
-		date DATETIME,
+		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
 	);
 	CREATE TABLE IF NOT EXISTS FACTURE(
 		id_facture INT AUTO_INCREMENT PRIMARY KEY,
 		montant DOUBLE,
-		date DATETIME,
+		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
 	);
@@ -281,9 +289,9 @@ func InitDB() {
 	);
 	CREATE TABLE IF NOT EXISTS NEWSLETTER(
   		id_newsletter INT AUTO_INCREMENT PRIMARY KEY,
-  		title VARCHAR(50) NOT NULL,
-  		content VARCHAR(200) NOT NULL,
-  		date_creation DATE NOT NULL
+  		titre VARCHAR(50) NOT NULL,
+  		contenu VARCHAR(200) NOT NULL,
+  		date_creation DATE DEFAULT CURRENT_TIMESTAMP
 	);`
 
 	_, err = DB.Exec(creationQuery)
