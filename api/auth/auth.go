@@ -219,64 +219,73 @@ func Logout(response http.ResponseWriter, request *http.Request) {
 }
 
 func Me(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	cookie, err := request.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			http.Error(response, "Non authentifié (aucun cookie)", http.StatusUnauthorized)
-			return
-		}
-		http.Error(response, "Erreur serveur", http.StatusBadRequest)
-		return
-	}
+    cookie, err := request.Cookie("session_token")
+    if err != nil {
+        if err == http.ErrNoCookie {
+            http.Error(response, "Non authentifié (aucun cookie)", http.StatusUnauthorized)
+            return
+        }
+        http.Error(response, "Erreur serveur", http.StatusBadRequest)
+        return
+    }
 
-	tokenString := cookie.Value
+    tokenString := cookie.Value
+    claims := &models.Claims{}
+    token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            return nil, jwt.ErrSignatureInvalid
+        }
+        return jwtKey, nil
+    })
 
-	claims := &models.Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.ErrSignatureInvalid
-		}
-		return jwtKey, nil 
-	})
+    if err != nil || !token.Valid {
+        http.Error(response, "Session invalide ou expirée", http.StatusUnauthorized)
+        return
+    }
 
-	if err != nil || !token.Valid {
-		http.Error(response, "Session invalide ou expirée", http.StatusUnauthorized)
-		return
-	}
+    query := `
+        SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
+               u.num_telephone, u.date_naissance, u.statut, 
+               u.date_creation, u.motif_bannissement, u.duree_bannissement,
+               a.rue, a.ville, a.code_postal, a.pays
+        FROM UTILISATEUR u
+        LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
+        WHERE u.id_utilisateur = ?
+    `
+    
+    var user models.Utilisateur
+    var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays sql.NullString
+    var dureeBan sql.NullInt64
 
-	userID := claims.UserID
+    errDB := db.DB.QueryRow(query, claims.UserID).Scan(
+        &user.ID, &user.Nom, &user.Prenom, &user.Email,
+        &numTel, &dateNaiss, &user.Statut, &dateCrea, &motifBan, &dureeBan,
+        &rue, &ville, &cp, &pays,
+    )
 
-	query := `
-		SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
-		       COALESCE(u.num_telephone, ''), COALESCE(u.date_naissance, ''), u.statut, 
-		       COALESCE(u.date_creation, ''), COALESCE(u.motif_bannissement, ''), COALESCE(u.duree_bannissement, 0),
-		       COALESCE(a.rue, ''), COALESCE(a.ville, ''), COALESCE(a.code_postal, ''), COALESCE(a.pays, '')
-		FROM UTILISATEUR u
-		LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
-		WHERE u.id_utilisateur = ?
-	`
-	
-	var user models.Utilisateur
-	errDB := db.DB.QueryRow(query, userID).Scan(
-		&user.ID, &user.Nom, &user.Prenom, &user.Email, &user.NumTelephone, &user.DateNaissance, 
-		&user.Statut, &user.DateCreation, &user.MotifBannissement, &user.DureeBannissement, 
-		&user.Adresse, &user.Ville, &user.CodePostal, &user.Pays,
-	)
+    if errDB != nil {
+        if errDB == sql.ErrNoRows {
+            http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
+        } else {
+            http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        }
+        return
+    }
 
-	if errDB != nil {
-		if errDB == sql.ErrNoRows {
-			http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
-		} else {
-			http.Error(response, "Erreur base de données", http.StatusInternalServerError)
-		}
-		return
-	}
+    user.NumTelephone = numTel.String
+    user.DateNaissance = dateNaiss.String
+    user.DateCreation = dateCrea.String
+    user.MotifBannissement = motifBan.String
+    user.DureeBannissement = int(dureeBan.Int64)
+    user.Adresse = rue.String
+    user.Ville = ville.String
+    user.CodePostal = cp.String
+    user.Pays = pays.String
 
-	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(user)
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(user)
 }
