@@ -81,3 +81,7 @@ type Document struct {
 	Type string `json:"type"`
 	Lien string `json:"lien"`
 }
+
+type Count struct {
+	Count int `json:"count"`
+}

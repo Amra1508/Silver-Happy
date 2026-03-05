@@ -123,6 +123,7 @@ func InitDB() {
 		date_naissance DATE,
 		num_telephone VARCHAR(20),
 		est_valide BOOLEAN DEFAULT false,
+		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		tarifs DOUBLE,
 		type_prestation VARCHAR(50),
 		id_abonnement INT,

@@ -131,11 +131,20 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	id := request.PathValue("id")
+
+	var idPlanning, idAdresse int
+
+	db.DB.QueryRow("SELECT id_planning, id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&idPlanning, &idAdresse)
+
 	_, err := db.DB.Exec("DELETE FROM UTILISATEUR WHERE id_utilisateur = ?", id)
 	if err != nil {
-		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
+		http.Error(response, "Erreur lors de la suppression de l'utilisateur", http.StatusInternalServerError)
 		return
 	}
+
+	db.DB.Exec("DELETE FROM PLANNING WHERE id_planning = ?", idPlanning)
+	db.DB.Exec("DELETE FROM ADRESSE WHERE id_adresse = ?", idAdresse)
+
 	response.WriteHeader(http.StatusNoContent)
 }
 
