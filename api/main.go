@@ -56,6 +56,12 @@ func main() {
 	http.HandleFunc("/conseil/update/{id}", communication.Update_Conseil)
 	http.HandleFunc("/conseil/delete/{id}", communication.Delete_Conseil)
 
+	http.HandleFunc("/prestataires/read", users.Read_Prestataire)
+	http.HandleFunc("/prestataires/create", users.Create_Prestataire)
+	http.HandleFunc("/prestataires/update/{id}", users.Update_Prestataire)
+	http.HandleFunc("/prestataires/delete/{id}", users.Delete_Prestataire)
+	http.HandleFunc("/prestataires/{id}/documents", users.Read_Prestataire_Documents)
+
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
 	}

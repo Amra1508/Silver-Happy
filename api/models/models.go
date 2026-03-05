@@ -34,32 +34,50 @@ type Claims struct {
 }
 
 type Captcha struct {
-	ID       int64 `json:"id"`
+	ID       int64  `json:"id"`
 	Question string `json:"question"`
 	Reponse  string `json:"reponse"`
 }
 
 type Produit struct {
-	ID          int64 `json:"id"`
-	Nom         string `json:"nom"`
-	Description string `json:"description"`
+	ID          int64   `json:"id"`
+	Nom         string  `json:"nom"`
+	Description string  `json:"description"`
 	Prix        float64 `json:"prix"`
-	Stock       int64 `json:"stock"`
-	Image 		string `json:"image"`
+	Stock       int64   `json:"stock"`
+	Image       string  `json:"image"`
 }
 
 type Service struct {
-    ID            int    `json:"id"`
-    Nom           string `json:"nom"`
-    Description   string `json:"description"`
-    Disponibilite int   `json:"disponibilite"`
-    IdUtilisateur int   `json:"id_utilisateur"`
+	ID            int    `json:"id"`
+	Nom           string `json:"nom"`
+	Description   string `json:"description"`
+	Disponibilite int    `json:"disponibilite"`
+	IdUtilisateur int    `json:"id_utilisateur"`
 }
 
 type Conseil struct {
-    ID          int64  `json:"id"`
-    Titre       string `json:"titre"`
-    Description string `json:"description"`
+	ID          int64  `json:"id"`
+	Titre       string `json:"titre"`
+	Description string `json:"description"`
 	Date        string `json:"date"`
-    Categorie   string `json:"categorie"`
+	Categorie   string `json:"categorie"`
+}
+
+type Prestataire struct {
+	ID             int64   `json:"id"`
+	Siret          string  `json:"siret"`
+	Prenom         string  `json:"prenom"`
+	Nom            string  `json:"nom"`
+	Email          string  `json:"email"`
+	DateNaissance  string  `json:"date_naissance"`
+	NumTelephone   string  `json:"num_telephone"`
+	EstValide      int     `json:"est_valide"`
+	Tarifs         float64 `json:"tarifs"`
+	TypePrestation string  `json:"type_prestation"`
+}
+type Document struct {
+	ID   int64  `json:"id_document"`
+	Type string `json:"type"`
+	Lien string `json:"lien"`
 }
