@@ -70,7 +70,7 @@
                 <div id="voir-plus-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-2xl border border-[#1C5B8F] shadow-xl overflow-y-auto max-h-[90vh]">
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Détails du Prestataire</h3>
-                        
+
                         <div class="grid grid-cols-2 gap-8 text-sm mb-6">
                             <div class="space-y-2">
                                 <h4 class="font-bold text-gray-700 text-base mb-2 border-b pb-1">Informations</h4>
@@ -140,7 +140,7 @@
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Tarifs (€)</label>
-                                    <input type="number" step="0.01" id="add-tarifs" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
+                                    <input type="number" min="1" step="0.01" id="add-tarifs" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
@@ -169,7 +169,7 @@
                         <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Prestataire</h3>
                         <form id="edit-form" class="space-y-4">
                             <input type="hidden" id="edit-id">
-                            
+
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Nom *</label>
@@ -260,7 +260,7 @@
             try {
                 const response = await fetch(`${API_BASE}/read`);
                 allPrestataires = await response.json();
-                
+
                 const tbody = document.getElementById('prestataire-table-body');
                 tbody.innerHTML = '';
 
@@ -305,32 +305,32 @@
         async function openVoirPlusModal(id) {
             const p = allPrestataires.find(item => item.id === id);
             if (!p) return;
-            
+
             currentPrestataireId = id;
-            
+
             document.getElementById('vp-nom').textContent = p.nom;
             document.getElementById('vp-prenom').textContent = p.prenom;
             document.getElementById('vp-email').textContent = p.email;
             document.getElementById('vp-tel').textContent = p.num_telephone || '-';
             document.getElementById('vp-date').textContent = p.date_naissance || '-';
-            
+
             document.getElementById('vp-siret').textContent = p.siret || '-';
             document.getElementById('vp-type').textContent = p.type_prestation || '-';
             document.getElementById('vp-tarifs').textContent = p.tarifs || '0';
-            
-            document.getElementById('vp-validation').innerHTML = p.est_valide === 1 
-                ? '<span class="text-green-600 font-bold">Validé</span>' 
-                : '<span class="text-yellow-600 font-bold">En attente</span>';
+
+            document.getElementById('vp-validation').innerHTML = p.est_valide === 1 ?
+                '<span class="text-green-600 font-bold">Validé</span>' :
+                '<span class="text-yellow-600 font-bold">En attente</span>';
 
             const docList = document.getElementById('vp-documents-list');
             docList.innerHTML = '<i>Chargement des documents...</i>';
-            
+
             toggleModal('voir-plus-modal');
 
             try {
                 const docRes = await fetch(`${API_BASE}/documents/${id}`);
                 if (!docRes.ok) throw new Error();
-                
+
                 const documents = await docRes.json();
 
                 if (!documents || documents.length === 0) {
@@ -354,7 +354,7 @@
         function triggerEdit() {
             toggleModal('voir-plus-modal');
             const p = allPrestataires.find(item => item.id === currentPrestataireId);
-            
+
             document.getElementById('edit-id').value = p.id;
             document.getElementById('edit-nom').value = p.nom;
             document.getElementById('edit-prenom').value = p.prenom;
@@ -365,7 +365,7 @@
             document.getElementById('edit-type').value = p.type_prestation;
             document.getElementById('edit-tarifs').value = p.tarifs;
             document.getElementById('edit-valide').value = p.est_valide;
-            
+
             toggleModal('edit-modal');
         }
 
@@ -391,7 +391,9 @@
             try {
                 const response = await fetch(`${API_BASE}/create`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (response.ok) {
@@ -424,7 +426,9 @@
             try {
                 const res = await fetch(`${API_BASE}/update/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (res.ok) {
