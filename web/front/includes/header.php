@@ -46,13 +46,15 @@
         </div>
 
     </div>
-    <script>
-        const btnLogout = document.getElementById('btn_logout');
 
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        
+    const btnLogout = document.getElementById('btn_logout');
+        
         if (btnLogout) {
             btnLogout.addEventListener('click', async (e) => {
                 e.preventDefault();
-
                 try {
                     const response = await fetch('http://localhost:8082/auth/logout', {
                         method: 'POST',
@@ -61,14 +63,45 @@
 
                     if (response.ok) {
                         window.location.replace("/front/index.php");
-                    } else {
+                    } else-* {
                         alert("Erreur lors de la déconnexion.");
                     }
                 } catch (error) {
-                    console.error("Erreur réseau :", error);
+                    console.error("Erreur réseau lors de la déconnexion :", error);
                 }
             });
         }
-    </script>
+
+        try {
+            const response = await fetch('http://localhost:8082/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error("Utilisateur non connecté ou session invalide");
+            }
+
+            const user = await response.json();
+
+            if (user.statut === 'admin') {
+                window.location.href = "../../back/dashboard.php";
+                return;
+            }
+
+            const nameDisplay = document.getElementById('header-user-name');
+            if (nameDisplay) {
+                nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;
+            }
+
+        } catch (error) {
+            console.error("Erreur d'authentification :", error);
+            window.location.href = "/front/index.php"; 
+        }
+    });
+</script>
 
 </header>
