@@ -5,9 +5,7 @@
 
     <div class="bg-[#E1AB2B]/60 py-2 px-6 flex justify-end gap-4">
         <?php if (isset($_COOKIE['session_token'])): ?>
-            <a href="/front/index.php">
-                <button id="btn_logout" class="header-button">Déconnexion</button>
-            </a>
+            <button id="btn_logout" class="header-button">Déconnexion</button>
         <?php else: ?>
             <a href="/front/account/signin.php">
                 <button class="header-button">Se connecter</button>
@@ -27,7 +25,6 @@
     </div>
 
     <div class="border border-[#D4D4D4] flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 px-4 py-4 md:px-6">
-
         <img class="w-30 h-12 md:w-35 md:h-12 object-contain" src="/front/images/SilverHappy_logo.png" alt="logo">
 
         <nav class="md:flex items-center gap-6 lg:gap-8">
@@ -44,13 +41,12 @@
                       hover:placeholder:text-[#E1AB2B] hover:border-[#E1AB2B] focus:placeholder:text-[#E1AB2B] focus:border-[#E1AB2B] 
                       placeholder:text-[#1C5B8F] placeholder:text-2xl placeholder:font-medium lg:placeholder:text-3xl text-xl">
         </div>
-
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
         
-    const btnLogout = document.getElementById('btn_logout');
+        const btnLogout = document.getElementById('btn_logout');
         
         if (btnLogout) {
             btnLogout.addEventListener('click', async (e) => {
@@ -62,8 +58,8 @@
                     });
 
                     if (response.ok) {
-                        window.location.replace("/front/index.php");
-                    } else-* {
+                        window.location.href = "/front/index.php";
+                    } else {
                         alert("Erreur lors de la déconnexion.");
                     }
                 } catch (error) {
@@ -99,9 +95,7 @@
 
         } catch (error) {
             console.error("Erreur d'authentification :", error);
-            window.location.href = "/front/index.php"; 
         }
     });
-</script>
-
+    </script>
 </header>
