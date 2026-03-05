@@ -328,7 +328,7 @@
             toggleModal('voir-plus-modal');
 
             try {
-                const docRes = await fetch(`${API_BASE}/${id}/documents`);
+                const docRes = await fetch(`${API_BASE}/documents/${id}`);
                 if (!docRes.ok) throw new Error();
                 
                 const documents = await docRes.json();
