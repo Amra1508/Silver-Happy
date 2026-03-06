@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"main/db"
@@ -12,74 +13,93 @@ import (
 )
 
 func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
 
-	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(est_valide, 0), IFNULL(tarifs, 0), IFNULL(type_prestation, '') FROM PRESTATAIRE`
+	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, '') FROM PRESTATAIRE`
 
 	rows, errorFetch := db.DB.Query(query)
 	if errorFetch != nil {
+		fmt.Println("Erreur SQL (Read_Prestataire) :", errorFetch)
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	var tabPrestataire []models.Prestataire
+	var listePrestataires []models.Prestataire
+
 	for rows.Next() {
-		var p models.Prestataire
-		if err := rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.EstValide, &p.Tarifs, &p.TypePrestation); err != nil {
+		var prestataire models.Prestataire
+
+		err := rows.Scan(
+			&prestataire.ID, &prestataire.Siret, &prestataire.Nom,
+			&prestataire.Prenom, &prestataire.Email, &prestataire.NumTelephone,
+			&prestataire.DateNaissance, &prestataire.Status, &prestataire.MotifRefus,
+			&prestataire.Tarifs, &prestataire.TypePrestation,
+		)
+
+		if err != nil {
+			fmt.Println("Erreur Lecture Prestataire :", err)
 			continue
 		}
-		tabPrestataire = append(tabPrestataire, p)
+
+		listePrestataires = append(listePrestataires, prestataire)
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(tabPrestataire)
+	json.NewEncoder(response).Encode(listePrestataires)
 }
 
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "POST") {
 		return
 	}
 
-	var p models.Prestataire
-	if err := json.NewDecoder(request.Body).Decode(&p); err != nil {
+	var prestataire models.Prestataire
+	if err := json.NewDecoder(request.Body).Decode(&prestataire); err != nil {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
 		return
 	}
 
 	hashMdp, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 
-	res, errorCreate := db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, est_valide, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.EstValide, p.Tarifs, p.TypePrestation, string(hashMdp))
+	res, errorCreate := db.DB.Exec(
+		"INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		prestataire.Siret, prestataire.Nom, prestataire.Prenom, prestataire.Email, prestataire.NumTelephone,
+		prestataire.DateNaissance, prestataire.Status, prestataire.MotifRefus, prestataire.Tarifs,
+		prestataire.TypePrestation, string(hashMdp),
+	)
 
 	if errorCreate != nil {
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
 		return
 	}
 
-	id, _ := res.LastInsertId()
-	p.ID = id
+	idNouveau, _ := res.LastInsertId()
+	prestataire.ID = idNouveau
 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusCreated)
-	json.NewEncoder(response).Encode(p)
+	json.NewEncoder(response).Encode(prestataire)
 }
 
 func Read_One_Prestataire(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
 
 	id := request.PathValue("id")
-	var p models.Prestataire
+	var prestataire models.Prestataire
 
-	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(est_valide, 0), IFNULL(tarifs, 0), IFNULL(type_prestation, '') FROM PRESTATAIRE WHERE id_prestataire = ?`
+	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, '') FROM PRESTATAIRE WHERE id_prestataire = ?`
 
-	err := db.DB.QueryRow(query, id).Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.EstValide, &p.Tarifs, &p.TypePrestation)
+	err := db.DB.QueryRow(query, id).Scan(
+		&prestataire.ID, &prestataire.Siret, &prestataire.Nom,
+		&prestataire.Prenom, &prestataire.Email, &prestataire.NumTelephone,
+		&prestataire.DateNaissance, &prestataire.Status, &prestataire.MotifRefus,
+		&prestataire.Tarifs, &prestataire.TypePrestation,
+	)
 
 	if err != nil {
 		http.Error(response, "Prestataire non trouvé", http.StatusNotFound)
@@ -87,11 +107,10 @@ func Read_One_Prestataire(response http.ResponseWriter, request *http.Request) {
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(p)
+	json.NewEncoder(response).Encode(prestataire)
 }
 
 func Delete_Prestataire(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "DELETE") {
 		return
 	}
@@ -108,20 +127,24 @@ func Delete_Prestataire(response http.ResponseWriter, request *http.Request) {
 }
 
 func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "PUT") {
 		return
 	}
 
 	id := request.PathValue("id")
 
-	var p models.Prestataire
-	if err := json.NewDecoder(request.Body).Decode(&p); err != nil {
+	var prestataire models.Prestataire
+	if err := json.NewDecoder(request.Body).Decode(&prestataire); err != nil {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
 		return
 	}
 
-	res, err := db.DB.Exec("UPDATE PRESTATAIRE SET siret = ?, nom = ?, prenom = ?, email = ?, num_telephone = ?, date_naissance = ?, est_valide = ?, tarifs = ?, type_prestation = ? WHERE id_prestataire = ?", p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.EstValide, p.Tarifs, p.TypePrestation, id)
+	res, err := db.DB.Exec(
+		"UPDATE PRESTATAIRE SET siret = ?, nom = ?, prenom = ?, email = ?, num_telephone = ?, date_naissance = ?, status = ?, motif_refus = ?, tarifs = ?, type_prestation = ? WHERE id_prestataire = ?",
+		prestataire.Siret, prestataire.Nom, prestataire.Prenom, prestataire.Email, prestataire.NumTelephone,
+		prestataire.DateNaissance, prestataire.Status, prestataire.MotifRefus, prestataire.Tarifs,
+		prestataire.TypePrestation, id,
+	)
 
 	if err != nil {
 		http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
@@ -160,18 +183,20 @@ func Read_Prestataire_Documents(response http.ResponseWriter, request *http.Requ
 	}
 	defer rows.Close()
 
-	var tabDocuments []models.Document
+	var listeDocuments []models.Document
+
 	for rows.Next() {
-		var doc models.Document
-		if err := rows.Scan(&doc.ID, &doc.Type, &doc.Lien); err == nil {
-			tabDocuments = append(tabDocuments, doc)
+		var document models.Document
+		err := rows.Scan(&document.ID, &document.Type, &document.Lien)
+		if err == nil {
+			listeDocuments = append(listeDocuments, document)
 		}
 	}
 
-	if tabDocuments == nil {
-		tabDocuments = make([]models.Document, 0)
+	if listeDocuments == nil {
+		listeDocuments = make([]models.Document, 0)
 	}
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(tabDocuments)
+	json.NewEncoder(response).Encode(listeDocuments)
 }

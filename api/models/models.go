@@ -72,10 +72,12 @@ type Prestataire struct {
 	Email          string  `json:"email"`
 	DateNaissance  string  `json:"date_naissance"`
 	NumTelephone   string  `json:"num_telephone"`
-	EstValide      int     `json:"est_valide"`
+	Status         string  `json:"status"`
+	MotifRefus     string  `json:"motif_refus"`
 	Tarifs         float64 `json:"tarifs"`
 	TypePrestation string  `json:"type_prestation"`
 }
+
 type Document struct {
 	ID   int64  `json:"id_document"`
 	Type string `json:"type"`
