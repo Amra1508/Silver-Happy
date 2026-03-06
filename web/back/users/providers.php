@@ -180,7 +180,7 @@
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="edit-siret" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
                                 <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="edit-type" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" step="0.01" id="edit-tarifs" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="edit-tarifs" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="edit-date" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required></div>
