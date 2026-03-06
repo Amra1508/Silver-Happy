@@ -89,6 +89,7 @@
                                 <p><span class="text-gray-500">Email :</span> <strong id="vp-email"></strong></p>
                                 <p><span class="text-gray-500">Téléphone :</span> <strong id="vp-tel"></strong></p>
                                 <p><span class="text-gray-500">Naissance :</span> <strong id="vp-date"></strong></p>
+                                <p><span class="text-gray-500">Inscrit le :</span> <strong id="vp-date-creation" class="text-[#1C5B8F]"></strong></p>
                             </div>
                             <div class="space-y-2">
                                 <h4 class="font-bold text-gray-700 text-base mb-2 border-b pb-1">Activité</h4>
@@ -280,14 +281,9 @@
                     if (provider.status === "validé") {
                         badge = "<span class='text-green-700 font-bold bg-green-100 px-3 py-1 rounded-full text-xs border border-green-200'>Validé</span>";
                     } else if (provider.status === "refusé") {
-                        badge = "<span class='text-red-700 font-bold bg-red-100 px-3 py-1 rounded-full text-xs border border-red-200'>Refusé</span><br><span class='text-xs text-red-500 italic mt-1 inline-block'>Motif : " + provider.motif_refus + "</span>";
+                        badge = "<span class='text-red-700 font-bold bg-red-100 px-3 py-1 rounded-full text-xs border border-red-200'>Refusé</span>";
                     } else {
                         badge = "<span class='text-yellow-700 font-bold bg-yellow-100 px-3 py-1 rounded-full text-xs border border-yellow-200'>En attente</span>";
-                    }
-
-                    let birthDate = "";
-                    if (provider.date_naissance) {
-                        birthDate = provider.date_naissance.substring(0, 10);
                     }
 
                     let phone = "-";
@@ -347,6 +343,12 @@
                 document.getElementById('vp-date').textContent = provider.date_naissance.substring(0, 10);
             } else {
                 document.getElementById('vp-date').textContent = "-";
+            }
+
+            if (provider.date_creation) {
+                document.getElementById('vp-date-creation').textContent = provider.date_creation;
+            } else {
+                document.getElementById('vp-date-creation').textContent = "-";
             }
 
             document.getElementById('vp-siret').textContent = provider.siret;

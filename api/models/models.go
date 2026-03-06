@@ -67,15 +67,16 @@ type Conseil struct {
 type Prestataire struct {
 	ID             int64   `json:"id"`
 	Siret          string  `json:"siret"`
-	Prenom         string  `json:"prenom"`
 	Nom            string  `json:"nom"`
+	Prenom         string  `json:"prenom"`
 	Email          string  `json:"email"`
-	DateNaissance  string  `json:"date_naissance"`
 	NumTelephone   string  `json:"num_telephone"`
+	DateNaissance  string  `json:"date_naissance"`
 	Status         string  `json:"status"`
 	MotifRefus     string  `json:"motif_refus"`
 	Tarifs         float64 `json:"tarifs"`
 	TypePrestation string  `json:"type_prestation"`
+	DateCreation   string  `json:"date_creation"`
 }
 
 type Document struct {

@@ -17,7 +17,8 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, '') FROM PRESTATAIRE`
+	// On a ajouté date_creation à la fin du SELECT
+	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, ''), IFNULL(DATE_FORMAT(date_creation, '%d/%m/%Y à %H:%i'), '') FROM PRESTATAIRE`
 
 	rows, errorFetch := db.DB.Query(query)
 	if errorFetch != nil {
@@ -32,11 +33,12 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var prestataire models.Prestataire
 
+		// On n'oublie pas d'ajouter &prestataire.DateCreation à la fin du Scan
 		err := rows.Scan(
 			&prestataire.ID, &prestataire.Siret, &prestataire.Nom,
 			&prestataire.Prenom, &prestataire.Email, &prestataire.NumTelephone,
 			&prestataire.DateNaissance, &prestataire.Status, &prestataire.MotifRefus,
-			&prestataire.Tarifs, &prestataire.TypePrestation,
+			&prestataire.Tarifs, &prestataire.TypePrestation, &prestataire.DateCreation,
 		)
 
 		if err != nil {
@@ -64,8 +66,9 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 
 	hashMdp, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 
+	// Pas besoin d'insérer date_creation, la BDD met l'heure actuelle toute seule !
 	res, errorCreate := db.DB.Exec(
-		"INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
 		prestataire.Siret, prestataire.Nom, prestataire.Prenom, prestataire.Email, prestataire.NumTelephone,
 		prestataire.DateNaissance, prestataire.Status, prestataire.MotifRefus, prestataire.Tarifs,
 		prestataire.TypePrestation, string(hashMdp),
@@ -92,13 +95,13 @@ func Read_One_Prestataire(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	var prestataire models.Prestataire
 
-	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, '') FROM PRESTATAIRE WHERE id_prestataire = ?`
+	query := `SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, ''), IFNULL(DATE_FORMAT(date_creation, '%d/%m/%Y à %H:%i'), '') FROM PRESTATAIRE WHERE id_prestataire = ?`
 
 	err := db.DB.QueryRow(query, id).Scan(
 		&prestataire.ID, &prestataire.Siret, &prestataire.Nom,
 		&prestataire.Prenom, &prestataire.Email, &prestataire.NumTelephone,
 		&prestataire.DateNaissance, &prestataire.Status, &prestataire.MotifRefus,
-		&prestataire.Tarifs, &prestataire.TypePrestation,
+		&prestataire.Tarifs, &prestataire.TypePrestation, &prestataire.DateCreation,
 	)
 
 	if err != nil {
@@ -140,7 +143,7 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 	}
 
 	res, err := db.DB.Exec(
-		"UPDATE PRESTATAIRE SET siret = ?, nom = ?, prenom = ?, email = ?, num_telephone = ?, date_naissance = ?, status = ?, motif_refus = ?, tarifs = ?, type_prestation = ? WHERE id_prestataire = ?",
+		"UPDATE PRESTATAIRE SET siret = ?, nom = ?, prenom = ?, email = ?, num_telephone = ?, date_naissance = NULLIF(?, ''), status = ?, motif_refus = ?, tarifs = ?, type_prestation = ? WHERE id_prestataire = ?",
 		prestataire.Siret, prestataire.Nom, prestataire.Prenom, prestataire.Email, prestataire.NumTelephone,
 		prestataire.DateNaissance, prestataire.Status, prestataire.MotifRefus, prestataire.Tarifs,
 		prestataire.TypePrestation, id,
