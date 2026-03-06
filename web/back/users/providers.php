@@ -73,7 +73,7 @@
 
                 <div id="voir-plus-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50 p-4">
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-3xl border border-[#1C5B8F] shadow-xl overflow-y-auto max-h-[90vh]">
-                        
+
                         <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-6">
                             <h3 class="text-2xl font-semibold text-[#1C5B8F]">Détails du Prestataire</h3>
                             <div class="flex items-center gap-4">
@@ -117,7 +117,7 @@
 
                         <div id="validation-actions" class="hidden flex-col gap-4 pt-4 border-t border-gray-100">
                             <input type="text" id="motif-refus" placeholder="Motif du refus (ex: Casier judiciaire invalide)..." class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-red-400 text-sm">
-                            
+
                             <div class="flex justify-center gap-4">
                                 <button type="button" onclick="rejectVerification()" class="bg-red-50 text-red-600 border border-red-200 px-6 py-2 rounded-xl font-bold hover:bg-red-100 transition">Refuser</button>
                                 <button type="button" onclick="skipVerification()" class="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl font-bold hover:bg-gray-200 transition">Garder en attente</button>
@@ -142,7 +142,7 @@
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="add-siret" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
                                 <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="add-type" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" step="0.01" id="add-tarifs" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="add-tarifs" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="add-date" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></div>
@@ -211,7 +211,7 @@
                         <div class="flex justify-center gap-6 border-t border-gray-100 pt-4">
                             <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
                             <button type="button" id="confirm-delete" class="bg-red-500 text-white px-8 py-2 rounded-full font-semibold">Oui, supprimer</button>
-                        </div> 
+                        </div>
                     </div>
                 </div>
 
@@ -230,15 +230,15 @@
 
         function showAlert(message, isSuccess) {
             messageBox.textContent = message;
-            
+
             if (isSuccess) {
                 messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700";
             } else {
                 messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
             }
-            
+
             messageBox.classList.remove('hidden');
-            
+
             setTimeout(function() {
                 messageBox.classList.add('hidden');
             }, 3500);
@@ -258,16 +258,16 @@
         // ====================================================
         async function loadProviders() {
             const response = await fetch(API_BASE + "/read");
-            
+
             if (response.ok) {
                 allProviders = await response.json();
-                
+
                 if (allProviders === null) {
                     allProviders = [];
                 }
 
                 const tableBody = document.getElementById('prestataire-table-body');
-                tableBody.innerHTML = ""; 
+                tableBody.innerHTML = "";
 
                 if (allProviders.length === 0) {
                     tableBody.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>Aucun prestataire en base.</td></tr>";
@@ -332,13 +332,13 @@
             document.getElementById('vp-nom').textContent = provider.nom;
             document.getElementById('vp-prenom').textContent = provider.prenom;
             document.getElementById('vp-email').textContent = provider.email;
-            
+
             if (provider.num_telephone) {
                 document.getElementById('vp-tel').textContent = provider.num_telephone;
             } else {
                 document.getElementById('vp-tel').textContent = "-";
             }
-            
+
             if (provider.date_naissance) {
                 document.getElementById('vp-date').textContent = provider.date_naissance.substring(0, 10);
             } else {
@@ -367,10 +367,10 @@
             documentsArea.innerHTML = "<i>Chargement des documents...</i>";
 
             const responseDocs = await fetch(API_BASE + "/documents/" + id);
-            
+
             if (responseDocs.ok) {
                 const documentList = await responseDocs.json();
-                
+
                 if (documentList.length === 0) {
                     documentsArea.innerHTML = "<i>Aucun document lié pour le moment.</i>";
                 } else {
@@ -394,7 +394,7 @@
             document.getElementById('validation-actions').classList.add('hidden');
             document.getElementById('validation-actions').classList.remove('flex');
             document.getElementById('validation-counter').classList.add('hidden');
-            
+
             document.getElementById('standard-actions').classList.remove('hidden');
 
             await setupDetailsModal(id);
@@ -411,33 +411,33 @@
                     pendingProviders.push(allProviders[i]);
                 }
             }
-            
+
             if (pendingProviders.length === 0) {
                 showAlert("Génial ! Il n'y a aucun dossier en attente à vérifier.", true);
-                return; 
+                return;
             }
-            
+
             currentVerificationIndex = 0;
-            document.getElementById('motif-refus').value = ""; 
-            
+            document.getElementById('motif-refus').value = "";
+
             document.getElementById('standard-actions').classList.add('hidden');
-            
+
             document.getElementById('validation-actions').classList.remove('hidden');
-            document.getElementById('validation-actions').classList.add('flex'); 
+            document.getElementById('validation-actions').classList.add('flex');
             document.getElementById('validation-counter').classList.remove('hidden');
-            
+
             showCurrentVerificationProfile();
             toggleModal('voir-plus-modal');
         }
 
         async function showCurrentVerificationProfile() {
             let currentProvider = pendingProviders[currentVerificationIndex];
-            
+
             let fileNumber = currentVerificationIndex + 1;
             let totalFiles = pendingProviders.length;
             document.getElementById('validation-counter').textContent = "Dossier " + fileNumber + " sur " + totalFiles;
-            
-            document.getElementById('motif-refus').value = ""; 
+
+            document.getElementById('motif-refus').value = "";
             await setupDetailsModal(currentProvider.id);
         }
 
@@ -455,19 +455,19 @@
 
         async function saveVerificationStatus(newStatus) {
             let currentProvider = pendingProviders[currentVerificationIndex];
-            
+
             let currentMotif = "";
             if (newStatus === "refusé") {
                 currentMotif = document.getElementById('motif-refus').value;
             }
 
             let payload = {
-                nom: currentProvider.nom, 
-                prenom: currentProvider.prenom, 
-                email: currentProvider.email, 
+                nom: currentProvider.nom,
+                prenom: currentProvider.prenom,
+                email: currentProvider.email,
                 num_telephone: currentProvider.num_telephone,
-                date_naissance: currentProvider.date_naissance, 
-                siret: currentProvider.siret, 
+                date_naissance: currentProvider.date_naissance,
+                siret: currentProvider.siret,
                 type_prestation: currentProvider.type_prestation,
                 tarifs: currentProvider.tarifs,
                 status: newStatus,
@@ -475,34 +475,36 @@
             };
 
             const response = await fetch(API_BASE + "/update/" + currentProvider.id, {
-                method: "PUT", 
-                headers: { "Content-Type": "application/json" }, 
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                skipVerification(); 
+                skipVerification();
             } else {
                 showAlert("Erreur pour enregistrer ce dossier.", false);
             }
         }
 
-        function approveVerification() { 
-            saveVerificationStatus("validé"); 
+        function approveVerification() {
+            saveVerificationStatus("validé");
         }
 
-        function rejectVerification() { 
-            saveVerificationStatus("refusé"); 
+        function rejectVerification() {
+            saveVerificationStatus("refusé");
         }
 
         // ====================================================
         // 4. ACTIONS: MODIFIER ET SUPPRIMER
         // ====================================================
         function prepareEdit() {
-            toggleModal('voir-plus-modal'); 
-            
+            toggleModal('voir-plus-modal');
+
             let provider = getProviderById(selectedProviderId);
-            
+
             document.getElementById('edit-id').value = provider.id;
             document.getElementById('edit-nom').value = provider.nom;
             document.getElementById('edit-prenom').value = provider.prenom;
@@ -518,7 +520,7 @@
             } else {
                 document.getElementById('edit-date').value = "";
             }
-            
+
             const statusMenu = document.getElementById('edit-status');
             if (provider.status === "refusé") {
                 statusMenu.innerHTML = `
@@ -532,10 +534,10 @@
                     <option value="refusé">Refusé</option>
                 `;
             }
-            
+
             statusMenu.value = provider.status;
-            
-            toggleModal('edit-modal'); 
+
+            toggleModal('edit-modal');
         }
 
         function prepareDelete() {
@@ -547,9 +549,9 @@
         // ====================================================
         // 5. ENVOI DES REQUETES AU SERVEUR
         // ====================================================
-        
+
         document.getElementById('add-form').addEventListener('submit', async function(event) {
-            event.preventDefault(); 
+            event.preventDefault();
 
             let payload = {
                 nom: document.getElementById('add-nom').value,
@@ -563,16 +565,18 @@
                 status: document.getElementById('add-status').value,
                 motif_refus: ""
             };
-            
+
             const response = await fetch(API_BASE + "/create", {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" }, 
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
                 toggleModal('add-modal');
-                document.getElementById('add-form').reset(); 
+                document.getElementById('add-form').reset();
                 showAlert("Prestataire ajouté avec succès !", true);
                 loadProviders();
             } else {
@@ -581,8 +585,8 @@
         });
 
         document.getElementById('edit-form').addEventListener('submit', async function(event) {
-            event.preventDefault(); 
-            
+            event.preventDefault();
+
             let id = document.getElementById('edit-id').value;
 
             let payload = {
@@ -597,10 +601,12 @@
                 status: document.getElementById('edit-status').value,
                 motif_refus: document.getElementById('edit-motif').value
             };
-            
+
             const response = await fetch(API_BASE + "/update/" + id, {
-                method: "PUT", 
-                headers: { "Content-Type": "application/json" }, 
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -615,9 +621,9 @@
 
         document.getElementById('confirm-delete').addEventListener('click', async function() {
             let id = document.getElementById('delete-id').value;
-            
-            const response = await fetch(API_BASE + "/delete/" + id, { 
-                method: "DELETE" 
+
+            const response = await fetch(API_BASE + "/delete/" + id, {
+                method: "DELETE"
             });
 
             if (response.ok) {
@@ -630,7 +636,6 @@
         });
 
         window.onload = loadProviders;
-        
     </script>
 </body>
 
