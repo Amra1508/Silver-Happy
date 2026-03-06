@@ -20,7 +20,8 @@ func main() {
 		fmt.Fprintf(w, "API Go : En ligne !")
 	})
 
-	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	//http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("/api/users/uploads"))))
 
 	http.HandleFunc("/auth/register", auth.Register)
 	http.HandleFunc("/auth/login", auth.Login)
@@ -62,6 +63,7 @@ func main() {
 	http.HandleFunc("/prestataires/update/{id}", users.Update_Prestataire)
 	http.HandleFunc("/prestataires/delete/{id}", users.Delete_Prestataire)
 	http.HandleFunc("/prestataires/documents/{id}", users.Read_Prestataire_Documents)
+	http.HandleFunc("/prestataires/upload/{id}", users.Upload_Prestataire_Document)
 
 	http.HandleFunc("/dashboard/seniors", dashboard.Seniors_Count)
 	http.HandleFunc("/dashboard/prestataires", dashboard.Prestataires_Count)

@@ -73,7 +73,7 @@
 
                 <div id="voir-plus-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50 p-4">
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-3xl border border-[#1C5B8F] shadow-xl overflow-y-auto max-h-[90vh]">
-
+                        
                         <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-6">
                             <h3 class="text-2xl font-semibold text-[#1C5B8F]">Détails du Prestataire</h3>
                             <div class="flex items-center gap-4">
@@ -102,8 +102,22 @@
 
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-8">
                             <h4 class="font-bold text-gray-700 mb-2">Documents du prestataire</h4>
-                            <div id="vp-documents-list" class="text-sm text-gray-500">
-                                <i>Chargement des documents...</i>
+                            
+                            <div id="vp-documents-list" class="text-sm text-gray-500 mb-6">
+                            </div>
+
+                            <div class="border-t border-gray-200 pt-4 mt-2">
+                                <h4 class="font-bold text-gray-700 mb-3 text-sm">Ajouter un nouveau document</h4>
+                                <form id="upload-form" class="space-y-3">
+                                    <input type="hidden" id="upload-provider-id">
+                                    <div>
+                                        <input type="text" id="upload-type" placeholder="Type de document (ex: Kbis, RIB, Identité...)" class="w-full p-2 border border-gray-300 rounded-xl focus:outline-none text-sm" required>
+                                    </div>
+                                    <div>
+                                        <input type="file" id="upload-file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#1C5B8F] hover:file:bg-blue-100" required>
+                                    </div>
+                                    <button type="submit" class="w-full bg-[#1C5B8F] text-white py-2 rounded-full font-semibold text-sm hover:bg-blue-800 transition">Envoyer le fichier</button>
+                                </form>
                             </div>
                         </div>
 
@@ -117,7 +131,7 @@
 
                         <div id="validation-actions" class="hidden flex-col gap-4 pt-4 border-t border-gray-100">
                             <input type="text" id="motif-refus" placeholder="Motif du refus (ex: Casier judiciaire invalide)..." class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-red-400 text-sm">
-
+                            
                             <div class="flex justify-center gap-4">
                                 <button type="button" onclick="rejectVerification()" class="bg-red-50 text-red-600 border border-red-200 px-6 py-2 rounded-xl font-bold hover:bg-red-100 transition">Refuser</button>
                                 <button type="button" onclick="skipVerification()" class="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl font-bold hover:bg-gray-200 transition">Garder en attente</button>
@@ -153,6 +167,17 @@
                                         <option value="validé">Validé</option>
                                         <option value="refusé">Refusé</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-100 pt-4 mt-4">
+                                <h4 class="text-sm font-bold text-gray-700 mb-2">Documents (Facultatif)</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <input type="text" id="add-doc-type" placeholder="Type (ex: Kbis)" class="w-full p-2 border border-[#1C5B8F] rounded-xl focus:outline-none text-sm">
+                                    </div>
+                                    <div>
+                                        <input type="file" id="add-doc-file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#1C5B8F] hover:file:bg-blue-100">
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-100">
@@ -211,7 +236,19 @@
                         <div class="flex justify-center gap-6 border-t border-gray-100 pt-4">
                             <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
                             <button type="button" id="confirm-delete" class="bg-red-500 text-white px-8 py-2 rounded-full font-semibold">Oui, supprimer</button>
-                        </div>
+                        </div> 
+                    </div>
+                </div>
+
+                <div id="delete-doc-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-[60]">
+                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-sm text-center border border-red-500 shadow-xl">
+                        <div class="text-red-500 text-5xl mb-4 font-bold">🗑️</div>
+                        <h3 class="text-xl font-semibold mb-2">Supprimer ce document ?</h3>
+                        <p class="text-gray-400 mb-8 font-light text-sm">Le fichier sera définitivement effacé.</p>
+                        <div class="flex justify-center gap-4">
+                            <button type="button" onclick="toggleModal('delete-doc-modal')" class="text-gray-400 px-4">Annuler</button>
+                            <button type="button" id="confirm-delete-doc" class="bg-red-500 text-white px-6 py-2 rounded-full font-semibold">Oui, supprimer</button>
+                        </div> 
                     </div>
                 </div>
 
@@ -253,9 +290,8 @@
             return null;
         }
 
-        // ====================================================
-        // 1. AFFICHER LE GRAND TABLEAU
-        // ====================================================
+
+
         async function loadProviders() {
             const response = await fetch(API_BASE + "/read");
 
@@ -281,7 +317,7 @@
                     if (provider.status === "validé") {
                         badge = "<span class='text-green-700 font-bold bg-green-100 px-3 py-1 rounded-full text-xs border border-green-200'>Validé</span>";
                     } else if (provider.status === "refusé") {
-                        badge = "<span class='text-red-700 font-bold bg-red-100 px-3 py-1 rounded-full text-xs border border-red-200'>Refusé</span>";
+                        badge = "<span class='text-red-700 font-bold bg-red-100 px-3 py-1 rounded-full text-xs border border-red-200'>Refusé</span><br><span class='text-xs text-red-500 italic mt-1 inline-block'>Motif : " + provider.motif_refus + "</span>";
                     } else {
                         badge = "<span class='text-yellow-700 font-bold bg-yellow-100 px-3 py-1 rounded-full text-xs border border-yellow-200'>En attente</span>";
                     }
@@ -322,12 +358,14 @@
             }
         }
 
-        // ====================================================
-        // 2. AFFICHER LA FENÊTRE DES DÉTAILS
-        // ====================================================
+        
+
+
         async function setupDetailsModal(id) {
             let provider = getProviderById(id);
             selectedProviderId = id;
+
+            document.getElementById('upload-provider-id').value = id;
 
             document.getElementById('vp-nom').textContent = provider.nom;
             document.getElementById('vp-prenom').textContent = provider.prenom;
@@ -374,13 +412,18 @@
                 if (documentList.length === 0) {
                     documentsArea.innerHTML = "<i>Aucun document lié pour le moment.</i>";
                 } else {
-                    documentsArea.innerHTML = "<div class='flex gap-4 flex-wrap'>";
+                    documentsArea.innerHTML = "<div class='flex flex-col gap-2'>";
                     for (let i = 0; i < documentList.length; i++) {
                         let documentItem = documentList[i];
                         documentsArea.innerHTML += `
-                            <a href="${documentItem.lien}" target="_blank" class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border text-[#1C5B8F] font-semibold hover:bg-blue-50 transition">
-                                📄 ${documentItem.type}
-                            </a>
+                            <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <a href="http://localhost:8082/${documentItem.lien}" target="_blank" class="text-[#1C5B8F] font-semibold text-sm hover:underline truncate">
+                                    📄 ${documentItem.type}
+                                </a>
+                                <button type="button" onclick="prepareDeleteDoc(${documentItem.id_document})" class="text-red-400 font-bold hover:text-red-600 px-2 text-xl transition">
+                                    &times;
+                                </button>
+                            </div>
                         `;
                     }
                     documentsArea.innerHTML += "</div>";
@@ -401,9 +444,8 @@
             toggleModal('voir-plus-modal');
         }
 
-        // ====================================================
-        // 3. LE MODE "VÉRIFIER LES PRESTATAIRES"
-        // ====================================================
+
+
         function startVerification() {
             pendingProviders = [];
             for (let i = 0; i < allProviders.length; i++) {
@@ -497,9 +539,9 @@
             saveVerificationStatus("refusé");
         }
 
-        // ====================================================
-        // 4. ACTIONS: MODIFIER ET SUPPRIMER
-        // ====================================================
+
+
+
         function prepareEdit() {
             toggleModal('voir-plus-modal');
 
@@ -546,9 +588,8 @@
             toggleModal('delete-modal');
         }
 
-        // ====================================================
-        // 5. ENVOI DES REQUETES AU SERVEUR
-        // ====================================================
+
+
 
         document.getElementById('add-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -568,13 +609,26 @@
 
             const response = await fetch(API_BASE + "/create", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
+                const nouveauPrestataire = await response.json(); 
+
+                let fileInput = document.getElementById('add-doc-file');
+                if (fileInput.files.length > 0) {
+                    let docType = document.getElementById('add-doc-type').value || "Document";
+                    let formDataPayload = new FormData();
+                    formDataPayload.append("type_document", docType);
+                    formDataPayload.append("fichier_document", fileInput.files[0]);
+
+                    await fetch(API_BASE + "/upload/" + nouveauPrestataire.id, {
+                        method: "POST",
+                        body: formDataPayload
+                    });
+                }
+
                 toggleModal('add-modal');
                 document.getElementById('add-form').reset();
                 showAlert("Prestataire ajouté avec succès !", true);
@@ -583,6 +637,9 @@
                 showAlert("Erreur pour ajouter ce prestataire.", false);
             }
         });
+
+
+
 
         document.getElementById('edit-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -632,6 +689,59 @@
                 loadProviders();
             } else {
                 showAlert("Impossible de supprimer.", false);
+            }
+        });
+
+
+
+        document.getElementById('upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            let providerId = document.getElementById('upload-provider-id').value;
+            let documentType = document.getElementById('upload-type').value;
+            let fileInput = document.getElementById('upload-file');
+
+            if (fileInput.files.length === 0) return;
+
+            let formDataPayload = new FormData();
+            formDataPayload.append("type_document", documentType);
+            formDataPayload.append("fichier_document", fileInput.files[0]);
+
+            const response = await fetch(API_BASE + "/upload/" + providerId, {
+                method: "POST",
+                body: formDataPayload
+            });
+
+            if (response.ok) {
+                document.getElementById('upload-form').reset();
+                showAlert("Le document a été sauvegardé avec succès !", true);
+                setupDetailsModal(providerId);
+            } else {
+                showAlert("Erreur lors de l'envoi du fichier.", false);
+            }
+        });
+
+
+
+        
+        let selectedDocId = null;
+
+        function prepareDeleteDoc(docId) {
+            selectedDocId = docId;
+            toggleModal('delete-doc-modal');
+        }
+
+        document.getElementById('confirm-delete-doc').addEventListener('click', async function() {
+            const response = await fetch(API_BASE + "/document/delete/" + selectedDocId, { 
+                method: "DELETE" 
+            });
+
+            if (response.ok) {
+                toggleModal('delete-doc-modal');
+                showAlert("Le document a été supprimé.", true);
+                setupDetailsModal(selectedProviderId);
+            } else {
+                showAlert("Erreur lors de la suppression.", false);
             }
         });
 
