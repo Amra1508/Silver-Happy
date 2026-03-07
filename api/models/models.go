@@ -88,3 +88,8 @@ type Document struct {
 type Count struct {
 	Count int `json:"count"`
 }
+
+type Revenue struct {
+    Date  string  `json:"date"`
+    Total float64 `json:"total"`
+}

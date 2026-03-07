@@ -24,6 +24,7 @@ func Read_User(response http.ResponseWriter, request *http.Request) {
                a.rue, a.ville, a.code_postal, a.pays
         FROM UTILISATEUR u
         LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
+		WHERE u.statut = 'user'
     `
 	rows, err := db.DB.Query(query)
 	if err != nil {

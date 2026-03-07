@@ -62,3 +62,38 @@ func Abonnement_Count(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(models.Count{Count: count})
 }
+
+func Revenus(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    query := `
+        SELECT DATE(date_paiement) as date, SUM(prix) as total 
+        FROM PAIEMENT 
+        WHERE statut = 'valide' 
+          AND date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY) 
+        GROUP BY DATE(date_paiement) 
+        ORDER BY date_paiement ASC
+    `
+    
+    rows, err := db.DB.Query(query)
+    if err != nil {
+        http.Error(response, "Erreur lors de la récupération des revenus", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var revenues []models.Revenue
+
+    for rows.Next() {
+        var r models.Revenue
+        if err := rows.Scan(&r.Date, &r.Total); err != nil {
+            continue
+        }
+        revenues = append(revenues, r)
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(revenues)
+}

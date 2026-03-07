@@ -68,6 +68,7 @@ func main() {
 	http.HandleFunc("/dashboard/seniors", dashboard.Seniors_Count)
 	http.HandleFunc("/dashboard/prestataires", dashboard.Prestataires_Count)
 	http.HandleFunc("/dashboard/abonnement", dashboard.Abonnement_Count)
+	http.HandleFunc("/dashboard/revenus", dashboard.Revenus)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
