@@ -105,8 +105,8 @@ func Upload_Prestataire_Document(response http.ResponseWriter, request *http.Req
 	typeDoc := request.FormValue("type_document")
 	fileName := id + "_" + handler.Filename
 
-	os.MkdirAll("/api/users/uploads", os.ModePerm)
-	newFile, _ := os.Create("/api/users/uploads/" + fileName)
+	os.MkdirAll("/api/uploads", os.ModePerm)
+	newFile, _ := os.Create("/api/uploads/" + fileName)
 	defer newFile.Close()
 	io.Copy(newFile, file)
 
@@ -125,7 +125,7 @@ func Delete_Prestataire_Document(response http.ResponseWriter, request *http.Req
 	err := db.DB.QueryRow("SELECT nom FROM DOCUMENT_PRESTATAIRE WHERE id_document = ?", idDoc).Scan(&cheminBDD)
 
 	if err == nil {
-		cheminPhysique := "/api/users/" + cheminBDD
+		cheminPhysique := "/api/" + cheminBDD
 		os.Remove(cheminPhysique)
 	}
 
