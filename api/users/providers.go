@@ -106,12 +106,33 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Prestataire(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "DELETE") {
-		return
-	}
-	id := request.PathValue("id")
-	db.DB.Exec("DELETE FROM PRESTATAIRE WHERE id_prestataire = ?", id)
-	json.NewEncoder(response).Encode("OK")
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
+    
+    id := request.PathValue("id")
+
+    rows, err := db.DB.Query("SELECT nom FROM DOCUMENT_PRESTATAIRE WHERE id_prestataire = ?", id)
+    if err == nil {
+        defer rows.Close()
+        for rows.Next() {
+            var cheminBDD string
+            if errScan := rows.Scan(&cheminBDD); errScan == nil {
+                cheminPhysique := "/api/" + cheminBDD
+                os.Remove(cheminPhysique)
+            }
+        }
+    }
+
+    db.DB.Exec("DELETE FROM DOCUMENT_PRESTATAIRE WHERE id_prestataire = ?", id)
+
+    _, errDelete := db.DB.Exec("DELETE FROM PRESTATAIRE WHERE id_prestataire = ?", id)
+    if errDelete != nil {
+        http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
+        return
+    }
+
+    json.NewEncoder(response).Encode("OK")
 }
 
 func Read_Prestataire_Documents(response http.ResponseWriter, request *http.Request) {
