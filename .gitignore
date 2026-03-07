@@ -1,4 +1,3 @@
 .env
 mariadb
-api/uploads
-api/users/uploads
+**/uploads/
