@@ -16,30 +16,60 @@ import (
 )
 
 func Read_Produit(response http.ResponseWriter, request *http.Request) {
-	
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	rows, errorFetch := db.DB.Query("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT")
-	if errorFetch != nil {
-		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close() 
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
 
-	var tabProduit []models.Produit
-	for rows.Next() {
-		var produit models.Produit
-		if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
-			fmt.Printf("ERREUR SCAN SUR PRODUIT ID %d: %v\n", produit.ID, err)
-			continue
-		}
-		tabProduit = append(tabProduit, produit)
-	}
+    limit := 10
+    offset := 0
+    page := 1
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(tabProduit)
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
+
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT").Scan(&total)
+
+    rows, errorFetch := db.DB.Query("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT LIMIT ? OFFSET ?", limit, offset)
+    if errorFetch != nil {
+        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close() 
+
+    var tabProduit []models.Produit
+    for rows.Next() {
+        var produit models.Produit
+        if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
+            fmt.Printf("ERREUR SCAN SUR PRODUIT ID %d: %v\n", produit.ID, err)
+            continue
+        }
+        tabProduit = append(tabProduit, produit)
+    }
+
+    if tabProduit == nil {
+        tabProduit = []models.Produit{}
+    }
+
+    dataResponse := map[string]interface{}{
+        "data":        tabProduit,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 const uploadDir = "./uploads"

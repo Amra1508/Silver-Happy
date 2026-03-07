@@ -16,7 +16,26 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    rows, errorFetch := db.DB.Query("SELECT id_service, nom, description, disponibilite, id_utilisateur FROM service")
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
+
+    limit := 10
+    offset := 0
+    page := 1
+
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
+
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM service").Scan(&total)
+
+    rows, errorFetch := db.DB.Query("SELECT id_service, nom, description, disponibilite, id_utilisateur FROM service LIMIT ? OFFSET ?", limit, offset)
     if errorFetch != nil {
         http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
         return
@@ -33,8 +52,19 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
         tabService = append(tabService, service)
     }
 
+    if tabService == nil {
+        tabService = []models.Service{}
+    }
+
+    dataResponse := map[string]interface{}{
+        "data":        tabService,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
     response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(tabService)
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Service(response http.ResponseWriter, request *http.Request) {

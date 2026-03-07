@@ -152,6 +152,8 @@
     <script>
         const API_BASE = "http://localhost:8082/service"; 
         const API_USERS = "http://localhost:8082/seniors/read";
+        let currentPage = 1;
+        const limit = 10;
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {
@@ -173,7 +175,6 @@
 
                 if (utilisateurs && utilisateurs.length > 0) {
                     utilisateurs.forEach(u => {
-                        
                         const id = u.id || u.ID;
                         const prenom = u.prenom || u.Prenom || '';
                         const nom = u.nom || u.Nom || '';
@@ -194,15 +195,19 @@
             }
         }
 
-        async function fetchServices() {
+        async function fetchServices(page = 1) {
             try {
-                const response = await fetch(`${API_BASE}/read`);
-                const services = await response.json();
+                currentPage = page;
+                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+                const result = await response.json();
+                
+                const services = result.data || [];
                 const tbody = document.getElementById('service-table-body');
                 tbody.innerHTML = '';
 
-                if (!services || services.length === 0) {
+                if (services.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Aucun service en base.</td></tr>';
+                    renderPagination(0, 0);
                     return;
                 }
 
@@ -229,9 +234,46 @@
                         </tr>
                     `;
                 });
+
+                renderPagination(result.totalPages, result.total);
             } catch (err) {
                 showAlert("Erreur lors de la récupération des services.", false);
             }
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            let paginationContainer = document.getElementById('pagination-controls');
+            
+            if (!paginationContainer) {
+                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination-controls';
+                tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
+            }
+
+            if (totalItems === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="flex justify-between items-center mt-6 px-4 text-sm">
+                    <span class="text-gray-500 font-semibold">Total : ${totalItems} services</span>
+                    <div class="flex gap-2">
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchServices(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
+                html += `<button onclick="fetchServices(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+            }
+
+            html += `
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchServices(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
+                    </div>
+                </div>
+            `;
+            paginationContainer.innerHTML = html;
         }
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
@@ -258,7 +300,7 @@
                     toggleModal('add-modal');
                     e.target.reset();
                     showAlert("Service ajouté !", true);
-                    fetchServices();
+                    fetchServices(1);
                 } else {
                     showAlert("Erreur lors de l'envoi", false);
                 }
@@ -294,7 +336,7 @@
                 if (res.ok) {
                     toggleModal('edit-modal');
                     showAlert("Modifications enregistrées", true);
-                    fetchServices(); 
+                    fetchServices(currentPage);
                 } else {
                     showAlert("Erreur lors de la mise à jour", false);
                 }
@@ -317,9 +359,9 @@
                 if (res.ok) {
                     toggleModal('delete-modal');
                     showAlert("Service supprimé", true);
-                    fetchServices(); 
+                    fetchServices(currentPage);
                 } else {
-                     showAlert("Erreur de suppression", false);
+                    showAlert("Erreur de suppression", false);
                 }
             } catch (err) {
                 showAlert("Erreur de suppression", false);
@@ -327,7 +369,7 @@
         });
 
         window.onload = () => {
-            fetchServices();
+            fetchServices(1);
             fetchUtilisateurs(); 
         };
     </script>

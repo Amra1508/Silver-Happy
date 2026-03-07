@@ -2,6 +2,7 @@ package captcha
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"main/db"
@@ -10,29 +11,59 @@ import (
 )
 
 func Read_Captcha(response http.ResponseWriter, request *http.Request) {
-	
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	rows, errorFetch := db.DB.Query("SELECT id_captcha, question, reponse FROM CAPTCHA")
-	if errorFetch != nil {
-		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close() 
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
 
-	var tabCaptcha []models.Captcha
-	for rows.Next() {
-		var captcha models.Captcha
-		if err := rows.Scan(&captcha.ID, &captcha.Question, &captcha.Reponse); err != nil {
-			continue
-		}
-		tabCaptcha = append(tabCaptcha, captcha)
-	}
+    limit := 10
+    offset := 0
+    page := 1
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(tabCaptcha)
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
+
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM CAPTCHA").Scan(&total)
+
+    rows, errorFetch := db.DB.Query("SELECT id_captcha, question, reponse FROM CAPTCHA LIMIT ? OFFSET ?", limit, offset)
+    if errorFetch != nil {
+        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close() 
+
+    var tabCaptcha []models.Captcha
+    for rows.Next() {
+        var captcha models.Captcha
+        if err := rows.Scan(&captcha.ID, &captcha.Question, &captcha.Reponse); err != nil {
+            continue
+        }
+        tabCaptcha = append(tabCaptcha, captcha)
+    }
+
+    if tabCaptcha == nil {
+        tabCaptcha = []models.Captcha{}
+    }
+
+    dataResponse := map[string]interface{}{
+        "data":        tabCaptcha,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Captcha(response http.ResponseWriter, request *http.Request) {

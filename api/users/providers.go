@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,21 +15,64 @@ import (
 )
 
 func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	rows, _ := db.DB.Query(`SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), IFNULL(type_prestation, ''), IFNULL(DATE_FORMAT(date_creation, '%d/%m/%Y à %H:%i'), '') FROM PRESTATAIRE`)
-	defer rows.Close()
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
 
-	var list []models.Prestataire
-	for rows.Next() {
-		var p models.Prestataire
-		rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.TypePrestation, &p.DateCreation)
-		list = append(list, p)
-	}
+    limit := 10
+    offset := 0
+    page := 1
 
-	json.NewEncoder(response).Encode(list)
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
+
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE").Scan(&total)
+
+    sqlQuery := `
+        SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), 
+               IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), 
+               IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), 
+               IFNULL(type_prestation, ''), IFNULL(DATE_FORMAT(date_creation, '%d/%m/%Y à %H:%i'), '') 
+        FROM PRESTATAIRE
+        LIMIT ? OFFSET ?
+    `
+    rows, err := db.DB.Query(sqlQuery, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var list []models.Prestataire
+    for rows.Next() {
+        var p models.Prestataire
+        rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.TypePrestation, &p.DateCreation)
+        list = append(list, p)
+    }
+
+    if list == nil {
+        list = []models.Prestataire{}
+    }
+
+    dataResponse := map[string]interface{}{
+        "data":        list,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {

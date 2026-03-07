@@ -264,21 +264,19 @@
         let pendingProviders = [];
         let selectedProviderId = null;
         let currentVerificationIndex = 0;
+        
+        let currentPage = 1;
+        const limit = 10;
 
         function showAlert(message, isSuccess) {
             messageBox.textContent = message;
-
             if (isSuccess) {
                 messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700";
             } else {
                 messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
             }
-
             messageBox.classList.remove('hidden');
-
-            setTimeout(function() {
-                messageBox.classList.add('hidden');
-            }, 3500);
+            setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
         function getProviderById(searchId) {
@@ -290,23 +288,20 @@
             return null;
         }
 
-
-
-        async function loadProviders() {
-            const response = await fetch(API_BASE + "/read");
+        async function loadProviders(page = 1) {
+            currentPage = page;
+            const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
 
             if (response.ok) {
-                allProviders = await response.json();
-
-                if (allProviders === null) {
-                    allProviders = [];
-                }
+                const result = await response.json();
+                allProviders = result.data || [];
 
                 const tableBody = document.getElementById('prestataire-table-body');
                 tableBody.innerHTML = "";
 
                 if (allProviders.length === 0) {
                     tableBody.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>Aucun prestataire en base.</td></tr>";
+                    renderPagination(0, 0);
                     return;
                 }
 
@@ -322,19 +317,12 @@
                         badge = "<span class='text-yellow-700 font-bold bg-yellow-100 px-3 py-1 rounded-full text-xs border border-yellow-200'>En attente</span>";
                     }
 
-                    let phone = "-";
-                    if (provider.num_telephone) {
-                        phone = provider.num_telephone;
-                    }
-
-                    let price = 0;
-                    if (provider.tarifs) {
-                        price = provider.tarifs;
-                    }
+                    let phone = provider.num_telephone ? provider.num_telephone : "-";
+                    let price = provider.tarifs ? provider.tarifs : 0;
 
                     let detailsButton = "<button onclick='openDetailsModal(" + provider.id + ")' class='bg-gray-100 hover:bg-gray-200 text-[#1C5B8F] px-4 py-2 rounded-full transition font-semibold text-sm'>Voir détails</button>";
 
-                    let htmlRow = `
+                    tableBody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition border-b border-gray-100">
                             <td class="p-4 text-gray-400">#${provider.id}</td>
                             <td class="p-4">
@@ -350,45 +338,62 @@
                             <td class="p-4 text-center">${detailsButton}</td>
                         </tr>
                     `;
-
-                    tableBody.innerHTML += htmlRow;
                 }
+                
+                renderPagination(result.totalPages, result.total);
+                
             } else {
                 showAlert("Erreur pour lire la base de données.", false);
             }
         }
 
-        
+        function renderPagination(totalPages, totalItems) {
+            let paginationContainer = document.getElementById('pagination-controls');
+            
+            if (!paginationContainer) {
+                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination-controls';
+                tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
+            }
 
+            if (totalItems === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="flex justify-between items-center mt-6 px-4 text-sm">
+                    <span class="text-gray-500 font-semibold">Total : ${totalItems} prestataires</span>
+                    <div class="flex gap-2">
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="loadProviders(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
+                html += `<button onclick="loadProviders(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+            }
+
+            html += `
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="loadProviders(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
+                    </div>
+                </div>
+            `;
+            paginationContainer.innerHTML = html;
+        }
 
         async function setupDetailsModal(id) {
             let provider = getProviderById(id);
+            if(!provider) return;
             selectedProviderId = id;
 
             document.getElementById('upload-provider-id').value = id;
-
             document.getElementById('vp-nom').textContent = provider.nom;
             document.getElementById('vp-prenom').textContent = provider.prenom;
             document.getElementById('vp-email').textContent = provider.email;
-
-            if (provider.num_telephone) {
-                document.getElementById('vp-tel').textContent = provider.num_telephone;
-            } else {
-                document.getElementById('vp-tel').textContent = "-";
-            }
-
-            if (provider.date_naissance) {
-                document.getElementById('vp-date').textContent = provider.date_naissance.substring(0, 10);
-            } else {
-                document.getElementById('vp-date').textContent = "-";
-            }
-
-            if (provider.date_creation) {
-                document.getElementById('vp-date-creation').textContent = provider.date_creation;
-            } else {
-                document.getElementById('vp-date-creation').textContent = "-";
-            }
-
+            document.getElementById('vp-tel').textContent = provider.num_telephone ? provider.num_telephone : "-";
+            document.getElementById('vp-date').textContent = provider.date_naissance ? provider.date_naissance.substring(0, 10) : "-";
+            document.getElementById('vp-date-creation').textContent = provider.date_creation ? provider.date_creation : "-";
             document.getElementById('vp-siret').textContent = provider.siret;
             document.getElementById('vp-type').textContent = provider.type_prestation;
             document.getElementById('vp-tarifs').textContent = provider.tarifs;
@@ -444,8 +449,6 @@
             toggleModal('voir-plus-modal');
         }
 
-
-
         function startVerification() {
             pendingProviders = [];
             for (let i = 0; i < allProviders.length; i++) {
@@ -455,7 +458,7 @@
             }
 
             if (pendingProviders.length === 0) {
-                showAlert("Génial ! Il n'y a aucun dossier en attente à vérifier.", true);
+                showAlert("Génial ! Il n'y a aucun dossier en attente à vérifier sur cette page.", true);
                 return;
             }
 
@@ -474,7 +477,6 @@
 
         async function showCurrentVerificationProfile() {
             let currentProvider = pendingProviders[currentVerificationIndex];
-
             let fileNumber = currentVerificationIndex + 1;
             let totalFiles = pendingProviders.length;
             document.getElementById('validation-counter').textContent = "Dossier " + fileNumber + " sur " + totalFiles;
@@ -488,8 +490,8 @@
 
             if (currentVerificationIndex >= pendingProviders.length) {
                 toggleModal('voir-plus-modal');
-                showAlert("Vous avez vu tous les dossiers en attente.", true);
-                loadProviders();
+                showAlert("Vous avez vu tous les dossiers en attente de cette page.", true);
+                loadProviders(currentPage);
             } else {
                 showCurrentVerificationProfile();
             }
@@ -531,16 +533,8 @@
             }
         }
 
-        function approveVerification() {
-            saveVerificationStatus("validé");
-        }
-
-        function rejectVerification() {
-            saveVerificationStatus("refusé");
-        }
-
-
-
+        function approveVerification() { saveVerificationStatus("validé"); }
+        function rejectVerification() { saveVerificationStatus("refusé"); }
 
         function prepareEdit() {
             toggleModal('voir-plus-modal');
@@ -578,7 +572,6 @@
             }
 
             statusMenu.value = provider.status;
-
             toggleModal('edit-modal');
         }
 
@@ -587,9 +580,6 @@
             document.getElementById('delete-id').value = selectedProviderId;
             toggleModal('delete-modal');
         }
-
-
-
 
         document.getElementById('add-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -617,7 +607,7 @@
                 const nouveauPrestataire = await response.json(); 
 
                 let fileInput = document.getElementById('add-doc-file');
-                if (fileInput.files.length > 0) {
+                if (fileInput.files.length > 0 && nouveauPrestataire.id) {
                     let docType = document.getElementById('add-doc-type').value || "Document";
                     let formDataPayload = new FormData();
                     formDataPayload.append("type_document", docType);
@@ -632,14 +622,11 @@
                 toggleModal('add-modal');
                 document.getElementById('add-form').reset();
                 showAlert("Prestataire ajouté avec succès !", true);
-                loadProviders();
+                loadProviders(1);
             } else {
                 showAlert("Erreur pour ajouter ce prestataire.", false);
             }
         });
-
-
-
 
         document.getElementById('edit-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -661,16 +648,14 @@
 
             const response = await fetch(API_BASE + "/update/" + id, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
                 toggleModal('edit-modal');
                 showAlert("Les modifications sont enregistrées.", true);
-                loadProviders();
+                loadProviders(currentPage);
             } else {
                 showAlert("Impossible de modifier.", false);
             }
@@ -686,13 +671,11 @@
             if (response.ok) {
                 toggleModal('delete-modal');
                 showAlert("Le prestataire a été définitivement supprimé.", true);
-                loadProviders();
+                loadProviders(currentPage);
             } else {
                 showAlert("Impossible de supprimer.", false);
             }
         });
-
-
 
         document.getElementById('upload-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -721,9 +704,6 @@
             }
         });
 
-
-
-        
         let selectedDocId = null;
 
         function prepareDeleteDoc(docId) {
@@ -745,8 +725,9 @@
             }
         });
 
-        window.onload = loadProviders;
+        window.onload = () => loadProviders(1);
     </script>
+
 </body>
 
 </html>

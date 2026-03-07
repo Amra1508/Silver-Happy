@@ -154,6 +154,8 @@
 
     <script>
         const API_BASE = "http://localhost:8082";
+        let currentPage = 1;
+        const limit = 10;
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {
@@ -163,15 +165,19 @@
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
-        async function fetchProduits() {
+        async function fetchProduits(page = 1) {
             try {
-                const response = await fetch(`${API_BASE}/produit/read`);
-                const produits = await response.json();
+                currentPage = page;
+                const response = await fetch(`${API_BASE}/produit/read?page=${currentPage}&limit=${limit}`);
+                const result = await response.json();
+                
+                const produits = result.data || [];
                 const tbody = document.getElementById('produit-table-body');
                 tbody.innerHTML = '';
 
-                if (!produits || produits.length === 0) {
+                if (produits.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Aucun produit en base.</td></tr>';
+                    renderPagination(0, 0);
                     return;
                 }
 
@@ -194,9 +200,46 @@
                         </tr>
                     `;
                 });
+
+                renderPagination(result.totalPages, result.total);
             } catch (err) {
                 showAlert("Erreur lors de la récupération des produits.", false);
             }
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            let paginationContainer = document.getElementById('pagination-controls');
+            
+            if (!paginationContainer) {
+                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination-controls';
+                tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
+            }
+
+            if (totalItems === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="flex justify-between items-center mt-6 px-4 text-sm">
+                    <span class="text-gray-500 font-semibold">Total : ${totalItems} produits</span>
+                    <div class="flex gap-2">
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchProduits(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
+                html += `<button onclick="fetchProduits(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+            }
+
+            html += `
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchProduits(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
+                    </div>
+                </div>
+            `;
+            paginationContainer.innerHTML = html;
         }
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
@@ -223,7 +266,7 @@
                     toggleModal('add-modal');
                     e.target.reset();
                     showAlert("Produit ajouté avec succès !", true);
-                    fetchProduits();
+                    fetchProduits(1)
                 } else {
                     showAlert("Erreur serveur lors de l'ajout.", false);
                 }
@@ -265,7 +308,7 @@
                 if (res.ok) {
                     toggleModal('edit-modal');
                     showAlert("Modifications enregistrées", true);
-                    fetchProduits();
+                    fetchProduits(currentPage);
                 } else {
                     showAlert("Erreur lors de la mise à jour", false);
                 }
@@ -288,14 +331,14 @@
                 if (res.ok) {
                     toggleModal('delete-modal');
                     showAlert("Produit supprimé", true);
-                    fetchProduits();
+                    fetchProduits(currentPage);
                 }
             } catch (err) {
                 showAlert("Erreur de suppression", false);
             }
         });
 
-        window.onload = fetchProduits;
+        window.onload = () => fetchProduits(1);
     </script>
 </body>
 

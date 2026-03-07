@@ -180,6 +180,8 @@
 
     <script>
         const API_BASE = "http://localhost:8082/seniors";
+        let currentPage = 1;
+        const limit = 10;
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {
@@ -189,19 +191,28 @@
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
-        async function fetchSeniors() {
+        async function fetchSeniors(page = 1) {
             try {
-                const response = await fetch(`${API_BASE}/read`);
-                const seniors = await response.json();
+                currentPage = page;
+                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+                const result = await response.json();
+                
+                const seniors = result.data || [];
                 const tbody = document.getElementById('senior-table-body');
                 tbody.innerHTML = '';
+
+                if (seniors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Aucun senior en base.</td></tr>';
+                    renderPagination(0, 0);
+                    return;
+                }
 
                 seniors.forEach(s => {
                     let dNaissance = s.date_naissance ? s.date_naissance.substring(0, 10) : '';
                     
                     let banCol = '<span class="text-gray-400 italic">-</span>';
                     if (s.statut === 'banni') {
-                        banCol = `<span class="text-red-500 font-bold">${s.motif_bannisement || 'Non précisé'}</span><br><span class="text-sm text-gray-500">${s.duree_bannissement || 0} jours</span>`;
+                        banCol = `<span class="text-red-500 font-bold">${s.motif_bannisement || s.motif_bannissement || 'Non précisé'}</span><br><span class="text-sm text-gray-500">${s.duree_bannissement || 0} jours</span>`;
                     }
                     
                     const s_nom = s.nom ? s.nom.replace(/'/g, "\\'") : '';
@@ -210,7 +221,7 @@
                     const s_ville = s.ville ? s.ville.replace(/'/g, "\\'") : '';
                     const s_cp = s.code_postal ? s.code_postal.replace(/'/g, "\\'") : '';
                     const s_pays = s.pays ? s.pays.replace(/'/g, "\\'") : '';
-                    const s_motif = s.motif_bannisement ? s.motif_bannisement.replace(/'/g, "\\'") : '';
+                    const s_motif = s.motif_bannisement || s.motif_bannissement ? (s.motif_bannisement || s.motif_bannissement).replace(/'/g, "\\'") : '';
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 border-b">
@@ -221,7 +232,7 @@
                             </td>
                             <td class="p-4 text-sm">
                                 ${s.email}<br>
-                                ${s.num_telephone}<br>
+                                ${s.num_telephone || ''}<br>
                                 <span class="text-xs text-gray-400">${s.adresse || ''} ${s.code_postal || ''} ${s.ville || ''}</span>
                             </td>
                             <td class="p-4">
@@ -230,15 +241,52 @@
                             <td class="p-4">${banCol}</td>
                             <td class="p-4 flex justify-center gap-3 mt-2">
                                 <button onclick="openBanModal(${s.id}, '${s.statut}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-gray-700 font-bold hover:underline">Bannir</button>
-                                <button onclick="openEditModal(${s.id}, '${s_nom}', '${s_prenom}', '${s.email}', '${s.num_telephone}', '${dNaissance}', '${s.statut}', '${s_adresse}', '${s_ville}', '${s_cp}', '${s_pays}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-[#E1AB2B] font-bold">Modifier</button>
+                                <button onclick="openEditModal(${s.id}, '${s_nom}', '${s_prenom}', '${s.email}', '${s.num_telephone || ''}', '${dNaissance}', '${s.statut}', '${s_adresse}', '${s_ville}', '${s_cp}', '${s_pays}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-[#E1AB2B] font-bold">Modifier</button>
                                 <button onclick="openDeleteModal(${s.id})" class="text-red-500 font-bold">Supprimer</button>
                             </td>
                         </tr>
                     `;
                 });
+
+                renderPagination(result.totalPages, result.total);
             } catch (err) {
                 showAlert("Erreur réseau", false);
             }
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            let paginationContainer = document.getElementById('pagination-controls');
+            
+            if (!paginationContainer) {
+                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination-controls';
+                tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
+            }
+
+            if (totalItems === 0) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="flex justify-between items-center mt-6 px-4 text-sm">
+                    <span class="text-gray-500 font-semibold">Total : ${totalItems} seniors</span>
+                    <div class="flex gap-2">
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchSeniors(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
+                html += `<button onclick="fetchSeniors(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+            }
+
+            html += `
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchSeniors(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
+                    </div>
+                </div>
+            `;
+            paginationContainer.innerHTML = html;
         }
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
@@ -254,7 +302,7 @@
                 ville: document.getElementById('add-ville').value,
                 code_postal: document.getElementById('add-cp').value,
                 pays: document.getElementById('add-pays').value,
-                motif_bannisement: "",
+                motif_bannissement: "",
                 duree_bannissement: 0
             };
             const response = await fetch(`${API_BASE}/create`, {
@@ -265,7 +313,7 @@
             if (response.ok) {
                 toggleModal('add-modal');
                 e.target.reset();
-                fetchSeniors();
+                fetchSeniors(1); 
                 showAlert("Senior créé !", true);
             }
         });
@@ -302,7 +350,7 @@
                 ville: document.getElementById('edit-ville').value,
                 code_postal: document.getElementById('edit-cp').value,
                 pays: document.getElementById('edit-pays').value,
-                motif_bannisement: document.getElementById('edit-motif').value,
+                motif_bannissement: document.getElementById('edit-motif').value,
                 duree_bannissement: parseInt(document.getElementById('edit-duree').value) || 0
             };
             const res = await fetch(`${API_BASE}/update/${id}`, {
@@ -312,7 +360,7 @@
             });
             if (res.ok) {
                 toggleModal('edit-modal');
-                fetchSeniors();
+                fetchSeniors(currentPage);
                 showAlert("Modifications enregistrées", true);
             }
         });
@@ -335,7 +383,7 @@
             const id = document.getElementById('ban-id').value;
             const data = {
                 statut: 'banni', 
-                motif_bannisement: document.getElementById('ban-motif').value,
+                motif_bannissement: document.getElementById('ban-motif').value,
                 duree_bannissement: parseInt(document.getElementById('ban-duree').value) || 0
             };
             const res = await fetch(`${API_BASE}/ban/${id}`, {
@@ -345,7 +393,7 @@
             });
             if (res.ok) {
                 toggleModal('ban-modal');
-                fetchSeniors();
+                fetchSeniors(currentPage);
                 showAlert("Utilisateur banni !", true);
             }
         });
@@ -354,7 +402,7 @@
             const id = document.getElementById('ban-id').value;
             const data = {
                 statut: 'user', 
-                motif_bannisement: '', 
+                motif_bannissement: '', 
                 duree_bannissement: 0  
             };
             const res = await fetch(`${API_BASE}/ban/${id}`, {
@@ -364,7 +412,7 @@
             });
             if (res.ok) {
                 toggleModal('ban-modal');
-                fetchSeniors();
+                fetchSeniors(currentPage);
                 showAlert("Le bannissement a été retiré", true);
             }
         });
@@ -379,12 +427,12 @@
             const res = await fetch(`${API_BASE}/delete/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 toggleModal('delete-modal');
-                fetchSeniors();
+                fetchSeniors(currentPage);
                 showAlert("Senior supprimé", true);
             }
         });
 
-        window.onload = fetchSeniors;
+        window.onload = () => fetchSeniors(1);
     </script>
 </body>
 </html>
