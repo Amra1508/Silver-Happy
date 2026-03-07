@@ -70,6 +70,10 @@ func main() {
 	http.HandleFunc("/dashboard/abonnement", dashboard.Abonnement_Count)
 	http.HandleFunc("/dashboard/revenus", dashboard.Revenus)
 
+	http.HandleFunc("/message/get/{id1}/with/{id2}", communication.Get_Message)
+	http.HandleFunc("/message/add", communication.Add_Message)
+	http.HandleFunc("/message/delete/{id}", communication.Delete_Message)
+
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
 	}

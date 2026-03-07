@@ -46,6 +46,9 @@
                     return;
                 }
 
+                window.currentUserId = user.id;
+                window.dispatchEvent(new Event('auth_ready'));
+
                 const nameDisplay = document.getElementById('header-user-name');
                 if (nameDisplay) {
                     nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;

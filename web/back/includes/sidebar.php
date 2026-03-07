@@ -41,7 +41,7 @@ if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
             <span>Produits de la boutique</span>
         </a>
 
-        <a href="/back/communication/messaging.php" class="sidebar-links">
+        <a href="/back/communication/list_user.php" class="sidebar-links">
             <img src="/back/icons/messages.svg" alt="messages" class="w-7 h-7 mx-4">
             <span>Messagerie</span>
         </a>

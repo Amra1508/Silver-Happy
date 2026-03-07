@@ -93,3 +93,13 @@ type Revenue struct {
     Date  string  `json:"date"`
     Total float64 `json:"total"`
 }
+
+type Message struct {
+	ID              int64  `json:"id"`
+	Contenu         string `json:"contenu"`
+	Date            string `json:"date"`
+	ID_Expediteur   int64  `json:"id_expediteur"`
+	ID_Destinataire int64  `json:"id_destinataire"`
+	Prénom          string `json:"prenom"`
+	Nom             string `json:"nom"`
+}

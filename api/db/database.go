@@ -184,7 +184,6 @@ func InitDB() {
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_utilisateur1 INT,
 		id_utilisateur2 INT,
-		statut ENUM('admin', 'user'),
 		FOREIGN KEY (id_utilisateur1) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_utilisateur2) REFERENCES UTILISATEUR(id_utilisateur)
 	);
