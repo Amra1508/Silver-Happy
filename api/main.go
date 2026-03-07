@@ -64,6 +64,7 @@ func main() {
 	http.HandleFunc("/prestataires/delete/{id}", users.Delete_Prestataire)
 	http.HandleFunc("/prestataires/documents/{id}", users.Read_Prestataire_Documents)
 	http.HandleFunc("/prestataires/upload/{id}", users.Upload_Prestataire_Document)
+	http.HandleFunc("/prestataires/document/delete/{id}", users.Delete_Prestataire_Document)
 
 	http.HandleFunc("/dashboard/seniors", dashboard.Seniors_Count)
 	http.HandleFunc("/dashboard/prestataires", dashboard.Prestataires_Count)
