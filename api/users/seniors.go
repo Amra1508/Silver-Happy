@@ -169,6 +169,12 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 
 	db.DB.QueryRow("SELECT id_planning, id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&idPlanning, &idAdresse)
 
+	_, errMsg := db.DB.Exec("DELETE FROM MESSAGE_ADMIN WHERE id_utilisateur1 = ? OR id_utilisateur2 = ?", id, id)
+	if errMsg != nil {
+		http.Error(response, "Erreur lors de la suppression des messages de l'utilisateur", http.StatusInternalServerError)
+		return
+	}
+
 	_, err := db.DB.Exec("DELETE FROM UTILISATEUR WHERE id_utilisateur = ?", id)
 	if err != nil {
 		http.Error(response, "Erreur lors de la suppression de l'utilisateur", http.StatusInternalServerError)

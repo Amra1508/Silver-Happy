@@ -84,6 +84,8 @@ func InitDB() {
 		description VARCHAR(200),
 		lieu VARCHAR(100),
 		nombre_place INT NOT NULL,
+		date_debut DATETIME,
+		date_fin DATETIME,
 		image VARCHAR(250) DEFAULT NULL,
 		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
