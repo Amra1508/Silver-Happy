@@ -81,12 +81,28 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var p models.Prestataire
-	json.NewDecoder(request.Body).Decode(&p)
+	if err := json.NewDecoder(request.Body).Decode(&p); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	taken, msg := isContactInfoTaken(p.Email, p.NumTelephone)
+	if taken {
+		http.Error(response, msg, http.StatusConflict)
+		return
+	}
+
 	hashMdp, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 
-	db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
+	_, err := db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
 		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.TypePrestation, string(hashMdp))
 
+	if err != nil {
+		http.Error(response, "Erreur création prestataire", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusCreated)
 	json.NewEncoder(response).Encode("OK")
 }
 

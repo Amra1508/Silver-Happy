@@ -1,6 +1,8 @@
 package utils
 
-import "net/http"
+import (
+	"net/http"
+)
 
 func HandleCORS(response http.ResponseWriter, request *http.Request, methode string) bool {
 
