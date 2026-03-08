@@ -313,7 +313,7 @@
                     if (provider.status === "validé") {
                         badge = "<span class='bg-[#26D443]/10 text-[#26D443] py-2 px-6 rounded-md font-semibold text-sm'>Validé</span>";
                     } else if (provider.status === "refusé") {
-                        badge = "<span class='bg-[#FF0000]/10 text-[#FF0000] py-2 px-6 rounded-md font-semibold text-sm'>Refusé</span><br><span class='text-xs text-red-500 italic mt-1 inline-block'>Motif : " + provider.motif_refus + "</span>";
+                        badge = "<span class='bg-[#FF0000]/10 text-[#FF0000] py-2 px-6 rounded-md font-semibold text-sm'>Refusé</span>";
                     } else {
                         badge = "<span class='bg-[#E1AB2B]/10 text-[#E1AB2B] py-2 px-6 rounded-md font-semibold text-sm'>En attente</span>";
                     }
