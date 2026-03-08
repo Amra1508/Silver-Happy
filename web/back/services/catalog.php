@@ -87,7 +87,7 @@
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Utilisateur (Senior)</label>
-                                <select id="add-id-utilisateur" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <select id="add-id-utilisateur" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none disabled:bg-gray-100 disabled:opacity-50">
                                     <option value="">Chargement...</option>
                                 </select>
                             </div>
@@ -121,7 +121,7 @@
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Utilisateur (Senior)</label>
-                                <select id="edit-id-utilisateur" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <select id="edit-id-utilisateur" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none disabled:bg-gray-100 disabled:opacity-50">
                                     <option value="">Chargement...</option>
                                 </select>
                             </div>
@@ -163,17 +163,33 @@
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
+        function checkDispo(selectDispoId, selectUserId) {
+            const val = document.getElementById(selectDispoId).value;
+            const selectUser = document.getElementById(selectUserId);
+            if (val === "0") {
+                selectUser.value = "";
+                selectUser.disabled = true;
+            } else {
+                selectUser.disabled = false;
+            }
+        }
+
+        document.getElementById('add-disponibilite').addEventListener('change', () => checkDispo('add-disponibilite', 'add-id-utilisateur'));
+        document.getElementById('edit-disponibilite').addEventListener('change', () => checkDispo('edit-disponibilite', 'edit-id-utilisateur'));
+
         async function fetchUtilisateurs() {
             const addSelect = document.getElementById('add-id-utilisateur');
             const editSelect = document.getElementById('edit-id-utilisateur');
 
             try {
                 const response = await fetch(API_USERS);
-                const utilisateurs = await response.json();
+                const jsonResponse = await response.json();
                 
-                let optionsHtml = '<option value="">Sélectionnez un utilisateur...</option>';
+                const utilisateurs = jsonResponse.data || jsonResponse; 
+                
+                let optionsHtml = '<option value="">-- Aucun / Sélectionner --</option>';
 
-                if (utilisateurs && utilisateurs.length > 0) {
+                if (Array.isArray(utilisateurs) && utilisateurs.length > 0) {
                     utilisateurs.forEach(u => {
                         const id = u.id || u.ID;
                         const prenom = u.prenom || u.Prenom || '';
@@ -181,17 +197,15 @@
                         
                         optionsHtml += `<option value="${id}">${prenom} ${nom} (ID: ${id})</option>`;
                     });
-                } else {
-                    optionsHtml = '<option value="">Aucun utilisateur trouvé</option>';
                 }
 
                 addSelect.innerHTML = optionsHtml;
                 editSelect.innerHTML = optionsHtml;
 
             } catch (err) {
-                console.error("Erreur lors de la récupération des utilisateurs:", err);
-                addSelect.innerHTML = '<option value="">Erreur de chargement des utilisateurs</option>';
-                editSelect.innerHTML = '<option value="">Erreur de chargement des utilisateurs</option>';
+                console.error("Erreur utilisateurs:", err);
+                addSelect.innerHTML = '<option value="">Erreur chargement</option>';
+                editSelect.innerHTML = '<option value="">Erreur chargement</option>';
             }
         }
 
@@ -212,13 +226,14 @@
                 }
 
                 services.forEach(c => {
-                    const id = c.id || c.ID;
-                    const nom = c.nom || c.Nom;
-                    const description = c.description || c.Description;
+                    const id = c.id_service || c.id || c.ID; 
+                    const nom = c.nom || c.Nom || '';
+                    const description = c.description || c.Description || '';
                     const disponibilite = c.disponibilite !== undefined ? c.disponibilite : c.Disponibilite;
-                    const id_utilisateur = c.id_utilisateur || c.IdUtilisateur;
+                    const id_utilisateur = c.id_utilisateur !== undefined ? c.id_utilisateur : c.IdUtilisateur;
 
                     const isDispo = parseInt(disponibilite) === 1 ? 'Oui' : 'Non';
+                    const userDisplay = id_utilisateur ? id_utilisateur : '<span class="text-gray-400 italic">Aucun</span>';
                     
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
@@ -226,9 +241,9 @@
                             <td class="p-4">${nom}</td>
                             <td class="p-4">${description}</td>
                             <td class="p-4">${isDispo}</td>
-                            <td class="p-4">${id_utilisateur}</td>
+                            <td class="p-4">${userDisplay}</td>
                             <td class="p-4 flex justify-center gap-8">
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', ${disponibilite}, ${id_utilisateur})" class="text-[#E1AB2B] font-bold">Modifier</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', ${disponibilite}, ${id_utilisateur || null})" class="text-[#E1AB2B] font-bold">Modifier</button>
                                 <button onclick="openDeleteModal(${id})" class="text-red-500 font-bold">Supprimer</button>
                             </td>
                         </tr>
@@ -278,17 +293,14 @@
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const userStr = document.getElementById('add-id-utilisateur').value;
+            
             const data = {
                 nom: document.getElementById('add-nom').value,
                 description: document.getElementById('add-description').value,
                 disponibilite: parseInt(document.getElementById('add-disponibilite').value),
-                id_utilisateur: parseInt(document.getElementById('add-id-utilisateur').value)
+                id_utilisateur: userStr !== "" ? parseInt(userStr) : null
             };
-            
-            if (!data.id_utilisateur) {
-                showAlert("Veuillez sélectionner un utilisateur.", false);
-                return;
-            }
 
             try {
                 const response = await fetch(`${API_BASE}/create`, {
@@ -299,13 +311,14 @@
                 if (response.ok) {
                     toggleModal('add-modal');
                     e.target.reset();
+                    document.getElementById('add-id-utilisateur').disabled = false;
                     showAlert("Service ajouté !", true);
                     fetchServices(1);
                 } else {
                     showAlert("Erreur lors de l'envoi", false);
                 }
             } catch (err) {
-                showAlert("Erreur lors de l'envoi", false);
+                showAlert("Erreur réseau", false);
             }
         });
 
@@ -314,19 +327,26 @@
             document.getElementById('edit-nom').value = nom;
             document.getElementById('edit-description').value = description;
             document.getElementById('edit-disponibilite').value = disponibilite;
-            document.getElementById('edit-id-utilisateur').value = id_utilisateur;
+            
+            document.getElementById('edit-id-utilisateur').value = id_utilisateur !== null ? id_utilisateur : "";
+
+            checkDispo('edit-disponibilite', 'edit-id-utilisateur');
+
             toggleModal('edit-modal');
         }
 
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
+            const userStr = document.getElementById('edit-id-utilisateur').value;
+
             const data = {
                 nom: document.getElementById('edit-nom').value,
                 description: document.getElementById('edit-description').value,
                 disponibilite: parseInt(document.getElementById('edit-disponibilite').value),
-                id_utilisateur: parseInt(document.getElementById('edit-id-utilisateur').value)
+                id_utilisateur: userStr !== "" ? parseInt(userStr) : null
             };
+
             try {
                 const res = await fetch(`${API_BASE}/update/${id}`, {
                     method: 'PUT',
@@ -341,7 +361,7 @@
                     showAlert("Erreur lors de la mise à jour", false);
                 }
             } catch (err) {
-                showAlert("Erreur lors de la mise à jour", false);
+                showAlert("Erreur réseau", false);
             }
         });
 
@@ -364,7 +384,7 @@
                     showAlert("Erreur de suppression", false);
                 }
             } catch (err) {
-                showAlert("Erreur de suppression", false);
+                showAlert("Erreur réseau", false);
             }
         });
 
