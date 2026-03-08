@@ -74,6 +74,11 @@ func main() {
 	http.HandleFunc("/message/add", communication.Add_Message)
 	http.HandleFunc("/message/delete/{id}", communication.Delete_Message)
 
+	http.HandleFunc("/evenement/read", services.Read_Evenement)
+	http.HandleFunc("/evenement/create", services.Create_Evenement)
+	http.HandleFunc("/evenement/update/{id}", services.Update_Evenement)
+	http.HandleFunc("/evenement/delete/{id}", services.Delete_Evenement)
+
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
 	}

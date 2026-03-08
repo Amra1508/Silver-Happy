@@ -72,8 +72,6 @@ func Read_Produit(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(dataResponse)
 }
 
-const uploadDir = "./uploads"
-
 func Create_Produit(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "POST") {
 		return

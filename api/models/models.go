@@ -103,3 +103,14 @@ type Message struct {
 	Prénom          string `json:"prenom"`
 	Nom             string `json:"nom"`
 }
+
+type Evenement struct {
+	ID          int    `json:"id_evenement"`
+	Nom         string `json:"nom"`
+	Description string `json:"description"`
+	Lieu        string `json:"lieu"`
+	NombrePlace int    `json:"nombre_place"`
+	Image       string `json:"image"`
+	DateDebut   string `json:"date_debut"`
+	DateFin     string `json:"date_fin"`
+}
