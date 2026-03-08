@@ -184,7 +184,22 @@
             messageBox.textContent = msg;
             messageBox.className = `max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
             messageBox.classList.remove('hidden');
-            setTimeout(() => messageBox.classList.add('hidden'), 3500);
+            setTimeout(() => messageBox.classList.add('hidden'), 5000);
+        }
+
+        async function showErrorFromResponse(response, defaultMsg) {
+            try {
+                const text = await response.text();
+                try {
+                    const json = JSON.parse(text);
+                    const errorMessage = json.message || json.error || text || defaultMsg;
+                    showAlert(errorMessage, false);
+                } catch {
+                    showAlert(text || defaultMsg, false);
+                }
+            } catch {
+                showAlert(defaultMsg, false);
+            }
         }
 
         function calculateDuration(start, end) {
@@ -230,8 +245,13 @@
             try {
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`);
-                const result = await response.json();
                 
+                if (!response.ok) {
+                    await showErrorFromResponse(response, "Erreur lors de la récupération des événements.");
+                    return;
+                }
+
+                const result = await response.json();
                 const evenements = result.data || [];
                 const tbody = document.getElementById('evenement-table-body');
                 tbody.innerHTML = '';
@@ -280,7 +300,7 @@
 
                 renderPagination(result.totalPages, result.total);
             } catch (err) {
-                showAlert("Erreur lors de la récupération des événements.", false);
+                showAlert(err.message || "Erreur réseau lors du chargement des événements.", false);
             }
         }
 
@@ -346,10 +366,10 @@
                     showAlert("Événement ajouté avec succès !", true);
                     fetchEvenements(1);
                 } else {
-                    showAlert("Erreur lors de l'ajout", false);
+                    await showErrorFromResponse(response, "Erreur lors de l'ajout");
                 }
             } catch (err) {
-                showAlert("Erreur réseau", false);
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
@@ -392,10 +412,10 @@
                     showAlert("Modifications enregistrées", true);
                     fetchEvenements(currentPage);
                 } else {
-                    showAlert("Erreur lors de la mise à jour", false);
+                    await showErrorFromResponse(res, "Erreur lors de la mise à jour");
                 }
             } catch (err) {
-                showAlert("Erreur réseau", false);
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
@@ -415,10 +435,10 @@
                     showAlert("Événement supprimé", true);
                     fetchEvenements(currentPage);
                 } else {
-                    showAlert("Erreur de suppression", false);
+                    await showErrorFromResponse(res, "Erreur de suppression");
                 }
             } catch (err) {
-                showAlert("Erreur réseau", false);
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 

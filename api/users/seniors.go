@@ -13,6 +13,33 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func isContactInfoTaken(email, numTelephone string) (bool, string) {
+	var emailCount int
+	var phoneCount int
+
+	db.DB.QueryRow(`
+		SELECT 
+			(SELECT COUNT(*) FROM UTILISATEUR WHERE email = ?) + 
+			(SELECT COUNT(*) FROM PRESTATAIRE WHERE email = ?)`,
+		email, email).Scan(&emailCount)
+
+	if emailCount > 0 {
+		return true, "Cet email est déjà utilisé par un utilisateur ou un prestataire."
+	}
+
+	db.DB.QueryRow(`
+		SELECT 
+			(SELECT COUNT(*) FROM UTILISATEUR WHERE num_telephone = ?) + 
+			(SELECT COUNT(*) FROM PRESTATAIRE WHERE num_telephone = ?)`,
+		numTelephone, numTelephone).Scan(&phoneCount)
+
+	if phoneCount > 0 {
+		return true, "Ce numéro de téléphone est déjà utilisé."
+	}
+
+	return false, ""
+}
+
 func Read_User(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "GET") {
         return
@@ -107,6 +134,12 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	taken, msg := isContactInfoTaken(user.Email, user.NumTelephone)
+	if taken {
+		http.Error(response, msg, http.StatusConflict)
+		return
+	}
+
 	var dateNaissance interface{} = user.DateNaissance
 	if user.DateNaissance == "" {
 		dateNaissance = nil
@@ -121,8 +154,8 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 	idAdresse, _ := resAdr.LastInsertId()
 
 	res, err := db.DB.Exec(`
-        INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_planning, id_adresse) 
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
+		INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_planning, id_adresse) 
+		VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
 		user.Nom, user.Prenom, user.Email, user.NumTelephone, dateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, string(hashMdp), idPlanning, idAdresse)
 
 	if err != nil {

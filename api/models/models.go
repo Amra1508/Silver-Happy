@@ -49,11 +49,11 @@ type Produit struct {
 }
 
 type Service struct {
-	ID            int    `json:"id"`
-	Nom           string `json:"nom"`
-	Description   string `json:"description"`
-	Disponibilite int    `json:"disponibilite"`
-	IdUtilisateur int    `json:"id_utilisateur"`
+    ID            int    `json:"id_service"`
+    Nom           string `json:"nom"`
+    Description   string `json:"description"`
+    Disponibilite int    `json:"disponibilite"`
+    IdUtilisateur *int   `json:"id_utilisateur"`
 }
 
 type Conseil struct {

@@ -197,13 +197,34 @@
             messageBox.textContent = msg;
             messageBox.className = `max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
             messageBox.classList.remove('hidden');
-            setTimeout(() => messageBox.classList.add('hidden'), 3500);
+            setTimeout(() => messageBox.classList.add('hidden'), 5000);
+        }
+
+        async function showErrorFromResponse(response, defaultMsg) {
+            try {
+                const text = await response.text();
+                try {
+                    const json = JSON.parse(text);
+                    const errorMessage = json.message || json.error || text || defaultMsg;
+                    showAlert(errorMessage, false);
+                } catch {
+                    showAlert(text || defaultMsg, false);
+                }
+            } catch {
+                showAlert(defaultMsg, false);
+            }
         }
 
         async function fetchSeniors(page = 1) {
             try {
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+
+                if (!response.ok) {
+                    await showErrorFromResponse(response, "Erreur lors de la récupération des seniors.");
+                    return;
+                }
+
                 const result = await response.json();
 
                 const seniors = result.data || [];
@@ -259,7 +280,7 @@
 
                 renderPagination(result.totalPages, result.total);
             } catch (err) {
-                showAlert("Erreur réseau", false);
+                showAlert(err.message || "Erreur réseau lors de la récupération des seniors.", false);
             }
         }
 
@@ -314,18 +335,26 @@
                 motif_bannissement: "",
                 duree_bannissement: 0
             };
-            const response = await fetch(`${API_BASE}/create`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            if (response.ok) {
-                toggleModal('add-modal');
-                e.target.reset();
-                fetchSeniors(1);
-                showAlert("Senior créé !", true);
+
+            try {
+                const response = await fetch(`${API_BASE}/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    toggleModal('add-modal');
+                    e.target.reset();
+                    fetchSeniors(1);
+                    showAlert("Senior créé !", true);
+                } else {
+                    await showErrorFromResponse(response, "Erreur lors de la création");
+                }
+            } catch (err) {
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
@@ -364,17 +393,25 @@
                 motif_bannissement: document.getElementById('edit-motif').value,
                 duree_bannissement: parseInt(document.getElementById('edit-duree').value) || 0
             };
-            const res = await fetch(`${API_BASE}/update/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                toggleModal('edit-modal');
-                fetchSeniors(currentPage);
-                showAlert("Modifications enregistrées", true);
+
+            try {
+                const res = await fetch(`${API_BASE}/update/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    toggleModal('edit-modal');
+                    fetchSeniors(currentPage);
+                    showAlert("Modifications enregistrées", true);
+                } else {
+                    await showErrorFromResponse(res, "Erreur lors de la mise à jour");
+                }
+            } catch (err) {
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
@@ -399,17 +436,25 @@
                 motif_bannissement: document.getElementById('ban-motif').value,
                 duree_bannissement: parseInt(document.getElementById('ban-duree').value) || 0
             };
-            const res = await fetch(`${API_BASE}/ban/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                toggleModal('ban-modal');
-                fetchSeniors(currentPage);
-                showAlert("Utilisateur banni !", true);
+
+            try {
+                const res = await fetch(`${API_BASE}/ban/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    toggleModal('ban-modal');
+                    fetchSeniors(currentPage);
+                    showAlert("Utilisateur banni !", true);
+                } else {
+                    await showErrorFromResponse(res, "Erreur lors du bannissement");
+                }
+            } catch (err) {
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
@@ -420,17 +465,25 @@
                 motif_bannissement: '',
                 duree_bannissement: 0
             };
-            const res = await fetch(`${API_BASE}/ban/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                toggleModal('ban-modal');
-                fetchSeniors(currentPage);
-                showAlert("Le bannissement a été retiré", true);
+
+            try {
+                const res = await fetch(`${API_BASE}/ban/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.ok) {
+                    toggleModal('ban-modal');
+                    fetchSeniors(currentPage);
+                    showAlert("Le bannissement a été retiré", true);
+                } else {
+                    await showErrorFromResponse(res, "Erreur lors de la levée du bannissement");
+                }
+            } catch (err) {
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
@@ -441,13 +494,20 @@
 
         document.getElementById('confirm-delete').addEventListener('click', async () => {
             const id = document.getElementById('delete-id').value;
-            const res = await fetch(`${API_BASE}/delete/${id}`, {
-                method: 'DELETE'
-            });
-            if (res.ok) {
-                toggleModal('delete-modal');
-                fetchSeniors(currentPage);
-                showAlert("Senior supprimé", true);
+            try {
+                const res = await fetch(`${API_BASE}/delete/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    toggleModal('delete-modal');
+                    fetchSeniors(currentPage);
+                    showAlert("Senior supprimé", true);
+                } else {
+                    await showErrorFromResponse(res, "Erreur lors de la suppression");
+                }
+            } catch (err) {
+                showAlert(err.message || "Erreur réseau", false);
             }
         });
 
