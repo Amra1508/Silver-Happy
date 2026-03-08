@@ -41,15 +41,15 @@
             <main class="p-8">
 
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Gestion des Événements</h1>
-                    <button onclick="toggleModal('add-modal')" class="bg-[#1C5B8F] text-white py-2 px-6 rounded-full hover:bg-blue-800 transition" type="button">
+                    <h1 class="title-text">Gestion des Événements</h1>
+                    <button onclick="toggleModal('add-modal')" class="add-button" type="button">
                         + Ajouter un Événement
                     </button>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
 
-                <div class="border border-[#1C5B8F] rounded-[2.5rem] overflow-hidden bg-white shadow-sm">
+                <div class="table-container">
                     <table class="w-full text-left">
                         <thead class="bg-[#1C5B8F] text-white">
                             <tr>
@@ -69,7 +69,7 @@
                     </table>
                 </div>
 
-                <div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
+                <div id="add-modal" class="hidden modal">
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg border border-[#1C5B8F] shadow-xl max-h-[90vh] overflow-y-auto">
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Événement</h3>
                         <form id="add-form" class="space-y-4">
@@ -107,13 +107,13 @@
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="bg-[#1C5B8F] text-white px-8 py-2 rounded-full font-semibold">Ajouter</button>
+                                <button type="submit" class="add-button">Ajouter</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
+                <div id="edit-modal" class="hidden modal">
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg border border-[#E1AB2B] shadow-xl max-h-[90vh] overflow-y-auto">
                         <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier l'Événement</h3>
                         <form id="edit-form" class="space-y-4">
@@ -152,21 +152,21 @@
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="bg-[#E1AB2B] text-white px-8 py-2 rounded-full font-semibold">Sauvegarder</button>
+                                <button type="submit" class="edit-button">Sauvegarder</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg text-center border border-red-500 shadow-xl">
+                <div id="delete-modal" class="hidden modal">
+                    <div class="delete-modal">
                         <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
                         <h3 class="text-2xl font-semibold mb-2">Supprimer l'événement ?</h3>
                         <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
                         <input type="hidden" id="delete-id">
                         <div class="flex justify-center gap-6">
-                            <button type="button" onclick="toggleModal('delete-modal')" class="px-8 py-2 border border-gray-200 rounded-full">Annuler</button>
-                            <button type="button" id="confirm-delete" class="bg-red-500 text-white px-8 py-2 rounded-full font-semibold">Oui, supprimer</button>
+                            <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
+                            <button type="button" id="confirm-delete" class="delete-button">Oui, supprimer</button>
                         </div>
                     </div>
                 </div>
@@ -175,7 +175,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082"; 
+        const API_BASE = "http://localhost:8082";
         let currentPage = 1;
         const limit = 10;
         const messageBox = document.getElementById('api-message');
@@ -206,12 +206,12 @@
             if (!start || !end) return "-";
             const startDate = new Date(start);
             const endDate = new Date(end);
-            
+
             if (isNaN(startDate) || isNaN(endDate)) return "-";
-            
+
             let diffMs = endDate - startDate;
             if (diffMs <= 0) return "0h";
-            
+
             const diffDays = Math.floor(diffMs / 86400000);
             const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
             const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
@@ -235,9 +235,12 @@
             if (!dateStr) return "-";
             const d = new Date(dateStr);
             if (isNaN(d)) return "-";
-            return d.toLocaleString('fr-FR', { 
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute:'2-digit'
+            return d.toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
 
@@ -245,7 +248,7 @@
             try {
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`);
-                
+
                 if (!response.ok) {
                     await showErrorFromResponse(response, "Erreur lors de la récupération des événements.");
                     return;
@@ -268,16 +271,16 @@
                     const description = c.description || c.Description || '';
                     const lieu = c.lieu || c.Lieu || '';
                     const places = c.nombre_place || c.NombrePlace || 0;
-                    
+
                     const date_debut = c.date_debut || c.DateDebut || '';
                     const date_fin = c.date_fin || c.DateFin || '';
-                    
+
                     const imgSrc = c.image ? `${API_BASE}/${c.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/150?text=Pas+d%27image';
-                    
+
                     const displayDebut = formatDisplayDate(date_debut);
                     const displayFin = formatDisplayDate(date_fin);
                     const duree = calculateDuration(date_debut, date_fin);
-                    
+
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
                             <td class="p-4">
@@ -306,9 +309,9 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
-                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                const tableContainer = document.querySelector('.table-container');
                 paginationContainer = document.createElement('div');
                 paginationContainer.id = 'pagination-controls';
                 tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
@@ -341,7 +344,7 @@
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const formData = new FormData();
             formData.append('nom', document.getElementById('add-nom').value);
             formData.append('description', document.getElementById('add-description').value);
@@ -349,7 +352,7 @@
             formData.append('nombre_place', document.getElementById('add-places').value);
             formData.append('date_debut', document.getElementById('add-debut').value);
             formData.append('date_fin', document.getElementById('add-fin').value);
-            
+
             const fileInput = document.getElementById('add-image');
             if (fileInput.files[0]) {
                 formData.append('image', fileInput.files[0]);
@@ -388,7 +391,7 @@
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
-            
+
             const formData = new FormData();
             formData.append('nom', document.getElementById('edit-nom').value);
             formData.append('description', document.getElementById('edit-description').value);
@@ -396,7 +399,7 @@
             formData.append('nombre_place', document.getElementById('edit-places').value);
             formData.append('date_debut', document.getElementById('edit-debut').value);
             formData.append('date_fin', document.getElementById('edit-fin').value);
-            
+
             const fileInput = document.getElementById('edit-image');
             if (fileInput.files[0]) {
                 formData.append('image', fileInput.files[0]);

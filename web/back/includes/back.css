@@ -7,54 +7,34 @@
     @apply w-full rounded-xl bg-white p-3 mt-2 border border-[#E1AB2B]/60
             focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#1C5B8F];
   }
-  .header-button {
-    @apply border border-[#1C5B8F] text-[#1C5B8F] px-4 py-1 rounded-full 
-    text-xl font-semibold hover:bg-[#1C5B8F] hover:text-white;
+  .title-text {
+    @apply text-3xl font-semibold text-[#1C5B8F];
   }
-  .menu-text {
-    @apply text-[#1C5B8F] font-medium text-2xl lg:text-3xl hover:text-[#E1AB2B] transition-colors;
+  .add-button {
+    @apply bg-[#D9D9D9]/40 text-[#1C5B8F] py-2 px-6 rounded-full hover:bg-[#D9D9D9]/80 font-semibold;
   }
-  .small-text {
-    @apply text-xl font-semibold text-[#1C5B8F];
+  .edit-button {
+    @apply bg-[#E1AB2B]/10 text-[#E1AB2B] py-2 px-6 rounded-full hover:bg-[#E1AB2B]/20 font-semibold;
   }
-  .big-text {
-    @apply text-4xl font-semibold text-[#1C5B8F];
-  }
-  .button-blue {
-    @apply bg-[#1C5B8F] text-white py-2 font-semibold text-xl 
-    hover:bg-[#E1AB2B]/60 transition shadow-md;
+  .delete-button {
+    @apply bg-[#FF0000]/10 text-[#FF0000] py-2 px-6 rounded-full hover:bg-[#FF0000]/20 font-semibold;
   }
   .sidebar-links {
     @apply flex items-center px-2 py-4 hover:bg-[#1C5B8F] border border-white text-lg font-medium;
   }
-  .simple-table {
-    @apply w-full text-left bg-white shadow-md rounded-xl overflow-hidden border border-gray-100;
+  .table-container {
+    @apply shadow-xl shadow-[#1C5B8F]/20 rounded-3xl overflow-hidden bg-white;
   }
-  .table-header {
-    @apply bg-[#1C5B8F] text-white text-lg;
+  .modal {
+    @apply fixed inset-0 bg-black/40 items-center justify-center z-50 p-4;
   }
-  .table-row {
-    @apply border-b hover:bg-[#D9D9D9]/20 transition text-[#1C5B8F] font-medium text-lg;
+  .add-modal {
+    @apply bg-white p-10 rounded-[2.5rem] w-full max-w-2xl shadow-xl shadow-[#1C5B8F]/20 overflow-y-auto max-h-[90vh];
   }
-  .table-cell {
-    @apply px-6 py-4;
+  .edit-modal {
+    @apply bg-white p-10 rounded-[2.5rem] w-full max-w-2xl shadow-xl shadow-[#E1AB2B]/20 overflow-y-auto max-h-[90vh];
   }
-  .modal-bg {
-    @apply fixed inset-0 bg-gray-500/75 z-50 flex justify-center items-center p-4 transition-opacity;
-  }
-  .modal-box {
-    @apply bg-white rounded-xl p-8 w-full max-w-2xl shadow-xl relative;
-  }
-  .btn-red {
-    @apply bg-red-600 text-white font-semibold px-6 py-2 rounded-full hover:bg-red-700 transition;
-  }
-  .message-bubble {
-    @apply rounded-2xl py-[10px] px-[15px] mb-[10px] max-w-[75%] inline-block;
-  }
-  .from-user {
-    @apply ml-auto text-right;
-  }
-  .from-admin {
-    @apply mr-auto text-left;
+  .delete-modal {
+    @apply bg-white p-10 rounded-[2.5rem] w-full max-w-lg text-center shadow-xl shadow-[#FF0000]/20;
   }
 }

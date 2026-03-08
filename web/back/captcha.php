@@ -41,15 +41,15 @@
             <main class="p-8">
 
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Gestion des Captchas</h1>
-                    <button onclick="toggleModal('add-modal')" class="bg-[#1C5B8F] text-white py-2 px-6 rounded-full hover:bg-blue-800 transition" type="button">
+                    <h1 class="title-text">Gestion des Captchas</h1>
+                    <button onclick="toggleModal('add-modal')" class="add-button" type="button">
                         + Ajouter un Captcha
                     </button>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
 
-                <div class="border border-[#1C5B8F] rounded-[2.5rem] overflow-hidden bg-white">
+                <div class="table-container">
                     <table class="w-full text-left">
                         <thead class="bg-[#1C5B8F] text-white">
                             <tr>
@@ -64,8 +64,8 @@
                     </table>
                 </div>
 
-                <div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-md border border-[#1C5B8F] shadow-xl">
+                <div id="add-modal" class="hidden modal">
+                    <div class="add-modal">
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Captcha</h3>
                         <form id="add-form" class="space-y-6">
                             <div>
@@ -78,14 +78,14 @@
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="bg-[#1C5B8F] text-white px-8 py-2 rounded-full font-semibold">Ajouter</button>
+                                <button type="submit" class="add-button">Ajouter</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-md border border-[#E1AB2B] shadow-xl">
+                <div id="edit-modal" class="hidden modal">
+                    <div class="edit-modal">
                         <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Captcha</h3>
                         <form id="edit-form" class="space-y-6">
                             <input type="hidden" id="edit-id">
@@ -99,21 +99,21 @@
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="bg-[#E1AB2B] text-white px-8 py-2 rounded-full font-semibold">Sauvegarder</button>
+                                <button type="submit" class="edit-button">Sauvegarder</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg text-center border border-red-500 shadow-xl">
-                        <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
+                <div id="delete-modal" class="hidden modal">
+                    <div class="delete-modal">
+                        <div class="text-[#FF0000] text-6xl mb-4 font-bold">!</div>
                         <h3 class="text-2xl font-semibold mb-2">Supprimer le captcha ?</h3>
                         <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
                         <input type="hidden" id="delete-id">
                         <div class="flex justify-center gap-6">
-                            <button type="button" onclick="toggleModal('delete-modal')" class="px-8 py-2 border border-gray-200 rounded-full">Annuler</button>
-                            <button type="button" id="confirm-delete" class="bg-red-500 text-white px-8 py-2 rounded-full font-semibold">Oui, supprimer</button>
+                            <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
+                            <button type="button" id="confirm-delete" class="delete-button">Oui, supprimer</button>
                         </div>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
             let paginationContainer = document.getElementById('pagination-controls');
 
             if (!paginationContainer) {
-                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                const tableContainer = document.querySelector('.table-container');
                 paginationContainer = document.createElement('div');
                 paginationContainer.id = 'pagination-controls';
                 tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);

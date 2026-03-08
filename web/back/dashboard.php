@@ -34,25 +34,25 @@
             <main class="p-8">
 
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Tableau de bord</h1>
+                    <h1 class="title-text">Tableau de bord</h1>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    
-                    <div class="bg-white border border-[#1C5B8F] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                        <h3 class="text-gray-500 text-lg mb-2">Seniors inscrits (30 derniers jours)</h3>
+
+                    <div class="bg-white shadow-xl shadow-[#1C5B8F]/20 rounded-[2.5rem] p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="text-gray-500 text-lg mb-2">Seniors inscrits <br>(30 derniers jours)</h3>
                         <p id="count-seniors" class="text-4xl font-bold text-[#1C5B8F]">...</p>
                     </div>
 
-                    <div class="bg-white border border-[#1C5B8F] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                        <h3 class="text-gray-500 text-lg mb-2">Prestataires inscrits (30 derniers jours)</h3>
+                    <div class="bg-white shadow-xl shadow-[#1C5B8F]/20 rounded-[2.5rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
+                        <h3 class="text-gray-500 text-lg mb-2">Prestataires inscrits <br>(30 derniers jours)</h3>
                         <p id="count-prestataires" class="text-4xl font-bold text-[#1C5B8F]">...</p>
                     </div>
 
-                    <div class="bg-white border border-[#E1AB2B] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                        <h3 class="text-gray-500 text-lg mb-2">Nouveaux abonnements (30 derniers jours)</h3>
+                    <div class="bg-white shadow-xl shadow-[#E1AB2B]/20 rounded-[2.5rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
+                        <h3 class="text-gray-500 text-lg mb-2">Nouveaux abonnements <br>(30 derniers jours)</h3>
                         <p id="count-abonnements" class="text-4xl font-bold text-[#E1AB2B]">...</p>
                     </div>
 
@@ -113,9 +113,12 @@
 
                 const labels = data.map(item => {
                     const dateObj = new Date(item.date);
-                    return dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                    return dateObj.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'short'
+                    });
                 });
-                
+
                 const totals = data.map(item => item.total);
 
                 const sommeTotale = totals.reduce((acc, montant) => acc + montant, 0);
@@ -127,7 +130,7 @@
 
                 const ctx = document.getElementById('revenusChart').getContext('2d');
                 new Chart(ctx, {
-                    type: 'line', 
+                    type: 'line',
                     data: {
                         labels: labels,
                         datasets: [{
@@ -160,22 +163,26 @@
                         scales: {
                             x: {
                                 ticks: {
-                                    maxRotation: 0, 
+                                    maxRotation: 0,
                                     callback: function(value, index) {
                                         const dateActuelle = new Date(data[index].date);
-                                        const moisActuel = dateActuelle.toLocaleDateString('fr-FR', { month: 'long' });
-                                        
+                                        const moisActuel = dateActuelle.toLocaleDateString('fr-FR', {
+                                            month: 'long'
+                                        });
+
                                         if (index === 0) {
                                             return moisActuel.charAt(0).toUpperCase() + moisActuel.slice(1);
                                         }
-                                        
+
                                         const datePrecedente = new Date(data[index - 1].date);
-                                        const moisPrecedent = datePrecedente.toLocaleDateString('fr-FR', { month: 'long' });
-                                        
+                                        const moisPrecedent = datePrecedente.toLocaleDateString('fr-FR', {
+                                            month: 'long'
+                                        });
+
                                         if (moisActuel !== moisPrecedent) {
                                             return moisActuel.charAt(0).toUpperCase() + moisActuel.slice(1);
                                         }
-                                        
+
                                         return null;
                                     }
                                 }
@@ -183,7 +190,7 @@
                             y: {
                                 ticks: {
                                     callback: function(value) {
-                                        return value + ' €'; 
+                                        return value + ' €';
                                     }
                                 }
                             }

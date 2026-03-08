@@ -33,12 +33,12 @@
             <main class="p-8">
 
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Contacter un utilisateur</h1>
+                    <h1 class="title-text">Contacter un utilisateur</h1>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
 
-                <div class="border border-[#1C5B8F] rounded-[2.5rem] overflow-hidden bg-white shadow-sm">
+                <div class="table-container">
                     <table class="w-full text-left">
                         <thead class="bg-[#1C5B8F] text-white">
                             <tr>
@@ -76,7 +76,7 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                
+
                 const seniors = result.data || [];
                 const tbody = document.getElementById('list-user-body');
                 tbody.innerHTML = '';
@@ -115,9 +115,9 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
-                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                const tableContainer = document.querySelector('.table-container');
                 paginationContainer = document.createElement('div');
                 paginationContainer.id = 'pagination-controls';
                 tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);

@@ -40,15 +40,15 @@
 
             <main class="p-8">
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Gestion des Seniors</h1>
-                    <button onclick="toggleModal('add-modal')" class="bg-[#1C5B8F] text-white py-2 px-6 rounded-full hover:bg-blue-800 transition" type="button">
+                    <h1 class="title-text">Gestion des Seniors</h1>
+                    <button onclick="toggleModal('add-modal')" class="add-button" type="button">
                         + Ajouter un Senior
                     </button>
                 </div>
 
-                <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
+                <div id="api-message" class="hidden"></div>
 
-                <div class="border border-[#1C5B8F] rounded-[2.5rem] overflow-hidden bg-white shadow-sm">
+                <div class="table-container">
                     <table class="w-full text-left">
                         <thead class="bg-[#1C5B8F] text-white">
                             <tr>
@@ -64,8 +64,8 @@
                     </table>
                 </div>
 
-                <div id="add-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50 p-4">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-2xl border border-[#1C5B8F] shadow-xl overflow-y-auto max-h-[90vh]">
+                <div id="add-modal" class="hidden modal">
+                    <div class="add-modal">
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Senior</h3>
                         <form id="add-form" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
@@ -98,14 +98,14 @@
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="bg-[#1C5B8F] text-white px-8 py-2 rounded-full font-semibold">Ajouter</button>
+                                <button type="submit" class="add-button">Ajouter</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50 p-4">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-2xl border border-[#E1AB2B] shadow-xl overflow-y-auto max-h-[90vh]">
+                <div id="edit-modal" class="hidden modal">
+                    <div class="edit-modal">
                         <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Senior</h3>
                         <form id="edit-form" class="space-y-4">
                             <input type="hidden" id="edit-id"><input type="hidden" id="edit-motif"><input type="hidden" id="edit-duree">
@@ -140,45 +140,45 @@
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="bg-[#E1AB2B] text-white px-8 py-2 rounded-full font-semibold">Sauvegarder</button>
+                                <button type="submit" class="edit-button">Sauvegarder</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="ban-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50 p-4">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg border border-gray-700 shadow-xl">
-                        <h3 class="text-2xl font-semibold text-gray-700 mb-6">Bannissement</h3>
+                <div id="ban-modal" class="hidden modal">
+                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg shadow-xl shadow-black/20">
+                        <h3 class="text-2xl font-semibold text-black mb-6">Bannissement</h3>
                         <form id="ban-form" class="space-y-4">
                             <input type="hidden" id="ban-id">
                             <div>
                                 <label class="text-sm text-gray-500">Motif du bannissement *</label>
-                                <input type="text" id="ban-motif" class="w-full mt-2 p-3 border border-gray-700 rounded-xl outline-none" required>
+                                <input type="text" id="ban-motif" class="w-full mt-2 p-3 border border-black rounded-xl focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#8F9490]" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Durée du ban (en jours) *</label>
-                                <input type="number" id="ban-duree" min="1" class="w-full mt-2 p-3 border border-gray-700 rounded-xl outline-none" required>
+                                <input type="number" id="ban-duree" min="1" class="w-full mt-2 p-3 border border-black rounded-xl focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#8F9490]" required>
                             </div>
-                            <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+                            <div class="flex justify-between items-center mt-8 pt-4">
                                 <button type="button" id="btn-unban" class="text-red-500 font-bold hover:underline hidden">Lever le ban</button>
                                 <div class="flex gap-4 ml-auto">
                                     <button type="button" onclick="toggleModal('ban-modal')" class="text-gray-400">Annuler</button>
-                                    <button type="submit" class="bg-gray-700 text-white px-8 py-2 rounded-full font-semibold">Bannir</button>
+                                    <button type="submit" class="bg-black text-white px-8 py-2 rounded-full font-semibold">Bannir</button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg text-center border border-red-500 shadow-xl">
+                <div id="delete-modal" class="hidden modal">
+                    <div class="delete-modal">
                         <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
                         <h3 class="text-2xl font-semibold mb-2">Supprimer le senior ?</h3>
                         <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
                         <input type="hidden" id="delete-id">
                         <div class="flex justify-center gap-6">
-                            <button type="button" onclick="toggleModal('delete-modal')" class="px-8 py-2 border border-gray-200 rounded-full">Annuler</button>
-                            <button type="button" id="confirm-delete" class="bg-red-500 text-white px-8 py-2 rounded-full font-semibold">Oui, supprimer</button>
+                            <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
+                            <button type="button" id="confirm-delete" class="delete-button">Oui, supprimer</button>
                         </div>
                     </div>
                 </div>
@@ -270,7 +270,7 @@
                             </td>
                             <td class="p-4">${banCol}</td>
                             <td class="p-4 flex justify-center gap-3 mt-2">
-                                <button onclick="openBanModal(${s.id}, '${s.statut}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-gray-700 font-bold hover:underline">Bannir</button>
+                                <button onclick="openBanModal(${s.id}, '${s.statut}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-gray-700 font-bold">Bannir</button>
                                 <button onclick="openEditModal(${s.id}, '${s_nom}', '${s_prenom}', '${s.email}', '${s.num_telephone || ''}', '${dNaissance}', '${s.statut}', '${s_adresse}', '${s_ville}', '${s_cp}', '${s_pays}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-[#E1AB2B] font-bold">Modifier</button>
                                 <button onclick="openDeleteModal(${s.id})" class="text-red-500 font-bold">Supprimer</button>
                             </td>
@@ -288,7 +288,7 @@
             let paginationContainer = document.getElementById('pagination-controls');
 
             if (!paginationContainer) {
-                const tableContainer = document.querySelector('.overflow-hidden.bg-white');
+                const tableContainer = document.querySelector('.table-container');
                 paginationContainer = document.createElement('div');
                 paginationContainer.id = 'pagination-controls';
                 tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);

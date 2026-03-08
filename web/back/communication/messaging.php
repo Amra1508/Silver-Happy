@@ -39,24 +39,30 @@
             <?php include("../includes/header.php"); ?>
 
             <main class="p-8">
-                <div class="max-w-4xl mx-auto py-5">
-                    <div class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-                        <div class="bg-white px-6 py-4 border-b border-gray-200 text-center">
-                            <h4 class="text-xl font-semibold text-gray-800">Messagerie</h4>
-                        </div>
+                <div class="flex justify-between items-center mb-8">
+                    <a href="/back/communication/list_user.php">
+                        <button class="flex items-center bg-gray-100 hover:bg-gray-200 text-[#1C5B8F] px-4 py-2 rounded-full transition font-semibold text-xl">
+                            <img src="/back/icons/fleche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir aux utilisateurs
+                        </button>
+                    </a>
+                </div>
+                <div class="bg-white rounded-[2.5rem] shadow-xl shadow-[#1C5B8F]/20 overflow-hidden">
+                    <div class="bg-[#1C5B8F] px-6 py-4 text-center">
+                        <h4 class="text-2xl font-semibold text-white">Messagerie</h4>
+                    </div>
 
-                        <div id="message_user" class="p-6 overflow-y-auto bg-gray-50" style="max-height: 400px;">
-                        </div>
+                    <div id="message_user" class="p-6 overflow-y-auto bg-gray-100" style="max-height: 350px;">
+                    </div>
 
-                        <div class="bg-white px-6 py-4 border-t border-gray-200 flex items-center gap-2">
-                            <input type="text" id="add"
-                                class="flex-1 block w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md focus:border-blue-500 focus:ring-blue-500 focus:outline-none focus:ring focus:ring-opacity-40"
-                                placeholder="Envoyer un message...">
-                            <button type="submit" onclick="add_message()"
-                                class="px-6 py-2 font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-600 rounded-md hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-80">
-                                Envoyer
-                            </button>
-                        </div>
+                    <div class="bg-white px-6 py-4 flex items-center gap-2">
+                        <input type="text" id="add"
+                            class="flex-1 block w-full px-4 py-2 text-gray-700 bg-white rounded-md border border-[#1C5B8F]
+                            focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#E1AB2B]/60"
+                            placeholder="Envoyer un message...">
+                        <button type="submit" onclick="add_message()"
+                            class="px-6 py-2 font-medium text-white bg-[#1C5B8F] rounded-md hover:bg-[#E1AB2B]/60">
+                            Envoyer
+                        </button>
                     </div>
                 </div>
             </main>
@@ -92,7 +98,7 @@
                 const isMe = msg.id_expediteur == id1;
 
                 const alignClass = isMe ? 'items-end' : 'items-start';
-                const bubbleBg = isMe ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800';
+                const bubbleBg = isMe ? 'bg-[#1C5B8F] text-white' : 'bg-gray-200 text-[#1C5B8F]';
                 const roundedClass = isMe ? 'rounded-l-lg rounded-tr-lg' : 'rounded-r-lg rounded-tl-lg';
 
                 page += `
@@ -100,7 +106,7 @@
                     <div class='relative max-w-xs md:max-w-md px-4 py-2 shadow-sm ${bubbleBg} ${roundedClass} flex items-center gap-3'>
                         <span class="text-sm">${msg.contenu}</span>
                         <button type='button' 
-                                class='p-1 transition-colors duration-200 rounded-full hover:bg-black/10' 
+                                class='p-1 transition-colors duration-200 rounded-full hover:bg-black/20' 
                                 onclick='delete_message(${msg.id})'>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
@@ -110,7 +116,6 @@
 
             document.getElementById("message_user").innerHTML = page;
 
-            // Auto-scroll vers le bas lors de la réception de messages
             const container = document.getElementById("message_user");
             container.scrollTop = container.scrollHeight;
         }
