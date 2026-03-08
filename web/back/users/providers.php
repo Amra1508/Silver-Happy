@@ -41,13 +41,20 @@
             <main class="p-8">
 
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="title-text">Gestion des Prestataires</h1>
-                    <div class="flex gap-4">
+                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Gestion des Prestataires</h1>
+                    <div class="flex items-center gap-4">
+                        
+                        <select id="status-filter" onchange="loadProviders(1)" class="bg-white border border-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold focus:outline-none shadow-sm cursor-pointer">
+                            <option value="tous">Tous les statuts</option>
+                            <option value="en attente">En attente</option>
+                            <option value="validé">Validé</option>
+                            <option value="refusé">Refusé</option>
+                        </select>
+
                         <button onclick="startVerification()" class="edit-button" type="button">
                             Vérifier les prestataires
                         </button>
-                        <button onclick="toggleModal('add-modal')"
-                            class="add-button" type="button">
+                        <button onclick="toggleModal('add-modal')" class="add-button" type="button">
                             + Ajouter un Prestataire
                         </button>
                     </div>
@@ -291,7 +298,11 @@
 
         async function loadProviders(page = 1) {
             currentPage = page;
-            const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+            
+            const statusFilterElement = document.getElementById('status-filter');
+            const statusFilter = statusFilterElement ? statusFilterElement.value : 'tous';
+
+            const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}&status=${statusFilter}`);
 
             if (response.ok) {
                 const result = await response.json();

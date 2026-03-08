@@ -23,6 +23,7 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
     query := request.URL.Query()
     limitStr := query.Get("limit")
     pageStr := query.Get("page")
+    statusFilter := query.Get("status")
 
     limit := 10
     offset := 0
@@ -36,18 +37,31 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
         offset = (page - 1) * limit
     }
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE").Scan(&total)
+    whereClause := ""
+    var argsCount []interface{}
+    var argsQuery []interface{}
 
+    if statusFilter != "" && statusFilter != "tous" {
+        whereClause = " WHERE status = ?"
+        argsCount = append(argsCount, statusFilter)
+        argsQuery = append(argsQuery, statusFilter)
+    }
+
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE"+whereClause, argsCount...).Scan(&total)
+
+    argsQuery = append(argsQuery, limit, offset)
     sqlQuery := `
         SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), 
                IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), 
                IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), 
                IFNULL(type_prestation, ''), IFNULL(DATE_FORMAT(date_creation, '%d/%m/%Y à %H:%i'), '') 
         FROM PRESTATAIRE
+        ` + whereClause + `
         LIMIT ? OFFSET ?
     `
-    rows, err := db.DB.Query(sqlQuery, limit, offset)
+    
+    rows, err := db.DB.Query(sqlQuery, argsQuery...)
     if err != nil {
         http.Error(response, "Erreur BDD", http.StatusInternalServerError)
         return
