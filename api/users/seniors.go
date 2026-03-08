@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"main/db"
 	"main/models"
@@ -134,6 +135,23 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	if user.Nom == "" || user.Prenom == "" || user.Email == "" {
+		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
+		return
+	}
+
+	if user.DateNaissance != "" {
+		dateParsed, err := time.Parse("2006-01-02", user.DateNaissance)
+		if err != nil {
+			http.Error(response, "Format de date de naissance invalide (attendu: AAAA-MM-JJ)", http.StatusBadRequest)
+			return
+		}
+		if dateParsed.After(time.Now()) {
+			http.Error(response, "La date de naissance ne peut pas être dans le futur", http.StatusBadRequest)
+			return
+		}
+	}
+
 	taken, msg := isContactInfoTaken(user.Email, user.NumTelephone)
 	if taken {
 		http.Error(response, msg, http.StatusConflict)
@@ -145,7 +163,11 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		dateNaissance = nil
 	}
 
-	hashMdp, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	hashMdp, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(response, "Erreur interne", http.StatusInternalServerError)
+		return
+	}
 
 	resPlan, _ := db.DB.Exec("INSERT INTO PLANNING (nom, description, date_creation) VALUES (?, 'Planning généré automatiquement', NOW())", "Planning de "+user.Prenom)
 	idPlanning, _ := resPlan.LastInsertId()

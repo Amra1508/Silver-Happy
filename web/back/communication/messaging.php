@@ -110,7 +110,6 @@
 
             document.getElementById("message_user").innerHTML = page;
 
-            // Auto-scroll vers le bas lors de la réception de messages
             const container = document.getElementById("message_user");
             container.scrollTop = container.scrollHeight;
         }
