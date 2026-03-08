@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"main/db"
 	"main/models"
@@ -86,15 +87,42 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
+		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
+		return
+	}
+
+	if p.DateNaissance != "" {
+		dateParsed, err := time.Parse("2006-01-02", p.DateNaissance)
+		if err != nil {
+			http.Error(response, "Format de date de naissance invalide (attendu: AAAA-MM-JJ)", http.StatusBadRequest)
+			return
+		}
+		if dateParsed.After(time.Now()) {
+			http.Error(response, "La date de naissance ne peut pas être dans le futur", http.StatusBadRequest)
+			return
+		}
+		
+		dateLimite := time.Now().AddDate(-18, 0, 0)
+		if dateParsed.After(dateLimite) {
+			http.Error(response, "Un prestataire doit avoir au moins 18 ans", http.StatusBadRequest)
+			return
+		}
+	}
+
 	taken, msg := isContactInfoTaken(p.Email, p.NumTelephone)
 	if taken {
 		http.Error(response, msg, http.StatusConflict)
 		return
 	}
 
-	hashMdp, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	hashMdp, err := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(response, "Erreur lors du hachage du mot de passe", http.StatusInternalServerError)
+		return
+	}
 
-	_, err := db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
+	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
 		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.TypePrestation, string(hashMdp))
 
 	if err != nil {
