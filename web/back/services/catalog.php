@@ -72,22 +72,22 @@
                         <form id="add-form" class="space-y-6">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="add-nom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-nom" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="add-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="add-description" class="add-input" required></textarea>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Disponibilité</label>
-                                <select id="add-disponibilite" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <select id="add-disponibilite" class="add-input" required>
                                     <option value="1">Oui</option>
                                     <option value="0">Non</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Utilisateur (Senior)</label>
-                                <select id="add-id-utilisateur" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <select id="add-id-utilisateur" class="add-input" required>
                                     <option value="">Chargement...</option>
                                 </select>
                             </div>
@@ -106,22 +106,22 @@
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="edit-nom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-nom" class="edit-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="edit-description" class="edit-input" required></textarea>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Disponibilité</label>
-                                <select id="edit-disponibilite" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <select id="edit-disponibilite" class="edit-input" required>
                                     <option value="1">Oui</option>
                                     <option value="0">Non</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Utilisateur (Senior)</label>
-                                <select id="edit-id-utilisateur" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <select id="edit-id-utilisateur" class="edit-input" required>
                                     <option value="">Chargement...</option>
                                 </select>
                             </div>
@@ -150,7 +150,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/service"; 
+        const API_BASE = "http://localhost:8082/service";
         const API_USERS = "http://localhost:8082/seniors/read";
         let currentPage = 1;
         const limit = 10;
@@ -170,7 +170,7 @@
             try {
                 const response = await fetch(API_USERS);
                 const utilisateurs = await response.json();
-                
+
                 let optionsHtml = '<option value="">Sélectionnez un utilisateur...</option>';
 
                 if (utilisateurs && utilisateurs.length > 0) {
@@ -178,7 +178,7 @@
                         const id = u.id || u.ID;
                         const prenom = u.prenom || u.Prenom || '';
                         const nom = u.nom || u.Nom || '';
-                        
+
                         optionsHtml += `<option value="${id}">${prenom} ${nom} (ID: ${id})</option>`;
                     });
                 } else {
@@ -200,7 +200,7 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                
+
                 const services = result.data || [];
                 const tbody = document.getElementById('service-table-body');
                 tbody.innerHTML = '';
@@ -219,7 +219,7 @@
                     const id_utilisateur = c.id_utilisateur || c.IdUtilisateur;
 
                     const isDispo = parseInt(disponibilite) === 1 ? 'Oui' : 'Non';
-                    
+
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
                             <td class="p-4 text-gray-400">#${id}</td>
@@ -243,7 +243,7 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
                 const tableContainer = document.querySelector('.overflow-hidden.bg-white');
                 paginationContainer = document.createElement('div');
@@ -284,7 +284,7 @@
                 disponibilite: parseInt(document.getElementById('add-disponibilite').value),
                 id_utilisateur: parseInt(document.getElementById('add-id-utilisateur').value)
             };
-            
+
             if (!data.id_utilisateur) {
                 showAlert("Veuillez sélectionner un utilisateur.", false);
                 return;
@@ -293,7 +293,9 @@
             try {
                 const response = await fetch(`${API_BASE}/create`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (response.ok) {
@@ -330,7 +332,9 @@
             try {
                 const res = await fetch(`${API_BASE}/update/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (res.ok) {
@@ -370,7 +374,7 @@
 
         window.onload = () => {
             fetchServices(1);
-            fetchUtilisateurs(); 
+            fetchUtilisateurs();
         };
     </script>
 </body>

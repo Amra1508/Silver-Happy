@@ -1,7 +1,11 @@
 @layer components {
-  .form-input {
-    @apply w-full rounded-md bg-[#D4D4D4]/40 px-3 py-1.5 
-            focus:outline-none focus:outline-2 focus:-outline-offset-2 focus:outline-[#E1AB2B]/60;
+  .add-input {
+    @apply w-full rounded-xl bg-white p-3 mt-2 border border-[#1C5B8F]
+            focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#E1AB2B]/60;
+  }
+  .edit-input {
+    @apply w-full rounded-xl bg-white p-3 mt-2 border border-[#E1AB2B]/60
+            focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#1C5B8F];
   }
   .header-button {
     @apply border border-[#1C5B8F] text-[#1C5B8F] px-4 py-1 rounded-full 
@@ -23,7 +27,6 @@
   .sidebar-links {
     @apply flex items-center px-2 py-4 hover:bg-[#1C5B8F] border border-white text-lg font-medium;
   }
-  /* nouveaux elements css que j'ai rajouté pour le tableau et les modal (et ptit coup de folie j'ai mis un boutton red pour suppriemr */
   .simple-table {
     @apply w-full text-left bg-white shadow-md rounded-xl overflow-hidden border border-gray-100;
   }

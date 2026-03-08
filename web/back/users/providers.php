@@ -73,7 +73,7 @@
 
                 <div id="voir-plus-modal" class="hidden fixed inset-0 bg-black bg-opacity-40 items-center justify-center z-50 p-4">
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-3xl border border-[#1C5B8F] shadow-xl overflow-y-auto max-h-[90vh]">
-                        
+
                         <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-6">
                             <h3 class="text-2xl font-semibold text-[#1C5B8F]">Détails du Prestataire</h3>
                             <div class="flex items-center gap-4">
@@ -102,7 +102,7 @@
 
                         <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-8">
                             <h4 class="font-bold text-gray-700 mb-2">Documents du prestataire</h4>
-                            
+
                             <div id="vp-documents-list" class="text-sm text-gray-500 mb-6">
                             </div>
 
@@ -131,7 +131,7 @@
 
                         <div id="validation-actions" class="hidden flex-col gap-4 pt-4 border-t border-gray-100">
                             <input type="text" id="motif-refus" placeholder="Motif du refus (ex: Casier judiciaire invalide)..." class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:border-red-400 text-sm">
-                            
+
                             <div class="flex justify-center gap-4">
                                 <button type="button" onclick="rejectVerification()" class="bg-red-50 text-red-600 border border-red-200 px-6 py-2 rounded-xl font-bold hover:bg-red-100 transition">Refuser</button>
                                 <button type="button" onclick="skipVerification()" class="bg-gray-100 text-gray-600 px-6 py-2 rounded-xl font-bold hover:bg-gray-200 transition">Garder en attente</button>
@@ -146,23 +146,23 @@
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Prestataire</h3>
                         <form id="add-form" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="add-nom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="add-prenom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></div>
+                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="add-nom" class="add-input" required></div>
+                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="add-prenom" class="add-input" required></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="add-email" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="add-tel" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="add-email" class="add-input" required></div>
+                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="add-tel" class="add-input"></div>
                             </div>
                             <div class="grid grid-cols-3 gap-4">
-                                <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="add-siret" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
-                                <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="add-type" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="add-tarifs" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none"></div>
+                                <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="add-siret" class="add-input"></div>
+                                <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="add-type" class="add-input"></div>
+                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="add-tarifs" class="add-input"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="add-date" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></div>
+                                <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="add-date" class="add-input" required></div>
                                 <div>
                                     <label class="text-sm text-gray-500">Statut initial</label>
-                                    <select id="add-status" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
+                                    <select id="add-status" class="add-input">
                                         <option value="en attente">En attente</option>
                                         <option value="validé">Validé</option>
                                         <option value="refusé">Refusé</option>
@@ -173,7 +173,7 @@
                                 <h4 class="text-sm font-bold text-gray-700 mb-2">Documents (Facultatif)</h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <input type="text" id="add-doc-type" placeholder="Type (ex: Kbis)" class="w-full p-2 border border-[#1C5B8F] rounded-xl focus:outline-none text-sm">
+                                        <input type="text" id="add-doc-type" placeholder="Type (ex: Kbis)" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#E1AB2B]/60 text-sm">
                                     </div>
                                     <div>
                                         <input type="file" id="add-doc-file" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-[#1C5B8F] hover:file:bg-blue-100">
@@ -195,29 +195,29 @@
                             <input type="hidden" id="edit-id">
 
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="edit-nom" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="edit-prenom" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required></div>
+                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="edit-nom" class="edit-input" required></div>
+                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="edit-prenom" class="edit-input" required></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="edit-email" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="edit-tel" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="edit-email" class="edit-input" required></div>
+                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="edit-tel" class="edit-input"></div>
                             </div>
                             <div class="grid grid-cols-3 gap-4">
-                                <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="edit-siret" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
-                                <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="edit-type" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="edit-tarifs" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none"></div>
+                                <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="edit-siret" class="edit-input"></div>
+                                <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="edit-type" class="edit-input"></div>
+                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="edit-tarifs" class="edit-input"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="edit-date" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required></div>
+                                <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="edit-date" class="edit-input" required></div>
                                 <div>
                                     <label class="text-sm text-gray-500">Statut</label>
-                                    <select id="edit-status" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none">
+                                    <select id="edit-status" class="edit-input">
                                     </select>
                                 </div>
                             </div>
                             <div class="pt-2">
                                 <label class="text-sm text-gray-500">Motif si refusé</label>
-                                <input type="text" id="edit-motif" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none">
+                                <input type="text" id="edit-motif" class="edit-input">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
@@ -236,7 +236,7 @@
                         <div class="flex justify-center gap-6 border-t border-gray-100 pt-4">
                             <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
                             <button type="button" id="confirm-delete" class="bg-red-500 text-white px-8 py-2 rounded-full font-semibold">Oui, supprimer</button>
-                        </div> 
+                        </div>
                     </div>
                 </div>
 
@@ -248,7 +248,7 @@
                         <div class="flex justify-center gap-4">
                             <button type="button" onclick="toggleModal('delete-doc-modal')" class="text-gray-400 px-4">Annuler</button>
                             <button type="button" id="confirm-delete-doc" class="bg-red-500 text-white px-6 py-2 rounded-full font-semibold">Oui, supprimer</button>
-                        </div> 
+                        </div>
                     </div>
                 </div>
 
@@ -264,7 +264,7 @@
         let pendingProviders = [];
         let selectedProviderId = null;
         let currentVerificationIndex = 0;
-        
+
         let currentPage = 1;
         const limit = 10;
 
@@ -339,9 +339,9 @@
                         </tr>
                     `;
                 }
-                
+
                 renderPagination(result.totalPages, result.total);
-                
+
             } else {
                 showAlert("Erreur pour lire la base de données.", false);
             }
@@ -349,7 +349,7 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
                 const tableContainer = document.querySelector('.overflow-hidden.bg-white');
                 paginationContainer = document.createElement('div');
@@ -384,7 +384,7 @@
 
         async function setupDetailsModal(id) {
             let provider = getProviderById(id);
-            if(!provider) return;
+            if (!provider) return;
             selectedProviderId = id;
 
             document.getElementById('upload-provider-id').value = id;
@@ -533,8 +533,13 @@
             }
         }
 
-        function approveVerification() { saveVerificationStatus("validé"); }
-        function rejectVerification() { saveVerificationStatus("refusé"); }
+        function approveVerification() {
+            saveVerificationStatus("validé");
+        }
+
+        function rejectVerification() {
+            saveVerificationStatus("refusé");
+        }
 
         function prepareEdit() {
             toggleModal('voir-plus-modal');
@@ -599,12 +604,14 @@
 
             const response = await fetch(API_BASE + "/create", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                const nouveauPrestataire = await response.json(); 
+                const nouveauPrestataire = await response.json();
 
                 let fileInput = document.getElementById('add-doc-file');
                 if (fileInput.files.length > 0 && nouveauPrestataire.id) {
@@ -648,7 +655,9 @@
 
             const response = await fetch(API_BASE + "/update/" + id, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
@@ -712,8 +721,8 @@
         }
 
         document.getElementById('confirm-delete-doc').addEventListener('click', async function() {
-            const response = await fetch(API_BASE + "/document/delete/" + selectedDocId, { 
-                method: "DELETE" 
+            const response = await fetch(API_BASE + "/document/delete/" + selectedDocId, {
+                method: "DELETE"
             });
 
             if (response.ok) {

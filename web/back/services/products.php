@@ -72,25 +72,25 @@
                         <form id="add-form" class="space-y-6">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="add-nom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-nom" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="add-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="add-description" class="add-input" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Prix (€)</label>
-                                    <input type="number" id="add-prix" min="1" step="0.01" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="number" id="add-prix" min="1" step="0.01" class="add-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Stock</label>
-                                    <input type="number" id="add-stock" min="1" step="1" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="number" id="add-stock" min="1" step="1" class="add-input" required>
                                 </div>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Image du produit</label>
-                                <input type="file" id="add-image" accept="image/*" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
+                                <input type="file" id="add-image" accept="image/*" class="add-input">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
@@ -107,25 +107,25 @@
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="edit-nom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-nom" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="edit-description" class="add-input" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Prix (€)</label>
-                                    <input type="number" id="edit-prix" min="1" step="0.01" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="number" id="edit-prix" min="1" step="0.01" class="add-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Stock</label>
-                                    <input type="number" id="edit-stock" min="1" step="1" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="number" id="edit-stock" min="1" step="1" class="add-input" required>
                                 </div>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Nouvelle image (laisser vide pour conserver l'actuelle)</label>
-                                <input type="file" id="edit-image" accept="image/*" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
+                                <input type="file" id="edit-image" accept="image/*" class="add-input">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
@@ -170,7 +170,7 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/produit/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                
+
                 const produits = result.data || [];
                 const tbody = document.getElementById('produit-table-body');
                 tbody.innerHTML = '';
@@ -183,7 +183,7 @@
 
                 produits.forEach(p => {
                     const imgSrc = p.image ? `${API_BASE}/${p.image}` : 'https://via.placeholder.com/150';
-                    
+
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
                             <td class="p-4">
@@ -209,7 +209,7 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
                 const tableContainer = document.querySelector('.overflow-hidden.bg-white');
                 paginationContainer = document.createElement('div');
@@ -244,13 +244,13 @@
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const formData = new FormData();
             formData.append('nom', document.getElementById('add-nom').value);
             formData.append('description', document.getElementById('add-description').value);
             formData.append('prix', document.getElementById('add-prix').value);
             formData.append('stock', document.getElementById('add-stock').value);
-            
+
             const fileInput = document.getElementById('add-image');
             if (fileInput.files[0]) {
                 formData.append('image', fileInput.files[0]);
@@ -288,13 +288,13 @@
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
-            
+
             const formData = new FormData();
             formData.append('nom', document.getElementById('edit-nom').value);
             formData.append('description', document.getElementById('edit-description').value);
             formData.append('prix', document.getElementById('edit-prix').value);
             formData.append('stock', document.getElementById('edit-stock').value);
-            
+
             const fileInput = document.getElementById('edit-image');
             if (fileInput.files[0]) {
                 formData.append('image', fileInput.files[0]);

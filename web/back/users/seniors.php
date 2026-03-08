@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +11,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Alata', 'sans-serif'], } } }
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif'],
+                    }
+                }
+            }
         }
+
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
             if (modal) {
@@ -21,6 +29,7 @@
         }
     </script>
 </head>
+
 <body class="bg-gray-50">
     <div class="flex min-h-screen">
 
@@ -60,28 +69,28 @@
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Senior</h3>
                         <form id="add-form" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="add-nom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="add-prenom" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl outline-none" required></div>
+                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="add-nom" class="add-input" required></div>
+                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="add-prenom" class="add-input" required></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="add-email" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="add-tel" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="add-email" class="add-input" required></div>
+                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="add-tel" class="add-input"></div>
                             </div>
                             <div class="border-t border-gray-100 pt-4 mt-2">
                                 <label class="text-sm text-[#1C5B8F] font-bold">Adresse</label>
                                 <div class="grid grid-cols-1 mt-2 mb-4">
-                                    <input type="text" id="add-adresse" placeholder="N° et Rue" class="w-full p-3 border border-[#1C5B8F] rounded-xl outline-none">
+                                    <input type="text" id="add-adresse" placeholder="N° et Rue" class="add-input">
                                 </div>
                                 <div class="grid grid-cols-3 gap-4">
-                                    <input type="text" id="add-cp" placeholder="Code Postal" class="w-full p-3 border border-[#1C5B8F] rounded-xl outline-none">
-                                    <input type="text" id="add-ville" placeholder="Ville" class="w-full p-3 border border-[#1C5B8F] rounded-xl outline-none">
-                                    <input type="text" id="add-pays" placeholder="Pays" class="w-full p-3 border border-[#1C5B8F] rounded-xl outline-none">
+                                    <input type="text" id="add-cp" placeholder="Code Postal" class="add-input">
+                                    <input type="text" id="add-ville" placeholder="Ville" class="add-input">
+                                    <input type="text" id="add-pays" placeholder="Pays" class="add-input">
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-                                <div><label class="text-sm text-gray-500">Date de naissance</label><input type="date" id="add-date" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Date de naissance</label><input type="date" id="add-date" class="add-input"></div>
                                 <div><label class="text-sm text-gray-500">Statut</label>
-                                    <select id="add-statut" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl outline-none">
+                                    <select id="add-statut" class="add-input">
                                         <option value="user">User</option>
                                         <option value="admin">Admin</option>
                                     </select>
@@ -101,28 +110,28 @@
                         <form id="edit-form" class="space-y-4">
                             <input type="hidden" id="edit-id"><input type="hidden" id="edit-motif"><input type="hidden" id="edit-duree">
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="edit-nom" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="edit-prenom" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl outline-none" required></div>
+                                <div><label class="text-sm text-gray-500">Nom *</label><input type="text" id="edit-nom" class="edit-input" required></div>
+                                <div><label class="text-sm text-gray-500">Prénom *</label><input type="text" id="edit-prenom" class="edit-input" required></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="edit-email" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl outline-none" required></div>
-                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="edit-tel" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Email *</label><input type="email" id="edit-email" class="edit-input" required></div>
+                                <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="edit-tel" class="edit-input"></div>
                             </div>
                             <div class="border-t border-gray-100 pt-4 mt-2">
                                 <label class="text-sm text-[#E1AB2B] font-bold">Adresse</label>
                                 <div class="grid grid-cols-1 mt-2 mb-4">
-                                    <input type="text" id="edit-adresse" class="w-full p-3 border border-[#E1AB2B] rounded-xl outline-none">
+                                    <input type="text" id="edit-adresse" class="edit-input">
                                 </div>
                                 <div class="grid grid-cols-3 gap-4">
-                                    <input type="text" id="edit-cp" class="w-full p-3 border border-[#E1AB2B] rounded-xl outline-none">
-                                    <input type="text" id="edit-ville" class="w-full p-3 border border-[#E1AB2B] rounded-xl outline-none">
-                                    <input type="text" id="edit-pays" class="w-full p-3 border border-[#E1AB2B] rounded-xl outline-none">
+                                    <input type="text" id="edit-cp" class="edit-input">
+                                    <input type="text" id="edit-ville" class="edit-input">
+                                    <input type="text" id="edit-pays" class="edit-input">
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
-                                <div><label class="text-sm text-gray-500">Date de naissance</label><input type="date" id="edit-date" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl outline-none"></div>
+                                <div><label class="text-sm text-gray-500">Date de naissance</label><input type="date" id="edit-date" class="edit-input"></div>
                                 <div><label class="text-sm text-gray-500">Statut</label>
-                                    <select id="edit-statut" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl outline-none">
+                                    <select id="edit-statut" class="edit-input">
                                         <option value="user">User</option>
                                         <option value="admin">Admin</option>
                                         <option value="banni">Banni</option>
@@ -196,7 +205,7 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                
+
                 const seniors = result.data || [];
                 const tbody = document.getElementById('senior-table-body');
                 tbody.innerHTML = '';
@@ -209,12 +218,12 @@
 
                 seniors.forEach(s => {
                     let dNaissance = s.date_naissance ? s.date_naissance.substring(0, 10) : '';
-                    
+
                     let banCol = '<span class="text-gray-400 italic">-</span>';
                     if (s.statut === 'banni') {
                         banCol = `<span class="text-red-500 font-bold">${s.motif_bannisement || s.motif_bannissement || 'Non précisé'}</span><br><span class="text-sm text-gray-500">${s.duree_bannissement || 0} jours</span>`;
                     }
-                    
+
                     const s_nom = s.nom ? s.nom.replace(/'/g, "\\'") : '';
                     const s_prenom = s.prenom ? s.prenom.replace(/'/g, "\\'") : '';
                     const s_adresse = s.adresse ? s.adresse.replace(/'/g, "\\'") : '';
@@ -256,7 +265,7 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
                 const tableContainer = document.querySelector('.overflow-hidden.bg-white');
                 paginationContainer = document.createElement('div');
@@ -307,13 +316,15 @@
             };
             const response = await fetch(`${API_BASE}/create`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(data)
             });
             if (response.ok) {
                 toggleModal('add-modal');
                 e.target.reset();
-                fetchSeniors(1); 
+                fetchSeniors(1);
                 showAlert("Senior créé !", true);
             }
         });
@@ -332,7 +343,7 @@
             document.getElementById('edit-pays').value = pays;
             document.getElementById('edit-motif').value = motif;
             document.getElementById('edit-duree').value = duree;
-            
+
             toggleModal('edit-modal');
         }
 
@@ -355,7 +366,9 @@
             };
             const res = await fetch(`${API_BASE}/update/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(data)
             });
             if (res.ok) {
@@ -369,7 +382,7 @@
             document.getElementById('ban-id').value = id;
             document.getElementById('ban-motif').value = motif;
             document.getElementById('ban-duree').value = duree > 0 ? duree : '';
-            
+
             if (statut === 'banni') {
                 document.getElementById('btn-unban').classList.remove('hidden');
             } else {
@@ -382,13 +395,15 @@
             e.preventDefault();
             const id = document.getElementById('ban-id').value;
             const data = {
-                statut: 'banni', 
+                statut: 'banni',
                 motif_bannissement: document.getElementById('ban-motif').value,
                 duree_bannissement: parseInt(document.getElementById('ban-duree').value) || 0
             };
             const res = await fetch(`${API_BASE}/ban/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(data)
             });
             if (res.ok) {
@@ -401,13 +416,15 @@
         document.getElementById('btn-unban').addEventListener('click', async () => {
             const id = document.getElementById('ban-id').value;
             const data = {
-                statut: 'user', 
-                motif_bannissement: '', 
-                duree_bannissement: 0  
+                statut: 'user',
+                motif_bannissement: '',
+                duree_bannissement: 0
             };
             const res = await fetch(`${API_BASE}/ban/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(data)
             });
             if (res.ok) {
@@ -424,7 +441,9 @@
 
         document.getElementById('confirm-delete').addEventListener('click', async () => {
             const id = document.getElementById('delete-id').value;
-            const res = await fetch(`${API_BASE}/delete/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/delete/${id}`, {
+                method: 'DELETE'
+            });
             if (res.ok) {
                 toggleModal('delete-modal');
                 fetchSeniors(currentPage);
@@ -435,4 +454,5 @@
         window.onload = () => fetchSeniors(1);
     </script>
 </body>
+
 </html>

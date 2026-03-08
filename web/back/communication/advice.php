@@ -72,15 +72,15 @@
                         <form id="add-form" class="space-y-6">
                             <div>
                                 <label class="text-sm text-gray-500">Titre</label>
-                                <input type="text" id="add-titre" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-titre" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="add-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="add-description" class="add-input" required></textarea>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Catégorie</label>
-                                <input type="text" id="add-categorie" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-categorie" class="add-input" required>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
@@ -97,15 +97,15 @@
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Titre</label>
-                                <input type="text" id="edit-titre" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-titre" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="edit-description" class="add-input" required></textarea>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Catégorie</label>
-                                <input type="text" id="edit-categorie" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-categorie" class="add-input" required>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
@@ -149,7 +149,7 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                
+
                 const conseils = result.data || [];
                 const tbody = document.getElementById('conseil-table-body');
                 tbody.innerHTML = '';
@@ -184,7 +184,7 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
                 const tableContainer = document.querySelector('.overflow-hidden.bg-white');
                 paginationContainer = document.createElement('div');

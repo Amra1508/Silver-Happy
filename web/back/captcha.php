@@ -70,11 +70,11 @@
                         <form id="add-form" class="space-y-6">
                             <div>
                                 <label class="text-sm text-gray-500">Question ou consigne</label>
-                                <input type="text" id="add-question" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-question" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Réponse exacte attendue</label>
-                                <input type="text" id="add-reponse" class="w-full mt-2 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-reponse" class="add-input" required>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
@@ -91,11 +91,11 @@
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Question</label>
-                                <input type="text" id="edit-question" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-question" class="edit-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Réponse</label>
-                                <input type="text" id="edit-reponse" class="w-full mt-2 p-3 border border-[#E1AB2B] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-reponse" class="edit-input" required>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
@@ -139,7 +139,7 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                
+
                 const captchas = result.data || [];
                 const tbody = document.getElementById('captcha-table-body');
                 tbody.innerHTML = '';
@@ -172,7 +172,7 @@
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
-            
+
             if (!paginationContainer) {
                 const tableContainer = document.querySelector('.overflow-hidden.bg-white');
                 paginationContainer = document.createElement('div');
@@ -214,14 +214,16 @@
             try {
                 const response = await fetch(`${API_BASE}/create`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (response.ok) {
                     toggleModal('add-modal');
                     e.target.reset();
                     showAlert("Captcha ajouté !", true);
-                    fetchCaptchas(1); 
+                    fetchCaptchas(1);
                 }
             } catch (err) {
                 showAlert("Erreur lors de l'envoi", false);
@@ -245,7 +247,9 @@
             try {
                 const res = await fetch(`${API_BASE}/update/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
                 if (res.ok) {
@@ -266,11 +270,13 @@
         document.getElementById('confirm-delete').addEventListener('click', async () => {
             const id = document.getElementById('delete-id').value;
             try {
-                const res = await fetch(`${API_BASE}/delete/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE}/delete/${id}`, {
+                    method: 'DELETE'
+                });
                 if (res.ok) {
                     toggleModal('delete-modal');
                     showAlert("Captcha supprimé", true);
-                    fetchCaptchas(currentPage); 
+                    fetchCaptchas(currentPage);
                 }
             } catch (err) {
                 showAlert("Erreur de suppression", false);
