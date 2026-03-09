@@ -10,7 +10,7 @@ if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
         <img src="/back/icons/SilverHappy_logo.png" alt="logo" class="w-full object-contain">
     </div>
 
-    <div class="my-2">
+    <div class="my-2 flex-1 overflow-y-auto">
         <a href="/back/dashboard.php" class="border-t-2 sidebar-links">
             <img src="/back/icons/tableau_bord.svg" alt="dashboard" class="w-7 h-7 mx-4">
             <span>Tableau de bord</span>
