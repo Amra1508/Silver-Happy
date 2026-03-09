@@ -70,40 +70,40 @@
                 </div>
 
                 <div id="add-modal" class="hidden modal">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg border border-[#1C5B8F] shadow-xl max-h-[90vh] overflow-y-auto">
+                    <div class="add-modal">
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Événement</h3>
                         <form id="add-form" class="space-y-4">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="add-nom" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="add-nom" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="add-description" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="add-description" class="add-input" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Lieu</label>
-                                    <input type="text" id="add-lieu" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="text" id="add-lieu" class="add-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Nombre de places</label>
-                                    <input type="number" id="add-places" min="1" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="number" id="add-places" min="1" class="add-input" required>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Date de début</label>
-                                    <input type="datetime-local" id="add-debut" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="datetime-local" id="add-debut" class="add-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Date de fin</label>
-                                    <input type="datetime-local" id="add-fin" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="datetime-local" id="add-fin" class="add-input" required>
                                 </div>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Image (Affiche)</label>
-                                <input type="file" id="add-image" accept="image/*" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
+                                <input type="file" id="add-image" accept="image/*" class="add-input">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
@@ -114,41 +114,41 @@
                 </div>
 
                 <div id="edit-modal" class="hidden modal">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-lg border border-[#E1AB2B] shadow-xl max-h-[90vh] overflow-y-auto">
+                    <div class="edit-modal">
                         <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier l'Événement</h3>
                         <form id="edit-form" class="space-y-4">
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="edit-nom" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                <input type="text" id="edit-nom" class="edit-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required></textarea>
+                                <textarea id="edit-description" class="edit-input" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Lieu</label>
-                                    <input type="text" id="edit-lieu" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="text" id="edit-lieu" class="edit-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Nombre de places</label>
-                                    <input type="number" id="edit-places" min="1" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="number" id="edit-places" min="1" class="edit-input" required>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Date de début</label>
-                                    <input type="datetime-local" id="edit-debut" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="datetime-local" id="edit-debut" class="edit-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Date de fin</label>
-                                    <input type="datetime-local" id="edit-fin" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none" required>
+                                    <input type="datetime-local" id="edit-fin" class="edit-input" required>
                                 </div>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Nouvelle image (laisser vide pour conserver l'actuelle)</label>
-                                <input type="file" id="edit-image" accept="image/*" class="w-full mt-1 p-3 border border-[#1C5B8F] rounded-xl focus:outline-none">
+                                <input type="file" id="edit-image" accept="image/*" class="edit-input">
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
                                 <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
@@ -294,8 +294,8 @@
                             <td class="p-4 text-sm">${displayFin}</td>
                             <td class="p-4 text-sm text-gray-600 font-medium">${duree}</td>
                             <td class="p-4 flex justify-center gap-4">
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}')" class="text-[#E1AB2B] font-bold hover:underline">Modifier</button>
-                                <button onclick="openDeleteModal(${id})" class="text-red-500 font-bold hover:underline">Supprimer</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-1 rounded-lg font-bold">Modifier</button>
+                                <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-1 rounded-lg font-bold">Supprimer</button>
                             </td>
                         </tr>
                     `;

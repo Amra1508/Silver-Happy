@@ -43,8 +43,8 @@
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="text-3xl font-semibold text-[#1C5B8F]">Gestion des Prestataires</h1>
                     <div class="flex items-center gap-4">
-                        
-                        <select id="status-filter" onchange="loadProviders(1)" class="bg-white border border-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold focus:outline-none shadow-sm cursor-pointer">
+
+                        <select id="status-filter" onchange="loadProviders(1)" class="bg-[#F5F5F5]/40 shadow-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold hover:bg-[#D9D9D9]/40 focus:outline-none shadow-sm cursor-pointer">
                             <option value="tous">Tous les statuts</option>
                             <option value="en attente">En attente</option>
                             <option value="validé">Validé</option>
@@ -298,7 +298,7 @@
 
         async function loadProviders(page = 1) {
             currentPage = page;
-            
+
             const statusFilterElement = document.getElementById('status-filter');
             const statusFilter = statusFilterElement ? statusFilterElement.value : 'tous';
 

@@ -194,8 +194,8 @@
                             <td class="p-4 font-bold text-[#1C5B8F]">${p.prix} €</td>
                             <td class="p-4">${p.stock}</td>
                             <td class="p-4 flex justify-center gap-4">
-                                <button onclick="openEditModal(${p.id}, '${p.nom.replace(/'/g, "\\'")}', '${p.description.replace(/'/g, "\\'")}', '${p.prix}', '${p.stock}')" class="text-[#E1AB2B] font-bold hover:underline">Modifier</button>
-                                <button onclick="openDeleteModal(${p.id})" class="text-red-500 font-bold hover:underline">Supprimer</button>
+                                <button onclick="openEditModal(${p.id}, '${p.nom.replace(/'/g, "\\'")}', '${p.description.replace(/'/g, "\\'")}', '${p.prix}', '${p.stock}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-1 rounded-lg font-bold">Modifier</button>
+                                <button onclick="openDeleteModal(${p.id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-1 rounded-lg font-bold">Supprimer</button>
                             </td>
                         </tr>
                     `;

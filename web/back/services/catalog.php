@@ -243,8 +243,8 @@
                             <td class="p-4">${isDispo}</td>
                             <td class="p-4">${userDisplay}</td>
                             <td class="p-4 flex justify-center gap-8">
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', ${disponibilite}, ${id_utilisateur || null})" class="text-[#E1AB2B] font-bold">Modifier</button>
-                                <button onclick="openDeleteModal(${id})" class="text-red-500 font-bold">Supprimer</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', ${disponibilite}, ${id_utilisateur || null})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-1 rounded-lg font-bold">Modifier</button>
+                                <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-1 rounded-lg font-bold">Supprimer</button>
                             </td>
                         </tr>
                     `;

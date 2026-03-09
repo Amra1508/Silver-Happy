@@ -160,10 +160,10 @@
                                 <input type="number" id="ban-duree" min="1" class="w-full mt-2 p-3 border border-black rounded-xl focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#8F9490]" required>
                             </div>
                             <div class="flex justify-between items-center mt-8 pt-4">
-                                <button type="button" id="btn-unban" class="text-red-500 font-bold hover:underline hidden">Lever le ban</button>
+                                <button type="button" id="btn-unban" class="delete-button hidden">Lever le ban</button>
                                 <div class="flex gap-4 ml-auto">
                                     <button type="button" onclick="toggleModal('ban-modal')" class="text-gray-400">Annuler</button>
-                                    <button type="submit" class="bg-black text-white px-8 py-2 rounded-full font-semibold">Bannir</button>
+                                    <button type="submit" class="text-black bg-[#D9D9D9]/40 hover:bg-[#D9D9D9]/80 px-8 py-2 rounded-full font-semibold">Bannir</button>
                                 </div>
                             </div>
                         </form>
@@ -242,7 +242,7 @@
 
                     let banCol = '<span class="text-gray-400 italic">-</span>';
                     if (s.statut === 'banni') {
-                        banCol = `<span class="text-red-500 font-bold">${s.motif_bannisement || s.motif_bannissement || 'Non précisé'}</span><br><span class="text-sm text-gray-500">${s.duree_bannissement || 0} jours</span>`;
+                        banCol = `<span class="text-red-500 font-bold">${s.motif_bannissement || 'Non précisé'}</span><br><span class="text-sm text-gray-500">${s.duree_bannissement || 0} jours</span>`;
                     }
 
                     const s_nom = s.nom ? s.nom.replace(/'/g, "\\'") : '';
@@ -251,7 +251,7 @@
                     const s_ville = s.ville ? s.ville.replace(/'/g, "\\'") : '';
                     const s_cp = s.code_postal ? s.code_postal.replace(/'/g, "\\'") : '';
                     const s_pays = s.pays ? s.pays.replace(/'/g, "\\'") : '';
-                    const s_motif = s.motif_bannisement || s.motif_bannissement ? (s.motif_bannisement || s.motif_bannissement).replace(/'/g, "\\'") : '';
+                    const s_motif = s.motif_bannissement ? (s.motif_bannissement).replace(/'/g, "\\'") : '';
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 border-b">
@@ -270,9 +270,9 @@
                             </td>
                             <td class="p-4">${banCol}</td>
                             <td class="p-4 flex justify-center gap-3 mt-2">
-                                <button onclick="openBanModal(${s.id}, '${s.statut}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-gray-700 font-bold">Bannir</button>
-                                <button onclick="openEditModal(${s.id}, '${s_nom}', '${s_prenom}', '${s.email}', '${s.num_telephone || ''}', '${dNaissance}', '${s.statut}', '${s_adresse}', '${s_ville}', '${s_cp}', '${s_pays}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-[#E1AB2B] font-bold">Modifier</button>
-                                <button onclick="openDeleteModal(${s.id})" class="text-red-500 font-bold">Supprimer</button>
+                                <button onclick="openBanModal(${s.id}, '${s.statut}', '${s.motif_bannissement}', ${s.duree_bannissement || 0})" class="text-black bg-[#D9D9D9]/40 hover:bg-[#D9D9D9]/80 px-1 rounded-lg font-bold">Bannir</button>
+                                <button onclick="openEditModal(${s.id}, '${s_nom}', '${s_prenom}', '${s.email}', '${s.num_telephone || ''}', '${dNaissance}', '${s.statut}', '${s_adresse}', '${s_ville}', '${s_cp}', '${s_pays}', '${s_motif}', ${s.duree_bannissement || 0})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-1 rounded-lg font-bold">Modifier</button>
+                                <button onclick="openDeleteModal(${s.id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-1 rounded-lg font-bold">Supprimer</button>
                             </td>
                         </tr>
                     `;
@@ -379,19 +379,20 @@
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
+            const statut = document.getElementById('edit-statut').value;
             const data = {
                 nom: document.getElementById('edit-nom').value,
                 prenom: document.getElementById('edit-prenom').value,
                 email: document.getElementById('edit-email').value,
                 num_telephone: document.getElementById('edit-tel').value,
                 date_naissance: document.getElementById('edit-date').value,
-                statut: document.getElementById('edit-statut').value,
+                statut: statut,
                 adresse: document.getElementById('edit-adresse').value,
                 ville: document.getElementById('edit-ville').value,
                 code_postal: document.getElementById('edit-cp').value,
                 pays: document.getElementById('edit-pays').value,
-                motif_bannissement: document.getElementById('edit-motif').value,
-                duree_bannissement: parseInt(document.getElementById('edit-duree').value) || 0
+                motif_bannissement: (statut === 'user') || (statut === 'admin') ? "" : document.getElementById('edit-motif').value,
+                duree_bannissement: (statut === 'user') || (statut === 'admin') ? 0 : (parseInt(document.getElementById('edit-duree').value) || 0)
             };
 
             try {

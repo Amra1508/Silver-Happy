@@ -17,7 +17,7 @@ type Utilisateur struct {
 	Statut            string `json:"statut"`
 	DateCreation      string `json:"date_creation"`
 	PremiereConnexion bool   `json:"premiere_connexion"`
-	MotifBannissement string `json:"motif_bannisement"`
+	MotifBannissement string `json:"motif_bannissement"`
 	DureeBannissement int    `json:"duree_bannissement"`
 }
 
