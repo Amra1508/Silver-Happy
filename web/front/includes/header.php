@@ -6,6 +6,9 @@
     <div class="bg-[#E1AB2B]/60 py-2 px-6 flex justify-end gap-4">
         <?php if (isset($_COOKIE['session_token'])): ?>
             <button id="btn_logout" class="header-button">Déconnexion</button>
+            <a href="/front/account/profile.php">
+                <button class="header-button">Mon compte</button>
+            </a>
         <?php else: ?>
             <a href="/front/account/signin.php">
                 <button class="header-button">Se connecter</button>
@@ -15,9 +18,11 @@
             </a>
         <?php endif; ?>
         <button class="border border-[#AA1114] text-[#AA1114] px-4 py-1 rounded-full text-xl font-semibold hover:bg-[#AA1114] hover:text-white">Urgence</button>
-        <button class="header-button transition-all group">
+
+        <button onclick="toggleZoom()" class="header-button transition-all group" title="Modifier la taille du texte">
             <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
+
         <button class="flex items-center gap-2 header-button transition-all group">
             <img src="/front/icons/france.png" alt="french" class="h-6 w-6 object-contain">
             <img src="/front/icons/dropdown.svg" alt="dropdown" class="w-5 h-5 object-contain transition-all group-hover:brightness-0 group-hover:invert">
@@ -44,8 +49,27 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
+        const zoomLevels = [1, 1.2, 1.4];
+        let currentZoomIndex = 0;
 
+        function toggleZoom() {
+            currentZoomIndex++;
+            if (currentZoomIndex >= zoomLevels.length) {
+                currentZoomIndex = 0;
+            }
+            applyZoom(zoomLevels[currentZoomIndex]);
+        }
+
+        function applyZoom(level) {
+            document.body.style.zoom = level;
+            if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+                document.body.style.transform = `scale(${level})`;
+                document.body.style.transformOrigin = 'top left';
+                document.body.style.width = `${100 / level}%`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const btnLogout = document.getElementById('btn_logout');
 
             if (btnLogout) {

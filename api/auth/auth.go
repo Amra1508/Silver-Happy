@@ -289,3 +289,122 @@ func Me(response http.ResponseWriter, request *http.Request) {
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(user)
 }
+
+func Update(response http.ResponseWriter, request *http.Request) {
+
+	if utils.HandleCORS(response, request, "PUT") {
+		return
+	}
+
+	cookie, err := request.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			http.Error(response, "Non authentifié (aucun cookie)", http.StatusUnauthorized)
+			return
+		}
+		http.Error(response, "Erreur serveur", http.StatusBadRequest)
+		return
+	}
+
+	tokenString := cookie.Value
+	claims := &models.Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return jwtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		http.Error(response, "Session invalide ou expirée", http.StatusUnauthorized)
+		return
+	}
+
+	userID := claims.UserID
+
+	var user models.Utilisateur
+	if err := json.NewDecoder(request.Body).Decode(&user); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	if strings.ContainsAny(user.Prenom, "0123456789") || strings.ContainsAny(user.Nom, "0123456789") || strings.ContainsAny(user.Pays, "0123456789") || strings.ContainsAny(user.Ville, "0123456789") {
+		http.Error(response, "Les informations que vous avez saisi sont erronées.", http.StatusConflict)
+		return
+	}
+
+	if len(user.Prenom) < 2 || len(user.Prenom) > 50 || len(user.Nom) < 2 || len(user.Nom) > 50 {
+		http.Error(response, "Le nom et le prénom doivent contenir entre 2 et 50 caractères", http.StatusConflict)
+		return
+	}
+
+	if len(user.NumTelephone) != 10 || len(user.CodePostal) != 5 {
+		http.Error(response, "Le numéro de téléphone ou le code postal est invalide.", http.StatusConflict)
+		return
+	}
+
+	tx, err := db.DB.Begin()
+	if err != nil {
+		http.Error(response, "Erreur serveur (Transaction)", http.StatusInternalServerError)
+		return
+	}
+
+	var idAdresse int
+	err = tx.QueryRow(`SELECT id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?`, userID).Scan(&idAdresse)
+	if err != nil {
+		tx.Rollback()
+		if err == sql.ErrNoRows {
+			http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
+		} else {
+			http.Error(response, "Erreur lors de la récupération des données", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	queryAddr := `UPDATE ADRESSE SET rue = ?, ville = ?, code_postal = ?, pays = ? WHERE id_adresse = ?`
+	_, err = tx.Exec(queryAddr, user.Adresse, user.Ville, user.CodePostal, user.Pays, idAdresse)
+	if err != nil {
+		tx.Rollback()
+		http.Error(response, "Erreur lors de la mise à jour de l'adresse", http.StatusInternalServerError)
+		return
+	}
+
+	var queryUser string
+	var args []interface{}
+
+	if user.Mdp != "" {
+		hashedPassword, errHash := bcrypt.GenerateFromPassword([]byte(user.Mdp), bcrypt.DefaultCost)
+		if errHash != nil {
+			tx.Rollback()
+			http.Error(response, "Erreur lors du hashage du mot de passe", http.StatusInternalServerError)
+			return
+		}
+		queryUser = `UPDATE UTILISATEUR SET prenom = ?, nom = ?, email = ?, date_naissance = ?, num_telephone = ?, mdp = ? WHERE id_utilisateur = ?`
+		args = []interface{}{user.Prenom, user.Nom, user.Email, user.DateNaissance, user.NumTelephone, string(hashedPassword), userID}
+	} else {
+		queryUser = `UPDATE UTILISATEUR SET prenom = ?, nom = ?, email = ?, date_naissance = ?, num_telephone = ? WHERE id_utilisateur = ?`
+		args = []interface{}{user.Prenom, user.Nom, user.Email, user.DateNaissance, user.NumTelephone, userID}
+	}
+
+	_, err = tx.Exec(queryUser, args...)
+	if err != nil {
+		tx.Rollback()
+		if strings.Contains(err.Error(), "Duplicate entry") {
+			http.Error(response, "Cette adresse email est déjà utilisée par un autre compte.", http.StatusConflict)
+		} else {
+			http.Error(response, "Erreur lors de la mise à jour du profil : "+err.Error(), http.StatusBadRequest)
+		}
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(response, "Erreur lors de la validation finale", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{
+		"message": "Profil mis à jour avec succès",
+	})
+}
