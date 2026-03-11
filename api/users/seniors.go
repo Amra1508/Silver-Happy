@@ -124,6 +124,76 @@ func Read_User(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(dataResponse)
 }
 
+func Read_Admin(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    queryParams := request.URL.Query()
+    limitStr := queryParams.Get("limit")
+    pageStr := queryParams.Get("page")
+
+    limit := 10
+    offset := 0
+    page := 1
+
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
+
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'admin'").Scan(&total)
+
+    query := `
+        SELECT id_utilisateur, nom, prenom, email, 
+               num_telephone
+        FROM UTILISATEUR
+        WHERE statut = 'admin'
+        LIMIT ? OFFSET ?
+    `
+    rows, err := db.DB.Query(query, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var tabUtilisateur []models.Utilisateur
+    for rows.Next() {
+        var user models.Utilisateur
+        var numTel sql.NullString
+
+        err := rows.Scan(
+            &user.ID, &user.Nom, &user.Prenom, &user.Email,
+            &numTel,
+        )
+
+        if err == nil {
+            user.NumTelephone = numTel.String
+
+            tabUtilisateur = append(tabUtilisateur, user)
+        }
+    }
+
+    if tabUtilisateur == nil {
+        tabUtilisateur = []models.Utilisateur{}
+    }
+
+    dataResponse := map[string]interface{}{
+        "data":        tabUtilisateur,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
+}
+
 func Create_User(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "POST") {
 		return

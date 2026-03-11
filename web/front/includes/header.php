@@ -31,7 +31,7 @@
             <a href="/front/index.php" class="menu-text">Accueil</a>
             <a href="#" class="menu-text">Activités</a>
             <a href="#" class="menu-text">Boutique</a>
-            <a href="#" class="menu-text">Messagerie</a>
+            <a href="/front/communication/list_contact.php" class="menu-text">Messagerie</a>
         </nav>
 
         <div class="w-full md:w-auto flex-1 max-w-md">
@@ -44,58 +44,61 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        
-        const btnLogout = document.getElementById('btn_logout');
-        
-        if (btnLogout) {
-            btnLogout.addEventListener('click', async (e) => {
-                e.preventDefault();
-                try {
-                    const response = await fetch('http://localhost:8082/auth/logout', {
-                        method: 'POST',
-                        credentials: 'include'
-                    });
+        document.addEventListener('DOMContentLoaded', async () => {
 
-                    if (response.ok) {
-                        window.location.href = "/front/index.php";
-                    } else {
-                        alert("Erreur lors de la déconnexion.");
+            const btnLogout = document.getElementById('btn_logout');
+
+            if (btnLogout) {
+                btnLogout.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    try {
+                        const response = await fetch('http://localhost:8082/auth/logout', {
+                            method: 'POST',
+                            credentials: 'include'
+                        });
+
+                        if (response.ok) {
+                            window.location.href = "/front/index.php";
+                        } else {
+                            alert("Erreur lors de la déconnexion.");
+                        }
+                    } catch (error) {
+                        console.error("Erreur réseau lors de la déconnexion :", error);
                     }
-                } catch (error) {
-                    console.error("Erreur réseau lors de la déconnexion :", error);
+                });
+            }
+
+            try {
+                const response = await fetch('http://localhost:8082/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error("Utilisateur non connecté ou session invalide");
                 }
-            });
-        }
 
-        try {
-            const response = await fetch('http://localhost:8082/auth/me', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
+                const user = await response.json();
 
-            if (!response.ok) {
-                throw new Error("Utilisateur non connecté ou session invalide");
+                if (user.statut === 'admin') {
+                    window.location.href = "../../back/dashboard.php";
+                    return;
+                }
+
+                window.currentUserId = user.id;
+                window.dispatchEvent(new Event('auth_ready'));
+
+                const nameDisplay = document.getElementById('header-user-name');
+                if (nameDisplay) {
+                    nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;
+                }
+
+            } catch (error) {
+                console.error("Erreur d'authentification :", error);
             }
-
-            const user = await response.json();
-
-            if (user.statut === 'admin') {
-                window.location.href = "../../back/dashboard.php";
-                return;
-            }
-
-            const nameDisplay = document.getElementById('header-user-name');
-            if (nameDisplay) {
-                nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;
-            }
-
-        } catch (error) {
-            console.error("Erreur d'authentification :", error);
-        }
-    });
+        });
     </script>
 </header>

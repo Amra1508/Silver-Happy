@@ -98,7 +98,7 @@
                             <td class="p-4 uppercase">${s.nom}</td>
                             <td class="p-4 text-gray-500">${s.email}</td>
                             <td class="p-4">
-                                <a href="/back/communication/messaging.php/${s.id}">
+                                <a href="/back/communication/messaging.php/${s.prenom}/${s.nom}/${s.id}">
                                     <button class="bg-gray-100 hover:bg-gray-200 text-[#1C5B8F] px-4 py-2 rounded-full transition font-semibold text-sm">Voir la discussion</button>
                                 </a>
                             </td>

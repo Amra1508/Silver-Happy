@@ -40,6 +40,7 @@ func main() {
 	http.HandleFunc("/produit/update/{id}", services.Update_Produit)
 
 	http.HandleFunc("/seniors/read", users.Read_User)
+	http.HandleFunc("/admin/read", users.Read_Admin)
 	http.HandleFunc("/seniors/create", users.Create_User)
 	http.HandleFunc("/seniors/update/{id}", users.Update_User)
 	http.HandleFunc("/seniors/delete/{id}", users.Delete_User)
