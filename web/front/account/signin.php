@@ -8,6 +8,7 @@
     </style>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <script>
         tailwind.config = {
@@ -45,8 +46,12 @@
                     </div>
                 </div>
 
+                <div class="sm:col-span-6 justify-self-center">
+                    <div class="cf-turnstile" data-sitekey="0x4AAAAAACpHSvX9fEtYZZTy" data-theme="light"></div>
+                </div>
+
                 <a class="sm:col-span-6 justify-self-center">
-                    <button id="btn_login" class=" px-14 rounded-md button-blue">Je me connecte</button>
+                    <button id="btn_login" class="px-14 rounded-md button-blue">Je me connecte</button>
                 </a>
             </div>
         </div>
@@ -55,50 +60,46 @@
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const btnLogin = document.getElementById('btn_login');
-
-        btnLogin.addEventListener('click', async (e) => {
+        document.getElementById('btn_login').addEventListener('click', async (e) => {
             e.preventDefault();
 
             const emailInput = document.getElementById('email').value;
             const passwordInput = document.getElementById('password').value;
+            
+            const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]')?.value;
 
-            if (!emailInput || !passwordInput) {
-                alert("Veuillez remplir votre email et votre mot de passe.");
-                return;
+            if (!emailInput || !passwordInput || !turnstileResponse) {
+                return alert("Veuillez remplir vos identifiants et valider le Captcha.");
             }
 
-            const data = {
-                email: emailInput,
-                mdp: passwordInput
-            };
+            if (!turnstileResponse) {
+                messageBox.textContent = "Veuillez valider la vérification de sécurité (Captcha).";
+                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
+                messageBox.classList.remove('hidden');
+                return;
+            }
 
             try {
                 const response = await fetch('http://localhost:8082/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ 
+                        email: emailInput, 
+                        mdp: passwordInput, 
+                        "cf-turnstile-response": turnstileResponse
+                    })
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.statut === "admin") {
-                        window.location.replace("../../back/dashboard.php");
-                    } else if (result.statut === "user") {
-                        window.location.replace("../index.php");
-                    } else {
-                        alert("Statut de compte non reconnu ou banni.");
-                    }
-
+                    if (result.statut === "admin") window.location.replace("../../back/dashboard.php");
+                    else if (result.statut === "user") window.location.replace("../index.php");
+                    else alert("Statut de compte non reconnu ou banni.");
                 } else {
-                    const errorText = await response.text();
-                    alert(errorText);
+                    alert(await response.text());
                 }
             } catch (error) {
-                console.error("Erreur de connexion :", error);
                 alert("Impossible de joindre le serveur de connexion.");
             }
         });
