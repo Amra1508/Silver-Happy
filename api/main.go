@@ -26,6 +26,7 @@ func main() {
 	http.HandleFunc("/auth/login", auth.Login)
 	http.HandleFunc("/auth/logout", auth.Logout)
 	http.HandleFunc("/auth/me", auth.Me)
+	http.HandleFunc("/auth/update", auth.Update)
 
 	http.HandleFunc("/captcha/create", captcha.Create_Captcha)
 	http.HandleFunc("/captcha/read", captcha.Read_Captcha)
