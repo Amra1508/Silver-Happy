@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"main/db"
@@ -19,9 +20,9 @@ func isContactInfoTaken(email, numTelephone string) (bool, string) {
 	var phoneCount int
 
 	db.DB.QueryRow(`
-		SELECT 
-			(SELECT COUNT(*) FROM UTILISATEUR WHERE email = ?) + 
-			(SELECT COUNT(*) FROM PRESTATAIRE WHERE email = ?)`,
+        SELECT 
+            (SELECT COUNT(*) FROM UTILISATEUR WHERE email = ?) + 
+            (SELECT COUNT(*) FROM PRESTATAIRE WHERE email = ?)`,
 		email, email).Scan(&emailCount)
 
 	if emailCount > 0 {
@@ -29,9 +30,9 @@ func isContactInfoTaken(email, numTelephone string) (bool, string) {
 	}
 
 	db.DB.QueryRow(`
-		SELECT 
-			(SELECT COUNT(*) FROM UTILISATEUR WHERE num_telephone = ?) + 
-			(SELECT COUNT(*) FROM PRESTATAIRE WHERE num_telephone = ?)`,
+        SELECT 
+            (SELECT COUNT(*) FROM UTILISATEUR WHERE num_telephone = ?) + 
+            (SELECT COUNT(*) FROM PRESTATAIRE WHERE num_telephone = ?)`,
 		numTelephone, numTelephone).Scan(&phoneCount)
 
 	if phoneCount > 0 {
@@ -42,30 +43,30 @@ func isContactInfoTaken(email, numTelephone string) (bool, string) {
 }
 
 func Read_User(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    queryParams := request.URL.Query()
-    limitStr := queryParams.Get("limit")
-    pageStr := queryParams.Get("page")
+	queryParams := request.URL.Query()
+	limitStr := queryParams.Get("limit")
+	pageStr := queryParams.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'user'").Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'user'").Scan(&total)
 
-    query := `
+	query := `
         SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
                u.num_telephone, u.date_naissance, u.statut, 
                u.date_creation, u.motif_bannissement, u.duree_bannissement,
@@ -75,123 +76,123 @@ func Read_User(response http.ResponseWriter, request *http.Request) {
         WHERE u.statut = 'user' OR u.statut = 'banni'
         LIMIT ? OFFSET ?
     `
-    rows, err := db.DB.Query(query, limit, offset)
-    if err != nil {
-        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, err := db.DB.Query(query, limit, offset)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabUtilisateur []models.Utilisateur
-    for rows.Next() {
-        var user models.Utilisateur
-        var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays sql.NullString
-        var dureeBan sql.NullInt64
+	var tabUtilisateur []models.Utilisateur
+	for rows.Next() {
+		var user models.Utilisateur
+		var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays sql.NullString
+		var dureeBan sql.NullInt64
 
-        err := rows.Scan(
-            &user.ID, &user.Nom, &user.Prenom, &user.Email,
-            &numTel, &dateNaiss, &user.Statut, &dateCrea, &motifBan, &dureeBan,
-            &rue, &ville, &cp, &pays,
-        )
+		err := rows.Scan(
+			&user.ID, &user.Nom, &user.Prenom, &user.Email,
+			&numTel, &dateNaiss, &user.Statut, &dateCrea, &motifBan, &dureeBan,
+			&rue, &ville, &cp, &pays,
+		)
 
-        if err == nil {
-            user.NumTelephone = numTel.String
-            user.DateNaissance = dateNaiss.String
-            user.DateCreation = dateCrea.String
-            user.MotifBannissement = motifBan.String
-            user.DureeBannissement = int(dureeBan.Int64)
-            user.Adresse = rue.String
-            user.Ville = ville.String
-            user.CodePostal = cp.String
-            user.Pays = pays.String
+		if err == nil {
+			user.NumTelephone = numTel.String
+			user.DateNaissance = dateNaiss.String
+			user.DateCreation = dateCrea.String
+			user.MotifBannissement = motifBan.String
+			user.DureeBannissement = int(dureeBan.Int64)
+			user.Adresse = rue.String
+			user.Ville = ville.String
+			user.CodePostal = cp.String
+			user.Pays = pays.String
 
-            tabUtilisateur = append(tabUtilisateur, user)
-        }
-    }
+			tabUtilisateur = append(tabUtilisateur, user)
+		}
+	}
 
-    if tabUtilisateur == nil {
-        tabUtilisateur = []models.Utilisateur{}
-    }
+	if tabUtilisateur == nil {
+		tabUtilisateur = []models.Utilisateur{}
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        tabUtilisateur,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        tabUtilisateur,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Read_Admin(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    queryParams := request.URL.Query()
-    limitStr := queryParams.Get("limit")
-    pageStr := queryParams.Get("page")
+	queryParams := request.URL.Query()
+	limitStr := queryParams.Get("limit")
+	pageStr := queryParams.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'admin'").Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'admin'").Scan(&total)
 
-    query := `
+	query := `
         SELECT id_utilisateur, nom, prenom, email, 
                num_telephone
         FROM UTILISATEUR
         WHERE statut = 'admin'
         LIMIT ? OFFSET ?
     `
-    rows, err := db.DB.Query(query, limit, offset)
-    if err != nil {
-        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, err := db.DB.Query(query, limit, offset)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabUtilisateur []models.Utilisateur
-    for rows.Next() {
-        var user models.Utilisateur
-        var numTel sql.NullString
+	var tabUtilisateur []models.Utilisateur
+	for rows.Next() {
+		var user models.Utilisateur
+		var numTel sql.NullString
 
-        err := rows.Scan(
-            &user.ID, &user.Nom, &user.Prenom, &user.Email,
-            &numTel,
-        )
+		err := rows.Scan(
+			&user.ID, &user.Nom, &user.Prenom, &user.Email,
+			&numTel,
+		)
 
-        if err == nil {
-            user.NumTelephone = numTel.String
+		if err == nil {
+			user.NumTelephone = numTel.String
 
-            tabUtilisateur = append(tabUtilisateur, user)
-        }
-    }
+			tabUtilisateur = append(tabUtilisateur, user)
+		}
+	}
 
-    if tabUtilisateur == nil {
-        tabUtilisateur = []models.Utilisateur{}
-    }
+	if tabUtilisateur == nil {
+		tabUtilisateur = []models.Utilisateur{}
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        tabUtilisateur,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        tabUtilisateur,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_User(response http.ResponseWriter, request *http.Request) {
@@ -205,8 +206,17 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	user.Nom = strings.TrimSpace(user.Nom)
+	user.Prenom = strings.TrimSpace(user.Prenom)
+	user.Email = strings.TrimSpace(user.Email)
+	user.NumTelephone = strings.TrimSpace(user.NumTelephone)
+	user.CodePostal = strings.TrimSpace(user.CodePostal)
+	user.Adresse = strings.TrimSpace(user.Adresse)
+	user.Ville = strings.TrimSpace(user.Ville)
+	user.Pays = strings.TrimSpace(user.Pays)
+
 	if user.Nom == "" || user.Prenom == "" || user.Email == "" {
-		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
+		http.Error(response, "Le nom, prénom et email sont obligatoires et ne peuvent pas être vides", http.StatusBadRequest)
 		return
 	}
 
@@ -246,8 +256,8 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 	idAdresse, _ := resAdr.LastInsertId()
 
 	res, err := db.DB.Exec(`
-		INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_planning, id_adresse) 
-		VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
+        INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_planning, id_adresse) 
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
 		user.Nom, user.Prenom, user.Email, user.NumTelephone, dateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, string(hashMdp), idPlanning, idAdresse)
 
 	if err != nil {
@@ -265,8 +275,26 @@ func Update_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	id := request.PathValue("id")
+	
 	var user models.Utilisateur
-	json.NewDecoder(request.Body).Decode(&user)
+	if err := json.NewDecoder(request.Body).Decode(&user); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	user.Nom = strings.TrimSpace(user.Nom)
+	user.Prenom = strings.TrimSpace(user.Prenom)
+	user.Email = strings.TrimSpace(user.Email)
+	user.NumTelephone = strings.TrimSpace(user.NumTelephone)
+	user.CodePostal = strings.TrimSpace(user.CodePostal)
+	user.Adresse = strings.TrimSpace(user.Adresse)
+	user.Ville = strings.TrimSpace(user.Ville)
+	user.Pays = strings.TrimSpace(user.Pays)
+
+	if user.Nom == "" || user.Prenom == "" || user.Email == "" {
+		http.Error(response, "Le nom, prénom et email ne peuvent pas être vides", http.StatusBadRequest)
+		return
+	}
 
 	var dateNaissance interface{} = user.DateNaissance
 	if user.DateNaissance == "" {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"main/db"
 	"main/models"
@@ -11,7 +12,6 @@ import (
 )
 
 func Get_Message(response http.ResponseWriter, request *http.Request) {
-	
 	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
@@ -24,7 +24,7 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close() 
+	defer rows.Close()
 
 	tabMessage := []models.Message{}
 	for rows.Next() {
@@ -41,7 +41,6 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 }
 
 func Add_Message(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "POST") {
 		return
 	}
@@ -49,6 +48,13 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
 	var message models.Message
 	if err := json.NewDecoder(request.Body).Decode(&message); err != nil {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	message.Contenu = strings.TrimSpace(message.Contenu)
+
+	if message.Contenu == "" {
+		http.Error(response, "Le message ne peut pas être vide.", http.StatusBadRequest)
 		return
 	}
 
@@ -67,7 +73,6 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Message(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "DELETE") {
 		return
 	}

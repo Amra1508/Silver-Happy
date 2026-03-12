@@ -80,6 +80,9 @@ func main() {
 	http.HandleFunc("/evenement/create", services.Create_Evenement)
 	http.HandleFunc("/evenement/update/{id}", services.Update_Evenement)
 	http.HandleFunc("/evenement/delete/{id}", services.Delete_Evenement)
+	http.HandleFunc("/evenement/prestataires/link/{id}", services.Link_Prestataire_Evenement)
+    http.HandleFunc("/evenement/prestataires/read/{id}", services.Read_Prestataires_For_Evenement)
+    http.HandleFunc("/evenement/prestataires/unlink/{id}/{id_prestataire}", services.Unlink_Prestataire_Evenement)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

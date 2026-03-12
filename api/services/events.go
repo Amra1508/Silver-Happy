@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"main/db"
@@ -102,12 +103,17 @@ func Create_Evenement(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := request.FormValue("nom")
-	desc := request.FormValue("description")
-	lieu := request.FormValue("lieu")
+	nom := strings.TrimSpace(request.FormValue("nom"))
+	desc := strings.TrimSpace(request.FormValue("description"))
+	lieu := strings.TrimSpace(request.FormValue("lieu"))
 	places := request.FormValue("nombre_place")
 	debut := request.FormValue("date_debut")
 	fin := request.FormValue("date_fin")
+
+	if nom == "" || desc == "" || lieu == "" {
+		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
 
 	file, handler, errFile := request.FormFile("image")
 	var imagePath string
@@ -222,12 +228,17 @@ func Update_Evenement(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := request.FormValue("nom")
-	desc := request.FormValue("description")
-	lieu := request.FormValue("lieu")
+	nom := strings.TrimSpace(request.FormValue("nom"))
+	desc := strings.TrimSpace(request.FormValue("description"))
+	lieu := strings.TrimSpace(request.FormValue("lieu"))
 	places := request.FormValue("nombre_place")
 	debut := request.FormValue("date_debut")
 	fin := request.FormValue("date_fin")
+
+	if nom == "" || desc == "" || lieu == "" {
+		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
 
 	file, handler, errFile := request.FormFile("image")
 	var imagePath string
@@ -277,4 +288,78 @@ func Update_Evenement(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Événement mis à jour avec succès"})
+}
+
+func Link_Prestataire_Evenement(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
+
+	idEvt := request.PathValue("id")
+	var payload map[string]int
+
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	idPrest := payload["id_prestataire"]
+
+	_, err := db.DB.Exec("INSERT IGNORE INTO PRESTATAIRE_EVENEMENT (id_prestataire, id_evenement) VALUES (?, ?)", idPrest, idEvt)
+	if err != nil {
+		http.Error(response, "Erreur lors de la liaison", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(response).Encode(map[string]string{"status": "success"})
+}
+
+func Read_Prestataires_For_Evenement(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+	idEvt := request.PathValue("id")
+
+	rows, err := db.DB.Query(`
+        SELECT prestataire.id_prestataire, prestataire.nom, prestataire.prenom, prestataire.type_prestation 
+        FROM PRESTATAIRE prestataire
+        JOIN PRESTATAIRE_EVENEMENT pevent ON prestataire.id_prestataire = pevent.id_prestataire 
+        WHERE pevent.id_evenement = ?`, idEvt)
+
+	if err != nil {
+		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var list []map[string]interface{}
+	for rows.Next() {
+		var id_prest int
+		var nom, prenom, type_prest string
+		rows.Scan(&id_prest, &nom, &prenom, &type_prest)
+		list = append(list, map[string]interface{}{
+			"id": id_prest, "nom": nom, "prenom": prenom, "type": type_prest,
+		})
+	}
+
+	if list == nil {
+		list = make([]map[string]interface{}, 0)
+	}
+	json.NewEncoder(response).Encode(list)
+}
+
+func Unlink_Prestataire_Evenement(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "DELETE") {
+		return
+	}
+	idEvt := request.PathValue("id")
+	idPrest := request.PathValue("id_prestataire")
+
+	_, err := db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ? AND id_prestataire = ?", idEvt, idPrest)
+	if err != nil {
+		http.Error(response, "Erreur lors de la suppression du lien", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(response).Encode(map[string]string{"status": "success"})
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"main/db"
 	"main/models"
@@ -77,6 +78,14 @@ func Create_Service(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	service.Nom = strings.TrimSpace(service.Nom)
+	service.Description = strings.TrimSpace(service.Description)
+
+	if service.Nom == "" || service.Description =="" {
+		http.Error(response, "Le nom et la description ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
+
 	if service.Disponibilite == 0 {
 		service.IdUtilisateur = nil
 	}
@@ -140,6 +149,14 @@ func Update_Service(response http.ResponseWriter, request *http.Request) {
 	var service models.Service
 	if err := json.NewDecoder(request.Body).Decode(&service); err != nil {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	service.Nom = strings.TrimSpace(service.Nom)
+	service.Description = strings.TrimSpace(service.Description)
+
+	if service.Nom == "" || service.Description =="" {
+		http.Error(response, "Le nom et la description ne peuvent pas être vides.", http.StatusBadRequest)
 		return
 	}
 

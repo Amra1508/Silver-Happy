@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"main/db"
@@ -16,42 +17,42 @@ import (
 )
 
 func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
-    statusFilter := query.Get("status")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
+	statusFilter := query.Get("status")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    whereClause := ""
-    var argsCount []interface{}
-    var argsQuery []interface{}
+	whereClause := ""
+	var argsCount []interface{}
+	var argsQuery []interface{}
 
-    if statusFilter != "" && statusFilter != "tous" {
-        whereClause = " WHERE status = ?"
-        argsCount = append(argsCount, statusFilter)
-        argsQuery = append(argsQuery, statusFilter)
-    }
+	if statusFilter != "" && statusFilter != "tous" {
+		whereClause = " WHERE status = ?"
+		argsCount = append(argsCount, statusFilter)
+		argsQuery = append(argsQuery, statusFilter)
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE"+whereClause, argsCount...).Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE"+whereClause, argsCount...).Scan(&total)
 
-    argsQuery = append(argsQuery, limit, offset)
-    sqlQuery := `
+	argsQuery = append(argsQuery, limit, offset)
+	sqlQuery := `
         SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), 
                IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), 
                IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), 
@@ -60,34 +61,34 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
         ` + whereClause + `
         LIMIT ? OFFSET ?
     `
-    
-    rows, err := db.DB.Query(sqlQuery, argsQuery...)
-    if err != nil {
-        http.Error(response, "Erreur BDD", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
 
-    var list []models.Prestataire
-    for rows.Next() {
-        var p models.Prestataire
-        rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.TypePrestation, &p.DateCreation)
-        list = append(list, p)
-    }
+	rows, err := db.DB.Query(sqlQuery, argsQuery...)
+	if err != nil {
+		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    if list == nil {
-        list = []models.Prestataire{}
-    }
+	var list []models.Prestataire
+	for rows.Next() {
+		var p models.Prestataire
+		rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.TypePrestation, &p.DateCreation)
+		list = append(list, p)
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        list,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	if list == nil {
+		list = []models.Prestataire{}
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	dataResponse := map[string]interface{}{
+		"data":        list,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
@@ -100,6 +101,13 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
 		return
 	}
+
+	p.Nom = strings.TrimSpace(p.Nom)
+	p.Prenom = strings.TrimSpace(p.Prenom)
+	p.Email = strings.TrimSpace(p.Email)
+	p.NumTelephone = strings.TrimSpace(p.NumTelephone)
+	p.Siret = strings.TrimSpace(p.Siret)
+	p.TypePrestation = strings.TrimSpace(p.TypePrestation)
 
 	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
@@ -116,7 +124,7 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 			http.Error(response, "La date de naissance ne peut pas être dans le futur", http.StatusBadRequest)
 			return
 		}
-		
+
 		dateLimite := time.Now().AddDate(-18, 0, 0)
 		if dateParsed.After(dateLimite) {
 			http.Error(response, "Un prestataire doit avoir au moins 18 ans", http.StatusBadRequest)
@@ -155,7 +163,22 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 
 	id := request.PathValue("id")
 	var p models.Prestataire
-	json.NewDecoder(request.Body).Decode(&p)
+	if err := json.NewDecoder(request.Body).Decode(&p); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	p.Nom = strings.TrimSpace(p.Nom)
+	p.Prenom = strings.TrimSpace(p.Prenom)
+	p.Email = strings.TrimSpace(p.Email)
+	p.NumTelephone = strings.TrimSpace(p.NumTelephone)
+	p.Siret = strings.TrimSpace(p.Siret)
+	p.TypePrestation = strings.TrimSpace(p.TypePrestation)
+
+	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
+		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
+		return
+	}
 
 	db.DB.Exec("UPDATE PRESTATAIRE SET siret=?, nom=?, prenom=?, email=?, num_telephone=?, date_naissance=NULLIF(?, ''), status=?, motif_refus=?, tarifs=?, type_prestation=? WHERE id_prestataire=?",
 		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.TypePrestation, id)
@@ -164,33 +187,33 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Prestataire(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "DELETE") {
-        return
-    }
-    
-    id := request.PathValue("id")
+	if utils.HandleCORS(response, request, "DELETE") {
+		return
+	}
 
-    rows, err := db.DB.Query("SELECT nom FROM DOCUMENT_PRESTATAIRE WHERE id_prestataire = ?", id)
-    if err == nil {
-        defer rows.Close()
-        for rows.Next() {
-            var cheminBDD string
-            if errScan := rows.Scan(&cheminBDD); errScan == nil {
-                cheminPhysique := "/api/" + cheminBDD
-                os.Remove(cheminPhysique)
-            }
-        }
-    }
+	id := request.PathValue("id")
 
-    db.DB.Exec("DELETE FROM DOCUMENT_PRESTATAIRE WHERE id_prestataire = ?", id)
+	rows, err := db.DB.Query("SELECT nom FROM DOCUMENT_PRESTATAIRE WHERE id_prestataire = ?", id)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var cheminBDD string
+			if errScan := rows.Scan(&cheminBDD); errScan == nil {
+				cheminPhysique := "/api/" + cheminBDD
+				os.Remove(cheminPhysique)
+			}
+		}
+	}
 
-    _, errDelete := db.DB.Exec("DELETE FROM PRESTATAIRE WHERE id_prestataire = ?", id)
-    if errDelete != nil {
-        http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
-        return
-    }
+	db.DB.Exec("DELETE FROM DOCUMENT_PRESTATAIRE WHERE id_prestataire = ?", id)
 
-    json.NewEncoder(response).Encode("OK")
+	_, errDelete := db.DB.Exec("DELETE FROM PRESTATAIRE WHERE id_prestataire = ?", id)
+	if errDelete != nil {
+		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(response).Encode("OK")
 }
 
 func Read_Prestataire_Documents(response http.ResponseWriter, request *http.Request) {

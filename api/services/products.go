@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"main/db"
@@ -16,60 +17,58 @@ import (
 )
 
 func Read_Produit(response http.ResponseWriter, request *http.Request) {
-    
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT").Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT").Scan(&total)
 
-    rows, errorFetch := db.DB.Query("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT LIMIT ? OFFSET ?", limit, offset)
-    if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close() 
+	rows, errorFetch := db.DB.Query("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT LIMIT ? OFFSET ?", limit, offset)
+	if errorFetch != nil {
+		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabProduit []models.Produit
-    for rows.Next() {
-        var produit models.Produit
-        if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
-            fmt.Printf("ERREUR SCAN SUR PRODUIT ID %d: %v\n", produit.ID, err)
-            continue
-        }
-        tabProduit = append(tabProduit, produit)
-    }
+	var tabProduit []models.Produit
+	for rows.Next() {
+		var produit models.Produit
+		if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
+			continue
+		}
+		tabProduit = append(tabProduit, produit)
+	}
 
-    if tabProduit == nil {
-        tabProduit = []models.Produit{}
-    }
+	if tabProduit == nil {
+		tabProduit = []models.Produit{}
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        tabProduit,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        tabProduit,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Produit(response http.ResponseWriter, request *http.Request) {
@@ -83,17 +82,22 @@ func Create_Produit(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := request.FormValue("nom")
-	desc := request.FormValue("description")
-	prix := request.FormValue("prix")
-	stock := request.FormValue("stock")
+	nom := strings.TrimSpace(request.FormValue("nom"))
+	desc := strings.TrimSpace(request.FormValue("description"))
+	prix := strings.TrimSpace(request.FormValue("prix"))
+	stock := strings.TrimSpace(request.FormValue("stock"))
+
+	if nom == "" || desc == "" || prix == "" || stock == ""{
+		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
 
 	file, handler, err := request.FormFile("image")
 	var imagePath string
 
 	if err == nil {
 		defer file.Close()
-		
+
 		os.MkdirAll(uploadDir, os.ModePerm)
 
 		fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
@@ -108,9 +112,9 @@ func Create_Produit(response http.ResponseWriter, request *http.Request) {
 		io.Copy(dst, file)
 	}
 
-	res, err := db.DB.Exec("INSERT INTO PRODUIT (nom, description, prix, stock, image) VALUES (?, ?, ?, ?, ?)", 
+	res, err := db.DB.Exec("INSERT INTO PRODUIT (nom, description, prix, stock, image) VALUES (?, ?, ?, ?, ?)",
 		nom, desc, prix, stock, imagePath)
-	
+
 	if err != nil {
 		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
 		return
@@ -121,9 +125,7 @@ func Create_Produit(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(map[string]interface{}{"id": id, "status": "success", "image": imagePath})
 }
 
-
 func Read_One_Produit(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
@@ -132,7 +134,7 @@ func Read_One_Produit(response http.ResponseWriter, request *http.Request) {
 	var produit models.Produit
 
 	err := db.DB.QueryRow("SELECT id_produit, nom, description, prix, stock FROM PRODUIT WHERE id_produit = ?", id).Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock)
-	
+
 	if err != nil {
 		http.Error(response, "Produit non trouvé", http.StatusNotFound)
 		return
@@ -143,7 +145,6 @@ func Read_One_Produit(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Produit(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "DELETE") {
 		return
 	}
@@ -152,7 +153,7 @@ func Delete_Produit(response http.ResponseWriter, request *http.Request) {
 
 	var imagePath sql.NullString
 	errQuery := db.DB.QueryRow("SELECT image FROM PRODUIT WHERE id_produit = ?", id).Scan(&imagePath)
-	
+
 	if errQuery != nil && errQuery != sql.ErrNoRows {
 		http.Error(response, "Erreur lors de la recherche du produit", http.StatusInternalServerError)
 		return
@@ -165,14 +166,13 @@ func Delete_Produit(response http.ResponseWriter, request *http.Request) {
 	}
 
 	if imagePath.Valid && imagePath.String != "" {
-		os.Remove(imagePath.String) 
+		os.Remove(imagePath.String)
 	}
 
 	response.WriteHeader(http.StatusNoContent)
 }
 
 func Update_Produit(response http.ResponseWriter, request *http.Request) {
-
 	if utils.HandleCORS(response, request, "PUT") {
 		return
 	}
@@ -185,20 +185,25 @@ func Update_Produit(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := request.FormValue("nom")
-	desc := request.FormValue("description")
-	prix := request.FormValue("prix")
-	stock := request.FormValue("stock")
+	nom := strings.TrimSpace(request.FormValue("nom"))
+	desc := strings.TrimSpace(request.FormValue("description"))
+	prix := strings.TrimSpace(request.FormValue("prix"))
+	stock := strings.TrimSpace(request.FormValue("stock"))
+
+	if nom == "" || desc == "" || prix == "" || stock == ""{
+		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
 
 	file, handler, errFile := request.FormFile("image")
 	var imagePath string
 
 	if errFile == nil {
 		defer file.Close()
-		
+
 		os.MkdirAll("./uploads", os.ModePerm)
 		fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
-		imagePath = filepath.Join("uploads", fileName) 
+		imagePath = filepath.Join("uploads", fileName)
 
 		dst, errCreate := os.Create(imagePath)
 		if errCreate != nil {
@@ -214,12 +219,12 @@ func Update_Produit(response http.ResponseWriter, request *http.Request) {
 
 	if imagePath != "" {
 		res, errDb = db.DB.Exec(
-			"UPDATE PRODUIT SET nom = ?, description = ?, prix = ?, stock = ?, image = ? WHERE id_produit = ?", 
+			"UPDATE PRODUIT SET nom = ?, description = ?, prix = ?, stock = ?, image = ? WHERE id_produit = ?",
 			nom, desc, prix, stock, imagePath, id,
 		)
 	} else {
 		res, errDb = db.DB.Exec(
-			"UPDATE PRODUIT SET nom = ?, description = ?, prix = ?, stock = ? WHERE id_produit = ?", 
+			"UPDATE PRODUIT SET nom = ?, description = ?, prix = ?, stock = ? WHERE id_produit = ?",
 			nom, desc, prix, stock, id,
 		)
 	}
