@@ -120,6 +120,29 @@
 
         <?php include("./includes/footer.php") ?>
 
+        <div id="tour-overlay" class="hidden fixed inset-0 bg-gray-900/70 z-[80] transition-opacity duration-300"></div>
+
+        <div id="tour-dialog" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white p-8 w-[90%] max-w-lg border border-gray-300 shadow-2xl rounded-sm">
+            <div class="mb-6">
+                <p id="tour-step-counter" class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">Étape 1 sur 7</p>
+                <h3 id="tour-title" class="text-2xl font-bold text-[#1C5B8F] mb-3">Guide de navigation</h3>
+                <p id="tour-text" class="text-gray-700 text-lg leading-relaxed">Texte explicatif classique.</p>
+            </div>
+
+            <div class="flex justify-between items-center border-t border-gray-200 pt-6 mt-2">
+                <button type="button" id="tour-prev" class="text-[#1C5B8F] underline hover:text-blue-800 px-2 py-1 invisible">
+                    Retour
+                </button>
+                
+                <button type="button" id="tour-next" class="bg-[#1C5B8F] text-white px-6 py-2 font-medium hover:bg-[#154670] transition-colors">
+                    Étape suivante
+                </button>
+                <button type="button" id="tour-close" class="hidden bg-[#E1AB2B] text-white px-6 py-2 font-medium hover:bg-[#c99723] transition-colors">
+                    Terminer la visite
+                </button>
+            </div>
+        </div>
+
     </main>
 
 </body>

@@ -120,6 +120,136 @@
                     nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;
                 }
 
+            if (user.premiere_connexion === 1) {
+                const tourOverlay = document.getElementById('tour-overlay');
+                const tourDialog = document.getElementById('tour-dialog');
+                const tCounter = document.getElementById('tour-step-counter');
+                const tTitle = document.getElementById('tour-title');
+                const tText = document.getElementById('tour-text');
+                const btnNext = document.getElementById('tour-next');
+                const btnPrev = document.getElementById('tour-prev');
+                const btnClose = document.getElementById('tour-close');
+
+                const steps = [
+                    { 
+                        selector: 'a[href="/front/account/profile.php"] button', 
+                        title: 'Votre compte personnel', 
+                        text: 'Ce bouton vous donne accès à vos informations personnelles, la gestion de votre abonnement et l\'historique de vos activités.' 
+                    },
+                    { 
+                        selector: 'button[class*="text-[#AA1114]"]', 
+                        title: 'Bouton d\'urgence', 
+                        text: 'En cas de nécessité, ce bouton d\'urgence vous permet de contacter immédiatement une assistance. Il reste visible sur toutes les pages.' 
+                    },
+                    { 
+                        selector: 'nav', 
+                        title: 'Menu de navigation', 
+                        text: 'Utilisez ces liens pour consulter les différentes rubriques du site : catalogue des activités, boutique et messagerie sécurisée.' 
+                    },
+                    { 
+                        selector: 'input[placeholder="Rechercher..."]', 
+                        title: 'Barre de recherche', 
+                        text: 'Saisissez un terme dans ce champ pour trouver rapidement un prestataire, un service ou une activité spécifique.' 
+                    },
+                    { 
+                        selector: 'button[title="Modifier la taille du texte"]', 
+                        title: 'Ajustement de l\'affichage', 
+                        text: 'Pour un meilleur confort de lecture, cliquez sur cette icône en forme de loupe afin d\'agrandir les textes de l\'interface.' 
+                    },
+                    { 
+                        selector: 'main a.button-blue', 
+                        title: 'Découverte des services', 
+                        text: 'Vous pouvez cliquer sur ce bouton pour parcourir l\'ensemble de nos offres.' 
+                    },
+                    { 
+                        selector: 'footer', 
+                        title: 'Informations complémentaires', 
+                        text: 'Le pied de page contient les mentions légales, les conditions d\'utilisation, ainsi que nos coordonnées de contact.' 
+                    }
+                ];
+
+                let currentStep = 0;
+                let highlightedElement = null;
+
+                function highlightElement(selector) {
+                    if (highlightedElement) {
+                        highlightedElement.classList.remove('relative', 'z-[90]', 'ring-4', 'ring-[#E1AB2B]', 'bg-white');
+                    }
+
+                    const el = document.querySelector(selector);
+                    if (el) {
+                        el.classList.add('relative', 'z-[90]', 'ring-4', 'ring-[#E1AB2B]', 'bg-white', 'transition-all', 'duration-300');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        highlightedElement = el;
+                    }
+                }
+
+                function updateTour() {
+                    const step = steps[currentStep];
+                    
+                    tCounter.textContent = `Étape ${currentStep + 1} sur ${steps.length}`;
+                    tTitle.textContent = step.title;
+                    tText.textContent = step.text;
+
+                    highlightElement(step.selector);
+
+                    btnPrev.classList.toggle('invisible', currentStep === 0);
+
+                    if (currentStep === steps.length - 1) {
+                        btnNext.classList.add('hidden');
+                        btnClose.classList.remove('hidden');
+                    } else {
+                        btnNext.classList.remove('hidden');
+                        btnClose.classList.add('hidden');
+                    }
+                }
+
+                if (tourOverlay && tourDialog) {
+                    setTimeout(() => {
+                        tourOverlay.classList.remove('hidden');
+                        tourDialog.classList.remove('hidden');
+                        updateTour();
+                    }, 500);
+
+                    btnNext.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (currentStep < steps.length - 1) {
+                            currentStep++;
+                            updateTour();
+                        }
+                    });
+
+                    btnPrev.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (currentStep > 0) {
+                            currentStep--;
+                            updateTour();
+                        }
+                    });
+
+                    const endTour = async (e) => {
+                        if (e) e.preventDefault();
+                        tourOverlay.classList.add('hidden');
+                        tourDialog.classList.add('hidden');
+                        
+                        if (highlightedElement) {
+                            highlightedElement.classList.remove('relative', 'z-[90]', 'ring-4', 'ring-[#E1AB2B]', 'bg-white');
+                        }
+
+                        try {
+                            await fetch('http://localhost:8082/auth/tutorial-seen', {
+                                method: 'POST',
+                                credentials: 'include'
+                            });
+                        } catch (err) {
+                            console.error("Erreur de validation du tutoriel :", err);
+                        }
+                    };
+
+                    btnClose.addEventListener('click', endTour);
+                }
+            }
+
             } catch (error) {
                 console.error("Erreur d'authentification :", error);
             }

@@ -263,7 +263,7 @@ func Me(response http.ResponseWriter, request *http.Request) {
 
     query := `
         SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
-               u.num_telephone, u.date_naissance, u.statut, 
+               u.num_telephone, u.date_naissance, u.statut, u.premiere_connexion,
                u.date_creation, u.motif_bannissement, u.duree_bannissement,
                a.rue, a.ville, a.code_postal, a.pays
         FROM UTILISATEUR u
@@ -274,10 +274,11 @@ func Me(response http.ResponseWriter, request *http.Request) {
     var user models.Utilisateur
     var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays sql.NullString
     var dureeBan sql.NullInt64
+    var premiereConnexion int
 
     errDB := db.DB.QueryRow(query, claims.UserID).Scan(
         &user.ID, &user.Nom, &user.Prenom, &user.Email,
-        &numTel, &dateNaiss, &user.Statut, &dateCrea, &motifBan, &dureeBan,
+        &numTel, &dateNaiss, &user.Statut, &premiereConnexion, &dateCrea, &motifBan, &dureeBan,
         &rue, &ville, &cp, &pays,
     )
 
@@ -299,6 +300,7 @@ func Me(response http.ResponseWriter, request *http.Request) {
     user.Ville = ville.String
     user.CodePostal = cp.String
     user.Pays = pays.String
+    user.PremiereConnexion = premiereConnexion
 
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(user)
@@ -435,4 +437,35 @@ func Update(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(map[string]string{
         "message": "Profil mis à jour avec succès",
     })
+}
+
+func TutorialSeen(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
+
+    cookie, err := request.Cookie("session_token")
+    if err != nil {
+        http.Error(response, "Non authentifié", http.StatusUnauthorized)
+        return
+    }
+
+    claims := &models.Claims{}
+    token, _ := jwt.ParseWithClaims(cookie.Value, claims, func(t *jwt.Token) (interface{}, error) {
+        return jwtKey, nil
+    })
+
+    if !token.Valid {
+        http.Error(response, "Session invalide", http.StatusUnauthorized)
+        return
+    }
+
+    _, errDB := db.DB.Exec("UPDATE UTILISATEUR SET premiere_connexion = 0 WHERE id_utilisateur = ?", claims.UserID)
+    if errDB != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusOK)
+    response.Write([]byte(`{"message": "Tutoriel validé"}`))
 }
