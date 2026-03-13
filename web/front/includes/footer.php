@@ -26,10 +26,10 @@
 
         <div class="flex-1 justify-center min-w-[300px] space-y-10">
             <h3 class="font-bold text-3xl text-[#E1AB2B]">Légal</h3>
-            <a href="#" class="footer-text">Mentions légales</a><br>
-            <a href="#" class="footer-text">Cookies</a><br>
-            <a href="#" class="footer-text">CGU</a><br>
-            <a href="#" class="footer-text">Confidentialité</a><br>
+            <a href="/front/legal/legal-notice.php" class="footer-text">Mentions légales</a><br>
+            <a href="/front/legal/cookies.php" class="footer-text">Cookies</a><br>
+            <a href="/front/legal/cgu.php" class="footer-text">CGU</a><br>
+            <a href="/front/legal/privacy.php" class="footer-text">Confidentialité</a><br>
         </div>
         <div class="my-10 mx-16 h-[1px] w-full bg-white"></div>
         <div class="flex-1 justify-center min-w-[300px]">
