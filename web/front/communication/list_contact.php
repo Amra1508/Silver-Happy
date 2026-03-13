@@ -1,3 +1,7 @@
+<?php
+$is_logged_in = isset($_COOKIE['session_token']);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -24,14 +28,23 @@
 
 <body>
     <?php include("../includes/header.php") ?>
-    <main class="pt-8 bg-gray-50">
+    <main class="pt-8 mb-10 bg-white">
         <div class="max-w-4xl mx-auto">
-            <h1 class="big-text mb-8 text-center">Discuter avec notre équipe</h1>
+            <?php if ($is_logged_in): ?>
+                <h1 class="big-text mb-8 text-center">Discuter avec notre équipe</h1>
 
-            <div id="list-user-body" class="grid gap-6">
-            </div>
+                <div id="list-user-body" class="grid gap-6">
+                </div>
 
-            <div id="pagination-controls"></div>
+                <div id="pagination-controls"></div>
+            <?php else: ?>
+                <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
+                    <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
+                        Vous devez être connecté(e) pour discuter avec notre équipe Silver Happy.</p>
+                    <a href="/front/account/signin.php" class="rounded-full px-4 py-2 button-blue">
+                        Je me connecte </a>
+                </div>
+            <?php endif; ?>
         </div>
 
     </main>
