@@ -16,9 +16,11 @@ type Utilisateur struct {
 	CodePostal        string `json:"code_postal"`
 	Statut            string `json:"statut"`
 	DateCreation      string `json:"date_creation"`
-	PremiereConnexion int `json:"premiere_connexion"`
+	PremiereConnexion int64  `json:"premiere_connexion"`
+	IdAbonnement 	  int64  `json:"id_abonnement"`
+	DebutAbonnement   string `json:"debut_abonnement"`
 	MotifBannissement string `json:"motif_bannissement"`
-	DureeBannissement int    `json:"duree_bannissement"`
+	DureeBannissement int  `json:"duree_bannissement"`
 }
 
 type LoginCredentials struct {
@@ -115,3 +117,20 @@ type Evenement struct {
 	DateDebut   string `json:"date_debut"`
 	DateFin     string `json:"date_fin"`
 }
+
+var SubReq struct {
+        Description     string  `json:"description"`
+        Renouvellement  int     `json:"renouvellement"`
+        TypeAbonnement  string  `json:"type_abonnement"` 
+        TypePaiement    string  `json:"type_paiement"`
+        MethodePaiement string  `json:"methode_paiement"`
+        Tarif           float64 `json:"tarif"`
+        IdPaiement      int     `json:"id_paiement"`
+    }
+
+var Req struct {
+        UserID         int    `json:"user_id"`
+        TypeAbonnement string `json:"type_abonnement"`
+        Periode        string `json:"periode"`         
+        Tarif          int64  `json:"tarif"`
+    }

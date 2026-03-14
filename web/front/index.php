@@ -45,7 +45,7 @@
                     class="absolute bottom-2 w-60 h-60 object-contain">
 
                 <div class="absolute bottom-10 right-10">
-                    <a href="#" class="rounded-full px-6 button-blue">
+                    <a href="/front/services/catalog.php" class="rounded-full px-6 button-blue">
                         Découvrez nos services
                     </a>
                 </div>

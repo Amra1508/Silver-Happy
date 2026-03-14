@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +14,8 @@ import (
 	"main/models"
 	"main/utils"
 
+	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/checkout/session"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -364,4 +368,154 @@ func Ban_User(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Statut mis à jour avec succès"})
+}
+
+func CreateCheckoutSession(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
+
+    stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+
+	req := models.Req 
+    
+    if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+    var idAbo sql.NullInt64
+    var debutAbo sql.NullString
+
+    errDB := db.DB.QueryRow("SELECT id_abonnement, debut_abonnement FROM UTILISATEUR WHERE id_utilisateur = ?", req.UserID).Scan(&idAbo, &debutAbo)
+    
+    if errDB != nil {
+        if errDB == sql.ErrNoRows {
+            http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
+        } else {
+            http.Error(response, "Erreur serveur base de données", http.StatusInternalServerError)
+        }
+        return
+    }
+
+    estAbonneActuellement := idAbo.Valid && idAbo.Int64 != 0
+    aDejaEteAbonne := debutAbo.Valid && debutAbo.String != ""
+
+    if estAbonneActuellement {
+        http.Error(response, "Vous possédez déjà un abonnement actif.", http.StatusForbidden)
+        return
+    }
+
+    if req.TypeAbonnement == "Renouvellement" && !aDejaEteAbonne {
+        http.Error(response, "Le tarif de renouvellement est réservé aux utilisateurs ayant déjà été abonnés.", http.StatusForbidden)
+        return
+    }
+
+    interval := "month"
+    if req.Periode == "annuel" {
+        interval = "year"
+    }
+
+    params := &stripe.CheckoutSessionParams{
+        PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+        Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+        ClientReferenceID:  stripe.String(strconv.Itoa(req.UserID)),
+        LineItems: []*stripe.CheckoutSessionLineItemParams{
+            {
+                PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+                    Currency: stripe.String("eur"),
+                    ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+                        Name: stripe.String("Silver Happy - " + req.TypeAbonnement),
+                    },
+                    UnitAmount: stripe.Int64(req.Tarif * 100),
+                    Recurring: &stripe.CheckoutSessionLineItemPriceDataRecurringParams{
+                        Interval: stripe.String(interval),
+                    },
+                },
+                Quantity: stripe.Int64(1),
+            },
+        },
+        SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-subscription?session_id={CHECKOUT_SESSION_ID}&user_id=%d&tarif=%d&periode=%s&type=%s", req.UserID, req.Tarif, req.Periode, req.TypeAbonnement)),
+        CancelURL:  stripe.String("http://localhost/front/subscription.php"),
+    }
+
+    s, err := session.New(params)
+    if err != nil {
+        http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
+        return
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]string{"url": s.URL})
+}
+
+func Success_Subscription(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+
+    sessionID := request.URL.Query().Get("session_id")
+    userID := request.URL.Query().Get("user_id")
+    tarifStr := request.URL.Query().Get("tarif")
+    periode := request.URL.Query().Get("periode")
+    typeAbo := request.URL.Query().Get("type")
+
+    tarif, err := strconv.ParseFloat(tarifStr, 64)
+    if err != nil {
+        http.Error(response, "Erreur de format de tarif", http.StatusBadRequest)
+        return
+    }
+
+    s, err := session.Get(sessionID, nil)
+    if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
+        http.Redirect(response, request, "http://localhost/front/abonnement.php?error=paiement_echoue", http.StatusSeeOther)
+        return
+    }
+
+    renouvellement := 0
+    if typeAbo == "Renouvellement" {
+        renouvellement = 1
+    }
+
+    resPaiement, errP := db.DB.Exec(`
+        INSERT INTO PAIEMENT (prix, statut, mode_paiement) 
+        VALUES (?, 'valide', 'carte')`, 
+        tarif)
+
+    if errP != nil {
+        fmt.Println("Erreur création paiement :", errP)
+        http.Error(response, "Erreur base de données (Paiement)", http.StatusInternalServerError)
+        return
+    }
+
+    idPaiement, _ := resPaiement.LastInsertId()
+    
+    resAbo, errA := db.DB.Exec(`
+        INSERT INTO ABONNEMENT (description, renouvellement, type_abonnement, type_paiement, methode_paiement, tarif, id_paiement)
+        VALUES ('Abonnement Silver Happy', ?, 'seniors', ?, 'carte', ?, ?)`,
+        renouvellement, periode, tarif, idPaiement)
+
+    if errA != nil {
+        fmt.Println("Erreur création abonnement :", errA)
+        http.Error(response, "Erreur base de données (Abonnement)", http.StatusInternalServerError)
+        return
+    }
+
+    idAbonnement, _ := resAbo.LastInsertId()
+
+    _, errU := db.DB.Exec(`
+        UPDATE UTILISATEUR 
+        SET id_abonnement = ?, debut_abonnement = NOW() 
+        WHERE id_utilisateur = ?`, 
+        idAbonnement, userID)
+
+    if errU != nil {
+        fmt.Println("Erreur mise à jour utilisateur :", errU)
+        http.Error(response, "Erreur mise à jour utilisateur", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(response, request, "http://localhost/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
 }

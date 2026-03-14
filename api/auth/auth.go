@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -264,7 +265,7 @@ func Me(response http.ResponseWriter, request *http.Request) {
     query := `
         SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
                u.num_telephone, u.date_naissance, u.statut, u.premiere_connexion,
-               u.date_creation, u.motif_bannissement, u.duree_bannissement,
+               u.date_creation, u.motif_bannissement, u.duree_bannissement, u.id_abonnement, u.debut_abonnement,
                a.rue, a.ville, a.code_postal, a.pays
         FROM UTILISATEUR u
         LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
@@ -272,17 +273,18 @@ func Me(response http.ResponseWriter, request *http.Request) {
     `
     
     var user models.Utilisateur
-    var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays sql.NullString
-    var dureeBan sql.NullInt64
-    var premiereConnexion int
+    
+    var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays, debutAbonnement sql.NullString
+    var dureeBan, idAbonnement, premiereConnexion sql.NullInt64 
 
     errDB := db.DB.QueryRow(query, claims.UserID).Scan(
         &user.ID, &user.Nom, &user.Prenom, &user.Email,
-        &numTel, &dateNaiss, &user.Statut, &premiereConnexion, &dateCrea, &motifBan, &dureeBan,
+        &numTel, &dateNaiss, &user.Statut, &premiereConnexion, &dateCrea, &motifBan, &dureeBan, &idAbonnement, &debutAbonnement,
         &rue, &ville, &cp, &pays,
     )
 
     if errDB != nil {
+        fmt.Println("Erreur DB Auth Me :", errDB)
         if errDB == sql.ErrNoRows {
             http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
         } else {
@@ -300,7 +302,10 @@ func Me(response http.ResponseWriter, request *http.Request) {
     user.Ville = ville.String
     user.CodePostal = cp.String
     user.Pays = pays.String
-    user.PremiereConnexion = premiereConnexion
+    user.DebutAbonnement = debutAbonnement.String
+    
+    user.PremiereConnexion = premiereConnexion.Int64 
+    user.IdAbonnement = idAbonnement.Int64
 
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(user)

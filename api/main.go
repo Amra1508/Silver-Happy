@@ -21,6 +21,7 @@ func main() {
 	})
 
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	http.HandleFunc("/create-checkout", users.CreateCheckoutSession)
 
 	http.HandleFunc("/auth/register", auth.Register)
 	http.HandleFunc("/auth/login", auth.Login)
@@ -47,6 +48,7 @@ func main() {
 	http.HandleFunc("/seniors/update/{id}", users.Update_User)
 	http.HandleFunc("/seniors/delete/{id}", users.Delete_User)
 	http.HandleFunc("/seniors/ban/{id}", users.Ban_User)
+	http.HandleFunc("/success-subscription", users.Success_Subscription)
 
 	http.HandleFunc("/service/read", services.Read_Service)
 	http.HandleFunc("/service/create", services.Create_Service)
@@ -84,6 +86,10 @@ func main() {
 	http.HandleFunc("/evenement/prestataires/link/{id}", services.Link_Prestataire_Evenement)
     http.HandleFunc("/evenement/prestataires/read/{id}", services.Read_Prestataires_For_Evenement)
     http.HandleFunc("/evenement/prestataires/unlink/{id}/{id_prestataire}", services.Unlink_Prestataire_Evenement)
+	http.HandleFunc("/evenement/register/{id}", services.Register_Evenement)
+	http.HandleFunc("/evenement/user/{id}", services.Read_User_Evenements)
+	http.HandleFunc("/evenement/unregister/{id}", services.Unregister_Evenement)
+
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

@@ -31,82 +31,87 @@
     <main>
         <div class="px-16 pt-10 pb-16">
             
-            <h2 class="text-3xl text-center mb-10 font-semibold text-[#1C5B8F]">Mes informations personnelles :</h2>
+            <h2 class="text-3xl text-center mb-10 font-semibold text-[#1C5B8F] flex items-center justify-center gap-4">
+                Mes informations personnelles
+                <span id="auth_status_badge" class="text-sm px-4 py-1 bg-gray-200 text-gray-500 rounded-full border font-bold transition-colors">
+                    ⏳ Vérification...
+                </span>
+            </h2>
 
-            <div id="response_message" class="hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border"></div>
+            <div id="response_message" class="hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold shadow-sm"></div>
 
-            <div class="border border-[#1C5B8F] rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6">
+            <div class="border border-[#1C5B8F] rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6 bg-white shadow-sm">
                 <div class="sm:col-span-3">
-                    <label class="small-text">Prénom</label>
+                    <label class="text-sm text-gray-600 font-bold">Prénom</label>
                     <div class="mt-2">
-                        <input id="first_name" type="text" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="first_name" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Nom</label>
+                    <label class="text-sm text-gray-600 font-bold">Nom</label>
                     <div class="mt-2">
-                        <input id="last_name" type="text" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="last_name" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Date de naissance</label>
+                    <label class="text-sm text-gray-600 font-bold">Date de naissance</label>
                     <div class="mt-2">
-                        <input id="birth_date" type="date" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="birth_date" type="date" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Numéro de téléphone</label>
+                    <label class="text-sm text-gray-600 font-bold">Numéro de téléphone</label>
                     <div class="mt-2">
-                        <input id="phone_number" type="tel" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="phone_number" type="tel" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Adresse mail</label>
+                    <label class="text-sm text-gray-600 font-bold">Adresse mail</label>
                     <div class="mt-2">
-                        <input id="profile_email" type="email" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="profile_email" type="email" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text font-bold text-gray-500">Nouveau mot de passe (optionnel)</label>
+                    <label class="text-sm text-gray-600 font-bold">Nouveau mot de passe (optionnel)</label>
                     <div class="mt-2">
-                        <input id="profile_password" type="password" placeholder="Laisser vide pour ne pas changer" class="form-input w-full border rounded-md px-3 py-2" />
+                        <input id="profile_password" type="password" placeholder="Laisser vide pour ne pas changer" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Pays</label>
+                    <label class="text-sm text-gray-600 font-bold">Pays</label>
                     <div class="mt-2">
-                        <input id="country" type="text" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="country" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Adresse</label>
+                    <label class="text-sm text-gray-600 font-bold">Adresse</label>
                     <div class="mt-2">
-                        <input id="address" type="text" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="address" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Ville</label>
+                    <label class="text-sm text-gray-600 font-bold">Ville</label>
                     <div class="mt-2">
-                        <input id="city" type="text" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="city" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label class="small-text">Code postal</label>
+                    <label class="text-sm text-gray-600 font-bold">Code postal</label>
                     <div class="mt-2">
-                        <input id="zip_code" type="text" class="form-input w-full border rounded-md px-3 py-2" required />
+                        <input id="zip_code" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
                     </div>
                 </div>
                 
-                <button id="btn_update" class="sm:col-span-6 justify-self-center px-14 py-3 rounded-full bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors">
+                <button id="btn_update" class="sm:col-span-6 justify-self-center px-14 py-3 rounded-full bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
                     Mettre à jour mes informations
                 </button>
             </div>
@@ -118,6 +123,35 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const messageBox = document.getElementById('response_message');
+            const authBadge = document.getElementById('auth_status_badge');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('success')) {
+                const type = urlParams.get('success');
+                messageBox.classList.remove('hidden');
+                messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700', 'block');
+                
+                if (type === 'abonnement_valide') {
+                    messageBox.textContent = "Félicitations ! Votre abonnement a bien été activé.";
+                } else {
+                    messageBox.textContent = "Opération réussie !";
+                }
+                
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } 
+            else if (urlParams.has('error')) {
+                const type = urlParams.get('error');
+                messageBox.classList.remove('hidden');
+                messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700', 'block');
+                
+                if (type === 'paiement_echoue') {
+                    messageBox.textContent = "Le paiement a échoué ou a été annulé. Vous n'avez pas été débité.";
+                } else {
+                    messageBox.textContent = "Une erreur est survenue.";
+                }
+                
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
 
             try {
                 const response = await fetch('http://localhost:8082/auth/me', {
@@ -128,6 +162,15 @@
 
                 if (response.ok) {
                     const user = await response.json();
+                    
+                    if (user.id_abonnement && user.id_abonnement !== null && user.id_abonnement !== 0) {
+                        authBadge.innerHTML = "Abonné(e)";
+                        authBadge.className = "text-sm px-4 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm";
+                    } else {
+                        authBadge.innerHTML = "Non abonné(e) <span class='ml-1 text-[#1C5B8F] underline text-xs'>S'abonner</span>";
+                        authBadge.className = "cursor-pointer text-sm px-4 py-1 bg-gray-100 border border-gray-300 text-gray-500 rounded-full font-bold shadow-sm hover:bg-gray-200 transition-colors";
+                        authBadge.onclick = () => window.location.href = "/front/services/subscription.php";
+                    }
                     
                     document.getElementById('first_name').value = user.prenom || '';
                     document.getElementById('last_name').value = user.nom || '';
@@ -146,12 +189,16 @@
                 }
             } catch (error) {
                 console.error("Erreur de récupération des données :", error);
+                authBadge.textContent = "Erreur serveur";
+                authBadge.className = "text-sm px-4 py-1 bg-red-100 border border-red-400 text-red-700 rounded-full font-bold shadow-sm";
             }
 
             const btnSubmit = document.getElementById('btn_update');
 
             btnSubmit.addEventListener('click', async (e) => {
                 e.preventDefault();
+
+                messageBox.className = "hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold shadow-sm";
 
                 const data = {
                     prenom: document.getElementById('first_name').value,
@@ -172,7 +219,8 @@
 
                 if (!data.prenom || !data.nom || !data.email) {
                     messageBox.textContent = "Veuillez remplir au moins votre nom, prénom et email.";
-                    messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700 block";
+                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700', 'block');
+                    messageBox.classList.remove('hidden');
                     return;
                 }
 
@@ -186,17 +234,19 @@
 
                     if (response.ok) {
                         messageBox.textContent = "Vos informations ont bien été mises à jour !";
-                        messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700 block";
-                        
+                        messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700', 'block');
+                        messageBox.classList.remove('hidden');
                         document.getElementById('profile_password').value = '';
                     } else {
                         const errorText = await response.text();
                         messageBox.textContent = "Erreur : " + errorText;
-                        messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700 block";
+                        messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700', 'block');
+                        messageBox.classList.remove('hidden');
                     }
                 } catch (error) {
                     messageBox.textContent = "Impossible de joindre le serveur.";
-                    messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700 block";
+                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700', 'block');
+                    messageBox.classList.remove('hidden');
                 }
             });
         });

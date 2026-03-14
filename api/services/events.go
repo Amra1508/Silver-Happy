@@ -363,3 +363,133 @@ func Unlink_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
 
 	json.NewEncoder(response).Encode(map[string]string{"status": "success"})
 }
+
+func Register_Evenement(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
+
+    idEvt := request.PathValue("id")
+    var payload map[string]int
+
+    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+    idUser, exists := payload["id_utilisateur"]
+    if !exists {
+        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
+        return
+    }
+
+    var count int
+    errCheck := db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
+    if errCheck == nil && count > 0 {
+        http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
+        return
+    }
+
+    var places int
+    err := db.DB.QueryRow("SELECT nombre_place FROM evenement WHERE id_evenement = ?", idEvt).Scan(&places)
+    if err != nil {
+        http.Error(response, "Événement introuvable", http.StatusNotFound)
+        return
+    }
+    if places <= 0 {
+        http.Error(response, "Désolé, cet événement est complet.", http.StatusForbidden)
+        return
+    }
+
+    _, err = db.DB.Exec("INSERT INTO INSCRIPTION (id_utilisateur, id_evenement) VALUES (?, ?)", idUser, idEvt)
+    if err != nil {
+        http.Error(response, "Erreur lors de l'inscription en BDD.", http.StatusInternalServerError)
+        return
+    }
+
+    db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Inscription réussie !"})
+}
+
+func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    idUser := request.PathValue("id")
+
+    query := `
+        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.image, e.date_debut, e.date_fin 
+        FROM evenement e
+        JOIN INSCRIPTION i ON e.id_evenement = i.id_evenement
+        WHERE i.id_utilisateur = ?
+        ORDER BY e.date_debut ASC
+    `
+    
+    rows, err := db.DB.Query(query, idUser)
+    if err != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var tabEvenement []models.Evenement
+    for rows.Next() {
+        var evt models.Evenement
+        var imagePath, dateDebut, dateFin sql.NullString
+
+        err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &imagePath, &dateDebut, &dateFin)
+        if err == nil {
+            evt.Image = imagePath.String
+            evt.DateDebut = dateDebut.String
+            evt.DateFin = dateFin.String
+            tabEvenement = append(tabEvenement, evt)
+        }
+    }
+
+    if tabEvenement == nil {
+        tabEvenement = []models.Evenement{}
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(tabEvenement)
+}
+
+func Unregister_Evenement(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
+
+    idEvt := request.PathValue("id")
+    var payload map[string]int
+
+    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+    idUser, exists := payload["id_utilisateur"]
+    if !exists {
+        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
+        return
+    }
+
+    res, err := db.DB.Exec("DELETE FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt)
+    if err != nil {
+        http.Error(response, "Erreur lors de la désinscription en BDD.", http.StatusInternalServerError)
+        return
+    }
+
+    affected, _ := res.RowsAffected()
+    if affected == 0 {
+        http.Error(response, "Vous n'étiez pas inscrit à cet événement.", http.StatusNotFound)
+        return
+    }
+
+    db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place + 1 WHERE id_evenement = ?", idEvt)
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Désinscription réussie !"})
+}
