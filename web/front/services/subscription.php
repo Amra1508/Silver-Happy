@@ -1,15 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Silver Happy - Abonnements</title>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
+    </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
+            }
         }
+
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
             if (modal) {
@@ -19,6 +29,7 @@
         }
     </script>
 </head>
+
 <body class="bg-gray-50 flex flex-col min-h-screen">
 
     <?php include("../includes/header.php") ?>
@@ -26,15 +37,15 @@
     <main class="flex-1 relative">
         <div id="api-message" class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-xl"></div>
 
-        <div class="w-full px-6 md:px-16 mt-10 bg-white pt-8">
-            <h2 class="text-3xl md:text-4xl mb-4 text-center text-[#1C5B8F] font-bold">Nos Tarifs d'Abonnement</h2>
+        <div class="w-full px-6 md:px-16 pt-8">
+            <h1 class="mb-5 text-center big-text">Nos Tarifs d'Abonnement</h1>
             <h2 class="text-lg text-gray-600 text-center mb-10">
                 Rejoignez la communauté Silver Happy et profitez de tous nos services adaptés.<br>
                 Choisissez la formule qui vous correspond le mieux.
             </h2>
         </div>
 
-        <div class="flex justify-center items-center gap-4 mb-8 bg-white px-16 pb-8">
+        <div class="flex justify-center items-center gap-4 mb-8 px-16 pb-8">
             <span class="text-xl font-bold text-[#1C5B8F] transition-colors" id="label-mensuel">Mensuel</span>
             <button id="toggle-billing" class="relative inline-flex h-8 w-16 items-center rounded-full bg-[#1C5B8F] transition-colors focus:outline-none shadow-inner">
                 <span id="toggle-knob" class="inline-block h-6 w-6 transform rounded-full bg-white transition-transform translate-x-1 shadow-md"></span>
@@ -83,7 +94,7 @@
             <div class="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl">
                 <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-2">Récapitulatif</h3>
                 <p id="modal-summary" class="text-gray-600 mb-6 pb-4 border-b">Chargement...</p>
-                
+
                 <form id="sub-form" class="space-y-6">
                     <input type="hidden" id="sub-tarif">
                     <input type="hidden" id="sub-periode">
@@ -124,18 +135,23 @@
                 toggleKnob.classList.replace('translate-x-1', 'translate-x-9');
                 labelMensuel.classList.replace('text-[#1C5B8F]', 'text-gray-400');
                 labelAnnuel.classList.replace('text-gray-400', 'text-[#1C5B8F]');
-                priceNormal.textContent = '40'; periodNormal.textContent = '/ annuel';
-                priceRenewal.textContent = '35'; periodRenewal.textContent = '/ annuel';
+                priceNormal.textContent = '40';
+                periodNormal.textContent = '/ annuel';
+                priceRenewal.textContent = '35';
+                periodRenewal.textContent = '/ annuel';
             } else {
                 toggleKnob.classList.replace('translate-x-9', 'translate-x-1');
                 labelMensuel.classList.replace('text-gray-400', 'text-[#1C5B8F]');
                 labelAnnuel.classList.replace('text-[#1C5B8F]', 'text-gray-400');
-                priceNormal.textContent = '4'; periodNormal.textContent = '/ mois';
-                priceRenewal.textContent = '3'; periodRenewal.textContent = '/ mois';
+                priceNormal.textContent = '4';
+                periodNormal.textContent = '/ mois';
+                priceRenewal.textContent = '3';
+                periodRenewal.textContent = '/ mois';
             }
         });
 
         const messageBox = document.getElementById('api-message');
+
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
             messageBox.className = `p-4 rounded-lg border text-center font-bold shadow-lg ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
@@ -161,7 +177,7 @@
             btnStripe.innerText = "Redirection...";
             btnStripe.disabled = true;
 
-            const userId = window.currentUserId || 1; 
+            const userId = window.currentUserId || 1;
 
             const data = {
                 user_id: parseInt(userId),
@@ -173,13 +189,15 @@
             try {
                 const response = await fetch('http://localhost:8082/create-checkout', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    window.location.href = result.url; 
+                    window.location.href = result.url;
                 } else {
                     showAlert("Erreur lors de l'initialisation du paiement.", false);
                     btnStripe.innerText = "Payer en toute sécurité";
@@ -193,4 +211,5 @@
         });
     </script>
 </body>
+
 </html>
