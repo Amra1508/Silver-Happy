@@ -40,6 +40,8 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+    env_file:
+      - .env
 
   pma-silver-happy:
     image: phpmyadmin:latest

@@ -21,6 +21,7 @@ type Utilisateur struct {
 	DebutAbonnement   string `json:"debut_abonnement"`
 	MotifBannissement string `json:"motif_bannissement"`
 	DureeBannissement int  `json:"duree_bannissement"`
+	TypePaiement string `json:"type_paiement"`
 }
 
 type LoginCredentials struct {
@@ -118,7 +119,7 @@ type Evenement struct {
 	DateFin     string `json:"date_fin"`
 }
 
-var SubReq struct {
+type SubReq struct {
         Description     string  `json:"description"`
         Renouvellement  int     `json:"renouvellement"`
         TypeAbonnement  string  `json:"type_abonnement"` 
@@ -128,7 +129,7 @@ var SubReq struct {
         IdPaiement      int     `json:"id_paiement"`
     }
 
-var Req struct {
+type Req struct {
         UserID         int    `json:"user_id"`
         TypeAbonnement string `json:"type_abonnement"`
         Periode        string `json:"periode"`         

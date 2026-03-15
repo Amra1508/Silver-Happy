@@ -262,25 +262,27 @@ func Me(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    query := `
-        SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
-               u.num_telephone, u.date_naissance, u.statut, u.premiere_connexion,
-               u.date_creation, u.motif_bannissement, u.duree_bannissement, u.id_abonnement, u.debut_abonnement,
-               a.rue, a.ville, a.code_postal, a.pays
-        FROM UTILISATEUR u
-        LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
-        WHERE u.id_utilisateur = ?
-    `
+        query := `
+		SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
+		       u.num_telephone, u.date_naissance, u.statut, u.premiere_connexion,
+		       u.date_creation, u.motif_bannissement, u.duree_bannissement, u.id_abonnement, u.debut_abonnement,
+		       a.rue, a.ville, a.code_postal, a.pays,
+		       ab.type_paiement
+		FROM UTILISATEUR u
+		LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
+		LEFT JOIN ABONNEMENT ab ON u.id_abonnement = ab.id_abonnement
+		WHERE u.id_utilisateur = ?
+	`
     
     var user models.Utilisateur
     
-    var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays, debutAbonnement sql.NullString
+    var numTel, dateNaiss, dateCrea, motifBan, rue, ville, cp, pays, debutAbonnement, typePaiement sql.NullString
     var dureeBan, idAbonnement, premiereConnexion sql.NullInt64 
 
     errDB := db.DB.QueryRow(query, claims.UserID).Scan(
         &user.ID, &user.Nom, &user.Prenom, &user.Email,
         &numTel, &dateNaiss, &user.Statut, &premiereConnexion, &dateCrea, &motifBan, &dureeBan, &idAbonnement, &debutAbonnement,
-        &rue, &ville, &cp, &pays,
+        &rue, &ville, &cp, &pays, &typePaiement,
     )
 
     if errDB != nil {
@@ -303,6 +305,7 @@ func Me(response http.ResponseWriter, request *http.Request) {
     user.CodePostal = cp.String
     user.Pays = pays.String
     user.DebutAbonnement = debutAbonnement.String
+    user.TypePaiement = typePaiement.String
     
     user.PremiereConnexion = premiereConnexion.Int64 
     user.IdAbonnement = idAbonnement.Int64

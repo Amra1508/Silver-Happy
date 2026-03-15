@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -377,7 +378,7 @@ func CreateCheckoutSession(response http.ResponseWriter, request *http.Request) 
 
     stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
-	req := models.Req 
+	req := models.Req{}
     
     if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
         http.Error(response, "Format JSON invalide", http.StatusBadRequest)
@@ -416,6 +417,8 @@ func CreateCheckoutSession(response http.ResponseWriter, request *http.Request) 
         interval = "year"
     }
 
+	encodedType := url.QueryEscape(req.TypeAbonnement)
+
     params := &stripe.CheckoutSessionParams{
         PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
         Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
@@ -435,15 +438,16 @@ func CreateCheckoutSession(response http.ResponseWriter, request *http.Request) 
                 Quantity: stripe.Int64(1),
             },
         },
-        SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-subscription?session_id={CHECKOUT_SESSION_ID}&user_id=%d&tarif=%d&periode=%s&type=%s", req.UserID, req.Tarif, req.Periode, req.TypeAbonnement)),
-        CancelURL:  stripe.String("http://localhost/front/subscription.php"),
+        SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-subscription?session_id={CHECKOUT_SESSION_ID}&user_id=%d&tarif=%d&periode=%s&type=%s", req.UserID, req.Tarif, req.Periode, encodedType)),
+    	CancelURL:  stripe.String("http://localhost/front/services/subscription.php"),
     }
 
     s, err := session.New(params)
-    if err != nil {
-        http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		fmt.Println("Erreur lors de la création de session Stripe :", err) 
+		http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
+		return
+	}
 
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(map[string]string{"url": s.URL})

@@ -164,9 +164,27 @@
                     const user = await response.json();
                     
                     if (user.id_abonnement && user.id_abonnement !== null && user.id_abonnement !== 0) {
-                        authBadge.innerHTML = "Abonné(e)";
-                        authBadge.className = "text-sm px-4 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm";
-                    } else {
+                        let expirationText = "Abonné(e)";
+                        
+                        if (user.debut_abonnement) {
+                            const debutDate = new Date(user.debut_abonnement);
+                            
+                            if (user.type_paiement === 'mensuel') {
+                                debutDate.setMonth(debutDate.getMonth() + 1);
+                            } else if (user.type_paiement === 'annuel') {
+                                debutDate.setFullYear(debutDate.getFullYear() + 1);
+                            } else if (user.type_paiement === 'trimestriel') {
+                                debutDate.setMonth(debutDate.getMonth() + 3);
+                            } 
+
+                            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                            const dateFinFormatee = debutDate.toLocaleDateString('fr-FR', options);
+                            expirationText = `Abonné(e) jusqu'au ${dateFinFormatee}`;
+                        }
+
+                        authBadge.innerHTML = expirationText;
+                        authBadge.className = "text-sm px-4 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm";
+                    } else {
                         authBadge.innerHTML = "Non abonné(e) <span class='ml-1 text-[#1C5B8F] underline text-xs'>S'abonner</span>";
                         authBadge.className = "cursor-pointer text-sm px-4 py-1 bg-gray-100 border border-gray-300 text-gray-500 rounded-full font-bold shadow-sm hover:bg-gray-200 transition-colors";
                         authBadge.onclick = () => window.location.href = "/front/services/subscription.php";
