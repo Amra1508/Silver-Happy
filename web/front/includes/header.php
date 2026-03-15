@@ -34,7 +34,7 @@
 
         <nav class="md:flex items-center gap-6 lg:gap-8">
             <a href="/front/index.php" class="menu-text">Accueil</a>
-            <a href="/front/services/events.php" class="menu-text">Activités</a>
+            <a href="/front/services/menu_activity.php" class="menu-text">Activités</a>
             <a href="/front/services/products.php" class="menu-text">Boutique</a>
             <a href="/front/communication/list_contact.php" class="menu-text">Messagerie</a>
             <a href="/front/services/subscription.php" class="menu-text">S'abonner</a>
