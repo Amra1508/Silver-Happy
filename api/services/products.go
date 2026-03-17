@@ -133,7 +133,7 @@ func Read_One_Produit(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	var produit models.Produit
 
-	err := db.DB.QueryRow("SELECT id_produit, nom, description, prix, stock FROM PRODUIT WHERE id_produit = ?", id).Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock)
+	err := db.DB.QueryRow("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT WHERE id_produit = ?", id).Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image)
 
 	if err != nil {
 		http.Error(response, "Produit non trouvé", http.StatusNotFound)

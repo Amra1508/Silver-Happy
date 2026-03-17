@@ -28,18 +28,19 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
 <body>
     <?php include("../includes/header.php") ?>
-    <main class="mb-10 bg-white">
+    <main class="p-8 bg-white">
         <div class="max-w-6xl mx-auto">
             <?php if ($is_logged_in): ?>
+                <div class="flex justify-between items-center mx-8">
+                    <a href="/front/services/products.php">
+                        <button class="flex items-center rounded-full px-6 button-blue">
+                            <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                        </button>
+                    </a>
+                </div>
                 <div class="max-w-6xl mx-auto px-4">
-                    <div class="w-full pt-8">
-                        <h1 class="mb-5 text-center big-text">Détails du Produit</h1>
-                    </div>
-
                     <div id="detail-container" class="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/10 overflow-hidden p-8">
-                        <div class="flex items-center justify-center py-20">
-                            <p class="text-gray-400 italic animate-pulse">Chargement du produit...</p>
-                        </div>
+
                     </div>
 
                     <div id="pagination-controls"></div>
@@ -74,7 +75,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
             }
 
             try {
-                const response = await fetch(`${API_BASE}/produit/read-one?id=${productId}`);
+                const response = await fetch(`${API_BASE}/produit/read-one/${productId}`);
 
                 if (!response.ok) {
                     throw new Error("Produit non trouvé côté serveur");
@@ -82,43 +83,39 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                 const p = await response.json();
 
-                const imgSrc = 'https://via.placeholder.com/500';
+                const imgSrc = p.image ? `${API_BASE}/${p.image}` : 'https://via.placeholder.com/150';
 
                 document.getElementById('detail-container').innerHTML = `
-            <div class="flex flex-col md:flex-row gap-12">
-                <div class="w-full md:w-1/2">
-                    <div class="aspect-square overflow-hidden rounded-3xl border border-gray-100 shadow-sm">
-                        <img src="${imgSrc}" class="w-full h-full object-cover" alt="${p.nom}">
-                    </div>
-                </div>
+                    <div class="flex flex-col md:flex-row gap-12">
+                        <div>
+                            <div class="w-96 h-96 overflow-hidden rounded-3xl border border-gray-100 shadow-sm">
+                                <img src="${imgSrc}" class="w-full h-full object-cover" alt="${p.nom}">
+                            </div>
+                        </div>
 
-                <div class="w-full md:w-1/2 flex flex-col justify-center">
-                    <h2 class="text-4xl font-bold text-[#1C5B8F] mb-4">${p.nom}</h2>
-                    <div class="text-3xl font-bold text-[#E1AB2B] mb-6 italic">
-                        ${parseFloat(p.prix).toFixed(2)} €
-                    </div>
-                    
-                    <div class="border-t border-gray-100 pt-6 mb-6">
-                        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Description</h3>
-                        <p class="text-gray-600 text-lg leading-relaxed text-justify">
-                            ${p.description}
-                        </p>
-                    </div>
+                        <div>
+                            <h2 class="big-text mb-4">${p.nom}</h2>
+                            <div class="text-3xl font-bold text-[#E1AB2B] mb-6">
+                                ${parseFloat(p.prix).toFixed(2)} €
+                            </div>
+                            
+                            <div class="border-t border-gray-100 pt-6 mb-6">
+                                <h3 class="text-sm font-semibold text-gray-400 mb-2">DESCRIPTION</h3>
+                                <p class="text-gray-600 text-lg leading-relaxed text-justify">
+                                    ${p.description}
+                                </p>
+                            </div>
 
-                    <div class="flex items-center gap-4 mt-auto">
-                        <span class="px-4 py-2 bg-blue-50 text-[#1C5B8F] rounded-full text-sm font-bold">
-                            Stock disponible : ${p.stock}
-                        </span>
-                        <button class="bg-[#1C5B8F] text-white px-8 py-3 rounded-full font-bold hover:bg-[#15466e] transition-all shadow-lg">
-                            Ajouter au panier
-                        </button>
+                            <div class="flex items-center gap-4 mt-auto">
+                                <span class="px-4 py-2 bg-blue-50 text-[#1C5B8F] rounded-full text-sm font-bold">
+                                    Stock disponible : ${p.stock}
+                                </span>
+                                <button class="bg-[#1C5B8F] text-white px-8 py-3 rounded-full font-bold hover:bg-[#15466e] transition-all shadow-lg">
+                                    Ajouter au panier
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <a href="javascript:history.back()" class="mt-8 text-gray-400 hover:text-[#1C5B8F] text-sm flex items-center gap-2">
-                        ← Retour à la liste
-                    </a>
-                </div>
-            </div>
         `;
             } catch (err) {
                 console.error("Erreur detail:", err);

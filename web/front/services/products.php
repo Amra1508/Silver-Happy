@@ -88,7 +88,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                     grid.innerHTML += `
                     <div class="group flex flex-col bg-white overflow-hidden">
-                        <a href="/front/services/detail_product.php/${p.id}">
+                        <a href="/front/services/detail_product.php?id=${p.id}">
                             <div class="w-64 h-64 overflow-hidden rounded-2xl border border-gray-100 shadow-sm mb-4">
                                 <img src="${imgSrc}" 
                                     class="w-full h-full object-cover group-hover:scale-105" 
