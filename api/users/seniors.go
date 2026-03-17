@@ -385,38 +385,50 @@ func CreateCheckoutSession(response http.ResponseWriter, request *http.Request) 
         return
     }
 
-    var idAbo sql.NullInt64
-    var debutAbo sql.NullString
+var idAbo sql.NullInt64
+	var debutAbo, typePaiement sql.NullString
+	var estActif bool 
 
-    errDB := db.DB.QueryRow("SELECT id_abonnement, debut_abonnement FROM UTILISATEUR WHERE id_utilisateur = ?", req.UserID).Scan(&idAbo, &debutAbo)
+	errDB := db.DB.QueryRow(`
+		SELECT u.id_abonnement, 
+		       u.debut_abonnement, 
+		       a.type_paiement,
+		       COALESCE((CASE 
+		           WHEN a.type_paiement = 'mensuel' THEN DATE_ADD(u.debut_abonnement, INTERVAL 1 MONTH) > NOW()
+		           WHEN a.type_paiement = 'trimestriel' THEN DATE_ADD(u.debut_abonnement, INTERVAL 3 MONTH) > NOW()
+		           WHEN a.type_paiement = 'annuel' THEN DATE_ADD(u.debut_abonnement, INTERVAL 1 YEAR) > NOW()
+		           ELSE DATE_ADD(u.debut_abonnement, INTERVAL 1 YEAR) > NOW()
+		       END), 0) as est_actif
+		FROM UTILISATEUR u 
+		LEFT JOIN ABONNEMENT a ON u.id_abonnement = a.id_abonnement 
+		WHERE u.id_utilisateur = ?`, req.UserID).Scan(&idAbo, &debutAbo, &typePaiement, &estActif)
+
+	if errDB != nil {
+		if errDB == sql.ErrNoRows {
+			http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
+		} else {
+			http.Error(response, "Erreur serveur base de données", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	aDejaEteAbonne := debutAbo.Valid && debutAbo.String != ""
+
+	if estActif {
+		http.Error(response, "Vous possédez déjà un abonnement actif.", http.StatusForbidden)
+		return
+	}
+
+	if req.TypeAbonnement == "Renouvellement" && !aDejaEteAbonne {
+		http.Error(response, "Le tarif de renouvellement est réservé aux utilisateurs ayant déjà été abonnés.", http.StatusForbidden)
+		return
+	}
+
+	interval := "month"
+	if req.Periode == "annuel" {
+		interval = "year"
+	}
     
-    if errDB != nil {
-        if errDB == sql.ErrNoRows {
-            http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
-        } else {
-            http.Error(response, "Erreur serveur base de données", http.StatusInternalServerError)
-        }
-        return
-    }
-
-    estAbonneActuellement := idAbo.Valid && idAbo.Int64 != 0
-    aDejaEteAbonne := debutAbo.Valid && debutAbo.String != ""
-
-    if estAbonneActuellement {
-        http.Error(response, "Vous possédez déjà un abonnement actif.", http.StatusForbidden)
-        return
-    }
-
-    if req.TypeAbonnement == "Renouvellement" && !aDejaEteAbonne {
-        http.Error(response, "Le tarif de renouvellement est réservé aux utilisateurs ayant déjà été abonnés.", http.StatusForbidden)
-        return
-    }
-
-    interval := "month"
-    if req.Periode == "annuel" {
-        interval = "year"
-    }
-
 	encodedType := url.QueryEscape(req.TypeAbonnement)
 
     params := &stripe.CheckoutSessionParams{

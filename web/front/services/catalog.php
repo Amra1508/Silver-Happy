@@ -30,19 +30,6 @@
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1">
-        
-        <div class="relative h-[400px] w-full overflow-hidden">
-            <img src="/front/images/background.webp" alt="" class="absolute inset-0 w-full h-full object-cover opacity-60">
-
-            <div class="absolute inset-0 flex flex-col items-center justify-center px-16 bg-white/30 backdrop-blur-sm">
-                <h2 class="big-text text-4xl md:text-5xl leading-tight mb-4 text-[#1C5B8F] font-bold text-center drop-shadow-md">
-                    Découvrez nos services
-                </h2>
-                <p class="text-xl md:text-2xl text-gray-800 text-center max-w-3xl font-medium">
-                    Des prestations sur-mesure pour vous accompagner au quotidien et vous offrir le meilleur confort.
-                </p>
-            </div>
-        </div>
 
         <div class="w-full px-6 md:px-16 mt-12 mb-8 bg-gray-50 text-center">
             <h2 class="big-text mb-4 text-[#1C5B8F]">

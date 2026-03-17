@@ -114,6 +114,7 @@
                 }
 
                 window.currentUserId = user.id;
+                window.isSubscribed = (user.id_abonnement !== null && user.id_abonnement !== undefined && user.id_abonnement !== 0);
                 window.dispatchEvent(new Event('auth_ready'));
 
                 const nameDisplay = document.getElementById('header-user-name');

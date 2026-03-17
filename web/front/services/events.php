@@ -23,14 +23,6 @@
     <main class="flex-1 relative">
         <div id="api-message" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-xl p-4 rounded-lg border text-center font-bold shadow-2xl transition-all duration-300"></div>
 
-        <div class="relative h-[400px] w-full overflow-hidden">
-            <img src="/front/images/background.webp" alt="" class="absolute inset-0 w-full h-full object-cover opacity-60">
-            <div class="absolute inset-0 flex flex-col items-center justify-center px-16 bg-white/30 backdrop-blur-sm">
-                <h2 class="big-text text-4xl md:text-5xl leading-tight mb-4 text-[#1C5B8F] font-bold text-center drop-shadow-md">Nos prochains événements</h2>
-                <p class="text-xl md:text-2xl text-gray-800 text-center max-w-3xl font-medium">Sorties, conférences, ateliers... Partagez des moments uniques avec la communauté.</p>
-            </div>
-        </div>
-
         <div id="my-events-section" class="hidden w-full px-6 md:px-16 mt-12">
             <h2 class="text-2xl font-bold text-[#E1AB2B] mb-6 flex items-center gap-2">
                 Mes événements réservés
@@ -82,6 +74,34 @@
             }).replace(/^\w/, c => c.toUpperCase());
         }
 
+        function getTimeRemaining(dateStr) {
+            if (!dateStr) return { isPast: false, text: "Date inconnue" };
+            
+            const now = new Date();
+            const evDate = new Date(dateStr);
+            if (isNaN(evDate)) return { isPast: false, text: "" };
+            
+            const diffMs = evDate - now;
+            
+            if (diffMs < 0) {
+                return { isPast: true, text: "Événement terminé" };
+            }
+
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+            let timeParts = [];
+            if (days > 0) timeParts.push(`${days}j`);
+            if (hours > 0) timeParts.push(`${hours}h`);
+            if (days === 0 && hours === 0 && minutes > 0) timeParts.push(`${minutes}m`);
+
+            return { 
+                isPast: false, 
+                text: timeParts.length > 0 ? `⏳ Dans ${timeParts.join(' ')}` : "⏳ Commence bientôt" 
+            };
+        }
+
         async function fetchMyEvenements() {
             const userId = window.currentUserId;
             if (!userId) return;
@@ -100,18 +120,21 @@
                     myEvents.forEach(e => {
                         const id = e.id_evenement || e.ID;
                         const dateText = formatDisplayDate(e.date_debut);
+                        const timeStatus = getTimeRemaining(e.date_debut);
                         const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/150?text=SH';
 
                         const card = `
-                            <div class="flex items-center bg-white border border-[#E1AB2B] rounded-2xl shadow-sm p-4 w-full md:w-[400px] hover:shadow-md transition">
-                                <img src="${imgSrc}" class="w-20 h-20 rounded-xl object-cover mr-4">
+                            <div class="flex items-center bg-white border border-[#E1AB2B] rounded-2xl shadow-sm p-4 w-full md:w-[400px] hover:shadow-md transition ${timeStatus.isPast ? 'opacity-75 bg-gray-50' : ''}">
+                                <img src="${imgSrc}" class="w-20 h-20 rounded-xl object-cover mr-4 ${timeStatus.isPast ? 'grayscale' : ''}">
                                 <div class="flex-1">
                                     <h4 class="font-bold text-[#1C5B8F] text-lg leading-tight line-clamp-1">${e.nom}</h4>
                                     <p class="text-sm text-gray-500 font-semibold mt-1">📅 ${dateText}</p>
+                                    <p class="text-sm ${timeStatus.isPast ? 'text-gray-400' : 'text-[#E1AB2B]'} font-bold mb-1">${timeStatus.text}</p>
                                     <p class="text-sm text-gray-500 mb-2">📍 ${e.lieu}</p>
-                                    <button onclick="unregisterEvent(${id})" class="text-sm text-red-500 hover:text-red-700 font-bold transition-colors">
-                                        ❌ Se désinscrire
-                                    </button>
+                                    ${timeStatus.isPast 
+                                        ? `<span class="text-sm text-gray-400 italic">Désinscription indisponible</span>` 
+                                        : `<button onclick="unregisterEvent(${id})" class="text-sm text-red-500 hover:text-red-700 font-bold transition-colors">❌ Se désinscrire</button>`
+                                    }
                                 </div>
                             </div>
                         `;
@@ -126,33 +149,39 @@
         }
 
         async function registerEvent(eventId) {
-            const userId = window.currentUserId; 
+        const userId = window.currentUserId; 
 
-            if (!userId) {
-                showAlert("Vous devez être connecté pour vous inscrire.", false);
-                setTimeout(() => window.location.href = "/front/account/signin.php", 2000);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/evenement/register/${eventId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
-                });
-
-                if (response.ok) {
-                    showAlert("🎉 Inscription confirmée ! Votre place est réservée.", true);
-                    fetchEvenements(currentPage); 
-                    fetchMyEvenements(); 
-                } else {
-                    const errText = await response.text();
-                    showAlert("Erreur : " + errText, false);
-                }
-            } catch (err) {
-                showAlert("Impossible de joindre le serveur.", false);
-            }
+        if (!userId) {
+            showAlert("Vous devez être connecté pour vous inscrire.", false);
+            setTimeout(() => window.location.href = "/front/account/signin.php", 2000);
+            return;
         }
+
+        if (!window.isSubscribed) {
+            showAlert("Vous devez posséder un abonnement pour participer aux événements.", false);
+            setTimeout(() => window.location.href = "/front/services/subscription.php", 2500);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/evenement/register/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+            });
+
+            if (response.ok) {
+                showAlert("Inscription confirmée ! Votre place est réservée.", true);
+                fetchEvenements(currentPage); 
+                fetchMyEvenements(); 
+            } else {
+                const errText = await response.text();
+                showAlert("Erreur : " + errText, false);
+            }
+        } catch (err) {
+            showAlert("Impossible de joindre le serveur.", false);
+        }
+    }
 
         async function unregisterEvent(eventId) {
             const userId = window.currentUserId; 
@@ -189,12 +218,18 @@
                 if (!response.ok) throw new Error("Erreur de récupération");
                 
                 const result = await response.json();
-                const evenements = result.data || [];
+                const evenementsAPI = result.data || [];
+                
+                const evenements = evenementsAPI.filter(e => {
+                    if (!e.date_debut) return true;
+                    return new Date(e.date_debut) >= new Date();
+                });
+
                 const container = document.getElementById('events-container');
                 container.innerHTML = '';
 
                 if (evenements.length === 0) {
-                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun événement prévu.</p>';
+                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun événement prévu prochainement.</p>';
                     return;
                 }
 
@@ -205,6 +240,7 @@
                     const lieu = e.lieu || e.Lieu || 'Lieu à définir';
                     const places = e.nombre_place !== undefined ? parseInt(e.nombre_place || e.NombrePlace) : 0;
                     const displayDebut = formatDisplayDate(e.date_debut);
+                    const timeStatus = getTimeRemaining(e.date_debut);
                     const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/400x250?text=Silver+Happy';
 
                     let badgeHTML = places > 0 
@@ -224,6 +260,7 @@
                             <div class="p-6 flex flex-col flex-grow">
                                 <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2">${nom}</h3>
                                 <div class="flex items-center text-sm text-gray-500 mb-1 font-semibold">📅 ${displayDebut}</div>
+                                <div class="flex items-center text-sm text-[#E1AB2B] mb-1 font-bold">${timeStatus.text}</div>
                                 <div class="flex items-center text-sm text-gray-500 mb-4 font-semibold">📍 ${lieu}</div>
                                 <p class="text-gray-600 mb-4 flex-grow line-clamp-3">${description}</p>
                                 ${btnHTML}
