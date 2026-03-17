@@ -21,6 +21,13 @@
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1 relative">
+        <div class="flex justify-between items-center mx-8">
+            <a href="/front/services/menu_activity.php">
+                <button class="flex items-center rounded-full px-6 button-blue">
+                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                </button>
+            </a>
+        </div>
         <div id="api-message" class="hidden fixed top-24 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-xl p-4 rounded-lg border text-center font-bold shadow-2xl transition-all duration-300"></div>
 
         <div id="my-events-section" class="hidden w-full px-6 md:px-16 mt-12">

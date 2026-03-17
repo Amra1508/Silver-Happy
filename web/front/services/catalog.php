@@ -31,6 +31,14 @@
 
     <main class="flex-1">
 
+    <div class="flex justify-between items-center mx-8">
+        <a href="/front/services/menu_activity.php">
+            <button class="flex items-center rounded-full px-6 button-blue">
+                <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+            </button>
+        </a>
+    </div>
+
         <div class="w-full px-6 md:px-16 mt-12 mb-8 bg-gray-50 text-center">
             <h2 class="big-text mb-4 text-[#1C5B8F]">
                 Notre catalogue
