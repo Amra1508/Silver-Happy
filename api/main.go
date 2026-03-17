@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"main/auth"
-	"main/captcha"
 	"main/communication"
 	"main/dashboard"
 	"main/db"
@@ -29,12 +28,6 @@ func main() {
 	http.HandleFunc("/auth/me", auth.Me)
 	http.HandleFunc("/auth/update", auth.Update)
 	http.HandleFunc("/auth/tutorial-seen", auth.TutorialSeen)
-
-	http.HandleFunc("/captcha/create", captcha.Create_Captcha)
-	http.HandleFunc("/captcha/read", captcha.Read_Captcha)
-	http.HandleFunc("/captcha/read-one/{id}", captcha.Read_One_Captcha)
-	http.HandleFunc("/captcha/delete/{id}", captcha.Delete_Captcha)
-	http.HandleFunc("/captcha/update/{id}", captcha.Update_Captcha)
 
 	http.HandleFunc("/produit/create", services.Create_Produit)
 	http.HandleFunc("/produit/read", services.Read_Produit)
@@ -61,6 +54,8 @@ func main() {
 	http.HandleFunc("/conseil/read-one/{id}", communication.Read_One_Conseil)
 	http.HandleFunc("/conseil/update/{id}", communication.Update_Conseil)
 	http.HandleFunc("/conseil/delete/{id}", communication.Delete_Conseil)
+
+	http.HandleFunc("/avis/read", communication.Read_Avis)
 
 	http.HandleFunc("/prestataires/read", users.Read_Prestataire)
 	http.HandleFunc("/prestataires/create", users.Create_Prestataire)

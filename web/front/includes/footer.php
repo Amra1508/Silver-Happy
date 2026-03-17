@@ -5,7 +5,7 @@
             <a href="#" class="footer-text">A propos</a><br>
             <a href="#" class="footer-text">Notre mission</a><br>
             <a href="#" class="footer-text">Nos prestataires</a><br>
-            <a href="#" class="footer-text">Témoignages</a><br>
+            <a href="/front/communication/review.php" class="footer-text">Témoignages</a><br>
         </div>
 
         <div class="flex-1 justify-center min-w-[300px] space-y-10">

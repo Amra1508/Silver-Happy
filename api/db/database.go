@@ -89,13 +89,6 @@ func InitDB() {
 		image VARCHAR(250) DEFAULT NULL,
 		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
-	CREATE TABLE IF NOT EXISTS PRESTATAIRE_EVENEMENT (
-		id_prestataire INT(11) NOT NULL,
-		id_evenement INT(11) NOT NULL,
-		PRIMARY KEY (id_prestataire, id_evenement),
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE,
-		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement) ON DELETE CASCADE
-	);
 	CREATE TABLE IF NOT EXISTS PLANNING(
 		id_planning INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100),
@@ -138,6 +131,14 @@ func InitDB() {
 		type_prestation VARCHAR(50),
 		id_abonnement INT,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement)
+	);
+	
+	CREATE TABLE IF NOT EXISTS PRESTATAIRE_EVENEMENT (
+		id_prestataire INT(11) NOT NULL,
+		id_evenement INT(11) NOT NULL,
+		PRIMARY KEY (id_prestataire, id_evenement),
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE,
+		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS UTILISATEUR(
 		id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
@@ -204,11 +205,6 @@ func InitDB() {
 		id_utilisateur INT,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
-	);
-	CREATE TABLE IF NOT EXISTS CAPTCHA(
-		id_captcha INT AUTO_INCREMENT PRIMARY KEY,
-		question VARCHAR(200),
-		reponse VARCHAR(200)
 	);
 	CREATE TABLE IF NOT EXISTS SERVICE(
 		id_service INT AUTO_INCREMENT PRIMARY KEY,

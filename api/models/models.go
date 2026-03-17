@@ -135,3 +135,11 @@ type Req struct {
         Periode        string `json:"periode"`         
         Tarif          int64  `json:"tarif"`
     }
+
+type Avis struct {
+	ID          int64  `json:"id"`
+	Description string `json:"description"`
+	Titre       string `json:"titre"`
+	Date        string `json:"date"`
+	Note   		int64  `json:"note"`
+}

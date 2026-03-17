@@ -105,8 +105,8 @@
                 </p>
             </div>
             <div class="py-10 flex flex-col items-center gap-2 pr-4 md:pr-16 md:pl-16">
-                <a href="#" class="rounded-full px-6 button-blue whitespace-nowrap">
-                    Laissez mon avis
+                <a href="/front/communication/review.php" class="rounded-full px-6 button-blue whitespace-nowrap">
+                    Laisser mon avis
                 </a>
                 <div class="flex gap-4 text-[#E1AB2B] text-5xl">
                     <span>★</span>
@@ -133,7 +133,7 @@
                 <button type="button" id="tour-prev" class="text-[#1C5B8F] underline hover:text-blue-800 px-2 py-1 invisible">
                     Retour
                 </button>
-                
+
                 <button type="button" id="tour-next" class="bg-[#1C5B8F] text-white px-6 py-2 font-medium hover:bg-[#154670] transition-colors">
                     Étape suivante
                 </button>

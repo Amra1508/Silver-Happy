@@ -1,3 +1,4 @@
+<?php include("../includes/login.php"); ?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -75,30 +76,30 @@
                         <form id="add-form" class="space-y-4">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="add-nom" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B]" required>
+                                <input type="text" id="add-nom" class="add-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="add-description" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B]" required></textarea>
+                                <textarea id="add-description" class="add-input" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Lieu</label>
-                                    <input type="text" id="add-lieu" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B]" required>
+                                    <input type="text" id="add-lieu" class="add-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Nombre de places</label>
-                                    <input type="number" id="add-places" min="1" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B]" required>
+                                    <input type="number" id="add-places" min="1" class="add-input" required>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Date de début</label>
-                                    <input type="datetime-local" id="add-debut" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B]" required>
+                                    <input type="datetime-local" id="add-debut" class="add-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Date de fin</label>
-                                    <input type="datetime-local" id="add-fin" class="w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B]" required>
+                                    <input type="datetime-local" id="add-fin" class="add-input" required>
                                 </div>
                             </div>
                             <div>
@@ -120,30 +121,30 @@
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="edit-nom" class="w-full rounded-xl p-2 border border-[#E1AB2B] focus:outline-none focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                <input type="text" id="edit-nom" class="edit-input" required>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="w-full rounded-xl p-2 border border-[#E1AB2B] focus:outline-none focus:ring-1 focus:ring-[#1C5B8F]" required></textarea>
+                                <textarea id="edit-description" class="edit-input" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Lieu</label>
-                                    <input type="text" id="edit-lieu" class="w-full rounded-xl p-2 border border-[#E1AB2B] focus:outline-none focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                    <input type="text" id="edit-lieu" class="edit-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Nombre de places</label>
-                                    <input type="number" id="edit-places" min="1" class="w-full rounded-xl p-2 border border-[#E1AB2B] focus:outline-none focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                    <input type="number" id="edit-places" min="1" class="edit-input" required>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Date de début</label>
-                                    <input type="datetime-local" id="edit-debut" class="w-full rounded-xl p-2 border border-[#E1AB2B] focus:outline-none focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                    <input type="datetime-local" id="edit-debut" class="edit-input" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Date de fin</label>
-                                    <input type="datetime-local" id="edit-fin" class="w-full rounded-xl p-2 border border-[#E1AB2B] focus:outline-none focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                    <input type="datetime-local" id="edit-fin" class="edit-input" required>
                                 </div>
                             </div>
                             <div>
@@ -175,9 +176,9 @@
                     <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-2xl shadow-xl shadow-[#1C5B8F]/20">
                         <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Prestataires de l'événement</h3>
                         <input type="hidden" id="link-event-id">
-                        
+
                         <div class="mb-6 flex gap-4">
-                            <select id="link-provider-select" class="flex-1 w-full rounded-xl p-2 border border-[#1C5B8F] focus:outline-none focus:ring-1 focus:ring-[#E1AB2B] text-sm">
+                            <select id="link-provider-select" class="flex-1 add-input text-sm">
                             </select>
                             <button type="button" onclick="linkProvider()" class="bg-[#1C5B8F] text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-800 text-sm whitespace-nowrap">Lier le prestataire</button>
                         </div>
@@ -491,13 +492,13 @@
                 const data = await res.json();
                 const select = document.getElementById('link-provider-select');
                 select.innerHTML = '<option value="">-- Sélectionner un prestataire à ajouter --</option>';
-                
-                if(data.data && data.data.length > 0) {
+
+                if (data.data && data.data.length > 0) {
                     data.data.forEach(p => {
                         select.innerHTML += `<option value="${p.id}">${p.nom.toUpperCase()} ${p.prenom} (${p.type_prestation})</option>`;
                     });
                 }
-            } catch(err) {
+            } catch (err) {
                 console.error("Erreur chargement prestataires", err);
             }
         }
@@ -505,13 +506,13 @@
         async function loadLinkedProviders(eventId) {
             const tbody = document.getElementById('linked-providers-body');
             tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400 text-xs">Chargement...</td></tr>';
-            
+
             try {
                 const res = await fetch(`${API_BASE}/evenement/prestataires/read/${eventId}`);
                 const providers = await res.json();
-                
+
                 tbody.innerHTML = '';
-                if(providers.length === 0) {
+                if (providers.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400 italic">Aucun prestataire lié pour le moment.</td></tr>';
                     return;
                 }
@@ -527,7 +528,7 @@
                         </tr>
                     `;
                 });
-            } catch(err) {
+            } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-red-400">Erreur lors du chargement.</td></tr>';
             }
         }
@@ -535,24 +536,28 @@
         async function linkProvider() {
             const eventId = document.getElementById('link-event-id').value;
             const providerId = document.getElementById('link-provider-select').value;
-            
-            if(!providerId) return;
+
+            if (!providerId) return;
 
             try {
                 const res = await fetch(`${API_BASE}/evenement/prestataires/link/${eventId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_prestataire: parseInt(providerId) })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_prestataire: parseInt(providerId)
+                    })
                 });
 
-                if(res.ok) {
+                if (res.ok) {
                     showAlert("Prestataire lié avec succès !", true);
-                    await loadLinkedProviders(eventId); 
-                    document.getElementById('link-provider-select').value = ""; 
+                    await loadLinkedProviders(eventId);
+                    document.getElementById('link-provider-select').value = "";
                 } else {
                     showAlert("Erreur lors de la liaison.", false);
                 }
-            } catch(err) {
+            } catch (err) {
                 showAlert("Erreur réseau.", false);
             }
         }
@@ -563,13 +568,13 @@
                     method: 'DELETE'
                 });
 
-                if(res.ok) {
+                if (res.ok) {
                     showAlert("Prestataire retiré de l'événement.", true);
-                    await loadLinkedProviders(eventId); 
+                    await loadLinkedProviders(eventId);
                 } else {
                     showAlert("Erreur lors de la suppression.", false);
                 }
-            } catch(err) {
+            } catch (err) {
                 showAlert("Erreur réseau.", false);
             }
         }

@@ -1,10 +1,3 @@
-<?php
-if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
-    header("Location: ../login.php");
-    exit();
-}
-?>
-
 <aside class="w-80 h-screen sticky top-0 bg-[#0F3452] flex flex-col text-white">
     <div class="p-4">
         <img src="/back/icons/SilverHappy_logo.png" alt="logo" class="w-full object-contain">
@@ -49,11 +42,6 @@ if (!isset($_COOKIE['session_token']) || empty($_COOKIE['session_token'])) {
         <a href="/back/communication/newsletter.php" class="sidebar-links">
             <img src="/back/icons/newsletter.svg" alt="newsletter" class="w-7 h-7 mx-4">
             <span>Newsletter</span>
-        </a>
-
-        <a href="/back/captcha.php" class="sidebar-links">
-            <img src="/back/icons/captcha.svg" alt="captcha" class="w-7 h-7 mx-4">
-            <span>Captcha</span>
         </a>
 
         <a href="/back/communication/advice.php" class="border-b-2 sidebar-links">

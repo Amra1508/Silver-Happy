@@ -100,17 +100,17 @@ $is_logged_in = isset($_COOKIE['session_token']);
                             </div>
                             
                             <div class="border-t border-gray-100 pt-6 mb-6">
-                                <h3 class="text-sm font-semibold text-gray-400 mb-2">DESCRIPTION</h3>
-                                <p class="text-gray-600 text-lg leading-relaxed text-justify">
+                                <h3 class="text-lg font-semibold text-gray-400 mb-2">DESCRIPTION</h3>
+                                <p class="text-gray-600 text-xl leading-relaxed text-justify">
                                     ${p.description}
                                 </p>
                             </div>
 
                             <div class="flex items-center gap-4 mt-auto">
-                                <span class="px-4 py-2 bg-blue-50 text-[#1C5B8F] rounded-full text-sm font-bold">
-                                    Stock disponible : ${p.stock}
+                                <span class="px-4 py-2 bg-[#E1AB2B]/30 text-[#1C5B8F] rounded-md text-sm font-bold">
+                                    ${p.stock} produit(s) restant(s)
                                 </span>
-                                <button class="bg-[#1C5B8F] text-white px-8 py-3 rounded-full font-bold hover:bg-[#15466e] transition-all shadow-lg">
+                                <button class="px-4 rounded-full button-blue">
                                     Ajouter au panier
                                 </button>
                             </div>
