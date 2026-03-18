@@ -31,7 +31,7 @@
 
     <main class="flex-1">
 
-    <div class="flex justify-between items-center mx-8">
+    <div class="p-3 flex justify-between items-center mx-8">
         <a href="/front/services/menu_activity.php">
             <button class="flex items-center rounded-full px-6 button-blue">
                 <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste

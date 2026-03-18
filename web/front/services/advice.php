@@ -92,7 +92,8 @@
                 }
 
                 conseils.forEach(c => {
-                    const id = c.id_conseil || c.ID;
+                    const id = c.id_conseil || c.ID || c.id; 
+                        
                     const titre = c.titre || c.Titre || 'Sans titre';
                     const description = c.description || c.Description || '';
                     const categorie = c.categorie || c.Categorie || 'Général';
@@ -102,17 +103,12 @@
 
                     container.innerHTML += `
                         <div class="md:max-w-[450px] w-full bg-white border-l-8 border-[#1C5B8F] rounded-xl shadow-md p-6 flex flex-col hover:shadow-lg transition-shadow">
-                            <div class="flex justify-between items-start mb-3">
-                                <span class="bg-[#E1AB2B]/20 text-yellow-800 border border-[#E1AB2B] text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                                    ${categorie}
-                                </span>
-                                <span class="text-sm text-gray-400 font-semibold">📅 ${datePub}</span>
-                            </div>
                             <h3 class="text-2xl text-[#1C5B8F] font-bold mb-4 leading-snug">${titre}</h3>
                             <p class="text-gray-600 leading-relaxed flex-grow text-lg mb-4">${description}</p>
-                            <button class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2">
+                            
+                            <a href="detail_advice.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2">
                                 Lire la suite <span class="text-xl">→</span>
-                            </button>
+                            </a>
                         </div>
                     `;
                 });
