@@ -54,6 +54,9 @@ func main() {
 	http.HandleFunc("/conseil/read-one/{id}", communication.Read_One_Conseil)
 	http.HandleFunc("/conseil/update/{id}", communication.Update_Conseil)
 	http.HandleFunc("/conseil/delete/{id}", communication.Delete_Conseil)
+	http.HandleFunc("/conseil/like/{id}", communication.Like_Conseil)
+	http.HandleFunc("/conseil/unlike/{id}", communication.Unlike_Conseil)
+
 
 	http.HandleFunc("/avis/read", communication.Read_Avis)
 

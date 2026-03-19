@@ -1,3 +1,7 @@
+<?php
+$is_logged_in = isset($_COOKIE['session_token']);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -44,13 +48,23 @@
             </h2>
         </div>
 
-        <div id="advice-container" class="flex flex-wrap gap-8 px-6 md:px-16 py-4 justify-center md:justify-start">
-            <div class="w-full text-center py-10">
-                <p class="text-xl text-gray-500 animate-pulse">Chargement de nos conseils...</p>
+        <?php if ($is_logged_in): ?>
+            <div id="advice-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-16 py-4 overflow-hidden">
+                <div class="w-full text-center py-10 col-span-full">
+                    <p class="text-xl text-gray-500 animate-pulse">Chargement de nos conseils...</p>
+                </div>
             </div>
-        </div>
 
-        <div id="pagination-controls" class="flex justify-center items-center gap-4 py-12"></div>
+            <div id="pagination-controls" class="flex justify-center items-center gap-4 py-12"></div>
+        <?php else: ?>
+            <div class="max-w-4xl mx-auto flex flex-col items-center justify-center py-20 rounded-[2.5rem] bg-white shadow-xl shadow-blue-900/10 mb-10 px-6">
+                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8 px-4">
+                    Vous devez être connecté(e) pour consulter nos conseils Silver Happy.</p>
+                <a href="/front/account/signin.php" class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white font-bold hover:bg-[#E1AB2B] transition-colors">
+                    Je me connecte 
+                </a>
+            </div>
+        <?php endif; ?>
 
     </main>
 
@@ -77,38 +91,52 @@
         async function fetchConseils(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/conseil/read?page=${currentPage}&limit=${limit}`);
+                const userId = window.currentUserId || 1; 
+                
+                const response = await fetch(`${API_BASE}/conseil/read?page=${currentPage}&limit=${limit}&user_id=${userId}`);
                 
                 if (!response.ok) throw new Error("Erreur de récupération des données");
                 
                 const result = await response.json();
-                const conseils = result.data || [];
+                let conseils = result.data || [];
                 const container = document.getElementById('advice-container');
                 container.innerHTML = '';
 
                 if (conseils.length === 0) {
-                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun conseil disponible pour le moment.</p>';
+                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic col-span-full text-center">Aucun conseil disponible pour le moment.</p>';
                     return;
                 }
 
+                conseils.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+
                 conseils.forEach(c => {
                     const id = c.id_conseil || c.ID || c.id; 
-                        
                     const titre = c.titre || c.Titre || 'Sans titre';
                     const description = c.description || c.Description || '';
                     const categorie = c.categorie || c.Categorie || 'Général';
+                    
+                    const likes = c.likes || 0; 
                     
                     const rawDate = c.date_publication || c.Date || c.date;
                     const datePub = formatDisplayDate(rawDate);
 
                     container.innerHTML += `
-                        <div class="md:max-w-[450px] w-full bg-white border-l-8 border-[#1C5B8F] rounded-xl shadow-md p-6 flex flex-col hover:shadow-lg transition-shadow">
-                            <h3 class="text-2xl text-[#1C5B8F] font-bold mb-4 leading-snug">${titre}</h3>
-                            <p class="text-gray-600 leading-relaxed flex-grow text-lg mb-4">${description}</p>
+                        <div class="bg-white border-l-8 border-[#1C5B8F] rounded-xl shadow-md p-6 flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full">
                             
-                            <a href="detail_advice.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2">
-                                Lire la suite <span class="text-xl">→</span>
-                            </a>
+                            <div class="absolute top-4 right-4 flex items-center gap-1 bg-gray-100 rounded-full px-3 py-1 cursor-default shadow-sm">
+                                <span class="text-red-500 text-lg">❤️</span>
+                                <span class="font-bold text-gray-700">${likes}</span>
+                            </div>
+
+                            <div class="mt-4 flex flex-col flex-grow">
+                                <span class="text-xs font-bold text-[#E1AB2B] uppercase tracking-wider mb-2 block pr-16">${categorie}</span>
+                                <h3 class="text-2xl text-[#1C5B8F] font-bold mb-4 leading-snug pr-10">${titre}</h3>
+                                <p class="text-gray-600 leading-relaxed flex-grow text-lg mb-4 line-clamp-3">${description || "Aucune description disponible."}</p>
+                                
+                                <a href="detail_advice.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2 mt-auto pt-4">
+                                    Lire la suite <span class="text-xl">→</span>
+                                </a>
+                            </div>
                         </div>
                     `;
                 });
@@ -117,7 +145,7 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('advice-container').innerHTML = `
-                    <div class="w-full text-center py-10">
+                    <div class="w-full text-center py-10 col-span-full">
                         <p class="text-xl text-red-500 font-bold">Impossible de charger les conseils.</p>
                         <p class="text-gray-500 mt-2">Veuillez vérifier votre connexion au serveur.</p>
                     </div>`;
@@ -126,6 +154,7 @@
 
         function renderPagination(totalPages) {
             const paginationContainer = document.getElementById('pagination-controls');
+            if(!paginationContainer) return;
             paginationContainer.innerHTML = '';
             
             if (totalPages <= 1) return;
@@ -140,7 +169,9 @@
         }
 
         window.onload = () => {
-            fetchConseils(1);
+            if (document.getElementById('advice-container')) {
+                fetchConseils(1);
+            }
         };
     </script>
 </body>

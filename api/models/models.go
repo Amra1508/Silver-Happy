@@ -37,12 +37,6 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-type Captcha struct {
-	ID       int64  `json:"id"`
-	Question string `json:"question"`
-	Reponse  string `json:"reponse"`
-}
-
 type Produit struct {
 	ID          int64   `json:"id"`
 	Nom         string  `json:"nom"`
@@ -61,11 +55,13 @@ type Service struct {
 }
 
 type Conseil struct {
-	ID          int64  `json:"id"`
-	Titre       string `json:"titre"`
-	Description string `json:"description"`
-	Date        string `json:"date"`
-	Categorie   string `json:"categorie"`
+    ID          int64  `json:"id"`
+    Titre       string `json:"titre"`
+    Description string `json:"description"`
+    Date        string `json:"date"`
+    Categorie   string `json:"categorie"`
+    Likes       int    `json:"likes"`
+    IsLiked     bool   `json:"is_liked"`
 }
 
 type Prestataire struct {

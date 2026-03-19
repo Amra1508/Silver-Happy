@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Profil - Silver Happy</title>
+    <title>Mon Profil</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -34,7 +34,7 @@
             <h2 class="text-3xl text-center mb-10 font-semibold text-[#1C5B8F] flex items-center justify-center gap-4">
                 Mes informations personnelles
                 <span id="auth_status_badge" class="text-sm px-4 py-1 bg-gray-200 text-gray-500 rounded-full border font-bold transition-colors">
-                    ⏳ Vérification...
+                    Vérification...
                 </span>
             </h2>
 

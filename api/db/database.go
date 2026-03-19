@@ -176,12 +176,14 @@ func InitDB() {
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_notification) REFERENCES NOTIFICATION(id_notification)
 	);
-	CREATE TABLE IF NOT EXISTS CONSULTATION(
-		id_utilisateur INT,
-		id_conseil INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_conseil) REFERENCES CONSEIL(id_conseil)
-	);
+	CREATE TABLE IF NOT EXISTS LIKE_CONSEIL (
+    id_utilisateur INT,
+    id_conseil INT,
+    date_like DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_utilisateur, id_conseil),
+    FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
+    FOREIGN KEY (id_conseil) REFERENCES CONSEIL(id_conseil)
+);
 	CREATE TABLE IF NOT EXISTS INSCRIPTION(
 		id_utilisateur INT,
 		id_evenement INT,
