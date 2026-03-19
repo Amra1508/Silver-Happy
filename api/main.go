@@ -43,6 +43,8 @@ func main() {
 	http.HandleFunc("/seniors/ban/{id}", users.Ban_User)
 	http.HandleFunc("/success-subscription", users.Success_Subscription)
 
+	http.HandleFunc("/planning", users.Read_User_Planning)
+
 	http.HandleFunc("/service/read", services.Read_Service)
 	http.HandleFunc("/service/create", services.Create_Service)
 	http.HandleFunc("/service/read-one/{id}", services.Read_One_Service)

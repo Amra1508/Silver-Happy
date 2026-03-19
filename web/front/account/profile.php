@@ -111,9 +111,15 @@
                     </div>
                 </div>
                 
-                <button id="btn_update" class="sm:col-span-6 justify-self-center px-14 py-3 rounded-full bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
-                    Mettre à jour mes informations
-                </button>
+                <div class="sm:col-span-6 flex flex-col sm:flex-row justify-center gap-4 mt-2">
+                    <a href="/front/account/planification.php" class="text-center px-10 py-3 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors shadow-sm">
+                        Consulter mon planning
+                    </a>
+                    <button id="btn_update" class="px-10 py-3 rounded-full bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
+                        Mettre à jour mes informations
+                    </button>
+                </div>
+
             </div>
         </div>
     </main>

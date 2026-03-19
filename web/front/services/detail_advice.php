@@ -19,7 +19,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1 container mx-auto px-6 py-12 max-w-4xl">
-        <a href="javascript:history.back()" class="text-[#1C5B8F] font-bold mb-6 inline-block hover:underline">← Retour aux conseils</a>
+        <div class="p-3 flex justify-between items-center mx-8">
+            <a href="/front/services/advice.php">
+                <button class="flex items-center rounded-full px-6 button-blue">
+                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                </button>
+            </a>
+        </div>
         
         <?php if ($is_logged_in): ?>
             <div id="detail-container">
