@@ -22,7 +22,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
         <div class="p-3 flex justify-between items-center mx-8">
             <a href="/front/services/advice.php">
                 <button class="flex items-center rounded-full px-6 button-blue">
-                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir aux conseils
                 </button>
             </a>
         </div>

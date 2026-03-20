@@ -62,9 +62,13 @@
                 <h2 class="text-3xl font-semibold text-[#1C5B8F]">
                     Mon Calendrier
                 </h2>
-                <a href="/chemin/vers/ton/profil.php" class="text-sm px-6 py-2 rounded-full border border-[#1C5B8F] text-[#1C5B8F] hover:bg-[#1C5B8F] hover:text-white transition-colors font-bold shadow-sm">
-                    Retour au profil
-                </a>
+                <div class="p-3 flex justify-between items-center mx-8">
+                    <a href="/front/account/profile.php">
+                        <button class="flex items-center rounded-full px-6 button-blue">
+                            <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à mon profil
+                        </button>
+                    </a>
+                </div>
             </div>
 
             <div id="status_message" class="text-center text-gray-500 font-bold py-10">
