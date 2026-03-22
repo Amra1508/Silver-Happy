@@ -1,3 +1,7 @@
+<?php
+$is_logged_in = isset($_COOKIE['session_token']);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -33,32 +37,42 @@
 <body class="font-sans antialiased bg-gray-50">
     <?php include("../includes/header.php") ?>
     <main class="p-8 bg-gray-50">
-        <div class="flex justify-between items-center mx-8 mb-8">
-            <a href="/front/communication/list_contact.php">
-                <button class="flex items-center rounded-full px-6 button-blue">
-                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
-                </button>
-            </a>
-        </div>
-        <div class="mx-8 bg-white rounded-[2.5rem] shadow-xl shadow-[#1C5B8F]/20 overflow-hidden">
-            <div class="bg-[#1C5B8F] px-6 py-4 text-center">
-                <h4 id="chat-title" class="text-2xl font-semibold text-white"></h4>
+        <?php if ($is_logged_in): ?>
+            <div class="flex justify-between items-center mx-8 mb-8">
+                <a href="/front/communication/list_contact.php">
+                    <button class="flex items-center rounded-full px-6 button-blue">
+                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                    </button>
+                </a>
             </div>
+            <div class="mx-8 bg-white rounded-[2.5rem] shadow-xl shadow-[#1C5B8F]/20 overflow-hidden">
+                <div class="bg-[#1C5B8F] px-6 py-4 text-center">
+                    <h4 id="chat-title" class="text-2xl font-semibold text-white"></h4>
+                </div>
 
-            <div id="message_user" class="p-6 overflow-y-auto bg-gray-100" style="max-height: 350px;">
-            </div>
+                <div id="message_user" class="p-6 overflow-y-auto bg-gray-100" style="max-height: 350px;">
+                </div>
 
-            <div class="bg-white px-6 py-4 flex items-center gap-2">
-                <input type="text" id="add"
-                    class="flex-1 block w-full px-4 py-2 text-gray-700 bg-white rounded-md border border-[#1C5B8F]
+                <div class="bg-white px-6 py-4 flex items-center gap-2">
+                    <input type="text" id="add"
+                        class="flex-1 block w-full px-4 py-2 text-gray-700 bg-white rounded-md border border-[#1C5B8F]
                             focus:outline-none focus:border-none focus:outline-1 focus:-outline-offset-1 focus:outline-[#E1AB2B]/60"
-                    placeholder="Envoyer un message...">
-                <button type="submit" onclick="add_message()"
-                    class="px-6 py-2 font-medium text-white bg-[#1C5B8F] rounded-md hover:bg-[#E1AB2B]/60">
-                    Envoyer
-                </button>
+                        placeholder="Envoyer un message...">
+                    <button type="submit" onclick="add_message()"
+                        class="px-6 py-2 font-medium text-white bg-[#1C5B8F] rounded-md hover:bg-[#E1AB2B]/60">
+                        Envoyer
+                    </button>
+                </div>
             </div>
-        </div>
+        <?php else: ?>
+            <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
+                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
+                    Vous devez être connecté(e) pour discuter avec notre équipe Silver Happy.</p>
+                <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
+                    Je me connecte
+                </a>
+            </div>
+        <?php endif; ?>
     </main>
     <?php include("../includes/footer.php") ?>
 

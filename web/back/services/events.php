@@ -277,6 +277,15 @@
             });
         }
 
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const minDT = now.toISOString().slice(0, 16);
+
+        document.getElementById('add-debut').min = minDT;
+        document.getElementById('add-fin').min = minDT;
+        document.getElementById('edit-debut').min = minDT;
+        document.getElementById('edit-fin').min = minDT;
+
         async function fetchEvenements(page = 1) {
             try {
                 currentPage = page;

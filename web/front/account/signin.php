@@ -65,7 +65,7 @@
 
             const emailInput = document.getElementById('email').value;
             const passwordInput = document.getElementById('password').value;
-            
+
             const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]')?.value;
 
             if (!emailInput || !passwordInput || !turnstileResponse) {
@@ -82,20 +82,31 @@
             try {
                 const response = await fetch('http://localhost:8082/auth/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include',
-                    body: JSON.stringify({ 
-                        email: emailInput, 
-                        mdp: passwordInput, 
+                    body: JSON.stringify({
+                        email: emailInput,
+                        mdp: passwordInput,
                         "cf-turnstile-response": turnstileResponse
                     })
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    if (result.statut === "admin") window.location.replace("../../back/dashboard.php");
-                    else if (result.statut === "user") window.location.replace("../index.php");
-                    else alert("Statut de compte non reconnu ou banni.");
+                    if (result.statut === "admin") {
+                        window.location.replace("../../back/dashboard.php");
+                    } else if (result.statut === "user") {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const redirectUrl = urlParams.get('redirect');
+
+                        if (redirectUrl) {
+                            window.location.replace(redirectUrl);
+                        } else {
+                            window.location.replace("../index.php");
+                        }
+                    } else alert("Statut de compte non reconnu ou banni.");
                 } else {
                     alert(await response.text());
                 }

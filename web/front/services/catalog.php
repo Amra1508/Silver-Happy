@@ -11,7 +11,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
+            }
         }
     </script>
 </head>
@@ -94,7 +100,13 @@
                     section.classList.remove('hidden');
                     myServices.forEach(s => {
                         const dateObj = new Date(s.date_heure);
-                        const dateString = dateObj.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).replace(/^\w/, c => c.toUpperCase());
+                        const dateString = dateObj.toLocaleString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }).replace(/^\w/, c => c.toUpperCase());
 
                         const card = `
                             <div class="flex items-center bg-white border border-[#E1AB2B] rounded-2xl shadow-sm p-5 w-full md:w-[400px]">
@@ -111,7 +123,7 @@
                         container.innerHTML += card;
                     });
                 } else {
-                    section.classList.add('hidden'); 
+                    section.classList.add('hidden');
                 }
             } catch (err) {
                 console.error("Erreur", err);
@@ -119,10 +131,10 @@
         }
 
         async function bookService(serviceId) {
-            const userId = window.currentUserId; 
+            const userId = window.currentUserId;
             if (!userId) {
                 showAlert("Vous devez être connecté pour prendre RDV.", false);
-                setTimeout(() => window.location.href = "/front/account/signin.php", 2000);
+                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>", 2000);
                 return;
             }
 
@@ -132,20 +144,27 @@
                 return;
             }
 
+            if (new Date(dateInput) <= new Date()) {
+                showAlert("Impossible de réserver dans le passé !", false);
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/service/register/${serviceId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
                         id_utilisateur: parseInt(userId),
-                        date_heure: dateInput 
+                        date_heure: dateInput
                     }),
                 });
 
                 if (response.ok) {
                     showAlert("Rendez-vous confirmé !", true);
-                    document.getElementById(`datetime-${serviceId}`).value = ""; 
-                    fetchMyServices(); 
+                    document.getElementById(`datetime-${serviceId}`).value = "";
+                    fetchMyServices();
                 } else {
                     const errText = await response.text();
                     showAlert("Erreur : " + errText, false);
@@ -156,7 +175,7 @@
         }
 
         async function cancelService(reservationId) {
-            const userId = window.currentUserId; 
+            const userId = window.currentUserId;
             if (!userId) return;
 
             if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ?")) return;
@@ -164,13 +183,17 @@
             try {
                 const response = await fetch(`${API_BASE}/service/unregister/${reservationId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId)
+                    }),
                 });
 
                 if (response.ok) {
                     showAlert("Rendez-vous annulé.", true);
-                    fetchMyServices(); 
+                    fetchMyServices();
                 } else {
                     const errText = await response.text();
                     showAlert("Erreur : " + errText, false);
@@ -197,7 +220,7 @@
 
                 const now = new Date();
                 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                const minDateTime = now.toISOString().slice(0,16);
+                const minDateTime = now.toISOString().slice(0, 16);
 
                 services.forEach(s => {
                     const id = s.id_service || s.ID;
@@ -234,7 +257,7 @@
             const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchServices(${currentPage - 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${prevDisabled}" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>`;
             paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F]">${currentPage}</strong> sur ${totalPages}</span>`;
-            
+
             const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchServices(${currentPage + 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${nextDisabled}" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>`;
         }
@@ -245,8 +268,11 @@
 
         window.onload = () => {
             fetchServices(1);
-            setTimeout(() => { if (window.currentUserId) fetchMyServices(); }, 500);
+            setTimeout(() => {
+                if (window.currentUserId) fetchMyServices();
+            }, 500);
         };
     </script>
 </body>
+
 </html>

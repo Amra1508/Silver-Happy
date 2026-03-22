@@ -49,8 +49,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
                     <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
                         Vous devez être connecté(e) pour consulter nos produits Silver Happy.</p>
-                    <a href="/front/account/signin.php" class="rounded-full px-4 py-2 button-blue">
-                        Je me connecte </a>
+                    <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>"> Je me connecte </a>
                 </div>
             <?php endif; ?>
         </div>

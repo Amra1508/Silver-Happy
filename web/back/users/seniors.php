@@ -216,6 +216,14 @@
             }
         }
 
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() - 18);
+
+        const simpleMax = maxDate.toISOString().split('T')[0];
+
+        document.getElementById('add-date').max = simpleMax;
+        document.getElementById('edit-date').max = simpleMax;
+
         async function fetchSeniors(page = 1) {
             try {
                 currentPage = page;

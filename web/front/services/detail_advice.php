@@ -4,6 +4,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,9 +12,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
-        body { font-family: 'Alata', sans-serif; }
+
+        body {
+            font-family: 'Alata', sans-serif;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50 flex flex-col min-h-screen">
 
     <?php include("../includes/header.php") ?>
@@ -26,7 +31,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 </button>
             </a>
         </div>
-        
+
         <?php if ($is_logged_in): ?>
             <div id="detail-container">
                 <div class="animate-pulse space-y-4">
@@ -40,8 +45,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8 px-4">
                     Vous devez être connecté(e) pour lire ce conseil.
                 </p>
-                <a href="/front/account/signin.php" class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white font-bold hover:bg-[#E1AB2B]">
-                    Je me connecte 
+                <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
+                    Je me connecte
                 </a>
             </div>
         <?php endif; ?>
@@ -51,18 +56,18 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
     <script>
         const API_BASE = "http://localhost:8082";
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const conseilId = urlParams.get('id');
 
         async function fetchOneConseil() {
             try {
-                const userId = window.currentUserId || 1; 
-                
+                const userId = window.currentUserId || 1;
+
                 const response = await fetch(`${API_BASE}/conseil/read-one/${conseilId}?user_id=${userId}`);
                 const result = await response.json();
-                
-                const c = result.data || result; 
+
+                const c = result.data || result;
 
                 if (!c || Object.keys(c).length === 0) {
                     throw new Error("Données vides");
@@ -79,17 +84,19 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         function renderDetail(c) {
             const container = document.getElementById('detail-container');
-            if(!container) return;
-            
+            if (!container) return;
+
             const rawDate = c.date_publication || c.Date || c.date;
             let dateStr = "Date inconnue";
-            
+
             if (rawDate) {
                 const safeDateStr = String(rawDate).replace(' ', 'T');
                 const d = new Date(safeDateStr);
                 if (!isNaN(d)) {
                     dateStr = d.toLocaleDateString('fr-FR', {
-                        day: 'numeric', month: 'long', year: 'numeric'
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
                     });
                 }
             }
@@ -97,9 +104,9 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const titre = c.titre || "Titre absent";
             const description = c.description || "";
             const categorie = c.categorie || "Général";
-            
+
             const likes = c.likes || 0;
-            const isAlreadyLikedByCurrentUser = (c.is_liked === true || c.is_liked === 1); 
+            const isAlreadyLikedByCurrentUser = (c.is_liked === true || c.is_liked === 1);
             const heartIcon = isAlreadyLikedByCurrentUser ? "❤️" : "🤍";
 
             container.innerHTML = `
@@ -137,9 +144,9 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const countSpan = element.querySelector('.like-count');
             const iconSpan = element.querySelector('.like-icon');
             let currentCount = parseInt(countSpan.innerText);
-            
-            const userId = window.currentUserId || 1; 
-            
+
+            const userId = window.currentUserId || 1;
+
             const isLiked = iconSpan.innerText === '❤️';
             const method = isLiked ? 'DELETE' : 'POST';
             const endpoint = isLiked ? `/conseil/unlike/${conseilId}` : `/conseil/like/${conseilId}`;
@@ -147,8 +154,12 @@ $is_logged_in = isset($_COOKIE['session_token']);
             try {
                 const response = await fetch(`${API_BASE}${endpoint}`, {
                     method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: userId })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: userId
+                    })
                 });
 
                 if (response.ok) {
@@ -175,4 +186,5 @@ $is_logged_in = isset($_COOKIE['session_token']);
         };
     </script>
 </body>
+
 </html>

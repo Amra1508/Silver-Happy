@@ -29,7 +29,7 @@
 
     <main>
         <div class="px-16 pt-10 pb-16">
-            
+
             <h2 class="text-3xl text-center mb-10 font-semibold text-[#1C5B8F]">Inscription :</h2>
 
             <div id="response_message" class="hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border"></div>
@@ -116,14 +116,27 @@
     <?php include("../includes/footer.php") ?>
 
     <script>
+        const limitDate = new Date();
+        limitDate.setFullYear(limitDate.getFullYear() - 18);
+        const strMax = limitDate.toISOString().split('T')[0];
+        document.getElementById('birth_date').max = strMax;
+
         const btnSubmit = document.getElementById('btn_register');
 
         btnSubmit.addEventListener('click', async (e) => {
             e.preventDefault();
 
             const messageBox = document.getElementById('response_message');
-            
+
             const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]')?.value;
+
+            const inputBirth = document.getElementById('birth_date').value;
+            if (inputBirth > strMax) {
+                messageBox.textContent = "Désolé, vous devez avoir au moins 18 ans.";
+                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
+                messageBox.classList.remove('hidden');
+                return;
+            }
 
             const data = {
                 prenom: document.getElementById('first_name').value,
@@ -156,7 +169,9 @@
             try {
                 const response = await fetch('http://localhost:8082/auth/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
 
@@ -164,15 +179,17 @@
 
                 if (response.ok) {
                     const result = await response.json();
-                    
+
                     messageBox.textContent = "Inscription réussie ! Bienvenue " + (result.prenom || data.prenom);
                     messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
                     messageBox.classList.remove('hidden');
 
-                    setTimeout(() => { window.location.href = "signin.php"; }, 2500);
+                    setTimeout(() => {
+                        window.location.href = "signin.php";
+                    }, 2500);
                 } else {
                     const errorText = await response.text();
-                    
+
                     messageBox.textContent = "Erreur : " + errorText;
                     messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
                     messageBox.classList.remove('hidden');

@@ -1,7 +1,3 @@
-<?php
-$is_logged_in = isset($_COOKIE['session_token']);
-?>
-
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -30,28 +26,19 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <?php include("../includes/header.php") ?>
     <main class="mb-10 bg-white">
         <div class="max-w-6xl mx-auto">
-            <?php if ($is_logged_in): ?>
-                <div class="max-w-6xl mx-auto px-4">
-                    <div class="w-full pt-8">
-                        <h1 class="mb-5 text-center big-text">Nos Produits</h1>
-                        <h2 class="text-lg text-gray-600 text-center mb-10">
-                            Découvrez notre large gamme de produits Silver Happy.
-                        </h2>
-                    </div>
-
-                    <div id="produit-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
-                    </div>
-
-                    <div id="pagination-controls"></div>
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="w-full pt-8">
+                    <h1 class="mb-5 text-center big-text">Nos Produits</h1>
+                    <h2 class="text-lg text-gray-600 text-center mb-10">
+                        Découvrez notre large gamme de produits Silver Happy.
+                    </h2>
                 </div>
-            <?php else: ?>
-                <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
-                    <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
-                        Vous devez être connecté(e) pour consulter nos produits Silver Happy.</p>
-                    <a href="/front/account/signin.php" class="rounded-full px-4 py-2 button-blue">
-                        Je me connecte </a>
+
+                <div id="produit-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
                 </div>
-            <?php endif; ?>
+
+                <div id="pagination-controls"></div>
+            </div>
         </div>
 
     </main>

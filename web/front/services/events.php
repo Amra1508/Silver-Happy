@@ -11,7 +11,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
+            }
         }
     </script>
 </head>
@@ -35,7 +41,7 @@
                 Mes événements réservés
             </h2>
             <div id="my-events-container" class="flex flex-wrap gap-6 pb-10 border-b border-gray-200">
-                </div>
+            </div>
         </div>
 
         <div class="w-full px-6 md:px-16 mt-12 mb-8 text-center">
@@ -44,7 +50,9 @@
         </div>
 
         <div id="events-container" class="flex flex-wrap gap-8 px-6 md:px-16 py-4 justify-center">
-            <div class="w-full text-center py-10"><p class="text-xl text-gray-500 animate-pulse">Chargement de l'agenda...</p></div>
+            <div class="w-full text-center py-10">
+                <p class="text-xl text-gray-500 animate-pulse">Chargement de l'agenda...</p>
+            </div>
         </div>
 
         <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
@@ -56,7 +64,7 @@
     <script>
         const API_BASE = "http://localhost:8082";
         let currentPage = 1;
-        const limit = 6; 
+        const limit = 6;
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {
@@ -77,21 +85,35 @@
             const d = new Date(dateStr);
             if (isNaN(d)) return "Date invalide";
             return d.toLocaleString('fr-FR', {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             }).replace(/^\w/, c => c.toUpperCase());
         }
 
         function getTimeRemaining(dateStr) {
-            if (!dateStr) return { isPast: false, text: "Date inconnue" };
-            
+            if (!dateStr) return {
+                isPast: false,
+                text: "Date inconnue"
+            };
+
             const now = new Date();
             const evDate = new Date(dateStr);
-            if (isNaN(evDate)) return { isPast: false, text: "" };
-            
+            if (isNaN(evDate)) return {
+                isPast: false,
+                text: ""
+            };
+
             const diffMs = evDate - now;
-            
+
             if (diffMs < 0) {
-                return { isPast: true, text: "Événement terminé" };
+                return {
+                    isPast: true,
+                    text: "Événement terminé"
+                };
             }
 
             const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -103,9 +125,9 @@
             if (hours > 0) timeParts.push(`${hours}h`);
             if (days === 0 && hours === 0 && minutes > 0) timeParts.push(`${minutes}m`);
 
-            return { 
-                isPast: false, 
-                text: timeParts.length > 0 ? `⏳ Dans ${timeParts.join(' ')}` : "⏳ Commence bientôt" 
+            return {
+                isPast: false,
+                text: timeParts.length > 0 ? `⏳ Dans ${timeParts.join(' ')}` : "⏳ Commence bientôt"
             };
         }
 
@@ -148,7 +170,7 @@
                         container.innerHTML += card;
                     });
                 } else {
-                    section.classList.add('hidden'); 
+                    section.classList.add('hidden');
                 }
             } catch (err) {
                 console.error("Impossible de charger les événements personnels", err);
@@ -156,42 +178,46 @@
         }
 
         async function registerEvent(eventId) {
-        const userId = window.currentUserId; 
+            const userId = window.currentUserId;
 
-        if (!userId) {
-            showAlert("Vous devez être connecté pour vous inscrire.", false);
-            setTimeout(() => window.location.href = "/front/account/signin.php", 2000);
-            return;
-        }
-
-        if (!window.isSubscribed) {
-            showAlert("Vous devez posséder un abonnement pour participer aux événements.", false);
-            setTimeout(() => window.location.href = "/front/services/subscription.php", 2500);
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/evenement/register/${eventId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
-            });
-
-            if (response.ok) {
-                showAlert("Inscription confirmée ! Votre place est réservée.", true);
-                fetchEvenements(currentPage); 
-                fetchMyEvenements(); 
-            } else {
-                const errText = await response.text();
-                showAlert("Erreur : " + errText, false);
+            if (!userId) {
+                showAlert("Vous devez être connecté pour vous inscrire.", false);
+                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>", 2000);
+                return;
             }
-        } catch (err) {
-            showAlert("Impossible de joindre le serveur.", false);
+
+            if (!window.isSubscribed) {
+                showAlert("Vous devez posséder un abonnement pour participer aux événements.", false);
+                setTimeout(() => window.location.href = "/front/services/subscription.php", 2500);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/evenement/register/${eventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId)
+                    }),
+                });
+
+                if (response.ok) {
+                    showAlert("Inscription confirmée ! Votre place est réservée.", true);
+                    fetchEvenements(currentPage);
+                    fetchMyEvenements();
+                } else {
+                    const errText = await response.text();
+                    showAlert("Erreur : " + errText, false);
+                }
+            } catch (err) {
+                showAlert("Impossible de joindre le serveur.", false);
+            }
         }
-    }
 
         async function unregisterEvent(eventId) {
-            const userId = window.currentUserId; 
+            const userId = window.currentUserId;
             if (!userId) return;
 
             if (!confirm("Êtes-vous sûr de vouloir annuler votre inscription à cet événement ?")) {
@@ -201,14 +227,18 @@
             try {
                 const response = await fetch(`${API_BASE}/evenement/unregister/${eventId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId)
+                    }),
                 });
 
                 if (response.ok) {
                     showAlert("Votre inscription a bien été annulée.", true);
-                    fetchEvenements(currentPage); 
-                    fetchMyEvenements(); 
+                    fetchEvenements(currentPage);
+                    fetchMyEvenements();
                 } else {
                     const errText = await response.text();
                     showAlert("Erreur : " + errText, false);
@@ -223,10 +253,10 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`);
                 if (!response.ok) throw new Error("Erreur de récupération");
-                
+
                 const result = await response.json();
                 const evenementsAPI = result.data || [];
-                
+
                 const evenements = evenementsAPI.filter(e => {
                     if (!e.date_debut) return true;
                     return new Date(e.date_debut) >= new Date();
@@ -250,13 +280,13 @@
                     const timeStatus = getTimeRemaining(e.date_debut);
                     const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/400x250?text=Silver+Happy';
 
-                    let badgeHTML = places > 0 
-                        ? `<span class="bg-[#E1AB2B]/20 text-yellow-800 border border-[#E1AB2B] text-xs px-3 py-1 rounded-full font-bold">Il reste ${places} place(s)</span>`
-                        : `<span class="bg-red-100 text-red-700 border border-red-300 text-xs px-3 py-1 rounded-full font-bold">Complet</span>`;
-                    
-                    let btnHTML = places > 0 
-                        ? `<button onclick="registerEvent(${id})" class="w-full rounded-full py-3 px-6 bg-[#1C5B8F] text-white font-bold text-lg mt-4 hover:bg-[#154670] transition-colors">Je m'inscris</button>`
-                        : `<button class="w-full rounded-full py-3 px-6 bg-gray-300 text-gray-500 font-bold text-lg mt-4 cursor-not-allowed" disabled>Complet</button>`;
+                    let badgeHTML = places > 0 ?
+                        `<span class="bg-[#E1AB2B]/20 text-yellow-800 border border-[#E1AB2B] text-xs px-3 py-1 rounded-full font-bold">Il reste ${places} place(s)</span>` :
+                        `<span class="bg-red-100 text-red-700 border border-red-300 text-xs px-3 py-1 rounded-full font-bold">Complet</span>`;
+
+                    let btnHTML = places > 0 ?
+                        `<button onclick="registerEvent(${id})" class="w-full rounded-full py-3 px-6 bg-[#1C5B8F] text-white font-bold text-lg mt-4 hover:bg-[#154670] transition-colors">Je m'inscris</button>` :
+                        `<button class="w-full rounded-full py-3 px-6 bg-gray-300 text-gray-500 font-bold text-lg mt-4 cursor-not-allowed" disabled>Complet</button>`;
 
                     container.innerHTML += `
                         <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all overflow-hidden">
@@ -290,7 +320,7 @@
             const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchEvenements(${currentPage - 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${prevDisabled}" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>`;
             paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F]">${currentPage}</strong> sur ${totalPages}</span>`;
-            
+
             const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchEvenements(${currentPage + 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${nextDisabled}" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>`;
         }
@@ -301,8 +331,11 @@
 
         window.onload = () => {
             fetchEvenements(1);
-            setTimeout(() => { if (window.currentUserId) fetchMyEvenements(); }, 500);
+            setTimeout(() => {
+                if (window.currentUserId) fetchMyEvenements();
+            }, 500);
         };
     </script>
 </body>
+
 </html>
