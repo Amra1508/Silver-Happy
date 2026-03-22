@@ -53,6 +53,13 @@ func main() {
     http.HandleFunc("/service/user/{id}", services.Read_User_Services)
     http.HandleFunc("/service/register/{id}", services.Register_Service)
     http.HandleFunc("/service/unregister/{id}", services.Unregister_Service)
+	http.HandleFunc("/services/filter", services.GetServicesByCategory)
+
+	http.HandleFunc("/categorie/read", services.Read_Categorie)
+	http.HandleFunc("/categorie/read/{id}", services.Read_One_Categorie)
+	http.HandleFunc("/categorie/create", services.Create_Categorie)
+	http.HandleFunc("/categorie/update/{id}", services.Update_Categorie)
+	http.HandleFunc("/categorie/delete/{id}", services.Delete_Categorie)
 
 	http.HandleFunc("/conseil/read", communication.Read_Conseil)
 	http.HandleFunc("/conseil/create", communication.Create_Conseil)

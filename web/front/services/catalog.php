@@ -47,9 +47,16 @@
 
         <div class="w-full px-6 md:px-16 mt-12 mb-8 bg-gray-50 text-center">
             <h2 class="text-4xl font-bold mb-4 text-[#1C5B8F]">Notre catalogue</h2>
-            <h2 class="text-lg max-w-4xl mx-auto text-gray-600">
+            <h2 class="text-lg max-w-4xl mx-auto text-gray-600 mb-8">
                 Parcourez ci-dessous l'ensemble des services proposés et réservez le créneau qui vous convient.
             </h2>
+            
+            <div class="flex justify-center items-center gap-4">
+                <label for="category-filter" class="font-bold text-gray-700">Trier par type :</label>
+                <select id="category-filter" onchange="applyCategoryFilter()" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E1AB2B] bg-white shadow-sm cursor-pointer">
+                    <option value="all">Toutes les prestations</option>
+                </select>
+            </div>
         </div>
 
         <div id="services-container" class="flex flex-wrap gap-8 px-6 md:px-16 py-10 justify-center">
@@ -69,6 +76,7 @@
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
+        let currentServicesData = []; 
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -101,11 +109,7 @@
                     myServices.forEach(s => {
                         const dateObj = new Date(s.date_heure);
                         const dateString = dateObj.toLocaleString('fr-FR', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                            hour: '2-digit',
-                            minute: '2-digit'
+                            weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
                         }).replace(/^\w/, c => c.toUpperCase());
 
                         const card = `
@@ -134,7 +138,7 @@
             const userId = window.currentUserId;
             if (!userId) {
                 showAlert("Vous devez être connecté pour prendre RDV.", false);
-                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>", 2000);
+                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=" + encodeURIComponent(window.location.pathname), 2000);
                 return;
             }
 
@@ -152,13 +156,8 @@
             try {
                 const response = await fetch(`${API_BASE}/service/register/${serviceId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_utilisateur: parseInt(userId),
-                        date_heure: dateInput
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_utilisateur: parseInt(userId), date_heure: dateInput }),
                 });
 
                 if (response.ok) {
@@ -177,18 +176,13 @@
         async function cancelService(reservationId) {
             const userId = window.currentUserId;
             if (!userId) return;
-
             if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ?")) return;
 
             try {
                 const response = await fetch(`${API_BASE}/service/unregister/${reservationId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_utilisateur: parseInt(userId)
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
                 });
 
                 if (response.ok) {
@@ -208,45 +202,96 @@
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/service/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
-                const services = result.data || [];
+                currentServicesData = result.data || [];
+                
                 const container = document.getElementById('services-container');
                 container.innerHTML = '';
 
-                if (services.length === 0) {
+                if (currentServicesData.length === 0) {
                     container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun service disponible.</p>';
                     renderPagination(0);
                     return;
                 }
 
-                const now = new Date();
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                const minDateTime = now.toISOString().slice(0, 16);
-
-                services.forEach(s => {
-                    const id = s.id_service || s.ID;
-                    const nom = s.nom || 'Service sans nom';
-                    const description = s.description || '';
-
-                    container.innerHTML += `
-                        <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col p-8 rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all relative">
-                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
-                            <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2 mt-2">${nom}</h3>
-                            <p class="text-gray-600 mb-6 flex-grow leading-relaxed">${description}</p>
-                            
-                            <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Choisissez votre créneau :</label>
-                                <input type="datetime-local" id="datetime-${id}" min="${minDateTime}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
-                                <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
-                                    Confirmer le RDV
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
+                updateCategoryDropdown(currentServicesData);
+                renderServiceCards(currentServicesData);
                 renderPagination(result.totalPages);
             } catch (err) {
                 showAlert("Erreur de connexion", false);
             }
+        }
+
+        function updateCategoryDropdown(services) {
+            const select = document.getElementById('category-filter');
+            const currentValue = select.value;
+            
+            // On extrait directement les noms des catégories (gérés par le backend en Go)
+            const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
+            
+            let optionsHtml = '<option value="all">Toutes les prestations</option>';
+            categories.forEach(catName => {
+                optionsHtml += `<option value="${catName}">${catName}</option>`;
+            });
+            
+            select.innerHTML = optionsHtml;
+            
+            if (currentValue !== 'all' && categories.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function applyCategoryFilter() {
+            const selectedCategory = document.getElementById('category-filter').value;
+            
+            if (selectedCategory === 'all') {
+                renderServiceCards(currentServicesData);
+            } else {
+                const filteredServices = currentServicesData.filter(s => (s.categorie_nom || 'Autre') === selectedCategory);
+                renderServiceCards(filteredServices);
+            }
+        }
+
+        function renderServiceCards(services) {
+            const container = document.getElementById('services-container');
+            container.innerHTML = '';
+            
+            if (services.length === 0) {
+                container.innerHTML = '<p class="text-lg text-gray-500 py-10 italic">Aucun service de cette catégorie sur cette page.</p>';
+                return;
+            }
+
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const minDateTime = now.toISOString().slice(0, 16);
+
+            services.forEach(s => {
+                const id = s.id_service || s.ID;
+                const nom = s.nom || 'Service sans nom';
+                const description = s.description || '';
+                
+                const typePrestation = s.categorie_nom || 'Autre';
+
+                container.innerHTML += `
+                    <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col p-8 rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all relative mt-4">
+                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
+                        
+                        <div class="mt-2 mb-1">
+                            <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${typePrestation}</span>
+                        </div>
+
+                        <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2">${nom}</h3>
+                        <p class="text-gray-600 mb-6 flex-grow leading-relaxed">${description}</p>
+                        
+                        <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Choisissez votre créneau :</label>
+                            <input type="datetime-local" id="datetime-${id}" min="${minDateTime}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
+                            <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
+                                Confirmer le RDV
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
         }
 
         function renderPagination(totalPages) {

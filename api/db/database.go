@@ -208,18 +208,25 @@ func InitDB() {
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
-	CREATE TABLE IF NOT EXISTS SERVICE(
+	CREATE TABLE IF NOT EXISTS CATEGORIE (
+		id_categorie INT AUTO_INCREMENT PRIMARY KEY,
+		nom VARCHAR(100) NOT NULL,
+		description TEXT
+	);
+	CREATE TABLE IF NOT EXISTS SERVICE (
 		id_service INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100),
-		description VARCHAR(200)
+		description VARCHAR(200),
+		id_categorie INT NULL,
+		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL
 	);
 	CREATE TABLE IF NOT EXISTS RESERVATION_SERVICE (
-			id_reservation INT AUTO_INCREMENT PRIMARY KEY,
-			id_service INT NOT NULL,
-			id_utilisateur INT NOT NULL,
-			date_heure DATETIME NOT NULL,
-			FOREIGN KEY (id_service) REFERENCES service(id_service) ON DELETE CASCADE
-		);
+		id_reservation INT AUTO_INCREMENT PRIMARY KEY,
+		id_service INT NOT NULL,
+		id_utilisateur INT NOT NULL,
+		date_heure DATETIME NOT NULL,
+		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service) ON DELETE CASCADE
+	);
 	CREATE TABLE IF NOT EXISTS PRESTATION(
 		id_prestation INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100),

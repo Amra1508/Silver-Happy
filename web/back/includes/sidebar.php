@@ -19,6 +19,11 @@
             <span>Seniors</span>
         </a>
 
+        <a href="/back/services/categories.php" class="sidebar-links">
+            <img src="/back/icons/categories.svg" alt="catalogue" class="w-7 h-7 mx-4">
+            <span>Catégories</span>
+        </a>
+
         <a href="/back/services/catalog.php" class="sidebar-links">
             <img src="/back/icons/catalogue.svg" alt="catalogue" class="w-7 h-7 mx-4">
             <span>Catalogue des services</span>

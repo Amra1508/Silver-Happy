@@ -50,6 +50,8 @@ type Service struct {
     ID          int    `json:"id_service"`
     Nom         string `json:"nom"`
     Description string `json:"description"`
+	IDCategorie *int   `json:"id_categorie"`
+	CategorieNom string `json:"categorie_nom"`
 }
 
 type UserReservation struct {
@@ -155,4 +157,10 @@ type PlanningItem struct {
     Location    string `json:"location"`
     Type        string `json:"type"`
     Color       string `json:"color"`
+}
+
+type Categorie struct {
+    ID          int    `json:"id_categorie"`
+    Nom         string `json:"nom"`
+    Description string `json:"description"`
 }

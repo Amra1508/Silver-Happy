@@ -33,9 +33,16 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
     }
 
     var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM service").Scan(&total)
+    db.DB.QueryRow("SELECT COUNT(*) FROM SERVICE").Scan(&total)
 
-    rows, errorFetch := db.DB.Query("SELECT id_service, nom, description FROM service LIMIT ? OFFSET ?", limit, offset)
+    sqlQuery := `
+        SELECT s.id_service, s.nom, s.description, s.id_categorie, IFNULL(c.nom, 'Autre') as categorie_nom
+        FROM SERVICE s
+        LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
+        LIMIT ? OFFSET ?
+    `
+
+    rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
     if errorFetch != nil {
         http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
         return
@@ -45,7 +52,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
     var tabService []models.Service
     for rows.Next() {
         var service models.Service
-        if err := rows.Scan(&service.ID, &service.Nom, &service.Description); err != nil {
+        if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.IDCategorie, &service.CategorieNom); err != nil {
             fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
             continue
         }
@@ -68,36 +75,78 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 }
 
 func Create_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    var service models.Service
-    if err := json.NewDecoder(request.Body).Decode(&service); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
+	var service models.Service
+	if err := json.NewDecoder(request.Body).Decode(&service); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
 
-    service.Nom = strings.TrimSpace(service.Nom)
-    service.Description = strings.TrimSpace(service.Description)
+	service.Nom = strings.TrimSpace(service.Nom)
+	service.Description = strings.TrimSpace(service.Description)
 
-    if service.Nom == "" || service.Description == "" {
-        http.Error(response, "Le nom et la description ne peuvent pas être vides.", http.StatusBadRequest)
-        return
-    }
+	if service.Nom == "" || service.Description == "" {
+		http.Error(response, "Le nom et la description sont requis.", http.StatusBadRequest)
+		return
+	}
 
-    res, errorCreate := db.DB.Exec("INSERT INTO service (nom, description) VALUES (?, ?)", service.Nom, service.Description)
-    if errorCreate != nil {
-        http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
-        return
-    }
+	res, errorCreate := db.DB.Exec("INSERT INTO SERVICE (nom, description, id_categorie) VALUES (?, ?, ?)", service.Nom, service.Description, service.IDCategorie)
+	if errorCreate != nil {
+		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
+		return
+	}
 
-    id, _ := res.LastInsertId()
-    service.ID = int(id)
+	id, _ := res.LastInsertId()
+	service.ID = int(id)
 
-    response.Header().Set("Content-Type", "application/json")
-    response.WriteHeader(http.StatusCreated)
-    json.NewEncoder(response).Encode(service)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(service)
+}
+
+func Update_Service(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "PUT") {
+		return
+	}
+
+	id := request.PathValue("id")
+
+	var service models.Service
+	if err := json.NewDecoder(request.Body).Decode(&service); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	service.Nom = strings.TrimSpace(service.Nom)
+	service.Description = strings.TrimSpace(service.Description)
+
+	res, err := db.DB.Exec("UPDATE SERVICE SET nom = ?, description = ?, id_categorie = ? WHERE id_service = ?", service.Nom, service.Description, service.IDCategorie, id)
+
+	if err != nil {
+		http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		http.Error(response, "Aucun service trouvé", http.StatusNotFound)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+}
+
+func Delete_Service(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "DELETE") {
+		return
+	}
+
+	id := request.PathValue("id")
+	db.DB.Exec("DELETE FROM SERVICE WHERE id_service = ?", id)
+	response.WriteHeader(http.StatusNoContent)
 }
 
 func Read_One_Service(response http.ResponseWriter, request *http.Request) {
@@ -118,63 +167,6 @@ func Read_One_Service(response http.ResponseWriter, request *http.Request) {
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(service)
 }
-
-func Update_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "PUT") {
-        return
-    }
-
-    id := request.PathValue("id")
-
-    var service models.Service
-    if err := json.NewDecoder(request.Body).Decode(&service); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
-
-    service.Nom = strings.TrimSpace(service.Nom)
-    service.Description = strings.TrimSpace(service.Description)
-
-    if service.Nom == "" || service.Description == "" {
-        http.Error(response, "Le nom et la description ne peuvent pas être vides.", http.StatusBadRequest)
-        return
-    }
-
-    res, err := db.DB.Exec("UPDATE service SET nom = ?, description = ? WHERE id_service = ?", service.Nom, service.Description, id)
-
-    if err != nil {
-        http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
-        return
-    }
-
-    rowsAffected, _ := res.RowsAffected()
-    if rowsAffected == 0 {
-        http.Error(response, "Aucun service trouvé avec cet ID", http.StatusNotFound)
-        return
-    }
-
-    response.Header().Set("Content-Type", "application/json")
-    response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Service mis à jour avec succès"})
-}
-
-func Delete_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "DELETE") {
-        return
-    }
-
-    id := request.PathValue("id")
-
-    _, err := db.DB.Exec("DELETE FROM service WHERE id_service = ?", id)
-    if err != nil {
-        http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
-        return
-    }
-
-    response.WriteHeader(http.StatusNoContent)
-}
-
-
 
 func Read_User_Services(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "GET") {
@@ -283,4 +275,36 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 
     response.WriteHeader(http.StatusOK)
     json.NewEncoder(response).Encode(map[string]string{"message": "Rendez-vous annulé !"})
+}
+
+func GetServicesByCategory(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	categorieIDStr := request.URL.Query().Get("categorie")
+	
+	query := `SELECT id_service, nom, description, id_categorie FROM SERVICE WHERE id_categorie = ?`
+	rows, err := db.DB.Query(query, categorieIDStr)
+	if err != nil {
+		http.Error(response, "Erreur récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var services []models.Service
+	for rows.Next() {
+		var s models.Service
+		if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &s.IDCategorie); err == nil {
+			services = append(services, s)
+		}
+	}
+
+	if services == nil {
+		services = []models.Service{}
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(services)
 }
