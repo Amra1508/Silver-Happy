@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -225,6 +226,12 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+    if !emailRegex.MatchString(user.Email) {
+        http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
+        return
+    }
+
 	if user.DateNaissance != "" {
 		dateParsed, err := time.Parse("2006-01-02", user.DateNaissance)
 		if err != nil {
@@ -300,6 +307,12 @@ func Update_User(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, "Le nom, prénom et email ne peuvent pas être vides", http.StatusBadRequest)
 		return
 	}
+
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+    if !emailRegex.MatchString(user.Email) {
+        http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
+        return
+    }
 
 	var dateNaissance interface{} = user.DateNaissance
 	if user.DateNaissance == "" {

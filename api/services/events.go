@@ -280,7 +280,6 @@ func Update_Evenement(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    // VERIFICATION DES DATES
     if errDate := validateDates(debut, fin); errDate != nil {
         http.Error(response, errDate.Error(), http.StatusBadRequest)
         return

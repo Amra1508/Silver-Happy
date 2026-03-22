@@ -99,7 +99,6 @@
             const calendarEl = document.getElementById('calendar');
 
             try {
-                // 1. Récupération de l'utilisateur
                 const authResponse = await fetch('http://localhost:8082/auth/me', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
@@ -114,7 +113,6 @@
                 const user = await authResponse.json();
                 const userId = user.id_utilisateur || user.id; 
 
-                // 2. Récupération du planning unifié
                 const planningResponse = await fetch(`http://localhost:8082/planning?user_id=${userId}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
@@ -127,12 +125,11 @@
                     statusMessage.classList.add('hidden');
                     calendarEl.classList.remove('hidden');
 
-                    // 3. Formatage pour FullCalendar
                     const eventsData = planningData.map(item => ({
                         id: item.id,
                         title: item.title,
                         start: item.start,
-                        end: item.end || undefined, // undefined si vide, FullCalendar s'adapte
+                        end: item.end || undefined,
                         backgroundColor: item.color,
                         borderColor: item.color,
                         extendedProps: {

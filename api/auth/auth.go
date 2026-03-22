@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -40,6 +41,12 @@ func Register(response http.ResponseWriter, request *http.Request) {
 
     if strings.Contains(user.Prenom, " ") || strings.Contains(user.Nom, " ") || strings.Contains(user.Email, " ") || strings.Contains(user.NumTelephone, " ") || strings.Contains(user.CodePostal, " ") {
         http.Error(response, "Les espaces ne sont pas autorisés pour ces champs.", http.StatusConflict)
+        return
+    }
+
+    emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+    if !emailRegex.MatchString(user.Email) {
+        http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
         return
     }
 
