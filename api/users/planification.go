@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,11 +17,6 @@ func Read_User_Planning(response http.ResponseWriter, request *http.Request) {
     }
 
     userIdStr := request.URL.Query().Get("user_id")
-    if userIdStr == "" {
-        http.Error(response, "L'ID utilisateur (user_id) est requis", http.StatusBadRequest)
-        return
-    }
-
     var userId int
     fmt.Sscanf(userIdStr, "%d", &userId)
 
@@ -29,46 +25,67 @@ func Read_User_Planning(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    sqlQuery := `
-        SELECT 
-            e.id_evenement, e.nom, e.description, e.lieu, e.date_debut, e.date_fin, e.image
-        FROM EVENEMENT e
-        JOIN INSCRIPTION i ON e.id_evenement = i.id_evenement
+    var tabPlanning []models.PlanningItem
+
+    sqlEvents := `
+        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.date_debut, e.date_fin
+        FROM evenement e
+        JOIN inscription i ON e.id_evenement = i.id_evenement
         WHERE i.id_utilisateur = ?
-        ORDER BY e.date_debut ASC
     `
-
-    rows, errorFetch := db.DB.Query(sqlQuery, userId)
-    if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération du planning", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
-
-    var tabPlanning []models.Evenement
-
-    for rows.Next() {
-        var evt models.Evenement
-        
-        err := rows.Scan(
-            &evt.ID, 
-            &evt.Nom, 
-            &evt.Description, 
-            &evt.Lieu, 
-            &evt.DateDebut, 
-            &evt.DateFin, 
-            &evt.Image,
-        )
-        
-        if err != nil {
-            fmt.Println("Erreur lors du scan de l'événement:", err)
-            continue
+    rowsEvents, err := db.DB.Query(sqlEvents, userId)
+    if err == nil {
+        defer rowsEvents.Close()
+        for rowsEvents.Next() {
+            var id int
+            var nom string
+            var desc, lieu, dateDebut, dateFin sql.NullString
+            
+            rowsEvents.Scan(&id, &nom, &desc, &lieu, &dateDebut, &dateFin)
+            
+            tabPlanning = append(tabPlanning, models.PlanningItem{
+                ID:          fmt.Sprintf("evt_%d", id),
+                Title:       nom,
+                Start:       dateDebut.String,
+                End:         dateFin.String,
+                Description: desc.String,
+                Location:    lieu.String,
+                Type:        "evenement",
+                Color:       "#E1AB2B",
+            })
         }
-        tabPlanning = append(tabPlanning, evt)
+    }
+
+    sqlServices := `
+        SELECT r.id_reservation, s.nom, s.description, r.date_heure
+        FROM reservation_service r
+        JOIN service s ON r.id_service = s.id_service
+        WHERE r.id_utilisateur = ?
+    `
+    rowsServices, err2 := db.DB.Query(sqlServices, userId)
+    if err2 == nil {
+        defer rowsServices.Close()
+        for rowsServices.Next() {
+            var id int
+            var nom string
+            var desc, dateHeure sql.NullString
+            
+            rowsServices.Scan(&id, &nom, &desc, &dateHeure)
+            
+            tabPlanning = append(tabPlanning, models.PlanningItem{
+                ID:          fmt.Sprintf("srv_%d", id),
+                Title:       nom,
+                Start:       dateHeure.String,
+                Description: desc.String,
+                Location:    "À définir avec le prestataire",
+                Type:        "service",
+                Color:       "#1C5B8F",
+            })
+        }
     }
 
     if tabPlanning == nil {
-        tabPlanning = []models.Evenement{}
+        tabPlanning = []models.PlanningItem{}
     }
 
     response.Header().Set("Content-Type", "application/json")

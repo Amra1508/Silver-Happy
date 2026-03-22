@@ -6,7 +6,6 @@
     <title>Mon Planning</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/fr.global.min.js'></script>
 
@@ -20,9 +19,6 @@
             --fc-button-hover-border-color: #154670;
             --fc-button-active-bg-color: #154670;
             --fc-button-active-border-color: #154670;
-            --fc-event-bg-color: #E1AB2B;
-            --fc-event-border-color: #E1AB2B;
-            --fc-event-text-color: #fff;
         }
         
         .fc-toolbar-title {
@@ -35,18 +31,13 @@
             padding: 2px 4px;
             font-weight: bold;
             border-radius: 4px;
+            color: white !important;
         }
     </style>
 
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Alata', 'sans-serif'],
-                    }
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } } }
         }
     </script>
 </head>
@@ -62,13 +53,16 @@
                 <h2 class="text-3xl font-semibold text-[#1C5B8F]">
                     Mon Calendrier
                 </h2>
-                <div class="p-3 flex justify-between items-center mx-8">
-                    <a href="/front/account/profile.php">
-                        <button class="flex items-center rounded-full px-6 button-blue">
-                            <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à mon profil
-                        </button>
-                    </a>
-                </div>
+                <a href="/front/account/profile.php">
+                    <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
+                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-5 h-5 mr-2 filter invert"> Revenir à mon profil
+                    </button>
+                </a>
+            </div>
+
+            <div class="flex gap-4 mb-6">
+                <span class="flex items-center text-sm font-bold text-gray-600"><div class="w-4 h-4 rounded-full bg-[#E1AB2B] mr-2"></div> Événements</span>
+                <span class="flex items-center text-sm font-bold text-gray-600"><div class="w-4 h-4 rounded-full bg-[#1C5B8F] mr-2"></div> Services (RDV)</span>
             </div>
 
             <div id="status_message" class="text-center text-gray-500 font-bold py-10">
@@ -89,7 +83,7 @@
                 <p><strong>Début :</strong> <span id="modalStart"></span></p>
                 <p><strong>Fin :</strong> <span id="modalEnd"></span></p>
                 <p><strong>Lieu :</strong> <span id="modalLocation"></span></p>
-                <p class="pt-2 border-t text-sm" id="modalDescription"></p>
+                <p class="pt-2 border-t text-sm mt-4" id="modalDescription"></p>
             </div>
             <div class="mt-6 flex justify-end">
                 <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full font-bold hover:bg-gray-300 transition-colors">
@@ -105,6 +99,7 @@
             const calendarEl = document.getElementById('calendar');
 
             try {
+                // 1. Récupération de l'utilisateur
                 const authResponse = await fetch('http://localhost:8082/auth/me', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
@@ -119,6 +114,7 @@
                 const user = await authResponse.json();
                 const userId = user.id_utilisateur || user.id; 
 
+                // 2. Récupération du planning unifié
                 const planningResponse = await fetch(`http://localhost:8082/planning?user_id=${userId}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
@@ -126,19 +122,22 @@
                 });
 
                 if (planningResponse.ok) {
-                    const evenements = await planningResponse.json();
+                    const planningData = await planningResponse.json();
                     
                     statusMessage.classList.add('hidden');
                     calendarEl.classList.remove('hidden');
 
-                    const eventsData = evenements.map(event => ({
-                        id: event.id_evenement,
-                        title: event.nom,
-                        start: event.date_debut,
-                        end: event.date_fin,
+                    // 3. Formatage pour FullCalendar
+                    const eventsData = planningData.map(item => ({
+                        id: item.id,
+                        title: item.title,
+                        start: item.start,
+                        end: item.end || undefined, // undefined si vide, FullCalendar s'adapte
+                        backgroundColor: item.color,
+                        borderColor: item.color,
                         extendedProps: {
-                            description: event.description || 'Aucune description.',
-                            lieu: event.lieu || 'Lieu non défini'
+                            description: item.description || 'Aucune description.',
+                            lieu: item.location || 'Non spécifié'
                         }
                     }));
 
@@ -156,16 +155,15 @@
                         
                         eventClick: function(info) {
                             const eventObj = info.event;
-                            
                             const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
                             
                             document.getElementById('modalTitle').textContent = eventObj.title;
-                            document.getElementById('modalStart').textContent = eventObj.start.toLocaleDateString('fr-FR', options).replace(':', 'h');
+                            document.getElementById('modalStart').textContent = eventObj.start ? eventObj.start.toLocaleDateString('fr-FR', options).replace(':', 'h') : 'Inconnu';
                             
                             if (eventObj.end) {
                                 document.getElementById('modalEnd').textContent = eventObj.end.toLocaleDateString('fr-FR', options).replace(':', 'h');
                             } else {
-                                document.getElementById('modalEnd').textContent = 'Non spécifiée';
+                                document.getElementById('modalEnd').textContent = 'Non spécifiée (ou rendez-vous ponctuel)';
                             }
                             
                             document.getElementById('modalLocation').textContent = eventObj.extendedProps.lieu;
@@ -182,7 +180,7 @@
                     statusMessage.classList.add("text-red-500");
                 }
             } catch (error) {
-                console.error("Erreur de récupération des données :", error);
+                console.error("Erreur de récupération :", error);
                 statusMessage.textContent = "Erreur de connexion au serveur.";
                 statusMessage.classList.add("text-red-500");
             }

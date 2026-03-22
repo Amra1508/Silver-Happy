@@ -47,11 +47,17 @@ type Produit struct {
 }
 
 type Service struct {
-	ID            int    `json:"id_service"`
-	Nom           string `json:"nom"`
-	Description   string `json:"description"`
-	Disponibilite int    `json:"disponibilite"`
-	IdUtilisateur *int   `json:"id_utilisateur"`
+    ID          int    `json:"id_service"`
+    Nom         string `json:"nom"`
+    Description string `json:"description"`
+}
+
+type UserReservation struct {
+    IdReservation int    `json:"id_reservation"`
+    IdService     int    `json:"id_service"`
+    Nom           string `json:"nom"`
+    Description   string `json:"description"`
+    DateHeure     string `json:"date_heure"`
 }
 
 type Conseil struct {
@@ -138,4 +144,15 @@ type Avis struct {
 	Titre       string `json:"titre"`
 	Date        string `json:"date"`
 	Note   		int64  `json:"note"`
+}
+
+type PlanningItem struct {
+    ID          string `json:"id"`
+    Title       string `json:"title"`
+    Start       string `json:"start"`
+    End         string `json:"end,omitempty"`
+    Description string `json:"description"`
+    Location    string `json:"location"`
+    Type        string `json:"type"`
+    Color       string `json:"color"`
 }

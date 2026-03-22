@@ -50,6 +50,9 @@ func main() {
 	http.HandleFunc("/service/read-one/{id}", services.Read_One_Service)
 	http.HandleFunc("/service/update/{id}", services.Update_Service)
 	http.HandleFunc("/service/delete/{id}", services.Delete_Service)
+    http.HandleFunc("/service/user/{id}", services.Read_User_Services)
+    http.HandleFunc("/service/register/{id}", services.Register_Service)
+    http.HandleFunc("/service/unregister/{id}", services.Unregister_Service)
 
 	http.HandleFunc("/conseil/read", communication.Read_Conseil)
 	http.HandleFunc("/conseil/create", communication.Create_Conseil)

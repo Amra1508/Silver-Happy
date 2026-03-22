@@ -211,11 +211,15 @@ func InitDB() {
 	CREATE TABLE IF NOT EXISTS SERVICE(
 		id_service INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100),
-		description VARCHAR(200),
-		disponibilite BOOLEAN DEFAULT true,
-		id_utilisateur INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
+		description VARCHAR(200)
 	);
+	CREATE TABLE IF NOT EXISTS RESERVATION_SERVICE (
+			id_reservation INT AUTO_INCREMENT PRIMARY KEY,
+			id_service INT NOT NULL,
+			id_utilisateur INT NOT NULL,
+			date_heure DATETIME NOT NULL,
+			FOREIGN KEY (id_service) REFERENCES service(id_service) ON DELETE CASCADE
+		);
 	CREATE TABLE IF NOT EXISTS PRESTATION(
 		id_prestation INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100),
