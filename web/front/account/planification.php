@@ -48,16 +48,20 @@
 
     <main class="flex-grow">
         <div class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+
+            <div class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+                <div class="p-3 flex justify-between items-center mx-8">
+                <a href="/front/services/menu_activity.php">
+                    <button class="flex items-center rounded-full px-6 button-blue">
+                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                    </button>
+                </a>
+            </div>
             
             <div class="flex items-center justify-between mb-10">
                 <h2 class="text-3xl font-semibold text-[#1C5B8F]">
                     Mon Calendrier
                 </h2>
-                <a href="/front/account/profile.php">
-                    <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
-                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-5 h-5 mr-2 filter invert"> Revenir à mon profil
-                    </button>
-                </a>
             </div>
 
             <div class="flex gap-4 mb-6">

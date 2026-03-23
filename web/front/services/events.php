@@ -45,8 +45,14 @@
         </div>
 
         <div class="w-full px-6 md:px-16 mt-12 mb-8 text-center">
-            <h2 class="big-text mb-4 text-[#1C5B8F]">L'agenda complet</h2>
-            <p class="text-gray-600 max-w-4xl mx-auto">Découvrez le programme et réservez votre place.</p>
+            <h2 class="big-text mb-4 text-[#1C5B8F] text-4xl font-bold">L'agenda complet</h2>
+            <p class="text-gray-600 max-w-4xl mx-auto mb-6">Découvrez le programme et réservez votre place.</p>
+            
+            <div class="max-w-xs mx-auto">
+                <select id="filter-category" class="w-full p-3 border border-gray-300 text-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1C5B8F]" onchange="fetchEvenements(1)">
+                    <option value="">Toutes les catégories</option>
+                    </select>
+            </div>
         </div>
 
         <div id="events-container" class="flex flex-wrap gap-8 px-6 md:px-16 py-4 justify-center">
@@ -55,7 +61,7 @@
             </div>
         </div>
 
-        <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
+        <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16 mt-4"></div>
 
     </main>
 
@@ -66,6 +72,8 @@
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
+        
+        let categoriesData = []; // Pour stocker les catégories
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -130,6 +138,32 @@
                 text: timeParts.length > 0 ? `⏳ Dans ${timeParts.join(' ')}` : "⏳ Commence bientôt"
             };
         }
+
+        // --- NOUVELLES FONCTIONS POUR LES CATÉGORIES ---
+        async function fetchCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categorie/read`); 
+                if(!response.ok) return;
+                const result = await response.json();
+                categoriesData = result.data || result || []; 
+                
+                const select = document.getElementById('filter-category');
+                categoriesData.forEach(cat => {
+                    const id = cat.id_categorie || cat.id || cat.ID;
+                    const nom = cat.nom || cat.Nom;
+                    select.innerHTML += `<option value="${id}">${nom}</option>`;
+                });
+            } catch (err) {
+                console.error("Erreur de chargement des catégories:", err);
+            }
+        }
+
+        function getCategoryName(id) {
+            if(!id) return null;
+            const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
+            return cat ? (cat.nom || cat.Nom) : null;
+        }
+        // ------------------------------------------------
 
         async function fetchMyEvenements() {
             const userId = window.currentUserId;
@@ -251,12 +285,24 @@
         async function fetchEvenements(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`);
+                const categoryId = document.getElementById('filter-category').value;
+                
+                let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`;
+                
+                // Si un filtre est sélectionné
+                if (categoryId) {
+                    url = `${API_BASE}/evenement/filter?categorie=${categoryId}`;
+                }
+
+                const response = await fetch(url);
                 if (!response.ok) throw new Error("Erreur de récupération");
 
                 const result = await response.json();
-                const evenementsAPI = result.data || [];
+                
+                // Gère la différence de format de réponse (objet paginé vs tableau direct pour le filtre)
+                const evenementsAPI = Array.isArray(result) ? result : (result.data || []);
 
+                // Ne garde que les événements futurs
                 const evenements = evenementsAPI.filter(e => {
                     if (!e.date_debut) return true;
                     return new Date(e.date_debut) >= new Date();
@@ -266,7 +312,8 @@
                 container.innerHTML = '';
 
                 if (evenements.length === 0) {
-                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun événement prévu prochainement.</p>';
+                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun événement prévu dans cette catégorie.</p>';
+                    renderPagination(Array.isArray(result) ? 0 : (result.totalPages || 0));
                     return;
                 }
 
@@ -279,35 +326,46 @@
                     const displayDebut = formatDisplayDate(e.date_debut);
                     const timeStatus = getTimeRemaining(e.date_debut);
                     const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/400x250?text=Silver+Happy';
+                    
+                    // AJOUT: Récupération du nom de la catégorie
+                    const catName = getCategoryName(e.id_categorie || e.IDCategorie);
+                    const catBadge = catName ? `<span class="text-xs bg-[#1C5B8F]/10 text-[#1C5B8F] px-3 py-1 rounded-full mb-3 inline-block font-bold border border-[#1C5B8F]/20">${catName}</span>` : '';
 
                     let badgeHTML = places > 0 ?
-                        `<span class="bg-[#E1AB2B]/20 text-yellow-800 border border-[#E1AB2B] text-xs px-3 py-1 rounded-full font-bold">Il reste ${places} place(s)</span>` :
-                        `<span class="bg-red-100 text-red-700 border border-red-300 text-xs px-3 py-1 rounded-full font-bold">Complet</span>`;
+                        `<span class="bg-[#E1AB2B]/90 text-white shadow-md text-sm px-4 py-2 rounded-full font-bold backdrop-blur-sm">Il reste ${places} place(s)</span>` :
+                        `<span class="bg-red-500/90 text-white shadow-md text-sm px-4 py-2 rounded-full font-bold backdrop-blur-sm">Complet</span>`;
 
                     let btnHTML = places > 0 ?
-                        `<button onclick="registerEvent(${id})" class="w-full rounded-full py-3 px-6 bg-[#1C5B8F] text-white font-bold text-lg mt-4 hover:bg-[#154670] transition-colors">Je m'inscris</button>` :
-                        `<button class="w-full rounded-full py-3 px-6 bg-gray-300 text-gray-500 font-bold text-lg mt-4 cursor-not-allowed" disabled>Complet</button>`;
+                        `<button onclick="registerEvent(${id})" class="w-full rounded-full py-3 px-6 bg-[#1C5B8F] text-white font-bold text-lg mt-4 hover:bg-[#154670] transition-colors shadow-md">Je m'inscris</button>` :
+                        `<button class="w-full rounded-full py-3 px-6 bg-gray-200 text-gray-500 font-bold text-lg mt-4 cursor-not-allowed border border-gray-300" disabled>Complet</button>`;
 
                     container.innerHTML += `
-                        <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all overflow-hidden">
-                            <div class="h-48 w-full overflow-hidden relative">
+                        <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col rounded-[2rem] shadow-lg hover:-translate-y-2 transition-all duration-300 overflow-hidden">
+                            <div class="h-56 w-full overflow-hidden relative">
                                 <img src="${imgSrc}" class="w-full h-full object-cover">
-                                <div class="absolute top-4 right-4 shadow-md">${badgeHTML}</div>
+                                <div class="absolute top-4 right-4">${badgeHTML}</div>
                             </div>
                             <div class="p-6 flex flex-col flex-grow">
-                                <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2">${nom}</h3>
-                                <div class="flex items-center text-sm text-gray-500 mb-1 font-semibold">📅 ${displayDebut}</div>
-                                <div class="flex items-center text-sm text-[#E1AB2B] mb-1 font-bold">${timeStatus.text}</div>
+                                ${catBadge}
+                                <h3 class="text-2xl text-[#1C5B8F] font-bold mb-3">${nom}</h3>
+                                <div class="flex items-center text-sm text-gray-600 mb-2 font-semibold">📅 ${displayDebut}</div>
+                                <div class="flex items-center text-sm text-[#E1AB2B] mb-2 font-bold">${timeStatus.text}</div>
                                 <div class="flex items-center text-sm text-gray-500 mb-4 font-semibold">📍 ${lieu}</div>
-                                <p class="text-gray-600 mb-4 flex-grow line-clamp-3">${description}</p>
+                                <p class="text-gray-600 mb-4 flex-grow line-clamp-3 leading-relaxed">${description}</p>
                                 ${btnHTML}
                             </div>
                         </div>
                     `;
                 });
 
-                renderPagination(result.totalPages);
+                if(Array.isArray(result) && !result.totalPages) {
+                    renderPagination(0); 
+                } else {
+                    renderPagination(result.totalPages);
+                }
+
             } catch (err) {
+                console.error(err);
                 showAlert("Erreur réseau.", false);
             }
         }
@@ -315,11 +373,12 @@
         function renderPagination(totalPages) {
             const paginationContainer = document.getElementById('pagination-controls');
             paginationContainer.innerHTML = '';
-            if (totalPages <= 1) return;
+            if (!totalPages || totalPages <= 1) return;
 
             const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchEvenements(${currentPage - 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${prevDisabled}" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>`;
-            paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F]">${currentPage}</strong> sur ${totalPages}</span>`;
+            
+            paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F] text-lg">${currentPage}</strong> sur ${totalPages}</span>`;
 
             const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchEvenements(${currentPage + 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${nextDisabled}" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>`;
@@ -329,8 +388,11 @@
             fetchMyEvenements();
         });
 
-        window.onload = () => {
+        window.onload = async () => {
+            // On charge d'abord les catégories avant d'afficher les événements
+            await fetchCategories();
             fetchEvenements(1);
+            
             setTimeout(() => {
                 if (window.currentUserId) fetchMyEvenements();
             }, 500);

@@ -99,6 +99,7 @@ func main() {
 	http.HandleFunc("/evenement/register/{id}", services.Register_Evenement)
 	http.HandleFunc("/evenement/user/{id}", services.Read_User_Evenements)
 	http.HandleFunc("/evenement/unregister/{id}", services.Unregister_Evenement)
+	http.HandleFunc("/evenement/filter", services.GetEvenementsByCategory)
 
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {

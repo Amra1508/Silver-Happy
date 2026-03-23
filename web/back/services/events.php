@@ -43,9 +43,16 @@
 
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="title-text text-3xl font-semibold text-[#1C5B8F]">Gestion des Événements</h1>
-                    <button onclick="toggleModal('add-modal')" class="bg-[#1C5B8F] text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-800 transition" type="button">
-                        + Ajouter un Événement
-                    </button>
+                    
+                    <div class="flex items-center gap-4">
+                        <label for="filter-category" class="font-semibold text-gray-700">Filtrer par :</label>
+                        <select id="filter-category" class="border border-gray-300 rounded p-2 text-sm w-48" onchange="fetchEvenements(1)">
+                            <option value="">Toutes les catégories</option>
+                            </select>
+                        <button onclick="toggleModal('add-modal')" class="bg-[#1C5B8F] text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-800 transition" type="button">
+                            + Ajouter un Événement
+                        </button>
+                    </div>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
@@ -56,12 +63,12 @@
                             <tr>
                                 <th class="p-4 font-semibold">Image</th>
                                 <th class="p-4 font-semibold">Nom</th>
+                                <th class="p-4 font-semibold">Catégorie</th>
                                 <th class="p-4 font-semibold">Description</th>
                                 <th class="p-4 font-semibold">Lieu</th>
                                 <th class="p-4 font-semibold text-center">Places</th>
                                 <th class="p-4 font-semibold">Début</th>
                                 <th class="p-4 font-semibold">Fin</th>
-                                <th class="p-4 font-semibold">Durée</th>
                                 <th class="p-4 font-semibold text-center">Actions</th>
                             </tr>
                         </thead>
@@ -76,30 +83,36 @@
                         <form id="add-form" class="space-y-4">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="add-nom" class="add-input" required>
+                                <input type="text" id="add-nom" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Catégorie</label>
+                                <select id="add-categorie" class="w-full p-2 border rounded">
+                                    <option value="">-- Sans catégorie --</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="add-description" class="add-input" required></textarea>
+                                <textarea id="add-description" class="w-full p-2 border rounded" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Lieu</label>
-                                    <input type="text" id="add-lieu" class="add-input" required>
+                                    <input type="text" id="add-lieu" class="w-full p-2 border rounded" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Nombre de places</label>
-                                    <input type="number" id="add-places" min="1" class="add-input" required>
+                                    <input type="number" id="add-places" min="1" class="w-full p-2 border rounded" required>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Date de début</label>
-                                    <input type="datetime-local" id="add-debut" class="add-input" required>
+                                    <input type="datetime-local" id="add-debut" class="w-full p-2 border rounded" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Date de fin</label>
-                                    <input type="datetime-local" id="add-fin" class="add-input" required>
+                                    <input type="datetime-local" id="add-fin" class="w-full p-2 border rounded" required>
                                 </div>
                             </div>
                             <div>
@@ -121,30 +134,36 @@
                             <input type="hidden" id="edit-id">
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="edit-nom" class="edit-input" required>
+                                <input type="text" id="edit-nom" class="w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Catégorie</label>
+                                <select id="edit-categorie" class="w-full p-2 border rounded">
+                                    <option value="">-- Sans catégorie --</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="edit-input" required></textarea>
+                                <textarea id="edit-description" class="w-full p-2 border rounded" required></textarea>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Lieu</label>
-                                    <input type="text" id="edit-lieu" class="edit-input" required>
+                                    <input type="text" id="edit-lieu" class="w-full p-2 border rounded" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Nombre de places</label>
-                                    <input type="number" id="edit-places" min="1" class="edit-input" required>
+                                    <input type="number" id="edit-places" min="1" class="w-full p-2 border rounded" required>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-sm text-gray-500">Date de début</label>
-                                    <input type="datetime-local" id="edit-debut" class="edit-input" required>
+                                    <input type="datetime-local" id="edit-debut" class="w-full p-2 border rounded" required>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Date de fin</label>
-                                    <input type="datetime-local" id="edit-fin" class="edit-input" required>
+                                    <input type="datetime-local" id="edit-fin" class="w-full p-2 border rounded" required>
                                 </div>
                             </div>
                             <div>
@@ -178,7 +197,7 @@
                         <input type="hidden" id="link-event-id">
 
                         <div class="mb-6 flex gap-4">
-                            <select id="link-provider-select" class="flex-1 add-input text-sm">
+                            <select id="link-provider-select" class="flex-1 p-2 border rounded text-sm">
                             </select>
                             <button type="button" onclick="linkProvider()" class="bg-[#1C5B8F] text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-800 text-sm whitespace-nowrap">Lier le prestataire</button>
                         </div>
@@ -212,6 +231,8 @@
         let currentPage = 1;
         const limit = 10;
         const messageBox = document.getElementById('api-message');
+        
+        let categoriesData = [];
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -286,10 +307,54 @@
         document.getElementById('edit-debut').min = minDT;
         document.getElementById('edit-fin').min = minDT;
 
+        async function fetchCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categorie/read`); 
+                if(!response.ok) return;
+                
+                const result = await response.json();
+                categoriesData = result.data || result || []; 
+                
+                populateCategorySelects();
+            } catch (err) {
+                console.error("Erreur chargement catégories:", err);
+            }
+        }
+
+        function populateCategorySelects() {
+            const filterSelect = document.getElementById('filter-category');
+            const addSelect = document.getElementById('add-categorie');
+            const editSelect = document.getElementById('edit-categorie');
+
+            let optionsHTML = '';
+            categoriesData.forEach(cat => {
+                const id = cat.id_categorie || cat.id || cat.ID;
+                const nom = cat.nom || cat.Nom;
+                optionsHTML += `<option value="${id}">${nom}</option>`;
+            });
+
+            filterSelect.innerHTML = `<option value="">Toutes les catégories</option>` + optionsHTML;
+            addSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
+            editSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
+        }
+
+        function getCategoryName(id) {
+            if(!id) return "-";
+            const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
+            return cat ? (cat.nom || cat.Nom) : "-";
+        }
+
         async function fetchEvenements(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`);
+                const categoryId = document.getElementById('filter-category').value;
+                let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`;
+
+                if(categoryId) {
+                    url = `${API_BASE}/evenement/filter?categorie=${categoryId}`;
+                }
+
+                const response = await fetch(url);
 
                 if (!response.ok) {
                     await showErrorFromResponse(response, "Erreur lors de la récupération des événements.");
@@ -297,13 +362,13 @@
                 }
 
                 const result = await response.json();
-                const evenements = result.data || [];
+                const evenements = Array.isArray(result) ? result : (result.data || []);
                 const tbody = document.getElementById('evenement-table-body');
                 tbody.innerHTML = '';
 
                 if (evenements.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-gray-400">Aucun événement en base.</td></tr>';
-                    renderPagination(0, 0);
+                    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-gray-400">Aucun événement trouvé.</td></tr>';
+                    renderPagination(result.totalPages || 0, result.total || 0);
                     return;
                 }
 
@@ -313,15 +378,14 @@
                     const description = c.description || c.Description || '';
                     const lieu = c.lieu || c.Lieu || '';
                     const places = c.nombre_place || c.NombrePlace || 0;
-
                     const date_debut = c.date_debut || c.DateDebut || '';
                     const date_fin = c.date_fin || c.DateFin || '';
+                    const idCat = c.id_categorie || c.IDCategorie || ''; 
 
                     const imgSrc = c.image ? `${API_BASE}/${c.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/150?text=Pas+d%27image';
 
                     const displayDebut = formatDisplayDate(date_debut);
                     const displayFin = formatDisplayDate(date_fin);
-                    const duree = calculateDuration(date_debut, date_fin);
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
@@ -329,22 +393,29 @@
                                 <img src="${imgSrc}" class="w-16 h-16 object-cover rounded-lg border border-gray-200" alt="Image event">
                             </td>
                             <td class="p-4 font-medium text-[#1C5B8F]">${nom}</td>
-                            <td class="p-4 text-sm max-w-xs truncate" title="${description}">${description}</td>
+                            <td class="p-4 text-sm text-gray-600">
+                                <span class="bg-gray-100 px-2 py-1 rounded border border-gray-200">${getCategoryName(idCat)}</span>
+                            </td>
+                            <td class="p-4 text-sm max-w-[200px] truncate" title="${description}">${description}</td>
                             <td class="p-4">${lieu}</td>
                             <td class="p-4 text-center font-bold">${places}</td>
                             <td class="p-4 text-sm">${displayDebut}</td>
                             <td class="p-4 text-sm">${displayFin}</td>
-                            <td class="p-4 text-sm text-gray-600 font-medium">${duree}</td>
                             <td class="p-4 flex justify-center gap-2">
-                                <button onclick="openLinkModal(${id})" class="text-[#1C5B8F] bg-[#1C5B8F]/10 hover:bg-[#1C5B8F]/20 px-2 py-1 rounded-lg font-bold text-xs">Prestataires</button>
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Modifier</button>
-                                <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-2 py-1 rounded-lg font-bold text-xs">Supprimer</button>
+                                <button onclick="openLinkModal(${id})" class="text-[#1C5B8F] bg-[#1C5B8F]/10 hover:bg-[#1C5B8F]/20 px-2 py-1 rounded-lg font-bold text-xs">Prestas</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', '${idCat}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Edit</button>
+                                <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-2 py-1 rounded-lg font-bold text-xs">Suppr</button>
                             </td>
                         </tr>
                     `;
                 });
 
-                renderPagination(result.totalPages, result.total);
+                if(Array.isArray(result) && !result.totalPages) {
+                    renderPagination(0, 0); 
+                } else {
+                    renderPagination(result.totalPages, result.total);
+                }
+
             } catch (err) {
                 showAlert(err.message || "Erreur réseau lors du chargement des événements.", false);
             }
@@ -360,7 +431,7 @@
                 tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
             }
 
-            if (totalItems === 0) {
+            if (totalItems === 0 || totalPages === 0) {
                 paginationContainer.innerHTML = '';
                 return;
             }
@@ -395,6 +466,9 @@
             formData.append('nombre_place', document.getElementById('add-places').value);
             formData.append('date_debut', document.getElementById('add-debut').value);
             formData.append('date_fin', document.getElementById('add-fin').value);
+            
+            const catValue = document.getElementById('add-categorie').value;
+            if(catValue) formData.append('id_categorie', catValue);
 
             const fileInput = document.getElementById('add-image');
             if (fileInput.files[0]) {
@@ -419,7 +493,7 @@
             }
         });
 
-        function openEditModal(id, nom, description, lieu, places, debut, fin) {
+        function openEditModal(id, nom, description, lieu, places, debut, fin, idCat) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-nom').value = nom;
             document.getElementById('edit-description').value = description;
@@ -427,6 +501,7 @@
             document.getElementById('edit-places').value = places;
             document.getElementById('edit-debut').value = formatDateForInput(debut);
             document.getElementById('edit-fin').value = formatDateForInput(fin);
+            document.getElementById('edit-categorie').value = idCat || ""; 
             document.getElementById('edit-image').value = '';
             toggleModal('edit-modal');
         }
@@ -442,6 +517,9 @@
             formData.append('nombre_place', document.getElementById('edit-places').value);
             formData.append('date_debut', document.getElementById('edit-debut').value);
             formData.append('date_fin', document.getElementById('edit-fin').value);
+            
+            const catValue = document.getElementById('edit-categorie').value;
+            if(catValue) formData.append('id_categorie', catValue);
 
             const fileInput = document.getElementById('edit-image');
             if (fileInput.files[0]) {
@@ -551,12 +629,8 @@
             try {
                 const res = await fetch(`${API_BASE}/evenement/prestataires/link/${eventId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_prestataire: parseInt(providerId)
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_prestataire: parseInt(providerId) })
                 });
 
                 if (res.ok) {
@@ -588,7 +662,10 @@
             }
         }
 
-        window.onload = () => fetchEvenements(1);
+        window.onload = async () => {
+            await fetchCategories();
+            fetchEvenements(1);
+        };
     </script>
 </body>
 

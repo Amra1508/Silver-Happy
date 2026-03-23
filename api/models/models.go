@@ -121,6 +121,7 @@ type Evenement struct {
 	Image       string `json:"image"`
 	DateDebut   string `json:"date_debut"`
 	DateFin     string `json:"date_fin"`
+	IDCategorie *int   `json:"id_categorie"`
 }
 
 type SubReq struct {
