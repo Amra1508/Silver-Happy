@@ -49,48 +49,53 @@
     <main class="flex-grow">
         <div class="max-w-6xl mx-auto px-6 pt-10 pb-16">
 
-            <div class="max-w-6xl mx-auto px-6 pt-10 pb-16">
-                <div class="p-3 flex justify-between items-center mx-8">
+            <div class="p-3 flex justify-between items-center mb-6">
                 <a href="/front/services/menu_activity.php">
-                    <button class="flex items-center rounded-full px-6 button-blue">
-                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
+                    <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
+                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir au menu
                     </button>
                 </a>
             </div>
             
-            <div class="flex items-center justify-between mb-10">
-                <h2 class="text-3xl font-semibold text-[#1C5B8F]">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-4xl font-bold text-[#1C5B8F]">
                     Mon Calendrier
                 </h2>
             </div>
 
-            <div class="flex gap-4 mb-6">
-                <span class="flex items-center text-sm font-bold text-gray-600"><div class="w-4 h-4 rounded-full bg-[#E1AB2B] mr-2"></div> Événements</span>
-                <span class="flex items-center text-sm font-bold text-gray-600"><div class="w-4 h-4 rounded-full bg-[#1C5B8F] mr-2"></div> Services (RDV)</span>
+            <div class="flex gap-6 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-flex">
+                <span class="flex items-center text-sm font-bold text-gray-700">
+                    <div class="w-5 h-5 rounded-full bg-[#E1AB2B] mr-3 shadow-inner"></div> Événements
+                </span>
+                <span class="flex items-center text-sm font-bold text-gray-700">
+                    <div class="w-5 h-5 rounded-full bg-[#1C5B8F] mr-3 shadow-inner"></div> Prestations de services
+                </span>
             </div>
 
-            <div id="status_message" class="text-center text-gray-500 font-bold py-10">
+            <div id="status_message" class="text-center text-xl text-gray-500 font-bold py-20 animate-pulse">
                 Chargement de votre planning...
             </div>
 
-            <div id="calendar" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-200 min-h-[600px]"></div>
+            <div id="calendar" class="hidden bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[600px]"></div>
 
         </div>
     </main>
 
     <?php include("../includes/footer.php") ?>
 
-    <div id="eventModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 id="modalTitle" class="text-2xl font-bold text-[#1C5B8F] mb-4"></h3>
-            <div class="space-y-3 text-gray-700">
-                <p><strong>Début :</strong> <span id="modalStart"></span></p>
-                <p><strong>Fin :</strong> <span id="modalEnd"></span></p>
-                <p><strong>Lieu :</strong> <span id="modalLocation"></span></p>
-                <p class="pt-2 border-t text-sm mt-4" id="modalDescription"></p>
+    <div id="eventModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all">
+            <h3 id="modalTitle" class="text-2xl font-bold text-[#1C5B8F] mb-6 border-b pb-4"></h3>
+            <div class="space-y-4 text-gray-700">
+                <p class="flex items-center"><span class="text-xl mr-3">📅</span> <strong class="w-20">Début :</strong> <span id="modalStart" class="font-medium"></span></p>
+                <p class="flex items-center"><span class="text-xl mr-3">🏁</span> <strong class="w-20">Fin :</strong> <span id="modalEnd" class="font-medium"></span></p>
+                <p class="flex items-start"><span class="text-xl mr-3">📍</span> <strong class="w-20">Lieu :</strong> <span id="modalLocation" class="font-medium"></span></p>
+                <div class="pt-4 border-t mt-6">
+                    <p class="text-sm text-gray-600 font-medium leading-relaxed" id="modalDescription"></p>
+                </div>
             </div>
-            <div class="mt-6 flex justify-end">
-                <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full font-bold hover:bg-gray-300 transition-colors">
+            <div class="mt-8 flex justify-center">
+                <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="px-8 py-3 bg-gray-100 text-gray-700 rounded-full font-bold hover:bg-gray-200 transition-colors w-full">
                     Fermer
                 </button>
             </div>
@@ -131,14 +136,14 @@
 
                     const eventsData = planningData.map(item => ({
                         id: item.id,
-                        title: item.title,
-                        start: item.start,
-                        end: item.end || undefined,
-                        backgroundColor: item.color,
-                        borderColor: item.color,
+                        title: item.titre,
+                        start: item.debut, 
+                        end: item.fin || undefined,
+                        backgroundColor: item.couleur,
+                        borderColor: item.couleur,
                         extendedProps: {
-                            description: item.description || 'Aucune description.',
-                            lieu: item.location || 'Non spécifié'
+                            description: item.description || 'Aucune description fournie.',
+                            lieu: item.lieu || 'Lieu non spécifié' 
                         }
                     }));
 
@@ -150,21 +155,24 @@
                             center: 'title',
                             right: 'dayGridMonth,timeGridWeek,timeGridDay' 
                         },
-                        events: eventsData, 
+                        events: eventsData,
                         height: 'auto',
-                        firstDay: 1,
+                        firstDay: 1, 
                         
                         eventClick: function(info) {
                             const eventObj = info.event;
                             const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
                             
                             document.getElementById('modalTitle').textContent = eventObj.title;
-                            document.getElementById('modalStart').textContent = eventObj.start ? eventObj.start.toLocaleDateString('fr-FR', options).replace(':', 'h') : 'Inconnu';
+                            
+                            document.getElementById('modalStart').textContent = eventObj.start 
+                                ? eventObj.start.toLocaleDateString('fr-FR', options).replace(':', 'h') 
+                                : 'Inconnu';
                             
                             if (eventObj.end) {
                                 document.getElementById('modalEnd').textContent = eventObj.end.toLocaleDateString('fr-FR', options).replace(':', 'h');
                             } else {
-                                document.getElementById('modalEnd').textContent = 'Non spécifiée (ou rendez-vous ponctuel)';
+                                document.getElementById('modalEnd').textContent = 'Ponctuel (Pas de fin spécifiée)';
                             }
                             
                             document.getElementById('modalLocation').textContent = eventObj.extendedProps.lieu;
@@ -177,13 +185,15 @@
                     calendar.render();
 
                 } else {
-                    statusMessage.textContent = "Impossible de récupérer le planning. Veuillez réessayer.";
-                    statusMessage.classList.add("text-red-500");
+                    statusMessage.textContent = "Impossible de récupérer votre planning. Veuillez réessayer.";
+                    statusMessage.classList.replace("text-gray-500", "text-red-500");
+                    statusMessage.classList.remove("animate-pulse");
                 }
             } catch (error) {
-                console.error("Erreur de récupération :", error);
+                console.error("Erreur réseau :", error);
                 statusMessage.textContent = "Erreur de connexion au serveur.";
-                statusMessage.classList.add("text-red-500");
+                statusMessage.classList.replace("text-gray-500", "text-red-500");
+                statusMessage.classList.remove("animate-pulse");
             }
         });
     </script>

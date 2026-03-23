@@ -149,15 +149,15 @@ type Avis struct {
 	Note   		int64  `json:"note"`
 }
 
-type PlanningItem struct {
-    ID          string `json:"id"`
-    Title       string `json:"title"`
-    Start       string `json:"start"`
-    End         string `json:"end,omitempty"`
-    Description string `json:"description"`
-    Location    string `json:"location"`
-    Type        string `json:"type"`
-    Color       string `json:"color"`
+type Planning struct {
+	ID          string `json:"id"`
+	Titre       string `json:"titre"`
+	Debut       string `json:"debut"`
+	Fin         string `json:"fin,omitempty"`
+	Description string `json:"description"`
+	Lieu        string `json:"lieu"`
+	Type        string `json:"type"`
+	Couleur     string `json:"couleur"`
 }
 
 type Categorie struct {
