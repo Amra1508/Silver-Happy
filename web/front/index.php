@@ -31,89 +31,85 @@
 
     <main>
         <div class="relative h-[600px] w-full overflow-hidden">
-            <img src="./images/background.webp"
-                alt="background"
-                class="absolute inset-0 w-full h-full object-cover opacity-60">
+            <img src="./images/background.webp" alt="background" class="absolute inset-0 w-full h-full object-cover opacity-60">
 
             <div class="absolute inset-0 flex flex-col items-start px-16 pt-40">
-                <h2 class="big-text leading-tight mb-8">
+                <h2 class="big-text leading-tight mb-8" data-i18n="title_main">
                     Bien vivre après 60 ans,<br>
                     c’est possible chez Silver Happy !
                 </h2>
-                <img src="./images/SilverHappy_illustration.png"
-                    alt="illustration"
-                    class="absolute bottom-2 w-60 h-60 object-contain">
+                <img src="./images/SilverHappy_illustration.png" alt="illustration" class="absolute bottom-2 w-60 h-60 object-contain">
 
                 <div class="absolute bottom-10 right-10">
-                    <a href="/front/services/advice.php" class="rounded-full px-6 button-blue">
+                    <a href="/front/services/advice.php" class="rounded-full px-6 button-blue" data-i18n="btn_advice">
                         Découvrez nos conseils
                     </a>
                 </div>
             </div>
         </div>
+
         <div class="w-full px-16 mt-7 bg-white">
-            <h2 class="big-text mb-8">
+            <h2 class="big-text mb-8" data-i18n="title_providers">
                 Nos prestataires
             </h2>
         </div>
         <div class="w-full px-16 bg-white">
-            <h2 class="small-text">
+            <h2 class="small-text" data-i18n="desc_providers">
                 Afin de vous proposer des activités, services et évènements à la hauteur de vos attentes, nos prestataires sont
                 rigoureusement sélectionnés. <br>
                 Pour garantir votre sérénité, chaque prestataire fait l'objet d'un contrôle approfondi
                 avant d'intégrer notre société :
             </h2>
         </div>
+
         <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-between">
             <div class="md:max-w-[600px] bg-white index-components">
-                <h3 class="big-text md:text-3xl mb-4">
+                <h3 class="big-text md:text-3xl mb-4" data-i18n="title_diplomas">
                     Diplômes & Certifications
                 </h3>
-                <p class="small-text md:text-lg leading-relaxed">
+                <p class="small-text md:text-lg leading-relaxed" data-i18n="desc_diplomas">
                     Vérification systématique des diplômes<br>
                     et des certifications professionnelles.
                 </p>
             </div>
             <div class="md:max-w-[600px] bg-white index-components">
-                <h3 class="big-text md:text-3xl font-bold mb-4">
+                <h3 class="big-text md:text-3xl font-bold mb-4" data-i18n="title_checks">
                     Contrôle des antécédents
                 </h3>
-                <p class="small-text md:text-lg leading-relaxed">
+                <p class="small-text md:text-lg leading-relaxed" data-i18n="desc_checks">
                     Contrôle rigoureux incluant l'extrait de casier judiciaire pour assurer votre sécurité et tranquillité d'esprit.
                 </p>
             </div>
         </div>
+
         <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-start">
-            <div class="bg-[#E1AB2B]/60 index-components">
-                <h3 class="text-center big-text md:text-3xl mb-4">
+            <div class="bg-[#E1AB2B]/60 index-components p-6 rounded-xl">
+                <h3 class="text-center big-text md:text-3xl mb-4" data-i18n="title_quality">
                     Chez Silver Happy, nous ne laissons rien au hasard.
                 </h3>
-                <p class="text-center small-text md:text-lg leading-relaxed">
+                <p class="text-center small-text md:text-lg leading-relaxed" data-i18n="desc_quality">
                     Cette exigence nous permet de vous offrir un accompagnement humain de qualité, sécurisé<br>
                     et totalement adapté à vos besoins spécifiques, pour que votre seule priorité reste votre plaisir et votre confort.
                 </p>
             </div>
         </div>
+
         <div class="flex flex-wrap gap-6 px-6 md:px-16 py-10 justify-between items-center">
             <div class="md:max-w-[900px] bg-white index-components">
-                <h3 class="big-text md:text-3xl font-bold mb-4">
+                <h3 class="big-text md:text-3xl font-bold mb-4" data-i18n="title_review">
                     Vous avez aimé votre première expérience ?
                 </h3>
-                <p class="small-text md:text-lg leading-relaxed">
+                <p class="small-text md:text-lg leading-relaxed" data-i18n="desc_review">
                     Partagez votre ressenti avec la communauté Silver Happy !
                     Votre avis compte et aide d'autres seniors à découvrir nos services.
                 </p>
             </div>
             <div class="py-10 flex flex-col items-center gap-2 pr-4 md:pr-16 md:pl-16">
-                <a href="/front/communication/review.php" class="rounded-full px-6 button-blue whitespace-nowrap">
+                <a href="/front/communication/review.php" class="rounded-full px-6 button-blue whitespace-nowrap" data-i18n="btn_review">
                     Laisser mon avis
                 </a>
                 <div class="flex gap-4 text-[#E1AB2B] text-5xl">
-                    <span>★</span>
-                    <span>★</span>
-                    <span>★</span>
-                    <span>★</span>
-                    <span>★</span>
+                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
                 </div>
             </div>
         </div>
@@ -124,20 +120,21 @@
 
         <div id="tour-dialog" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white p-8 w-[90%] max-w-lg border border-gray-300 shadow-2xl rounded-sm">
             <div class="mb-6">
-                <p id="tour-step-counter" class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">Étape 1 sur 7</p>
-                <h3 id="tour-title" class="text-2xl font-bold text-[#1C5B8F] mb-3">Guide de navigation</h3>
+                <p class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
+                    <span data-i18n="tour_step">Étape</span> 1 <span data-i18n="tour_of">sur</span> 7
+                </p>
+                <h3 id="tour-title" class="text-2xl font-bold text-[#1C5B8F] mb-3" data-i18n="tour_title">Guide de navigation</h3>
                 <p id="tour-text" class="text-gray-700 text-lg leading-relaxed">Texte explicatif classique.</p>
             </div>
 
             <div class="flex justify-between items-center border-t border-gray-200 pt-6 mt-2">
-                <button type="button" id="tour-prev" class="text-[#1C5B8F] underline hover:text-blue-800 px-2 py-1 invisible">
+                <button type="button" id="tour-prev" class="text-[#1C5B8F] underline hover:text-blue-800 px-2 py-1 invisible" data-i18n="tour_prev">
                     Retour
                 </button>
-
-                <button type="button" id="tour-next" class="bg-[#1C5B8F] text-white px-6 py-2 font-medium hover:bg-[#154670] transition-colors">
+                <button type="button" id="tour-next" class="bg-[#1C5B8F] text-white px-6 py-2 font-medium hover:bg-[#154670] transition-colors" data-i18n="tour_next">
                     Étape suivante
                 </button>
-                <button type="button" id="tour-close" class="hidden bg-[#E1AB2B] text-white px-6 py-2 font-medium hover:bg-[#c99723] transition-colors">
+                <button type="button" id="tour-close" class="hidden bg-[#E1AB2B] text-white px-6 py-2 font-medium hover:bg-[#c99723] transition-colors" data-i18n="tour_close">
                     Terminer la visite
                 </button>
             </div>
@@ -145,6 +142,44 @@
 
     </main>
 
+    <script>
+        async function changeLanguage(lang) {
+            localStorage.setItem('user_lang', lang);
+
+            document.documentElement.lang = lang;
+
+            if (lang === 'fr') {
+                location.reload(); 
+                return;
+            }
+
+            try {
+                const response = await fetch(`./locales/${lang}.json`);
+                if (!response.ok) throw new Error(`Fichier de langue ${lang} introuvable.`);
+                
+                const translations = await response.json();
+
+                const elements = document.querySelectorAll('[data-i18n]');
+
+                elements.forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (translations[key]) {
+                        element.innerHTML = translations[key];
+                    }
+                });
+
+            } catch (error) {
+                console.error("Erreur de traduction :", error);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('user_lang');
+            if (savedLang && savedLang !== 'fr') {
+                changeLanguage(savedLang);
+            }
+        });
+    </script>
 </body>
 
 </html>

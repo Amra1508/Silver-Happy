@@ -11,7 +11,7 @@
         <div class="flex-1 justify-center min-w-[300px] space-y-10">
             <h3 class="font-bold text-3xl text-[#E1AB2B]">Services</h3>
             <a href="/front/services/menu_activity.php" class="footer-text">Activités</a><br>
-            <a href="#" class="footer-text">Planning</a><br>
+            <a href="/front/account/planification.php" class="footer-text">Planning</a><br>
             <a href="/front/services/products.php" class="footer-text">Boutique</a><br>
             <a href="/front/communication/list_contact.php" class="footer-text">Messagerie</a><br>
         </div>
