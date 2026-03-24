@@ -353,7 +353,6 @@ func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(tabEvenement)
 }
 
-// NOUVELLE FONCTION POUR LE FILTRE
 func GetEvenementsByCategory(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "GET") {
 		return
