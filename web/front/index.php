@@ -120,10 +120,10 @@
 
         <div id="tour-dialog" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white p-8 w-[90%] max-w-lg border border-gray-300 shadow-2xl rounded-sm">
             <div class="mb-6">
-                <p class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
+                <p id="tour-step-counter" class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
                     <span data-i18n="tour_step">Étape</span> 1 <span data-i18n="tour_of">sur</span> 7
                 </p>
-                <h3 id="tour-title" class="text-2xl font-bold text-[#1C5B8F] mb-3" data-i18n="tour_title">Guide de navigation</h3>
+                <h3 id="tour-title" class="text-2xl font-bold text-[#1C5B8F] mb-3">Guide de navigation</h3>
                 <p id="tour-text" class="text-gray-700 text-lg leading-relaxed">Texte explicatif classique.</p>
             </div>
 
@@ -145,7 +145,6 @@
     <script>
         async function changeLanguage(lang) {
             localStorage.setItem('user_lang', lang);
-
             document.documentElement.lang = lang;
 
             if (lang === 'fr') {
@@ -158,7 +157,6 @@
                 if (!response.ok) throw new Error(`Fichier de langue ${lang} introuvable.`);
                 
                 const translations = await response.json();
-
                 const elements = document.querySelectorAll('[data-i18n]');
 
                 elements.forEach(element => {
@@ -167,9 +165,8 @@
                         element.innerHTML = translations[key];
                     }
                 });
-
             } catch (error) {
-                console.error("Erreur de traduction :", error);
+                console.error(error);
             }
         }
 
@@ -179,6 +176,136 @@
                 changeLanguage(savedLang);
             }
         });
+
+        window.addEventListener('auth_ready', () => {
+            if (window.userData && window.userData.premiere_connexion === 1) {
+                initTour();
+            }
+        });
+
+        function initTour() {
+            const tourOverlay = document.getElementById('tour-overlay');
+            const tourDialog = document.getElementById('tour-dialog');
+            const tCounter = document.getElementById('tour-step-counter');
+            const tTitle = document.getElementById('tour-title');
+            const tText = document.getElementById('tour-text');
+            const btnNext = document.getElementById('tour-next');
+            const btnPrev = document.getElementById('tour-prev');
+            const btnClose = document.getElementById('tour-close');
+
+            const steps = [
+                {
+                    selector: 'a[href="/front/account/profile.php"]',
+                    title: 'Votre compte personnel',
+                    text: 'Ce bouton vous donne accès à vos informations personnelles, la gestion de votre abonnement et l\'historique de vos activités.'
+                },
+                {
+                    selector: 'button[data-i18n="nav_emergency"]',
+                    title: 'Bouton d\'urgence',
+                    text: 'En cas de nécessité, ce bouton d\'urgence vous permet de contacter immédiatement une assistance. Il reste visible sur toutes les pages.'
+                },
+                {
+                    selector: 'nav',
+                    title: 'Menu de navigation',
+                    text: 'Utilisez ces liens pour consulter les différentes rubriques du site : catalogue des activités, boutique et messagerie sécurisée.'
+                },
+                {
+                    selector: 'input[data-i18n-placeholder="nav_search"]',
+                    title: 'Barre de recherche',
+                    text: 'Saisissez un terme dans ce champ pour trouver rapidement un prestataire, un service ou une activité spécifique.'
+                },
+                {
+                    selector: 'img[alt="zoom"]',
+                    title: 'Ajustement de l\'affichage',
+                    text: 'Pour un meilleur confort de lecture, cliquez sur cette icône en forme de loupe afin d\'agrandir les textes de l\'interface.'
+                },
+                {
+                    selector: 'a[href="/front/services/advice.php"]',
+                    title: 'Découverte des services',
+                    text: 'Vous pouvez cliquer sur ce bouton pour parcourir l\'ensemble de nos offres.'
+                },
+                {
+                    selector: 'footer',
+                    title: 'Informations complémentaires',
+                    text: 'Le pied de page contient les mentions légales, les conditions d\'utilisation, ainsi que nos coordonnées de contact.'
+                }
+            ];
+
+            let currentStep = 0;
+            let highlightedElement = null;
+
+            function highlightElement(selector) {
+                if (highlightedElement) {
+                    highlightedElement.classList.remove('relative', 'z-[90]', 'ring-4', 'ring-[#E1AB2B]', 'bg-white');
+                }
+
+                const el = document.querySelector(selector);
+                if (el) {
+                    el.classList.add('relative', 'z-[90]', 'ring-4', 'ring-[#E1AB2B]', 'bg-white', 'transition-all', 'duration-300');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    highlightedElement = el;
+                }
+            }
+
+            function updateTour() {
+                const step = steps[currentStep];
+
+                tCounter.innerHTML = `<span data-i18n="tour_step">Étape</span> ${currentStep + 1} <span data-i18n="tour_of">sur</span> ${steps.length}`;
+                tTitle.textContent = step.title;
+                tText.textContent = step.text;
+
+                highlightElement(step.selector);
+
+                btnPrev.classList.toggle('invisible', currentStep === 0);
+
+                if (currentStep === steps.length - 1) {
+                    btnNext.classList.add('hidden');
+                    btnClose.classList.remove('hidden');
+                } else {
+                    btnNext.classList.remove('hidden');
+                    btnClose.classList.add('hidden');
+                }
+            }
+
+            setTimeout(() => {
+                tourOverlay.classList.remove('hidden');
+                tourDialog.classList.remove('hidden');
+                updateTour();
+            }, 500);
+
+            btnNext.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentStep < steps.length - 1) {
+                    currentStep++;
+                    updateTour();
+                }
+            });
+
+            btnPrev.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateTour();
+                }
+            });
+
+            btnClose.addEventListener('click', async (e) => {
+                e.preventDefault();
+                tourOverlay.classList.add('hidden');
+                tourDialog.classList.add('hidden');
+
+                if (highlightedElement) {
+                    highlightedElement.classList.remove('relative', 'z-[90]', 'ring-4', 'ring-[#E1AB2B]', 'bg-white');
+                }
+
+                try {
+                    await fetch('http://localhost:8082/auth/tutorial-seen', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                } catch (err) {}
+            });
+        }
     </script>
 </body>
 

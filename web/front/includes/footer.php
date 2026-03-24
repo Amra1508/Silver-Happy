@@ -18,7 +18,7 @@
 
         <div class="flex-1 justify-center min-w-[300px] space-y-10">
             <h3 class="font-bold text-3xl text-[#E1AB2B]">Aide & Support</h3>
-            <a href="#" class="footer-text">Tutoriel</a><br>
+            <a href="#" onclick="initTour(); return false;" class="footer-text">Tutoriel</a><br>
             <a href="#" class="footer-text">FAQ</a><br>
             <a href="https://mail.google.com/mail/?view=cm&fs=1&to=contact.silver.happy@gmail.com" target="_blank" class="footer-text">Nous contacter</a><br>
             <a href="#" class="footer-text">Accessibilité</a><br>
