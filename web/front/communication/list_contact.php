@@ -26,17 +26,30 @@ $is_logged_in = isset($_COOKIE['session_token']);
     </script>
 </head>
 
-<body>
+<body class="bg-gray-50 flex flex-col min-h-screen">
     <?php include("../includes/header.php") ?>
-    <main class="pt-8 mb-10 bg-white">
+    
+    <main class="pt-8 mb-10 bg-white flex-grow">
         <div class="max-w-4xl mx-auto">
             <?php if ($is_logged_in): ?>
                 <h1 class="big-text mb-8 text-center">Discuter avec notre équipe</h1>
 
-                <div id="list-user-body" class="grid gap-6">
+                <div id="no-sub-container" class="hidden flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
+                    <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
+                        Vous devez posséder un abonnement Silver Happy pour accéder à la messagerie.
+                    </p>
+                    <a class="rounded-full px-8 py-3 button-blue text-lg" href="/front/services/subscription.php">
+                        Découvrir nos abonnements
+                    </a>
                 </div>
 
-                <div id="pagination-controls"></div>
+                <div id="contacts-container" class="hidden">
+                    <div id="list-user-body" class="grid gap-6">
+                    </div>
+
+                    <div id="pagination-controls"></div>
+                </div>
+
             <?php else: ?>
                 <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
                     <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
@@ -46,16 +59,29 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 </div>
             <?php endif; ?>
         </div>
-
     </main>
+    
     <?php include("../includes/footer.php") ?>
 
     <script>
         const API_BASE = "http://localhost:8082/admin";
-        const messageBox = document.getElementById('api-message');
-
         let currentPage = 1;
         const limit = 10;
+
+        window.addEventListener('auth_ready', () => {
+            const noSubContainer = document.getElementById('no-sub-container');
+            const contactsContainer = document.getElementById('contacts-container');
+
+            if (!window.isSubscribed) {
+                if (noSubContainer) noSubContainer.classList.remove('hidden');
+                return;
+            }
+
+            if (contactsContainer) {
+                contactsContainer.classList.remove('hidden');
+                fetchAdmins(1);
+            }
+        });
 
         async function fetchAdmins(page = 1) {
             try {
@@ -68,41 +94,38 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 tbody.innerHTML = '';
 
                 if (admins.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">Aucun admin disponible.</td></tr>';
+                    tbody.innerHTML = '<div class="p-8 text-center text-gray-400">Aucun admin disponible.</div>';
                     renderPagination(0, 0);
                     return;
                 }
 
                 admins.forEach(s => {
-
                     const cardHtml = `
-            <div class="flex flex-col md:flex-row items-center justify-between index-components">
-                
-                <div class="flex items-center gap-5 flex-1">
-                    <div>
-                        <h2 class="small-text">${s.prenom} <span class="uppercase">${s.nom}</span></h2>
-                        <p class="text-black flex items-center gap-2">
-                            ${s.email}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-4 md:mt-0">
-                    <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${s.id}" class="inline-block">
-                        <button class="rounded-full px-6 button-blue">
-                            Voir la discussion
-                        </button>
-                    </a>
-                </div>
-            </div>
-        `;
+                        <div class="flex flex-col md:flex-row items-center justify-between index-components">
+                            <div class="flex items-center gap-5 flex-1">
+                                <div>
+                                    <h2 class="small-text">${s.prenom} <span class="uppercase">${s.nom}</span></h2>
+                                    <p class="text-black flex items-center gap-2">
+                                        ${s.email}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-4 md:mt-0">
+                                <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${s.id}" class="inline-block">
+                                    <button class="rounded-full px-6 button-blue">
+                                        Voir la discussion
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+                    `;
                     tbody.insertAdjacentHTML('beforeend', cardHtml);
                 });
 
                 renderPagination(result.totalPages, result.total);
 
             } catch (err) {
-                showAlert("Erreur lors de la connexion à l'API", false);
+                console.error("Erreur lors de la connexion à l'API");
             }
         }
 
@@ -110,13 +133,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
             let paginationContainer = document.getElementById('pagination-controls');
 
             if (!paginationContainer) {
-                const tableContainer = document.querySelector('.table-container');
+                const listContainer = document.getElementById('list-user-body');
                 paginationContainer = document.createElement('div');
                 paginationContainer.id = 'pagination-controls';
-                tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
+                listContainer.parentNode.insertBefore(paginationContainer, listContainer.nextSibling);
             }
 
-            if (totalItems === 0) {
+            if (totalItems === 0 || totalPages <= 1) {
                 paginationContainer.innerHTML = '';
                 return;
             }
@@ -141,7 +164,11 @@ $is_logged_in = isset($_COOKIE['session_token']);
             paginationContainer.innerHTML = html;
         }
 
-        window.onload = () => fetchAdmins(1);
+        setTimeout(() => {
+            const isLogged = "<?php echo $is_logged_in ? '1' : '0'; ?>";
+            if (isLogged === '1' && !window.currentUserId) {
+            }
+        }, 1500);
     </script>
 </body>
 

@@ -225,7 +225,6 @@
             const select = document.getElementById('category-filter');
             const currentValue = select.value;
             
-            // On extrait directement les noms des catégories (gérés par le backend en Go)
             const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
             
             let optionsHtml = '<option value="all">Toutes les prestations</option>';

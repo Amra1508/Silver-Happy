@@ -72,8 +72,8 @@
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
-        
-        let categoriesData = []; // Pour stocker les catégories
+
+        let categoriesData = [];
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -139,7 +139,6 @@
             };
         }
 
-        // --- NOUVELLES FONCTIONS POUR LES CATÉGORIES ---
         async function fetchCategories() {
             try {
                 const response = await fetch(`${API_BASE}/categorie/read`); 
@@ -163,7 +162,6 @@
             const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
             return cat ? (cat.nom || cat.Nom) : null;
         }
-        // ------------------------------------------------
 
         async function fetchMyEvenements() {
             const userId = window.currentUserId;
@@ -289,7 +287,6 @@
                 
                 let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`;
                 
-                // Si un filtre est sélectionné
                 if (categoryId) {
                     url = `${API_BASE}/evenement/filter?categorie=${categoryId}`;
                 }
@@ -299,10 +296,8 @@
 
                 const result = await response.json();
                 
-                // Gère la différence de format de réponse (objet paginé vs tableau direct pour le filtre)
                 const evenementsAPI = Array.isArray(result) ? result : (result.data || []);
 
-                // Ne garde que les événements futurs
                 const evenements = evenementsAPI.filter(e => {
                     if (!e.date_debut) return true;
                     return new Date(e.date_debut) >= new Date();
@@ -327,7 +322,6 @@
                     const timeStatus = getTimeRemaining(e.date_debut);
                     const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/400x250?text=Silver+Happy';
                     
-                    // AJOUT: Récupération du nom de la catégorie
                     const catName = getCategoryName(e.id_categorie || e.IDCategorie);
                     const catBadge = catName ? `<span class="text-xs bg-[#1C5B8F]/10 text-[#1C5B8F] px-3 py-1 rounded-full mb-3 inline-block font-bold border border-[#1C5B8F]/20">${catName}</span>` : '';
 
@@ -389,7 +383,6 @@
         });
 
         window.onload = async () => {
-            // On charge d'abord les catégories avant d'afficher les événements
             await fetchCategories();
             fetchEvenements(1);
             

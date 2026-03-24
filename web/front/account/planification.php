@@ -1,3 +1,10 @@
+<?php 
+if (!isset($_COOKIE['session_token'])) {
+    header("Location: /front/account/signin.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -11,28 +18,6 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
-        
-        :root {
-            --fc-button-bg-color: #1C5B8F;
-            --fc-button-border-color: #1C5B8F;
-            --fc-button-hover-bg-color: #154670;
-            --fc-button-hover-border-color: #154670;
-            --fc-button-active-bg-color: #154670;
-            --fc-button-active-border-color: #154670;
-        }
-        
-        .fc-toolbar-title {
-            text-transform: capitalize;
-            color: #1C5B8F;
-        }
-
-        .fc-event {
-            cursor: pointer;
-            padding: 2px 4px;
-            font-weight: bold;
-            border-radius: 4px;
-            color: white !important;
-        }
     </style>
 
     <script>
@@ -50,9 +35,9 @@
         <div class="max-w-6xl mx-auto px-6 pt-10 pb-16">
 
             <div class="p-3 flex justify-between items-center mb-6">
-                <a href="/front/services/menu_activity.php">
+                <a href="/front/account/profile.php">
                     <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
-                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir au menu
+                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir a mon profil
                     </button>
                 </a>
             </div>
@@ -63,20 +48,31 @@
                 </h2>
             </div>
 
-            <div class="flex gap-6 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-flex">
-                <span class="flex items-center text-sm font-bold text-gray-700">
-                    <div class="w-5 h-5 rounded-full bg-[#E1AB2B] mr-3 shadow-inner"></div> Événements
-                </span>
-                <span class="flex items-center text-sm font-bold text-gray-700">
-                    <div class="w-5 h-5 rounded-full bg-[#1C5B8F] mr-3 shadow-inner"></div> Prestations de services
-                </span>
+            <div id="no-sub-container" class="hidden flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10 bg-white">
+                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8 px-4">
+                    Vous devez être abonné(e) pour consulter votre planning d'activités.
+                </p>
+                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white font-bold text-lg hover:bg-[#154670] transition" href="/front/services/subscription.php">
+                    Je m'abonne
+                </a>
+            </div>
+
+            <div id="planning-content" class="hidden">
+                <div class="flex gap-6 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-flex">
+                    <span class="flex items-center text-sm font-bold text-gray-700">
+                        <div class="w-5 h-5 rounded-full bg-[#E1AB2B] mr-3 shadow-inner"></div> Événements
+                    </span>
+                    <span class="flex items-center text-sm font-bold text-gray-700">
+                        <div class="w-5 h-5 rounded-full bg-[#1C5B8F] mr-3 shadow-inner"></div> Prestations de services
+                    </span>
+                </div>
+
+                <div id="calendar" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[600px]"></div>
             </div>
 
             <div id="status_message" class="text-center text-xl text-gray-500 font-bold py-20 animate-pulse">
                 Chargement de votre planning...
             </div>
-
-            <div id="calendar" class="hidden bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[600px]"></div>
 
         </div>
     </main>
@@ -106,6 +102,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const statusMessage = document.getElementById('status_message');
             const calendarEl = document.getElementById('calendar');
+            const planningContent = document.getElementById('planning-content');
+            const noSubContainer = document.getElementById('no-sub-container');
 
             try {
                 const authResponse = await fetch('http://localhost:8082/auth/me', {
@@ -120,6 +118,14 @@
                 }
 
                 const user = await authResponse.json();
+                const isSubscribed = (user.id_abonnement !== null && user.id_abonnement !== undefined && user.id_abonnement !== 0);
+
+                if (!isSubscribed) {
+                    statusMessage.classList.add('hidden');
+                    noSubContainer.classList.remove('hidden');
+                    return;
+                }
+
                 const userId = user.id_utilisateur || user.id; 
 
                 const planningResponse = await fetch(`http://localhost:8082/planning?user_id=${userId}`, {
@@ -132,7 +138,7 @@
                     const planningData = await planningResponse.json();
                     
                     statusMessage.classList.add('hidden');
-                    calendarEl.classList.remove('hidden');
+                    planningContent.classList.remove('hidden');
 
                     const eventsData = planningData.map(item => ({
                         id: item.id,
@@ -190,7 +196,6 @@
                     statusMessage.classList.remove("animate-pulse");
                 }
             } catch (error) {
-                console.error("Erreur réseau :", error);
                 statusMessage.textContent = "Erreur de connexion au serveur.";
                 statusMessage.classList.replace("text-gray-500", "text-red-500");
                 statusMessage.classList.remove("animate-pulse");
