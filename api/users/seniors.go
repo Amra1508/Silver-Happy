@@ -17,7 +17,10 @@ import (
 	"main/utils"
 
 	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/charge"
 	"github.com/stripe/stripe-go/v78/checkout/session"
+	"github.com/stripe/stripe-go/v78/invoice"
+	"github.com/stripe/stripe-go/v78/paymentintent"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -479,72 +482,89 @@ var idAbo sql.NullInt64
 }
 
 func Success_Subscription(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
-    sessionID := request.URL.Query().Get("session_id")
-    userID := request.URL.Query().Get("user_id")
-    tarifStr := request.URL.Query().Get("tarif")
-    periode := request.URL.Query().Get("periode")
-    typeAbo := request.URL.Query().Get("type")
+	sessionID := request.URL.Query().Get("session_id")
+	userID := request.URL.Query().Get("user_id")
+	tarifStr := request.URL.Query().Get("tarif")
+	periode := request.URL.Query().Get("periode")
+	typeAbo := request.URL.Query().Get("type")
 
-    tarif, err := strconv.ParseFloat(tarifStr, 64)
-    if err != nil {
-        http.Error(response, "Erreur de format de tarif", http.StatusBadRequest)
-        return
-    }
+	tarif, err := strconv.ParseFloat(tarifStr, 64)
+	if err != nil {
+		http.Error(response, "Erreur de format de tarif", http.StatusBadRequest)
+		return
+	}
 
-    s, err := session.Get(sessionID, nil)
-    if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
-        http.Redirect(response, request, "http://localhost/front/abonnement.php?error=paiement_echoue", http.StatusSeeOther)
-        return
-    }
+	s, err := session.Get(sessionID, nil)
+	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
+		http.Redirect(response, request, "http://localhost/front/abonnement.php?error=paiement_echoue", http.StatusSeeOther)
+		return
+	}
 
-    renouvellement := 0
-    if typeAbo == "Renouvellement" {
-        renouvellement = 1
-    }
+	var urlFacture string
 
-    resPaiement, errP := db.DB.Exec(`
-        INSERT INTO PAIEMENT (prix, statut, mode_paiement) 
-        VALUES (?, 'valide', 'carte')`, 
-        tarif)
+	if s.PaymentIntent != nil {
+		pi, errPI := paymentintent.Get(s.PaymentIntent.ID, nil)
+		if errPI == nil && pi.LatestCharge != nil {
+			ch, errC := charge.Get(pi.LatestCharge.ID, nil)
+			if errC == nil {
+				urlFacture = ch.ReceiptURL
+			}
+		}
+	} else if s.Invoice != nil {
+		inv, errI := invoice.Get(s.Invoice.ID, nil)
+		if errI == nil {
+			urlFacture = inv.HostedInvoiceURL
+		}
+	}
 
-    if errP != nil {
-        fmt.Println("Erreur création paiement :", errP)
-        http.Error(response, "Erreur base de données (Paiement)", http.StatusInternalServerError)
-        return
-    }
+	renouvellement := 0
+	if typeAbo == "Renouvellement" {
+		renouvellement = 1
+	}
 
-    idPaiement, _ := resPaiement.LastInsertId()
-    
-    resAbo, errA := db.DB.Exec(`
-        INSERT INTO ABONNEMENT (description, renouvellement, type_abonnement, type_paiement, methode_paiement, tarif, id_paiement)
-        VALUES ('Abonnement Silver Happy', ?, 'seniors', ?, 'carte', ?, ?)`,
-        renouvellement, periode, tarif, idPaiement)
+	resPaiement, errP := db.DB.Exec(`
+		INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture) 
+		VALUES (?, 'valide', 'carte', ?)`,
+		tarif, urlFacture)
 
-    if errA != nil {
-        fmt.Println("Erreur création abonnement :", errA)
-        http.Error(response, "Erreur base de données (Abonnement)", http.StatusInternalServerError)
-        return
-    }
+	if errP != nil {
+		fmt.Println("Erreur création paiement :", errP)
+		http.Error(response, "Erreur base de données (Paiement)", http.StatusInternalServerError)
+		return
+	}
 
-    idAbonnement, _ := resAbo.LastInsertId()
+	idPaiement, _ := resPaiement.LastInsertId()
 
-    _, errU := db.DB.Exec(`
-        UPDATE UTILISATEUR 
-        SET id_abonnement = ?, debut_abonnement = NOW() 
-        WHERE id_utilisateur = ?`, 
-        idAbonnement, userID)
+	resAbo, errA := db.DB.Exec(`
+		INSERT INTO ABONNEMENT (description, renouvellement, type_abonnement, type_paiement, methode_paiement, tarif, id_paiement)
+		VALUES ('Abonnement Silver Happy', ?, 'seniors', ?, 'carte', ?, ?)`,
+		renouvellement, periode, tarif, idPaiement)
 
-    if errU != nil {
-        fmt.Println("Erreur mise à jour utilisateur :", errU)
-        http.Error(response, "Erreur mise à jour utilisateur", http.StatusInternalServerError)
-        return
-    }
+	if errA != nil {
+		fmt.Println("Erreur création abonnement :", errA)
+		http.Error(response, "Erreur base de données (Abonnement)", http.StatusInternalServerError)
+		return
+	}
 
-    http.Redirect(response, request, "http://localhost/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
+	idAbonnement, _ := resAbo.LastInsertId()
+
+	_, errU := db.DB.Exec(`
+		UPDATE UTILISATEUR 
+		SET id_abonnement = ?, debut_abonnement = NOW() 
+		WHERE id_utilisateur = ?`,
+		idAbonnement, userID)
+
+	if errU != nil {
+		fmt.Println("Erreur mise à jour utilisateur :", errU)
+		http.Error(response, "Erreur mise à jour utilisateur", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(response, request, "http://localhost/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
 }
