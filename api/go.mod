@@ -10,7 +10,5 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/stripe/stripe-go v70.15.0+incompatible
-	github.com/stripe/stripe-go/v78 v78.12.0 // indirect
+	github.com/stripe/stripe-go/v78 v78.12.0
 )

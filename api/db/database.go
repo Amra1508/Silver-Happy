@@ -161,6 +161,15 @@ func InitDB() {
 		FOREIGN KEY (id_adresse) REFERENCES ADRESSE(id_adresse),
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement)
 	);
+	CREATE TABLE IF NOT EXISTS PANIER(
+		id_panier INT AUTO_INCREMENT PRIMARY KEY,
+		id_utilisateur INT,
+		id_produit INT,
+		quantite INT,
+		date_reservation DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
+		FOREIGN KEY (id_produit) REFERENCES PRODUIT(id_produit)
+	);
 	CREATE TABLE IF NOT EXISTS COMMANDE(
 		id_commande INT AUTO_INCREMENT PRIMARY KEY,
 		date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
