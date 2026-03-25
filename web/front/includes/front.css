@@ -26,4 +26,7 @@
   .index-components {
     @apply flex-1 min-w-[400px] max-w-full border border-gray-100 rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-blue-900/10;
   }
+  .add-modal {
+    @apply bg-white p-10 rounded-[2.5rem] w-full max-w-2xl shadow-xl shadow-[#1C5B8F]/20 overflow-y-auto max-h-[90vh];
+  }
 }

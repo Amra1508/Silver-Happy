@@ -46,26 +46,26 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                     <div id="pagination-controls"></div>
                 </div>
-                <!-- <div id="qty-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div class="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300">
-                        <h3 class="text-2xl font-bold text-[#1C5B8F] mb-4 text-center">Quantité souhaitée</h3>
+                <div id="add-modal" class="hidden fixed inset-0 z-50 bg-black/50 items-center justify-center">
+                    <div class="add-modal flex flex-col items-center">
+                        <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Quantité souhaitée</h3>
 
-                        <div class="flex items-center justify-center gap-6 mb-8">
-                            <button onclick="changeQty(-1)" class="w-12 h-12 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] text-2xl font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors">-</button>
-                            <span id="modal-qty-display" class="text-4xl font-bold w-12 text-center">1</span>
-                            <button onclick="changeQty(1)" class="w-12 h-12 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] text-2xl font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors">+</button>
+                        <div class="flex items-center justify-center gap-8 mb-8">
+                            <button onclick="updateQuantite(-1)" type="button" class="w-12 h-12 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] text-2xl font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors">-</button>
+                            <span id="quantite" class="text-4xl font-bold w-12 text-center text-[#1C5B8F]">1</span>
+                            <button onclick="updateQuantite(1)" type="button" class="w-12 h-12 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] text-2xl font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors">+</button>
                         </div>
 
-                        <div class="flex flex-col gap-3">
-                            <button id="confirm-add-btn" class="w-full py-3 rounded-full button-blue font-bold text-lg">
-                                Confirmer l'ajout
+                        <div class="w-full flex flex-col gap-3">
+                            <button id="confirm-add-btn" class="rounded-full px-4 button-blue text-lg">
+                                Ajouter au panier
                             </button>
-                            <button onclick="closeModal()" class="w-full py-2 text-gray-500 font-semibold hover:underline">
+                            <button onclick="toggleModal('add-modal')" class="text-gray-400 hover:underline">
                                 Annuler
                             </button>
                         </div>
                     </div>
-                </div> -->
+                </div>
             <?php else: ?>
                 <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
                     <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
@@ -98,6 +98,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
         window.addEventListener('auth_ready', () => {
             panierExpire();
             fetchOneProduit();
+            setInterval(fetchOneProduit, 2000);
         });
 
         async function panierExpire() {
@@ -106,32 +107,51 @@ $is_logged_in = isset($_COOKIE['session_token']);
             } catch (err) {}
         }
 
-        async function ajouterAuPanier(idProduit) {
-            const idUtilisateur = window.currentUserId;
+        let produit = null;
+        let quantite = 1;
+        let maxStock = 0;
 
-            if (!idUtilisateur) {
-                showAlert("Vous devez être connecté", false);
-                return;
+        function openAddModal(id, stock) {
+            produit = id;
+            maxStock = stock;
+            quantite = 1;
+
+            document.getElementById('quantite').innerText = quantite;
+
+            document.getElementById('confirm-add-btn').onclick = () => ajouter(produit, quantite);
+
+            toggleModal('add-modal');
+        }
+
+        function updateQuantite(nb) {
+            const ajout = quantite + nb;
+            if (ajout >= 1 && ajout <= maxStock) {
+                quantite = ajout;
+                document.getElementById('quantite').innerText = quantite;
+            } else if (ajout > maxStock) {
+                showAlert("Limite de stock atteinte", false);
             }
+        }
+
+        async function ajouter(idProduit, quantite) {
+            const idUtilisateur = window.currentUserId;
 
             const donnees = new FormData();
             donnees.append("id_produit", idProduit);
             donnees.append("id_utilisateur", idUtilisateur);
+            donnees.append("quantite", quantite);
 
-            try {
-                const reponse = await fetch(`${API_BASE}/panier/add`, {
-                    method: 'POST',
-                    body: donnees
-                });
+            const response = await fetch("http://localhost:8082/panier/add", {
+                method: 'POST',
+                body: donnees
+            });
 
-                if (reponse.ok) {
-                    showAlert("Votre panier expire dans 15 min !", true);
-                    fetchOneProduit();
-                } else {
-                    showAlert("Impossible d'ajouter le produit.");
-                }
-            } catch (err) {
-                showAlert("Erreur de connexion au serveur.");
+            if (response.ok) {
+                toggleModal('add-modal');
+                showAlert(`Votre panier expire dans 15 min !`, true);
+                fetchOneProduit();
+            } else {
+                showAlert("Impossible d'ajouter au panier.", false);
             }
         }
 
@@ -190,7 +210,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                             ${rupture ? 
                                 ` ` 
                                 : 
-                                `<button onclick="ajouterAuPanier(${p.id})" class="px-4 rounded-md button-blue">
+                                `<button onclick="openAddModal(${p.id}, ${p.stock})" class="px-4 rounded-md button-blue">
                                     Ajouter au panier
                                 </button>`
                             }
@@ -204,6 +224,14 @@ $is_logged_in = isset($_COOKIE['session_token']);
             <div class="text-center py-20">
                 <p class="text-red-500 font-bold">Erreur : ${err.message}</p>
             </div>`;
+            }
+        }
+
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.toggle('hidden');
+                modal.classList.toggle('flex');
             }
         }
     </script>
