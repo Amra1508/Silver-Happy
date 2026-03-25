@@ -121,7 +121,7 @@
         <div id="tour-dialog" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white p-8 w-[90%] max-w-lg border border-gray-300 shadow-2xl rounded-sm">
             <div class="mb-6">
                 <p id="tour-step-counter" class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">
-                    <span data-i18n="tour_step">Étape</span> 1 <span data-i18n="tour_of">sur</span> 7
+                    <span data-i18n="tour_step">Étape</span> 1 <span data-i18n="tour_of">sur</span> 8
                 </p>
                 <h3 id="tour-title" class="text-2xl font-bold text-[#1C5B8F] mb-3">Guide de navigation</h3>
                 <p id="tour-text" class="text-gray-700 text-lg leading-relaxed">Texte explicatif classique.</p>
@@ -134,7 +134,7 @@
                 <button type="button" id="tour-next" class="bg-[#1C5B8F] text-white px-6 py-2 font-medium hover:bg-[#154670] transition-colors" data-i18n="tour_next">
                     Étape suivante
                 </button>
-                <button type="button" id="tour-close" class="hidden bg-[#E1AB2B] text-white px-6 py-2 font-medium hover:bg-[#c99723] transition-colors" data-i18n="tour_close">
+                <button type="button" id="tour-resume" class="hidden bg-[#E1AB2B] text-white px-6 py-2 font-medium hover:bg-[#c99723] transition-colors" data-i18n="tour_close">
                     Terminer la visite
                 </button>
             </div>
@@ -191,7 +191,8 @@
             const tText = document.getElementById('tour-text');
             const btnNext = document.getElementById('tour-next');
             const btnPrev = document.getElementById('tour-prev');
-            const btnClose = document.getElementById('tour-close');
+            const btnResume = document.getElementById('tour-resume');
+
 
             const steps = [
                 {
@@ -228,7 +229,13 @@
                     selector: 'footer',
                     title: 'Informations complémentaires',
                     text: 'Le pied de page contient les mentions légales, les conditions d\'utilisation, ainsi que nos coordonnées de contact.'
+                },
+                {
+                    selector: 'header',
+                    title: 'Bonne navigation !',
+                    text: 'Vous connaissez mainteant Silver Happy ! Vous pouvez naviguer et en faire à votre guise.'
                 }
+
             ];
 
             let currentStep = 0;
@@ -260,10 +267,10 @@
 
                 if (currentStep === steps.length - 1) {
                     btnNext.classList.add('hidden');
-                    btnClose.classList.remove('hidden');
+                    btnResume.classList.remove('hidden');
                 } else {
                     btnNext.classList.remove('hidden');
-                    btnClose.classList.add('hidden');
+                    btnResume.classList.add('hidden');
                 }
             }
 
@@ -289,7 +296,7 @@
                 }
             });
 
-            btnClose.addEventListener('click', async (e) => {
+            btnResume.addEventListener('click', async (e) => {
                 e.preventDefault();
                 tourOverlay.classList.add('hidden');
                 tourDialog.classList.add('hidden');

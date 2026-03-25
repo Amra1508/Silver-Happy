@@ -19,7 +19,12 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 	id1 := request.PathValue("id1")
 	id2 := request.PathValue("id2")
 
-	rows, errorFetch := db.DB.Query("SELECT id_message, contenu, date, id_utilisateur1, id_utilisateur2 FROM MESSAGE_ADMIN WHERE (id_utilisateur1 = ? AND id_utilisateur2 = ?) OR (id_utilisateur1 = ? AND id_utilisateur2 = ?)", id1, id2, id2, id1)
+	_, errUpdate := db.DB.Exec("UPDATE MESSAGE_ADMIN SET est_lu = 1 WHERE id_utilisateur1 = ? AND id_utilisateur2 = ? AND est_lu = 0", id2, id1)
+	if errUpdate != nil {
+		fmt.Printf("Erreur lors de la mise à jour de est_lu")
+	}
+
+	rows, errorFetch := db.DB.Query("SELECT id_message, contenu, date, id_utilisateur1, id_utilisateur2, est_lu FROM MESSAGE_ADMIN WHERE (id_utilisateur1 = ? AND id_utilisateur2 = ?) OR (id_utilisateur1 = ? AND id_utilisateur2 = ?)", id1, id2, id2, id1)
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
@@ -29,7 +34,7 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 	tabMessage := []models.Message{}
 	for rows.Next() {
 		var message models.Message
-		if err := rows.Scan(&message.ID, &message.Contenu, &message.Date, &message.ID_Expediteur, &message.ID_Destinataire); err != nil {
+		if err := rows.Scan(&message.ID, &message.Contenu, &message.Date, &message.ID_Expediteur, &message.ID_Destinataire, &message.Est_Lu); err != nil {
 			fmt.Printf("ERREUR SCAN SUR MESSAGE ID %d: %v\n", message.ID, err)
 			continue
 		}
@@ -66,6 +71,7 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
 
 	id, _ := res.LastInsertId()
 	message.ID = id
+	message.Est_Lu = false
 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusCreated)

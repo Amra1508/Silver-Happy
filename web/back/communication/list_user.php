@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Utilisateurs - Silver Happy</title>
+    <title>Liste des Utilisateurs</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
     </style>
@@ -34,12 +34,12 @@
             <main class="p-8">
 
                 <div class="flex justify-between items-center mb-8">
-                    <h1 class="title-text">Contacter un utilisateur</h1>
+                    <h1 class="title-text text-3xl font-bold text-[#1C5B8F]">Contacter un utilisateur</h1>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
 
-                <div class="table-container">
+                <div class="table-container bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
                     <table class="w-full text-left">
                         <thead class="bg-[#1C5B8F] text-white">
                             <tr>
@@ -47,7 +47,7 @@
                                 <th class="p-4 font-semibold">Prénom</th>
                                 <th class="p-4 font-semibold">Nom</th>
                                 <th class="p-4 font-semibold">Adresse mail</th>
-                                <th class="p-4 font-semibold">Contacter</th>
+                                <th class="p-4 font-semibold text-center">Messages en attente</th> <th class="p-4 font-semibold">Contacter</th>
                             </tr>
                         </thead>
                         <tbody id="list-user-body" class="divide-y divide-gray-100"></tbody>
@@ -83,7 +83,7 @@
                 tbody.innerHTML = '';
 
                 if (seniors.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">Aucun utilisateur en base.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Aucun utilisateur en base.</td></tr>';
                     renderPagination(0, 0);
                     return;
                 }
@@ -91,16 +91,26 @@
                 seniors.forEach(s => {
                     const s_nom = s.nom ? s.nom.replace(/'/g, "\\'") : '';
                     const s_prenom = s.prenom ? s.prenom.replace(/'/g, "\\'") : '';
+                    const id = s.id_utilisateur || s.ID || s.id; 
+                    
+                    const unreadCount = s.est_lu || 0;
+                    
+                    const badgeHtml = unreadCount > 0 
+                        ? `<span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-sm">${unreadCount}</span>` 
+                        : `<span class="text-gray-400 text-sm font-medium">0</span>`;
 
                     tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 border-b">
-                            <td class="p-4 text-gray-400">#${s.id}</td>
-                            <td class="p-4">${s.prenom}</td>
-                            <td class="p-4 uppercase">${s.nom}</td>
-                            <td class="p-4 text-gray-500">${s.email}</td>
+                        <tr class="hover:bg-gray-50 border-b transition-colors">
+                            <td class="p-4 text-gray-400 font-mono text-sm">#${id}</td>
+                            <td class="p-4 font-medium text-gray-700">${s.prenom}</td>
+                            <td class="p-4 uppercase font-medium text-gray-700">${s.nom}</td>
+                            <td class="p-4 text-gray-500 text-sm">${s.email}</td>
+                            <td class="p-4 text-center">${badgeHtml}</td>
                             <td class="p-4">
-                                <a href="/back/communication/messaging.php/${s.prenom}/${s.nom}/${s.id}">
-                                    <button class="bg-gray-100 hover:bg-gray-200 text-[#1C5B8F] px-4 py-2 rounded-full transition font-semibold text-sm">Voir la discussion</button>
+                                <a href="/back/communication/messaging.php/${s.prenom}/${s.nom}/${id}">
+                                    <button class="bg-gray-100 hover:bg-[#1C5B8F] hover:text-white text-[#1C5B8F] px-4 py-2 rounded-full transition-all font-semibold text-sm shadow-sm">
+                                        Voir la discussion
+                                    </button>
                                 </a>
                             </td>
                         </tr>
@@ -110,6 +120,7 @@
                 renderPagination(result.totalPages, result.total);
 
             } catch (err) {
+                console.error(err);
                 showAlert("Erreur lors de la connexion à l'API", false);
             }
         }
@@ -131,18 +142,18 @@
 
             let html = `
                 <div class="flex justify-between items-center mt-6 px-4 text-sm">
-                    <span class="text-gray-500 font-semibold">Total : ${totalItems} utilisateurs</span>
+                    <span class="text-gray-500 font-semibold bg-gray-100 px-3 py-1 rounded-full">Total : ${totalItems} utilisateurs</span>
                     <div class="flex gap-2">
-                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchSeniors(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchSeniors(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">Précédent</button>
             `;
 
             for (let i = 1; i <= totalPages; i++) {
-                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
-                html += `<button onclick="fetchSeniors(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white shadow-md' : 'text-[#1C5B8F] hover:bg-blue-50';
+                html += `<button onclick="fetchSeniors(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition-all font-medium ${activeClass}">${i}</button>`;
             }
 
             html += `
-                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchSeniors(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchSeniors(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">Suivant</button>
                     </div>
                 </div>
             `;
