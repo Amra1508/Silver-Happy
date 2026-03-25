@@ -62,7 +62,7 @@
         let currentPage = 1;
         const limit = 6;
 
-        window.addEventListener(() => {
+        window.addEventListener('DOMContentLoaded', () => { 
             fetchConseils();
             setInterval(fetchConseils, 2000);
         });

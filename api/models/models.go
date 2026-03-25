@@ -22,6 +22,7 @@ type Utilisateur struct {
 	MotifBannissement string `json:"motif_bannissement"`
 	DureeBannissement int  `json:"duree_bannissement"`
 	TypePaiement string `json:"type_paiement"`
+	EstLu 		   int     `json:"est_lu"`
 }
 
 type LoginCredentials struct {
@@ -110,6 +111,7 @@ type Message struct {
 	ID_Destinataire int64  `json:"id_destinataire"`
 	Prénom          string `json:"prenom"`
 	Nom             string `json:"nom"`
+	Est_Lu			bool 	`json:"est_lu"`
 }
 
 type Evenement struct {

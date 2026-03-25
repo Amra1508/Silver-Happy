@@ -67,10 +67,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
         const API_BASE = "http://localhost:8082/admin";
         let currentPage = 1;
         const limit = 10;
+        let currentUserId = null;
 
         window.addEventListener('auth_ready', () => {
             const noSubContainer = document.getElementById('no-sub-container');
             const contactsContainer = document.getElementById('contacts-container');
+            
+            currentUserId = window.currentUserId;
 
             if (!window.isSubscribed) {
                 if (noSubContainer) noSubContainer.classList.remove('hidden');
@@ -86,7 +89,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
         async function fetchAdmins(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+                const url = `${API_BASE}/read?page=${currentPage}&limit=${limit}&user_id=${currentUserId || ''}`;
+                const response = await fetch(url);
                 const result = await response.json();
 
                 const admins = result.data || [];
@@ -100,18 +104,28 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 }
 
                 admins.forEach(s => {
+                    const id = s.id_utilisateur || s.ID || s.id;
+                    const unreadCount = s.est_lu || 0;
+                    
+                    const badgeHtml = unreadCount > 0 
+                        ? `<span class="ml-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-sm">${unreadCount} message(s) non lu(s)</span>` 
+                        : '';
+
                     const cardHtml = `
                         <div class="flex flex-col md:flex-row items-center justify-between index-components">
                             <div class="flex items-center gap-5 flex-1">
                                 <div>
-                                    <h2 class="small-text">${s.prenom} <span class="uppercase">${s.nom}</span></h2>
+                                    <h2 class="small-text flex items-center">
+                                        ${s.prenom} <span class="uppercase ml-1">${s.nom}</span>
+                                        ${badgeHtml}
+                                    </h2>
                                     <p class="text-black flex items-center gap-2">
                                         ${s.email}
                                     </p>
                                 </div>
                             </div>
                             <div class="mt-4 md:mt-0">
-                                <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${s.id}" class="inline-block">
+                                <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${id}" class="inline-block">
                                     <button class="rounded-full px-6 button-blue">
                                         Voir la discussion
                                     </button>
