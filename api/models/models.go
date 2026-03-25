@@ -165,3 +165,12 @@ type Categorie struct {
     Nom         string `json:"nom"`
     Description string `json:"description"`
 }
+
+type Panier struct {
+        IdPanier int     `json:"id_panier"`
+		IdProduit int    `json:"id_produit"`
+        Quantite int     `json:"quantite"`
+        Nom      string  `json:"nom"`
+        Prix     float64 `json:"prix"`
+        Image    string  `json:"image"`
+}

@@ -32,12 +32,20 @@ $is_logged_in = isset($_COOKIE['session_token']);
         <div class="max-w-6xl mx-auto">
             <?php if ($is_logged_in): ?>
                 <div id="api-message" class="hidden"></div>
-                <div class="flex justify-between items-center mx-8">
-                    <a href="/front/services/products.php">
-                        <button class="flex items-center rounded-full px-6 button-blue">
-                            <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir aux produits
-                        </button>
-                    </a>
+                <div class="w-full pt-8 relative">
+                    <div class="flex justify-between items-center mx-8">
+                        <a href="/front/services/products.php">
+                            <button class="flex items-center rounded-md px-6 button-blue">
+                                <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir aux produits
+                            </button>
+                        </a>
+                    </div>
+                    <div class="absolute right-8 top-10">
+                        <a href="/front/services/basket.php" class="flex items-center gap-2 px-4 rounded-md button-blue">
+                            Mon Panier
+                            <img src="/front/icons/panier.svg" alt="panier" class="w-5 h-5 filter brightness-0 invert">
+                        </a>
+                    </div>
                 </div>
                 <div class="max-w-6xl mx-auto px-4">
                     <div id="detail-container" class="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/10 overflow-hidden p-8">
@@ -69,7 +77,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
             <?php else: ?>
                 <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
                     <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
-                        Vous devez être connecté(e) pour consulter nos produits Silver Happy.</p>
+                        Vous devez être connecté(e) pour consulter ce produit Silver Happy.</p>
                     <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>"> Je me connecte </a>
                 </div>
             <?php endif; ?>
@@ -95,41 +103,68 @@ $is_logged_in = isset($_COOKIE['session_token']);
             }, 4000);
         }
 
-        window.addEventListener('auth_ready', () => {
-            panierExpire();
-            fetchOneProduit();
-            setInterval(fetchOneProduit, 2000);
-        });
+        let isModalOpen = false;
 
-        async function panierExpire() {
-            try {
-                await fetch(`${API_BASE}/panier/autodelete`);
-            } catch (err) {}
-        }
+        window.addEventListener('auth_ready', () => {
+            fetchOneProduit();
+            setInterval(() => {
+                if (!isModalOpen) fetchOneProduit();
+            }, 2000);
+        });
 
         let produit = null;
         let quantite = 1;
         let maxStock = 0;
+        let quantitePanier = 0;
 
-        function openAddModal(id, stock) {
+        async function openAddModal(id, stock) {
             produit = id;
-            maxStock = stock;
+            maxStock = Number(stock);
             quantite = 1;
+            isModalOpen = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/panier/get?id_utilisateur=${window.currentUserId}`);
+                const items = await response.json();
+
+                const existingItem = items.find(item => Number(item.id_produit) === Number(id));
+
+                quantitePanier = existingItem ? Number(existingItem.quantite) : 0;
+
+            } catch (e) {
+                console.error("Erreur panier:", e);
+                quantitePanier = 0;
+            }
 
             document.getElementById('quantite').innerText = quantite;
-
             document.getElementById('confirm-add-btn').onclick = () => ajouter(produit, quantite);
-
             toggleModal('add-modal');
         }
 
+        function showStockError() {
+            console.log("Debug Stock - Panier:", quantitePanier, "Max:", maxStock);
+
+            const msg = quantitePanier > 0 ?
+                `Vous avez déjà ${quantitePanier} articles au panier. Stock max : ${maxStock}.` :
+                "Limite de stock atteinte.";
+            showAlert(msg, false);
+        }
+
         function updateQuantite(nb) {
-            const ajout = quantite + nb;
-            if (ajout >= 1 && ajout <= maxStock) {
-                quantite = ajout;
+            const ajout = Number(quantite) + Number(nb) + Number(quantitePanier);
+
+            if (nb > 0) {
+                if (ajout <= maxStock) {
+                    quantite += nb;
+                    document.getElementById('quantite').innerText = quantite;
+                    document.getElementById('confirm-add-btn').onclick = () => ajouter(produit, quantite);
+                } else {
+                    showStockError();
+                }
+            } else if (nb < 0 && quantite > 1) {
+                quantite += nb;
                 document.getElementById('quantite').innerText = quantite;
-            } else if (ajout > maxStock) {
-                showAlert("Limite de stock atteinte", false);
+                document.getElementById('confirm-add-btn').onclick = () => ajouter(produit, quantite);
             }
         }
 
@@ -148,10 +183,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
             if (response.ok) {
                 toggleModal('add-modal');
-                showAlert(`Votre panier expire dans 15 min !`, true);
+                showAlert(`Produit ajouté au panier !`, true);
                 fetchOneProduit();
             } else {
-                showAlert("Impossible d'ajouter au panier.", false);
+                showStockError();
             }
         }
 
@@ -230,8 +265,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
         function toggleModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
+                const isHidden = modal.classList.contains('hidden');
                 modal.classList.toggle('hidden');
                 modal.classList.toggle('flex');
+                if (!isHidden) isModalOpen = false;
             }
         }
     </script>

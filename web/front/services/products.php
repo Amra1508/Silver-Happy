@@ -25,9 +25,15 @@
 <body>
     <?php include("../includes/header.php") ?>
     <main class="mb-10 bg-white">
-        <div class="max-w-6xl mx-auto">
+        <div class="w-full pt-8 relative">
+            <div class="absolute right-60 top-10">
+                <a href="/front/services/basket.php" class="flex items-center gap-2 px-4 rounded-md button-blue">
+                    Mon Panier
+                    <img src="/front/icons/panier.svg" alt="panier" class="w-5 h-5 filter brightness-0 invert">
+                </a>
+            </div>
             <div class="max-w-6xl mx-auto px-4">
-                <div class="w-full pt-8">
+                <div class="w-full">
                     <h1 class="mb-5 text-center big-text">Nos Produits</h1>
                     <h2 class="text-lg text-gray-600 text-center mb-10">
                         Découvrez notre large gamme de produits Silver Happy.
