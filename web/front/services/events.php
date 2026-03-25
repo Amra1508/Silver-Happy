@@ -47,11 +47,11 @@
         <div class="w-full px-6 md:px-16 mt-12 mb-8 text-center">
             <h2 class="big-text mb-4 text-[#1C5B8F] text-4xl font-bold">L'agenda complet</h2>
             <p class="text-gray-600 max-w-4xl mx-auto mb-6">Découvrez le programme et réservez votre place.</p>
-            
+
             <div class="max-w-xs mx-auto">
                 <select id="filter-category" class="w-full p-3 border border-gray-300 text-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1C5B8F]" onchange="fetchEvenements(1)">
                     <option value="">Toutes les catégories</option>
-                    </select>
+                </select>
             </div>
         </div>
 
@@ -72,6 +72,11 @@
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
+
+        window.addEventListener('auth_ready', () => {
+            fetchEvenements();
+            setInterval(fetchEvenements, 2000);
+        });
 
         let categoriesData = [];
 
@@ -141,11 +146,11 @@
 
         async function fetchCategories() {
             try {
-                const response = await fetch(`${API_BASE}/categorie/read`); 
-                if(!response.ok) return;
+                const response = await fetch(`${API_BASE}/categorie/read`);
+                if (!response.ok) return;
                 const result = await response.json();
-                categoriesData = result.data || result || []; 
-                
+                categoriesData = result.data || result || [];
+
                 const select = document.getElementById('filter-category');
                 categoriesData.forEach(cat => {
                     const id = cat.id_categorie || cat.id || cat.ID;
@@ -158,7 +163,7 @@
         }
 
         function getCategoryName(id) {
-            if(!id) return null;
+            if (!id) return null;
             const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
             return cat ? (cat.nom || cat.Nom) : null;
         }
@@ -284,9 +289,9 @@
             try {
                 currentPage = page;
                 const categoryId = document.getElementById('filter-category').value;
-                
+
                 let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`;
-                
+
                 if (categoryId) {
                     url = `${API_BASE}/evenement/filter?categorie=${categoryId}`;
                 }
@@ -295,7 +300,7 @@
                 if (!response.ok) throw new Error("Erreur de récupération");
 
                 const result = await response.json();
-                
+
                 const evenementsAPI = Array.isArray(result) ? result : (result.data || []);
 
                 const evenements = evenementsAPI.filter(e => {
@@ -321,7 +326,7 @@
                     const displayDebut = formatDisplayDate(e.date_debut);
                     const timeStatus = getTimeRemaining(e.date_debut);
                     const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/400x250?text=Silver+Happy';
-                    
+
                     const catName = getCategoryName(e.id_categorie || e.IDCategorie);
                     const catBadge = catName ? `<span class="text-xs bg-[#1C5B8F]/10 text-[#1C5B8F] px-3 py-1 rounded-full mb-3 inline-block font-bold border border-[#1C5B8F]/20">${catName}</span>` : '';
 
@@ -352,8 +357,8 @@
                     `;
                 });
 
-                if(Array.isArray(result) && !result.totalPages) {
-                    renderPagination(0); 
+                if (Array.isArray(result) && !result.totalPages) {
+                    renderPagination(0);
                 } else {
                     renderPagination(result.totalPages);
                 }
@@ -371,7 +376,7 @@
 
             const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchEvenements(${currentPage - 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${prevDisabled}" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>`;
-            
+
             paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F] text-lg">${currentPage}</strong> sur ${totalPages}</span>`;
 
             const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
@@ -385,7 +390,7 @@
         window.onload = async () => {
             await fetchCategories();
             fetchEvenements(1);
-            
+
             setTimeout(() => {
                 if (window.currentUserId) fetchMyEvenements();
             }, 500);

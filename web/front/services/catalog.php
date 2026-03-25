@@ -50,7 +50,7 @@
             <h2 class="text-lg max-w-4xl mx-auto text-gray-600 mb-8">
                 Parcourez ci-dessous l'ensemble des services proposés et réservez le créneau qui vous convient.
             </h2>
-            
+
             <div class="flex justify-center items-center gap-4">
                 <label for="category-filter" class="font-bold text-gray-700">Trier par type :</label>
                 <select id="category-filter" onchange="applyCategoryFilter()" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E1AB2B] bg-white shadow-sm cursor-pointer">
@@ -76,7 +76,12 @@
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
-        let currentServicesData = []; 
+        let currentServicesData = [];
+
+        window.addEventListener('auth_ready', () => {
+            fetchServices();
+            setInterval(fetchServices, 20000);
+        });
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -109,7 +114,11 @@
                     myServices.forEach(s => {
                         const dateObj = new Date(s.date_heure);
                         const dateString = dateObj.toLocaleString('fr-FR', {
-                            weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            hour: '2-digit',
+                            minute: '2-digit'
                         }).replace(/^\w/, c => c.toUpperCase());
 
                         const card = `
@@ -156,8 +165,13 @@
             try {
                 const response = await fetch(`${API_BASE}/service/register/${serviceId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId), date_heure: dateInput }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId),
+                        date_heure: dateInput
+                    }),
                 });
 
                 if (response.ok) {
@@ -181,8 +195,12 @@
             try {
                 const response = await fetch(`${API_BASE}/service/unregister/${reservationId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId)
+                    }),
                 });
 
                 if (response.ok) {
@@ -203,7 +221,7 @@
                 const response = await fetch(`${API_BASE}/service/read?page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
                 currentServicesData = result.data || [];
-                
+
                 const container = document.getElementById('services-container');
                 container.innerHTML = '';
 
@@ -224,16 +242,16 @@
         function updateCategoryDropdown(services) {
             const select = document.getElementById('category-filter');
             const currentValue = select.value;
-            
+
             const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
-            
+
             let optionsHtml = '<option value="all">Toutes les prestations</option>';
             categories.forEach(catName => {
                 optionsHtml += `<option value="${catName}">${catName}</option>`;
             });
-            
+
             select.innerHTML = optionsHtml;
-            
+
             if (currentValue !== 'all' && categories.includes(currentValue)) {
                 select.value = currentValue;
             }
@@ -241,7 +259,7 @@
 
         function applyCategoryFilter() {
             const selectedCategory = document.getElementById('category-filter').value;
-            
+
             if (selectedCategory === 'all') {
                 renderServiceCards(currentServicesData);
             } else {
@@ -253,7 +271,7 @@
         function renderServiceCards(services) {
             const container = document.getElementById('services-container');
             container.innerHTML = '';
-            
+
             if (services.length === 0) {
                 container.innerHTML = '<p class="text-lg text-gray-500 py-10 italic">Aucun service de cette catégorie sur cette page.</p>';
                 return;
@@ -267,7 +285,7 @@
                 const id = s.id_service || s.ID;
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
-                
+
                 const typePrestation = s.categorie_nom || 'Autre';
 
                 container.innerHTML += `

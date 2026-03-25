@@ -17,7 +17,7 @@
                 <button class="header-button" data-i18n="nav_signup">S'inscrire</button>
             </a>
         <?php endif; ?>
-        
+
         <button class="border border-[#AA1114] text-[#AA1114] px-4 py-1 rounded-full text-xl font-semibold hover:bg-[#AA1114] hover:text-white" data-i18n="nav_emergency">Urgence</button>
 
         <button onclick="toggleZoom()" class="header-button transition-all group" title="Modifier la taille du texte">
@@ -93,13 +93,13 @@
 
             try {
                 const response = await fetch(`/locales/${lang}.json`);
-                
+
                 if (!response.ok && lang === 'fr') {
                     location.reload();
                     return;
                 }
                 if (!response.ok) throw new Error(`Fichier ${lang}.json introuvable.`);
-                
+
                 const translations = await response.json();
 
                 document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -118,7 +118,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            
+
             const savedLang = localStorage.getItem('user_lang');
             if (savedLang && savedLang !== 'fr') {
                 changeLanguage(savedLang);
@@ -149,7 +149,9 @@
             try {
                 const response = await fetch('http://localhost:8082/auth/me', {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include'
                 });
 

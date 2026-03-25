@@ -62,6 +62,11 @@
         let currentPage = 1;
         const limit = 6;
 
+        window.addEventListener(() => {
+            fetchConseils();
+            setInterval(fetchConseils, 2000);
+        });
+
         function formatDisplayDate(dateStr) {
             if (!dateStr) return "Date inconnue";
 
