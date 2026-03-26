@@ -166,6 +166,11 @@
                     return;
                 }
 
+                if (user.statut === 'banni') {
+                    window.location.href = "/front/ban.php";
+                    return;
+                }
+
                 window.userData = user;
 
                 window.currentUserId = user.id;
