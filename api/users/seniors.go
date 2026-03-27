@@ -467,27 +467,52 @@ var idAbo sql.NullInt64
     
 	encodedType := url.QueryEscape(req.TypeAbonnement)
 
+    var prixRenouvellement int64
+    var fraisInitiaux int64
+
+    if req.Periode == "annuel" {
+        interval = "year"
+        prixRenouvellement = 35
+        fraisInitiaux = 5
+    } else {
+        interval = "month"
+        prixRenouvellement = 3
+        fraisInitiaux = 1 
+    }
+
     params := &stripe.CheckoutSessionParams{
         PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
         Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
         ClientReferenceID:  stripe.String(strconv.Itoa(req.UserID)),
+        
         LineItems: []*stripe.CheckoutSessionLineItemParams{
             {
                 PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
                     Currency: stripe.String("eur"),
                     ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-                        Name: stripe.String("Silver Happy - " + req.TypeAbonnement),
+                        Name: stripe.String("Abonnement Silver Happy (" + req.Periode + ")"),
                     },
-                    UnitAmount: stripe.Int64(req.Tarif * 100),
+                    UnitAmount: stripe.Int64(prixRenouvellement * 100), // Stripe veut des centimes
                     Recurring: &stripe.CheckoutSessionLineItemPriceDataRecurringParams{
                         Interval: stripe.String(interval),
                     },
                 },
                 Quantity: stripe.Int64(1),
             },
+            {
+                PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+                    Currency: stripe.String("eur"),
+                    ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+                        Name: stripe.String("Frais de première souscription"),
+                    },
+                    UnitAmount: stripe.Int64(fraisInitiaux * 100),
+                },
+                Quantity: stripe.Int64(1),
+            },
         },
+        
         SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-subscription?session_id={CHECKOUT_SESSION_ID}&user_id=%d&tarif=%d&periode=%s&type=%s", req.UserID, req.Tarif, req.Periode, encodedType)),
-    	CancelURL:  stripe.String("http://localhost/front/services/subscription.php"),
+        CancelURL:  stripe.String("http://localhost/front/services/subscription.php"),
     }
 
     s, err := session.New(params)
