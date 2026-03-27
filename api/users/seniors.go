@@ -407,7 +407,7 @@ func Ban_User(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(map[string]string{"message": "Statut mis à jour avec succès"})
 }
 
-func CreateCheckoutSession(response http.ResponseWriter, request *http.Request) {
+func Paiement_Abonnement(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "POST") {
         return
     }
@@ -431,7 +431,6 @@ var idAbo sql.NullInt64
 		       a.type_paiement,
 		       COALESCE((CASE 
 		           WHEN a.type_paiement = 'mensuel' THEN DATE_ADD(u.debut_abonnement, INTERVAL 1 MONTH) > NOW()
-		           WHEN a.type_paiement = 'trimestriel' THEN DATE_ADD(u.debut_abonnement, INTERVAL 3 MONTH) > NOW()
 		           WHEN a.type_paiement = 'annuel' THEN DATE_ADD(u.debut_abonnement, INTERVAL 1 YEAR) > NOW()
 		           ELSE DATE_ADD(u.debut_abonnement, INTERVAL 1 YEAR) > NOW()
 		       END), 0) as est_actif

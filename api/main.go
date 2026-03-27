@@ -20,7 +20,7 @@ func main() {
 	})
 
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
-	http.HandleFunc("/create-checkout", users.CreateCheckoutSession)
+	http.HandleFunc("/create-checkout", users.Paiement_Abonnement)
 
 	http.HandleFunc("/auth/register", auth.Register)
 	http.HandleFunc("/auth/login", auth.Login)
@@ -38,6 +38,8 @@ func main() {
 	http.HandleFunc("/panier/add", services.Add_Panier)
 	http.HandleFunc("/panier/get", services.Get_Panier)
 	http.HandleFunc("/panier/delete", services.Delete_Panier)
+	http.HandleFunc("/paiement-panier", services.Paiement_Panier)
+	http.HandleFunc("/success-basket", services.Success_Basket)
 
 	http.HandleFunc("/seniors/read", users.Read_User)
 	http.HandleFunc("/admin/read", users.Read_Admin)

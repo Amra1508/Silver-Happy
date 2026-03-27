@@ -136,7 +136,30 @@ $is_logged_in = isset($_COOKIE['session_token']);
         }
 
         async function validerCommande() {
-            alert("Redirection vers le paiement...");
+            const userId = window.currentUserId;
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/paiement-panier`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: parseInt(userId)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    alert("Erreur lors de la création de la session de paiement.");
+                }
+            } catch (err) {
+                console.error("Erreur:", err);
+                alert("Impossible de contacter le serveur de paiement.");
+            }
         }
     </script>
 </body>
