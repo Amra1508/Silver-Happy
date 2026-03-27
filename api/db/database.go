@@ -175,12 +175,21 @@ func InitDB() {
 	);
 	CREATE TABLE IF NOT EXISTS COMMANDE(
 		id_commande INT AUTO_INCREMENT PRIMARY KEY,
+		id_utilisateur INT NOT NULL,
+		id_paiement INT NOT NULL,
 		date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
 		total DOUBLE,
-		id_paiement INT NOT NULL,
-		id_utilisateur INT,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
+	);
+	CREATE TABLE IF NOT EXISTS LIGNE_COMMANDE(
+		id_ligne INT AUTO_INCREMENT PRIMARY KEY,
+		id_commande INT NOT NULL,
+		id_produit INT NOT NULL,
+		quantite INT,
+		prix_unitaire DOUBLE,
+		FOREIGN KEY (id_commande) REFERENCES COMMANDE(id_commande),
+		FOREIGN KEY (id_produit) REFERENCES PRODUIT(id_produit)
 	);
 	CREATE TABLE IF NOT EXISTS RECEPTION(
 		id_utilisateur INT,
@@ -291,13 +300,6 @@ func InitDB() {
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
-	);
-	CREATE TABLE IF NOT EXISTS APPARTIENT(
-		quantite INT NOT NULL,
-		id_produit INT,
-		id_commande INT,
-		FOREIGN KEY (id_produit) REFERENCES PRODUIT(id_produit),
-		FOREIGN KEY (id_commande) REFERENCES COMMANDE(id_commande)
 	);
 	CREATE TABLE IF NOT EXISTS POSTE(
 		id_utilisateur INT,

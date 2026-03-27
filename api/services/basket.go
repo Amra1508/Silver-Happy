@@ -1,12 +1,22 @@
 package services
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 
 	"main/db"
 	"main/models"
 	"main/utils"
+
+	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/charge"
+	"github.com/stripe/stripe-go/v78/checkout/session"
+	"github.com/stripe/stripe-go/v78/invoice"
+	"github.com/stripe/stripe-go/v78/paymentintent"
 )
 
 func Add_Panier(response http.ResponseWriter, request *http.Request) {
@@ -93,4 +103,178 @@ func Delete_Panier(response http.ResponseWriter, request *http.Request) {
 
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(map[string]string{"message": "Article supprimé"})
+}
+
+func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
+
+    stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+
+	req := models.Req{}
+    
+    if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+	rows, errDB := db.DB.Query(`
+		SELECT p.id_produit, p.quantite, pr.id_produit, pr.nom, pr.prix, pr.stock 
+        FROM PANIER AS p JOIN PRODUIT pr ON p.id_produit = pr.id_produit
+		WHERE p.id_utilisateur = ?`, req.UserID)
+
+    if errDB != nil {
+		if errDB == sql.ErrNoRows {
+			http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
+		} else {
+			http.Error(response, "Erreur serveur base de données", http.StatusInternalServerError)
+		}
+		return
+	}
+    defer rows.Close()
+
+    var lineItems []*stripe.CheckoutSessionLineItemParams
+    var total float64
+
+    for rows.Next() {
+
+        var idProduitP, quantite, idProduit, stock int
+        var nom string
+        var prix float64
+
+        err := rows.Scan(&idProduitP, &quantite, &idProduit, &nom, &prix, &stock)
+
+        if err != nil {
+            fmt.Println("Erreur Scan:", err)
+            continue
+        }
+
+        if quantite > stock {
+		    http.Error(response, "Il n'y a plus assez de stock pour le produit suivant : "+ nom, http.StatusForbidden)
+		    return
+	    }
+
+        total += (prix * float64(quantite))
+
+        item := &stripe.CheckoutSessionLineItemParams{
+            PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+                    Currency: stripe.String("eur"),
+                    ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+                        Name: stripe.String(nom),
+                    },
+                    UnitAmount: stripe.Int64(int64(prix * 100)),
+                },
+            Quantity: stripe.Int64(int64(quantite)),
+        }
+
+        lineItems = append(lineItems, item)
+    }
+
+    params := &stripe.CheckoutSessionParams{
+        PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+        Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
+        ClientReferenceID:  stripe.String(strconv.Itoa(req.UserID)),
+        LineItems: lineItems,
+        SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f", req.UserID, total)),
+    	CancelURL:  stripe.String("http://localhost/front/services/basket.php"),
+    }
+
+    s, err := session.New(params)
+	if err != nil {
+		fmt.Println("Erreur lors de la création de session Stripe :", err) 
+		http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
+		return
+	}
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]string{"url": s.URL})
+}
+
+func Success_Basket(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+
+	sessionID := request.URL.Query().Get("session_id")
+	userID := request.URL.Query().Get("user_id")
+	totalStr := request.URL.Query().Get("total")
+
+	total, err := strconv.ParseFloat(totalStr, 64)
+	if err != nil {
+		http.Error(response, "Erreur de format du total", http.StatusBadRequest)
+		return
+	}
+
+	s, err := session.Get(sessionID, nil)
+	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
+		http.Redirect(response, request, "http://localhost/front/basket.php?error=paiement_echoue", http.StatusSeeOther)
+		return
+	}
+
+	var urlFacture string
+
+	if s.PaymentIntent != nil {
+		pi, errPI := paymentintent.Get(s.PaymentIntent.ID, nil)
+		if errPI == nil && pi.LatestCharge != nil {
+			ch, errC := charge.Get(pi.LatestCharge.ID, nil)
+			if errC == nil {
+				urlFacture = ch.ReceiptURL
+			}
+		}
+	} else if s.Invoice != nil {
+		inv, errI := invoice.Get(s.Invoice.ID, nil)
+		if errI == nil {
+			urlFacture = inv.HostedInvoiceURL
+		}
+	}
+
+	resPaiement, errP := db.DB.Exec(`
+		INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture) 
+		VALUES (?, 'valide', 'carte', ?)`,
+		total, urlFacture)
+
+	if errP != nil {
+		fmt.Println("Erreur création paiement :", errP)
+		http.Error(response, "Erreur base de données (Paiement)", http.StatusInternalServerError)
+		return
+	}
+
+	idPaiement, _ := resPaiement.LastInsertId()
+
+	resCmd, errCmd := db.DB.Exec(`
+    INSERT INTO COMMANDE (id_utilisateur, id_paiement, total)
+    VALUES(?, ?, ?)`, userID, idPaiement, total)
+
+	if errCmd != nil {
+		fmt.Println("Erreur insertion commande :", errCmd)
+		http.Error(response, "Erreur base de données (Commande)", http.StatusInternalServerError)
+		return
+	}
+
+    idCommande, _ := resCmd.LastInsertId()
+
+	_, errLines := db.DB.Exec(`
+        INSERT INTO LIGNE_COMMANDE (id_commande, id_produit, quantite, prix_unitaire)
+        SELECT ?, p.id_produit, p.quantite, pr.prix
+        FROM PANIER p
+        JOIN PRODUIT pr ON p.id_produit = pr.id_produit
+        WHERE p.id_utilisateur = ?`, 
+        idCommande, userID)
+
+    if errLines != nil {
+        fmt.Println("Erreur lignes:", errLines)
+    }
+
+    db.DB.Exec(`
+        UPDATE PRODUIT pr
+        JOIN PANIER p ON pr.id_produit = p.id_produit
+        SET pr.stock = pr.stock - p.quantite
+        WHERE p.id_utilisateur = ?`, userID)
+
+    db.DB.Exec("DELETE FROM PANIER WHERE id_utilisateur = ?", userID)
+
+	http.Redirect(response, request, "http://localhost/front/services/products.php?success=paiement_valide", http.StatusSeeOther)
 }
