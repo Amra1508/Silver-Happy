@@ -21,6 +21,7 @@ import (
 	"github.com/stripe/stripe-go/v78/checkout/session"
 	"github.com/stripe/stripe-go/v78/invoice"
 	"github.com/stripe/stripe-go/v78/paymentintent"
+	"github.com/stripe/stripe-go/v78/subscription"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -587,4 +588,58 @@ func Success_Subscription(response http.ResponseWriter, request *http.Request) {
 	}
 
 	http.Redirect(response, request, "http://localhost/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
+}
+
+func Cancel_Subscription(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
+
+    var payload map[string]int
+    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+    idUser, exists := payload["id_utilisateur"]
+    if !exists {
+        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
+        return
+    }
+
+    var stripeSub sql.NullString
+    err := db.DB.QueryRow(`
+        SELECT a.stripe_sub 
+        FROM UTILISATEUR u 
+        JOIN ABONNEMENT a ON u.id_abonnement = a.id_abonnement 
+        WHERE u.id_utilisateur = ?
+    `, idUser).Scan(&stripeSub)
+
+    if err != nil {
+        http.Error(response, "Aucun abonnement actif trouvé.", http.StatusNotFound)
+        return
+    }
+
+    if stripeSub.Valid && stripeSub.String != "" {
+        stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+        
+        params := &stripe.SubscriptionParams{
+            CancelAtPeriodEnd: stripe.Bool(true), 
+        }
+        
+        _, errStripe := subscription.Update(stripeSub.String, params)
+        if errStripe != nil {
+            fmt.Println("Erreur lors de l'annulation Stripe:", errStripe)
+        }
+    }
+
+    _, errUpdate := db.DB.Exec("UPDATE ABONNEMENT SET renouvellement = 0 WHERE stripe_sub = ?", stripeSub.String)
+    
+    if errUpdate != nil {
+        http.Error(response, "Erreur lors de la mise à jour BDD.", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Renouvellement automatique désactivé."})
 }

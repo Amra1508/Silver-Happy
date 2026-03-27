@@ -208,9 +208,14 @@ if (!isset($_COOKIE['session_token'])) {
                             authBadge.className = "cursor-pointer text-sm px-4 py-1 bg-red-100 border border-red-300 text-red-600 rounded-full font-bold shadow-sm hover:bg-red-200 transition-colors";
                             authBadge.onclick = () => window.location.href = "/front/services/subscription.php";
                         } else {
-                            authBadge.innerHTML = `Abonné(e) jusqu'au ${dateFinFormatee}`;
-                            authBadge.className = "text-sm px-4 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm";
-                        }
+                        authBadge.innerHTML = `
+                            Abonné(e) jusqu'au ${dateFinFormatee} 
+                            <span onclick="cancelSubscription()" class="ml-3 text-red-500 hover:text-red-700 underline text-xs cursor-pointer transition-colors">
+                                Résilier
+                            </span>
+                        `;
+                        authBadge.className = "text-sm pl-4 pr-3 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm flex items-center";
+                    }
 
                     } else {
                         authBadge.innerHTML = "Non abonné(e) <span class='ml-1 text-[#1C5B8F] underline text-xs'>S'abonner</span>";
@@ -296,6 +301,32 @@ if (!isset($_COOKIE['session_token'])) {
                 }
             });
         });
+
+        window.cancelSubscription = async function() {
+        if (!confirm("Êtes-vous sûr de vouloir annuler le renouvellement automatique de votre abonnement ?")) {
+            return;
+        }
+
+        try {
+            const responseMe = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
+            const user = await responseMe.json();
+
+            const response = await fetch('http://localhost:8082/abonnement/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_utilisateur: user.id_utilisateur || user.id })
+            });
+
+            if (response.ok) {
+                window.location.href = "/front/account/profile.php?success=resiliation_validee";
+            } else {
+                const errText = await response.text();
+                alert("Erreur : " + errText);
+            }
+        } catch (err) {
+            alert("Erreur de connexion au serveur.");
+        }
+    };
     </script>
 </body>
 </html>

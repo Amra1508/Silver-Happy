@@ -43,7 +43,8 @@ func InitDB() {
 		prix DOUBLE,
 		date_paiement DATETIME DEFAULT CURRENT_TIMESTAMP,
 		statut ENUM('en_attente', 'valide', 'refuse', 'rembourse'),
-		mode_paiement ENUM('carte', 'cheque', 'prelevement')
+		mode_paiement ENUM('carte', 'cheque', 'prelevement'),
+		stripe_pi VARCHAR(255) DEFAULT NULL
 	);
 	CREATE TABLE IF NOT EXISTS PRODUIT(
 		id_produit INT AUTO_INCREMENT PRIMARY KEY,
@@ -87,7 +88,8 @@ func InitDB() {
 		date_debut DATETIME,
 		date_fin DATETIME,
 		image VARCHAR(250) DEFAULT NULL,
-		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP
+		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
+		prix FLOAT DEFAULT 0.0
 	);
 	CREATE TABLE IF NOT EXISTS PLANNING(
 		id_planning INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,6 +114,7 @@ func InitDB() {
 		type_paiement ENUM('mensuel', 'annuel'),
 		methode_paiement ENUM('carte', 'cheque', 'prelevement'),
 		tarif DOUBLE,
+		stripe_sub VARCHAR(255) DEFAULT NULL,
 		id_paiement INT NOT NULL,
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
 	);
@@ -196,6 +199,7 @@ func InitDB() {
 	CREATE TABLE IF NOT EXISTS INSCRIPTION(
 		id_utilisateur INT,
 		id_evenement INT,
+		id_paiement INT DEFAULT NULL,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement)
 	);

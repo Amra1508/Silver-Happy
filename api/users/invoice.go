@@ -22,10 +22,19 @@ func GetUserInvoices(response http.ResponseWriter, request *http.Request) {
 		JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
 		JOIN UTILISATEUR u ON u.id_abonnement = a.id_abonnement
 		WHERE u.id_utilisateur = ? AND p.statut = 'valide'
-		ORDER BY p.date_paiement DESC
+
+		UNION ALL
+
+		SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, CONCAT('Inscription : ', e.nom) AS description
+		FROM PAIEMENT p
+		JOIN INSCRIPTION i ON p.id_paiement = i.id_paiement
+		JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
+		WHERE i.id_utilisateur = ? AND p.statut = 'valide'
+
+		ORDER BY date_paiement DESC
 	`
 
-	rows, err := db.DB.Query(query, userID)
+	rows, err := db.DB.Query(query, userID, userID)
 	if err != nil {
 		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
 		return

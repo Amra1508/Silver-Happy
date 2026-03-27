@@ -27,6 +27,16 @@
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1 relative">
+        <?php if(isset($_GET['success']) && $_GET['success'] == 'inscription_validee'): ?>
+            <div class="bg-green-100 border-green-400 text-green-700 w-full max-w-xl mx-auto mt-4 p-4 rounded-lg border text-center font-bold shadow-md">
+                Paiement réussi ! Votre inscription est validée.
+            </div>
+        <?php endif; ?>
+        <?php if(isset($_GET['error']) && $_GET['error'] == 'paiement_echoue'): ?>
+            <div class="bg-red-100 border-red-400 text-red-700 w-full max-w-xl mx-auto mt-4 p-4 rounded-lg border text-center font-bold shadow-md">
+                Le paiement a échoué ou a été annulé.
+            </div>
+        <?php endif; ?>
         <div class="p-3 flex justify-between items-center mx-8">
             <a href="/front/services/menu_activity.php">
                 <button class="flex items-center rounded-full px-6 button-blue">
@@ -219,35 +229,35 @@
 
             if (!userId) {
                 showAlert("Vous devez être connecté pour vous inscrire.", false);
-                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>", 2000);
-                return;
-            }
-
-            if (!window.isSubscribed) {
-                showAlert("Vous devez posséder un abonnement pour participer aux événements.", false);
-                setTimeout(() => window.location.href = "/front/services/subscription.php", 2500);
+                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=" + encodeURIComponent(window.location.href), 2000);
                 return;
             }
 
             try {
-                const response = await fetch(`${API_BASE}/evenement/register/${eventId}`, {
+                const response = await fetch(`${API_BASE}/evenement/checkout/${eventId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_utilisateur: parseInt(userId)
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
                 });
 
-                if (response.ok) {
-                    showAlert("Inscription confirmée ! Votre place est réservée.", true);
-                    fetchEvenements(currentPage);
-                    fetchMyEvenements();
-                } else {
+                if (!response.ok) {
                     const errText = await response.text();
                     showAlert("Erreur : " + errText, false);
+                    return;
                 }
+
+                const data = await response.json();
+
+                if (data.isFree) {
+                    showAlert("Inscription gratuite confirmée !", true);
+                    fetchEvenements(currentPage);
+                    fetchMyEvenements();
+                } else if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    showAlert("Erreur lors de la génération du paiement.", false);
+                }
+
             } catch (err) {
                 showAlert("Impossible de joindre le serveur.", false);
             }
@@ -280,6 +290,45 @@
                     const errText = await response.text();
                     showAlert("Erreur : " + errText, false);
                 }
+            } catch (err) {
+                showAlert("Impossible de joindre le serveur.", false);
+            }
+        }
+
+        async function registerEvent(eventId) {
+            const userId = window.currentUserId;
+
+            if (!userId) {
+                showAlert("Vous devez être connecté pour vous inscrire.", false);
+                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=" + encodeURIComponent(window.location.href), 2000);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/evenement/checkout/${eventId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    showAlert("Erreur : " + errText, false);
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.isFree) {
+                    showAlert("Inscription gratuite confirmée !", true);
+                    fetchEvenements(currentPage);
+                    fetchMyEvenements();
+                } else if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    showAlert("Erreur de paiement", false);
+                }
+
             } catch (err) {
                 showAlert("Impossible de joindre le serveur.", false);
             }
@@ -330,6 +379,10 @@
                     const catName = getCategoryName(e.id_categorie || e.IDCategorie);
                     const catBadge = catName ? `<span class="text-xs bg-[#1C5B8F]/10 text-[#1C5B8F] px-3 py-1 rounded-full mb-3 inline-block font-bold border border-[#1C5B8F]/20">${catName}</span>` : '';
 
+                    const prix = parseFloat(e.prix || e.Prix || 0);
+                    const displayPrix = prix > 0 ? `${prix.toFixed(2)} €` : 'Gratuit';
+                    const prixBadge = `<span class="text-xs ${prix > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'} px-3 py-1 rounded-full mb-3 inline-block font-bold border ml-2">${displayPrix}</span>`;
+                    
                     let badgeHTML = places > 0 ?
                         `<span class="bg-[#E1AB2B]/90 text-white shadow-md text-sm px-4 py-2 rounded-full font-bold backdrop-blur-sm">Il reste ${places} place(s)</span>` :
                         `<span class="bg-red-500/90 text-white shadow-md text-sm px-4 py-2 rounded-full font-bold backdrop-blur-sm">Complet</span>`;
@@ -346,6 +399,7 @@
                             </div>
                             <div class="p-6 flex flex-col flex-grow">
                                 ${catBadge}
+                                ${prixBadge}
                                 <h3 class="text-2xl text-[#1C5B8F] font-bold mb-3">${nom}</h3>
                                 <div class="flex items-center text-sm text-gray-600 mb-2 font-semibold">📅 ${displayDebut}</div>
                                 <div class="flex items-center text-sm text-[#E1AB2B] mb-2 font-bold">${timeStatus.text}</div>

@@ -46,6 +46,7 @@ func main() {
 	http.HandleFunc("/seniors/delete/{id}", users.Delete_User)
 	http.HandleFunc("/seniors/ban/{id}", users.Ban_User)
 	http.HandleFunc("/success-subscription", users.Success_Subscription)
+	http.HandleFunc("/abonnement/cancel", users.Cancel_Subscription)
 
 	http.HandleFunc("/factures/user/{id}", users.GetUserInvoices)
 
@@ -106,6 +107,9 @@ func main() {
 	http.HandleFunc("/evenement/user/{id}", services.Read_User_Evenements)
 	http.HandleFunc("/evenement/unregister/{id}", services.Unregister_Evenement)
 	http.HandleFunc("/evenement/filter", services.GetEvenementsByCategory)
+
+	http.HandleFunc("/evenement/checkout/{id}", services.CreateEventCheckoutSession)
+	http.HandleFunc("/success-event", services.Success_Event_Payment)
 
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {

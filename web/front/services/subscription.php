@@ -59,8 +59,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
             </div>
 
             <div class="flex flex-wrap gap-8 px-6 md:px-16 pb-16 justify-center bg-gray-50 pt-8">
-                <div class="md:max-w-[450px] w-full bg-white border border-[#1C5B8F] flex flex-col items-center py-10 px-8 rounded-[2.5rem] shadow-lg">
-                    <h3 class="text-2xl md:text-3xl font-bold mb-6 text-[#1C5B8F] text-center">Abonnement Normal</h3>
+                <div class="md:max-w-[450px] w-full bg-white border border-[#1C5B8F] flex flex-col items-center py-10 px-8 rounded-[2.5rem] shadow-lg hover:-translate-y-2 transition-transform duration-300">
+                    <h3 class="text-2xl md:text-3xl font-bold mb-6 text-[#1C5B8F] text-center">Abonnement Silver Happy</h3>
                     <div class="flex items-baseline gap-2 mb-2">
                         <span class="text-6xl font-bold text-black" id="price-normal">4</span>
                         <span class="text-3xl font-bold text-black">€</span>
@@ -70,27 +70,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         <li>✓ Accès complet aux activités</li>
                         <li>✓ Messagerie incluse</li>
                         <li>✓ Support prioritaire</li>
+                        <li class="italic text-sm text-[#1C5B8F] pt-4">Renouvellement automatique, sans engagement.</li>
                     </ul>
-                    <button onclick="openSubModal(false)" class="w-full rounded-full py-4 px-6 bg-[#1C5B8F] text-white font-bold text-xl mt-auto hover:bg-[#154670] transition-colors">
+                    <button onclick="openSubModal()" class="w-full rounded-full py-4 px-6 bg-[#1C5B8F] text-white font-bold text-xl mt-auto hover:bg-[#154670] transition-colors shadow-md">
                         M'abonner
-                    </button>
-                </div>
-
-                <div class="md:max-w-[450px] w-full bg-white border-2 border-[#E1AB2B] flex flex-col items-center py-10 px-8 rounded-[2.5rem] relative overflow-hidden shadow-lg">
-                    <div class="absolute top-0 w-full h-4 bg-[#E1AB2B]"></div>
-                    <h3 class="text-2xl md:text-3xl font-bold mb-6 text-[#1C5B8F] text-center">Renouvellement</h3>
-                    <div class="flex items-baseline gap-2 mb-2">
-                        <span class="text-6xl font-bold text-black" id="price-renewal">3</span>
-                        <span class="text-3xl font-bold text-black">€</span>
-                    </div>
-                    <p class="text-gray-500 mb-10 text-center" id="period-renewal">/ mois</p>
-                    <ul class="text-gray-600 mb-10 space-y-3 w-full px-4 text-center text-lg">
-                        <li>✓ Continuité de vos avantages</li>
-                        <li>✓ Tarif préférentiel fidélité</li>
-                        <li>✓ Sans interruption</li>
-                    </ul>
-                    <button onclick="openSubModal(true)" class="w-full rounded-full py-4 px-6 bg-[#E1AB2B] text-black font-bold text-xl mt-auto hover:bg-[#c79624] transition-colors">
-                        Renouveler mon offre
                     </button>
                 </div>
             </div>
@@ -103,7 +86,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     <form id="sub-form" class="space-y-6">
                         <input type="hidden" id="sub-tarif">
                         <input type="hidden" id="sub-periode">
-                        <input type="hidden" id="sub-type">
 
                         <p class="text-sm text-gray-500 italic text-center">
                             Vous allez être redirigé vers l'interface de paiement sécurisée de Stripe.
@@ -119,10 +101,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 </div>
             </div>
         <?php else: ?>
-            <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
+            <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10 m-8 bg-white border border-gray-100">
                 <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
                     Vous devez être connecté(e) pour souscrire un abonnement Silver Happy.</p>
-                <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
+                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
                     Je me connecte
                 </a>
             </div>
@@ -138,8 +120,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
         const labelAnnuel = document.getElementById('label-annuel');
         const priceNormal = document.getElementById('price-normal');
         const periodNormal = document.getElementById('period-normal');
-        const priceRenewal = document.getElementById('price-renewal');
-        const periodRenewal = document.getElementById('period-renewal');
 
         let isAnnual = false;
 
@@ -150,17 +130,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 labelMensuel.classList.replace('text-[#1C5B8F]', 'text-gray-400');
                 labelAnnuel.classList.replace('text-gray-400', 'text-[#1C5B8F]');
                 priceNormal.textContent = '40';
-                periodNormal.textContent = '/ annuel';
-                priceRenewal.textContent = '35';
-                periodRenewal.textContent = '/ annuel';
+                periodNormal.textContent = '/ an';
             } else {
                 toggleKnob.classList.replace('translate-x-9', 'translate-x-1');
                 labelMensuel.classList.replace('text-gray-400', 'text-[#1C5B8F]');
                 labelAnnuel.classList.replace('text-[#1C5B8F]', 'text-gray-400');
                 priceNormal.textContent = '4';
                 periodNormal.textContent = '/ mois';
-                priceRenewal.textContent = '3';
-                periodRenewal.textContent = '/ mois';
             }
         });
 
@@ -173,15 +149,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
             setTimeout(() => messageBox.classList.add('hidden'), 4000);
         }
 
-        function openSubModal(isRenewal) {
-            const tarif = isRenewal ? priceRenewal.textContent : priceNormal.textContent;
+        function openSubModal() {
+            const tarif = priceNormal.textContent;
             const periodeText = isAnnual ? "Annuel" : "Mensuel";
-            const typeAbo = isRenewal ? "Renouvellement" : "Abonnement Normal";
 
-            document.getElementById('modal-summary').innerHTML = `Offre : <strong class="text-[#1C5B8F]">${typeAbo} (${periodeText})</strong><br>Tarif : <strong class="text-[#E1AB2B] text-xl">${tarif}€</strong>`;
+            document.getElementById('modal-summary').innerHTML = `Offre : <strong class="text-[#1C5B8F]">Abonnement Silver Happy (${periodeText})</strong><br>Tarif : <strong class="text-[#E1AB2B] text-xl">${tarif}€</strong>`;
             document.getElementById('sub-tarif').value = tarif;
             document.getElementById('sub-periode').value = isAnnual ? 'annuel' : 'mensuel';
-            document.getElementById('sub-type').value = typeAbo;
             toggleModal('sub-modal');
         }
 
@@ -195,7 +169,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
             const data = {
                 user_id: parseInt(userId),
-                type_abonnement: document.getElementById('sub-type').value,
+                type_abonnement: "Abonnement Normal",
                 periode: document.getElementById('sub-periode').value,
                 tarif: parseInt(document.getElementById('sub-tarif').value)
             };
@@ -203,9 +177,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
             try {
                 const response = await fetch('http://localhost:8082/create-checkout', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 

@@ -124,17 +124,8 @@ type Evenement struct {
 	DateDebut   string `json:"date_debut"`
 	DateFin     string `json:"date_fin"`
 	IDCategorie *int   `json:"id_categorie"`
+	Prix        float64 `json:"prix"`
 }
-
-type SubReq struct {
-        Description     string  `json:"description"`
-        Renouvellement  int     `json:"renouvellement"`
-        TypeAbonnement  string  `json:"type_abonnement"` 
-        TypePaiement    string  `json:"type_paiement"`
-        MethodePaiement string  `json:"methode_paiement"`
-        Tarif           float64 `json:"tarif"`
-        IdPaiement      int     `json:"id_paiement"`
-    }
 
 type Req struct {
         UserID         int    `json:"user_id"`

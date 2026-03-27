@@ -66,6 +66,7 @@
                                 <th class="p-4 font-semibold">Catégorie</th>
                                 <th class="p-4 font-semibold">Description</th>
                                 <th class="p-4 font-semibold">Lieu</th>
+                                <th class="p-4 font-semibold text-center">Prix</th>
                                 <th class="p-4 font-semibold text-center">Places</th>
                                 <th class="p-4 font-semibold">Début</th>
                                 <th class="p-4 font-semibold">Fin</th>
@@ -94,6 +95,10 @@
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
                                 <textarea id="add-description" class="w-full p-2 border rounded" required></textarea>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Prix (€)</label>
+                                <input type="number" step="0.01" min="0" id="add-prix" class="w-full p-2 border rounded" required>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -145,6 +150,10 @@
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
                                 <textarea id="edit-description" class="w-full p-2 border rounded" required></textarea>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Prix (€)</label>
+                                <input type="number" step="0.01" min="0" id="edit-prix" class="w-full p-2 border rounded" required>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -367,7 +376,7 @@
                 tbody.innerHTML = '';
 
                 if (evenements.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-gray-400">Aucun événement trouvé.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-gray-400">Aucun événement trouvé.</td></tr>';
                     renderPagination(result.totalPages || 0, result.total || 0);
                     return;
                 }
@@ -381,11 +390,13 @@
                     const date_debut = c.date_debut || c.DateDebut || '';
                     const date_fin = c.date_fin || c.DateFin || '';
                     const idCat = c.id_categorie || c.IDCategorie || ''; 
+                    const prix = parseFloat(c.prix || c.Prix || 0);
 
                     const imgSrc = c.image ? `${API_BASE}/${c.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/150?text=Pas+d%27image';
 
                     const displayDebut = formatDisplayDate(date_debut);
                     const displayFin = formatDisplayDate(date_fin);
+                    const displayPrix = prix > 0 ? `${prix.toFixed(2)} €` : 'Gratuit';
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition">
@@ -398,12 +409,13 @@
                             </td>
                             <td class="p-4 text-sm max-w-[200px] truncate" title="${description}">${description}</td>
                             <td class="p-4">${lieu}</td>
+                            <td class="p-4 text-center font-bold text-gray-700">${displayPrix}</td>
                             <td class="p-4 text-center font-bold">${places}</td>
                             <td class="p-4 text-sm">${displayDebut}</td>
                             <td class="p-4 text-sm">${displayFin}</td>
                             <td class="p-4 flex justify-center gap-2">
                                 <button onclick="openLinkModal(${id})" class="text-[#1C5B8F] bg-[#1C5B8F]/10 hover:bg-[#1C5B8F]/20 px-2 py-1 rounded-lg font-bold text-xs">Prestas</button>
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', '${idCat}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Edit</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', '${idCat}', ${prix})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Edit</button>
                                 <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-2 py-1 rounded-lg font-bold text-xs">Suppr</button>
                             </td>
                         </tr>
@@ -464,6 +476,7 @@
             formData.append('description', document.getElementById('add-description').value);
             formData.append('lieu', document.getElementById('add-lieu').value);
             formData.append('nombre_place', document.getElementById('add-places').value);
+            formData.append('prix', document.getElementById('add-prix').value);
             formData.append('date_debut', document.getElementById('add-debut').value);
             formData.append('date_fin', document.getElementById('add-fin').value);
             
@@ -493,12 +506,13 @@
             }
         });
 
-        function openEditModal(id, nom, description, lieu, places, debut, fin, idCat) {
+        function openEditModal(id, nom, description, lieu, places, debut, fin, idCat, prix) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-nom').value = nom;
             document.getElementById('edit-description').value = description;
             document.getElementById('edit-lieu').value = lieu;
             document.getElementById('edit-places').value = places;
+            document.getElementById('edit-prix').value = prix;
             document.getElementById('edit-debut').value = formatDateForInput(debut);
             document.getElementById('edit-fin').value = formatDateForInput(fin);
             document.getElementById('edit-categorie').value = idCat || ""; 
@@ -515,6 +529,7 @@
             formData.append('description', document.getElementById('edit-description').value);
             formData.append('lieu', document.getElementById('edit-lieu').value);
             formData.append('nombre_place', document.getElementById('edit-places').value);
+            formData.append('prix', document.getElementById('edit-prix').value);
             formData.append('date_debut', document.getElementById('edit-debut').value);
             formData.append('date_fin', document.getElementById('edit-fin').value);
             
