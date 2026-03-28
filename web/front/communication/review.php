@@ -113,6 +113,17 @@ $is_logged_in = isset($_COOKIE['session_token']);
         const limit = 6;
 
         function toggleModal(show) {
+            if (show) {
+                const user = window.userData;
+                const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
+
+                if (!hasSubscription) {
+                    alert("Seuls les membres possédant un abonnement Silver Happy peuvent laisser un avis sur notre plateforme.");
+                    window.location.href = "/front/services/subscription.php";
+                    return; 
+                }
+            }
+
             const modal = document.getElementById('modal-review');
             if (show) modal.classList.remove('hidden');
             else {
@@ -157,7 +168,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
         async function submitAvis(event) {
             event.preventDefault();
 
-            // Récupération de l'ID utilisateur (on vérifie s'il existe)
             const userId = window.currentUserId;
 
             if (!userId) {
@@ -173,7 +183,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 description: document.getElementById('review-desc').value,
                 note: parseInt(document.getElementById('review-note').value),
                 categorie: categorie,
-                // Si c'est pas un prestataire, on envoie strictement null
                 id_prestataire: (categorie === "Prestataire" && idPresta) ? parseInt(idPresta) : null,
                 id_utilisateur: parseInt(userId)
             };

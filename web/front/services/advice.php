@@ -31,28 +31,41 @@
 
     <main class="flex-1 relative">
 
-        <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] leading-tight mb-4">
-                Nos conseils pratiques
-            </h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
-                Découvrez nos astuces, recommandations et guides pour profiter pleinement de chaque instant en toute sérénité.
-            </p>
-
-            <div class="flex justify-center">
-                <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
-                    Dernières publications
-                </h2>
+        <div id="no-sub-container" class="hidden max-w-4xl mx-auto mt-12 mb-8">
+            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/10 px-8">
+                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
+                    Vous devez posséder un abonnement Silver Happy pour accéder à nos conseils pratiques.
+                </p>
+                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white hover:bg-[#154670] transition font-bold text-lg shadow-md" href="/front/services/subscription.php">
+                    Découvrir nos abonnements
+                </a>
             </div>
         </div>
 
-        <div id="advice-container" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
-            <div class="w-full text-center py-10">
-                <p class="text-xl text-gray-500 animate-pulse">Chargement de nos conseils...</p>
-            </div>
-        </div>
+        <div id="main-content-container">
+            <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] leading-tight mb-4">
+                    Nos conseils pratiques
+                </h1>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
+                    Découvrez nos astuces, recommandations et guides pour profiter pleinement de chaque instant en toute sérénité.
+                </p>
 
-        <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
+                <div class="flex justify-center">
+                    <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
+                        Dernières publications
+                    </h2>
+                </div>
+            </div>
+
+            <div id="advice-container" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
+                <div class="w-full text-center py-10">
+                    <p class="text-xl text-gray-500 animate-pulse">Chargement de nos conseils...</p>
+                </div>
+            </div>
+
+            <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
+        </div>
 
     </main>
 
@@ -60,11 +73,24 @@
 
     <script>
         const API_BASE = "http://localhost:8082";
-        let currentPage = 1;
         const limit = 6;
 
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchConseils();
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentPage = parseInt(urlParams.get('page')) || 1;
+
+        window.addEventListener('auth_ready', () => {
+            const noSubContainer = document.getElementById('no-sub-container');
+            const mainContent = document.getElementById('main-content-container');
+
+            const user = window.userData;
+            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
+
+            if (!hasSubscription) {
+                if (mainContent) mainContent.classList.add('hidden');
+                if (noSubContainer) noSubContainer.classList.remove('hidden');
+            } else {
+                fetchConseils(currentPage);
+            }
         });
 
         function formatDisplayDate(dateStr) {
@@ -82,6 +108,11 @@
         async function fetchConseils(page = 1) {
             try {
                 currentPage = page;
+                
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('page', currentPage);
+                window.history.pushState({}, '', newUrl);
+
                 const userId = window.currentUserId || 1;
 
                 const response = await fetch(`${API_BASE}/conseil/read?page=${currentPage}&limit=${limit}&user_id=${userId}`);
@@ -165,6 +196,13 @@
             const nextDisabled = currentPage === totalPages ? 'disabled' : '';
             container.innerHTML += `<button onclick="fetchConseils(${currentPage + 1})" class="${btnClass}" ${nextDisabled}>Suivant →</button>`;
         }
+
+        window.addEventListener('popstate', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const page = parseInt(urlParams.get('page')) || 1;
+            fetchConseils(page);
+        });
+
     </script>
 </body>
 

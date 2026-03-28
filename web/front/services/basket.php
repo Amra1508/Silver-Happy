@@ -139,6 +139,15 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const userId = window.currentUserId;
             if (!userId) return;
 
+            const user = window.userData;
+            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
+
+            if (!hasSubscription) {
+                alert("Vous devez posséder un abonnement Silver Happy pour valider votre commande.");
+                window.location.href = "/front/services/subscription.php";
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/paiement-panier`, {
                     method: 'POST',

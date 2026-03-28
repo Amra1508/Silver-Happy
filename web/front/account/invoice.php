@@ -80,11 +80,16 @@ if (!isset($_COOKIE['session_token'])) {
             const invoicesContainer = document.getElementById('invoices-container');
             const tbody = document.getElementById('invoices-tbody');
 
-            if (!window.isSubscribed) {
+            const user = window.userData;
+            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
+
+            if (!hasSubscription) {
                 noSubContainer.classList.remove('hidden');
+                invoicesContainer.classList.add('hidden'); 
                 return;
             }
 
+            noSubContainer.classList.add('hidden');
             invoicesContainer.classList.remove('hidden');
 
             try {
@@ -122,6 +127,7 @@ if (!isset($_COOKIE['session_token'])) {
                 });
 
             } catch (err) {
+                console.error(err);
                 tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-red-500 font-semibold">Erreur lors de la récupération de vos factures. Veuillez réessayer plus tard.</td></tr>';
             }
         });

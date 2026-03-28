@@ -102,7 +102,6 @@ if (!$is_logged_in) {
     <script>
         const API_BASE = "http://localhost:8082";
 
-        // Fonction pour récupérer l'ID de l'utilisateur de manière sûre
         function getUserId() {
             return window.currentUserId || null;
         }
@@ -110,7 +109,6 @@ if (!$is_logged_in) {
         async function fetchMyAvis() {
             const userId = getUserId();
             if (!userId) {
-                // Si l'ID n'est pas encore là, on réessaie dans 100ms
                 setTimeout(fetchMyAvis, 100);
                 return;
             }
@@ -148,7 +146,6 @@ if (!$is_logged_in) {
             }
         }
 
-        // Gestion de la suppression
         async function deleteAvis(id) {
             const userId = getUserId();
             if (!confirm("Supprimer cet avis ?")) return;
@@ -163,7 +160,6 @@ if (!$is_logged_in) {
             }
         }
 
-        // Ouvrir la modale d'édition
         async function openEditModal(id) {
             try {
                 const response = await fetch(`${API_BASE}/avis/read-one/${id}`);
@@ -179,7 +175,6 @@ if (!$is_logged_in) {
             }
         }
 
-        // Soumettre l'édition
         async function submitEdit(event) {
             event.preventDefault();
             const userId = getUserId();

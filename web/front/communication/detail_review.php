@@ -101,7 +101,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const categorie = c.categorie || "Général";
             const note = c.note || 0;
 
-            // Récupération et formatage du nom du prestataire
             const fullNom = `${c.prenom_prestataire || ''} ${c.nom_prestataire || ''}`.trim();
             const prestaHTML = (c.categorie === "Prestataire" && fullNom !== "") ?
                 `<div class="mb-4 flex items-center gap-2">

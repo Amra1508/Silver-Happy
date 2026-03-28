@@ -78,11 +78,6 @@
         const messageBox = document.getElementById('api-message');
         let currentServicesData = [];
 
-        window.addEventListener('auth_ready', () => {
-            fetchServices();
-            setInterval(fetchServices, 20000);
-        });
-
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
             messageBox.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-xl p-4 rounded-lg border text-center font-bold shadow-2xl transition-all duration-300 ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
@@ -145,9 +140,19 @@
 
         async function bookService(serviceId) {
             const userId = window.currentUserId;
+
             if (!userId) {
                 showAlert("Vous devez être connecté pour prendre RDV.", false);
                 setTimeout(() => window.location.href = "/front/account/signin.php?redirect=" + encodeURIComponent(window.location.pathname), 2000);
+                return;
+            }
+
+            const user = window.userData;
+            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
+
+            if (!hasSubscription) {
+                showAlert("Vous devez posséder un abonnement Silver Happy pour réserver un service.", false);
+                setTimeout(() => window.location.href = "/front/services/subscription.php", 3000);
                 return;
             }
 
@@ -157,8 +162,17 @@
                 return;
             }
 
-            if (new Date(dateInput) <= new Date()) {
+            const selectedDate = new Date(dateInput);
+            if (selectedDate <= new Date()) {
                 showAlert("Impossible de réserver dans le passé !", false);
+                return;
+            }
+
+            const hour = selectedDate.getHours();
+            const minutes = selectedDate.getMinutes();
+
+            if (hour < 10 || hour > 18 || (hour === 18 && minutes > 0)) {
+                showAlert("Les réservations sont possibles uniquement entre 10h00 et 18h00.", false);
                 return;
             }
 
@@ -285,7 +299,6 @@
                 const id = s.id_service || s.ID;
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
-
                 const typePrestation = s.categorie_nom || 'Autre';
 
                 container.innerHTML += `
@@ -300,7 +313,10 @@
                         <p class="text-gray-600 mb-6 flex-grow leading-relaxed">${description}</p>
                         
                         <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Choisissez votre créneau :</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">
+                                Choisissez votre créneau : 
+                                <span class="text-xs text-gray-500 font-normal block mt-1">(Entre 10h00 et 18h00)</span>
+                            </label>
                             <input type="datetime-local" id="datetime-${id}" min="${minDateTime}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
                             <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
                                 Confirmer le RDV

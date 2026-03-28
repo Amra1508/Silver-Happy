@@ -83,11 +83,6 @@
         const limit = 6;
         const messageBox = document.getElementById('api-message');
 
-        window.addEventListener('auth_ready', () => {
-            fetchEvenements();
-            setInterval(fetchEvenements, 2000);
-        });
-
         let categoriesData = [];
 
         function showAlert(msg, isSuccess) {
@@ -224,45 +219,6 @@
             }
         }
 
-        async function registerEvent(eventId) {
-            const userId = window.currentUserId;
-
-            if (!userId) {
-                showAlert("Vous devez être connecté pour vous inscrire.", false);
-                setTimeout(() => window.location.href = "/front/account/signin.php?redirect=" + encodeURIComponent(window.location.href), 2000);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/evenement/checkout/${eventId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
-                });
-
-                if (!response.ok) {
-                    const errText = await response.text();
-                    showAlert("Erreur : " + errText, false);
-                    return;
-                }
-
-                const data = await response.json();
-
-                if (data.isFree) {
-                    showAlert("Inscription gratuite confirmée !", true);
-                    fetchEvenements(currentPage);
-                    fetchMyEvenements();
-                } else if (data.url) {
-                    window.location.href = data.url;
-                } else {
-                    showAlert("Erreur lors de la génération du paiement.", false);
-                }
-
-            } catch (err) {
-                showAlert("Impossible de joindre le serveur.", false);
-            }
-        }
-
         async function unregisterEvent(eventId) {
             const userId = window.currentUserId;
             if (!userId) return;
@@ -304,6 +260,15 @@
                 return;
             }
 
+            const user = window.userData;
+            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
+
+            if (!hasSubscription) {
+                showAlert("Vous devez posséder un abonnement pour participer à cet événement.", false);
+                setTimeout(() => window.location.href = "/front/services/subscription.php", 3000);
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/evenement/checkout/${eventId}`, {
                     method: 'POST',
@@ -326,7 +291,7 @@
                 } else if (data.url) {
                     window.location.href = data.url;
                 } else {
-                    showAlert("Erreur de paiement", false);
+                    showAlert("Erreur lors de la génération du paiement.", false);
                 }
 
             } catch (err) {
