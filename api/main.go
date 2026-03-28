@@ -84,6 +84,7 @@ func main() {
 	http.HandleFunc("/avis/create", communication.Create_Avis)
 
 	http.HandleFunc("/prestataires/read", users.Read_Prestataire)
+	http.HandleFunc("/prestataires/top", users.Get_Prestataire_Top)
 	http.HandleFunc("/prestataires/create", users.Create_Prestataire)
 	http.HandleFunc("/prestataires/update/{id}", users.Update_Prestataire)
 	http.HandleFunc("/prestataires/delete/{id}", users.Delete_Prestataire)

@@ -141,6 +141,7 @@ type Avis struct {
 	Date        string `json:"date"`
 	Note   		int64  `json:"note"`
 	Categorie   string  `json:"categorie"`
+	Prestataire *int64  `json:"id_prestataire"`
 }
 
 type Planning struct {

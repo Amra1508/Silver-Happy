@@ -44,16 +44,16 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                     <div id="pagination-controls"></div>
                 </div>
-                <div id="modal-review" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 relative">
+                <div id="modal-review" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div class="add-modal">
                         <button onclick="toggleModal(false)" class="absolute top-4 right-6 text-2xl text-gray-400 hover:text-red-500">&times;</button>
 
                         <h2 class="text-2xl font-bold text-[#1C5B8F] mb-6">Votre avis nous intéresse</h2>
 
                         <form id="form-review" onsubmit="submitAvis(event)" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Catégorie</label>
-                                <select id="review-categorie" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Catégorie</label>
+                                <select id="review-categorie" onchange="handleCategoryChange()" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
                                     <option value="Service">Service</option>
                                     <option value="Evènement">Evènement</option>
                                     <option value="Prestataire">Prestataire</option>
@@ -61,26 +61,36 @@ $is_logged_in = isset($_COOKIE['session_token']);
                                 </select>
                             </div>
 
+                            <div id="prestataire-selection" class="hidden mt-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Nom du Prestataire</label>
+                                <select id="review-id-prestataire" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
+                                    <option value="">Sélectionner un prestataire</option>
+                                </select>
+                            </div>
+
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Titre</label>
-                                <input type="text" id="review-titre" required placeholder="En quelques mots..."
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Titre</label>
+                                <input type="text" id="review-titre" required placeholder="ex.Sortie au Louvre"
                                     class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
                             </div>
 
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Note (0 à 5)</label>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Note (0 à 5)</label>
                                 <input type="number" id="review-note" min="0" max="5" value="5" required
                                     class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
                             </div>
 
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Description</label>
-                                <textarea id="review-desc" rows="4" required placeholder="Racontez votre expérience..."
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                                <textarea id="review-desc" rows="4" required
                                     class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none"></textarea>
                             </div>
 
-                            <button type="submit" class="w-full bg-[#1C5B8F] text-white font-bold py-3 rounded-xl hover:bg-[#E1AB2B] transition-all">
+                            <button type="submit" class="w-full bg-[#1C5B8F] text-white font-semibold py-3 rounded-xl hover:bg-[#E1AB2B] transition-all">
                                 Publier l'avis
+                            </button>
+                            <button onclick="toggleModal(false)" class="w-full bg-[#1C5B8F] text-white font-semibold py-3 rounded-xl hover:bg-[#E1AB2B] transition-all">
+                                Annuler
                             </button>
                         </form>
                     </div>
@@ -114,14 +124,58 @@ $is_logged_in = isset($_COOKIE['session_token']);
             }
         }
 
+        async function loadPrestataires() {
+            try {
+                const response = await fetch(`${API_BASE}/prestataires/read?limit=500&status=valide`);
+                const result = await response.json();
+
+                const prestataires = result.data || [];
+                const select = document.getElementById('review-id-prestataire');
+
+                select.innerHTML = '<option value="">Sélectionner un prestataire</option>';
+
+                prestataires.forEach(p => {
+                    const option = document.createElement('option');
+
+                    const id = p.id_prestataire || p.ID || p.id;
+                    const nom = p.nom || p.Nom || '';
+                    const prenom = p.prenom || p.Prenom || '';
+
+                    if (id) {
+                        option.value = id;
+                        option.textContent = `${prenom} ${nom}`.trim();
+                        select.appendChild(option);
+                    }
+                });
+            } catch (err) {
+                console.error("Erreur chargement prestataires:", err);
+            }
+        }
+
+        function handleCategoryChange() {
+            const categorie = document.getElementById('review-categorie').value;
+            const div = document.getElementById('prestataire-selection');
+
+            if (categorie === "Prestataire") {
+                div.classList.remove('hidden');
+                loadPrestataires();
+            } else {
+                div.classList.add('hidden');
+            }
+        }
+
         async function submitAvis(event) {
             event.preventDefault();
+
+            const idPresta = document.getElementById('review-id-prestataire').value;
+            const categorie = document.getElementById('review-categorie').value;
 
             const data = {
                 titre: document.getElementById('review-titre').value,
                 description: document.getElementById('review-desc').value,
                 note: parseInt(document.getElementById('review-note').value),
-                categorie: document.getElementById('review-categorie').value
+                categorie: categorie,
+                id_prestataire: (categorie === "Prestataire" && idPresta) ? parseInt(idPresta) : null
             };
 
             try {

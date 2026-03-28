@@ -91,6 +91,102 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(dataResponse)
 }
 
+func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
+	statusFilter := query.Get("status")
+
+	limit := 10
+	offset := 0
+	page := 1
+
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
+
+	whereClause := ""
+	var argsCount []interface{}
+	var argsQuery []interface{}
+
+	if statusFilter != "" && statusFilter != "tous" {
+		whereClause = " WHERE p.status = ?"
+		argsCount = append(argsCount, statusFilter)
+		argsQuery = append(argsQuery, statusFilter)
+	}
+
+	var total int
+	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p"+whereClause, argsCount...).Scan(&total)
+	if errTotal != nil {
+		http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
+		return
+	}
+
+	sqlQuery := `
+		SELECT p.id_prestataire, p.prenom, p.nom, p.type_prestation, 
+		       IFNULL(AVG(a.note), 0) as moyenne, 
+		       COUNT(a.id_avis) as nombre_avis 
+		FROM PRESTATAIRE AS p 
+		LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
+		` + whereClause + `
+		GROUP BY p.id_prestataire 
+		ORDER BY moyenne DESC 
+		LIMIT ? OFFSET ?`
+
+	argsQuery = append(argsQuery, limit, offset)
+
+	rows, err := db.DB.Query(sqlQuery, argsQuery...)
+	if err != nil {
+		fmt.Println("Erreur SQL:", err)
+		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var list []map[string]interface{}
+	for rows.Next() {
+		var id int64
+		var prenom, nom, typePresta string
+		var moyenne float64
+		var nbAvis int
+
+		if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis); err != nil {
+			continue
+		}
+
+		list = append(list, map[string]interface{}{
+			"id_prestataire":  id,
+			"prenom":          prenom,
+			"nom":             nom,
+			"type_prestation": typePresta,
+			"moyenne":         moyenne,
+			"nombre_avis":     nbAvis,
+		})
+	}
+
+	if list == nil {
+		list = []map[string]interface{}{}
+	}
+
+	dataResponse := map[string]interface{}{
+		"data":        list,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
+}
+
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "POST") {
 		return

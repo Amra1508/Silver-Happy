@@ -35,7 +35,7 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 	var total int
 	db.DB.QueryRow("SELECT COUNT(*) FROM AVIS").Scan(&total)
 
-	rows, errorFetch := db.DB.Query("SELECT id_avis, description, titre, note, date, categorie FROM AVIS LIMIT ? OFFSET ?", limit, offset)
+	rows, errorFetch := db.DB.Query("SELECT id_avis, description, titre, note, date, categorie, id_prestataire FROM AVIS LIMIT ? OFFSET ?", limit, offset)
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
@@ -45,7 +45,7 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 	var tabAvis []models.Avis
 	for rows.Next() {
 		var avis models.Avis
-		if err := rows.Scan(&avis.ID, &avis.Description, &avis.Titre, &avis.Note, &avis.Date, &avis.Categorie); err != nil {
+		if err := rows.Scan(&avis.ID, &avis.Description, &avis.Titre, &avis.Note, &avis.Date, &avis.Categorie, &avis.Prestataire); err != nil {
 			continue
 		}
 		tabAvis = append(tabAvis, avis)
@@ -80,7 +80,7 @@ func Read_One_Avis(response http.ResponseWriter, request *http.Request) {
 
     var avis models.Avis
 
-    sqlQuery := `SELECT id_avis, description, titre, note, date, categorie FROM AVIS WHERE id_avis = ?`
+    sqlQuery := `SELECT id_avis, description, titre, note, date, categorie, id_prestataire FROM AVIS WHERE id_avis = ?`
 
     err := db.DB.QueryRow(sqlQuery, id).Scan(
         &avis.ID, 
@@ -89,6 +89,7 @@ func Read_One_Avis(response http.ResponseWriter, request *http.Request) {
 		&avis.Note,
         &avis.Date, 
         &avis.Categorie,
+		&avis.Prestataire,
     )
     
     if err != nil {
@@ -120,7 +121,7 @@ func Create_Avis(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	res, errorCreate := db.DB.Exec("INSERT INTO AVIS (description, titre, note, categorie) VALUES (?, ?, ?, ?)", avis.Description, avis.Titre, avis.Note, avis.Categorie)
+	res, errorCreate := db.DB.Exec("INSERT INTO AVIS (description, titre, note, categorie, id_prestataire) VALUES (?, ?, ?, ?, ?)", avis.Description, avis.Titre, avis.Note, avis.Categorie, avis.Prestataire)
 	if errorCreate != nil {
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
 		return

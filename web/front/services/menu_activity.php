@@ -30,7 +30,7 @@
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1">
-        
+
         <div class="relative h-[400px] w-full overflow-hidden">
             <img src="/front/images/background.webp" alt="" class="absolute inset-0 w-full h-full object-cover opacity-60">
 
@@ -54,10 +54,10 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 px-6 md:px-16 py-12 max-w-7xl mx-auto">
-            
+
             <a href="/front/services/events.php" class="group w-full bg-white border border-gray-200 flex flex-col p-10 rounded-[2.5rem] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-[#1C5B8F] group-hover:bg-[#E1AB2B] transition-colors"></div>
-                
+
                 <h3 class="text-3xl text-[#1C5B8F] font-bold mb-4 text-center">Événements</h3>
                 <p class="text-gray-600 text-center text-lg flex-grow mb-8">
                     Participez à nos sorties, ateliers et conférences pour partager des moments de convivialité avec la communauté.
@@ -69,7 +69,7 @@
 
             <a href="/front/services/catalog.php" class="group w-full bg-white border border-gray-200 flex flex-col p-10 rounded-[2.5rem] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-[#E1AB2B] group-hover:bg-[#1C5B8F] transition-colors"></div>
-                
+
                 <h3 class="text-3xl text-[#1C5B8F] font-bold mb-4 text-center">Services</h3>
                 <p class="text-gray-600 text-center text-lg flex-grow mb-8">
                     Découvrez notre gamme d'accompagnement à domicile : aide aux repas, entretien, et assistance quotidienne.
@@ -79,9 +79,9 @@
                 </div>
             </a>
 
-            <a href="#" class="group w-full bg-white border border-gray-200 flex flex-col p-10 rounded-[2.5rem] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
+            <a href="/front/services/providers.php" class="group w-full bg-white border border-gray-200 flex flex-col p-10 rounded-[2.5rem] shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-[#1C5B8F] group-hover:bg-[#E1AB2B] transition-colors"></div>
-                
+
                 <h3 class="text-3xl text-[#1C5B8F] font-bold mb-4 text-center">Prestataires</h3>
                 <p class="text-gray-600 text-center text-lg flex-grow mb-8">
                     Faites connaissance avec nos professionnels de confiance, rigoureusement sélectionnés pour vous.
@@ -97,4 +97,5 @@
     <?php include("../includes/footer.php") ?>
 
 </body>
+
 </html>
