@@ -282,6 +282,7 @@ func InitDB() {
 		titre VARCHAR(100),
 		note INT,
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
+		categorie ENUM('Service', 'Evenement', 'Prestataire', 'Communication', 'Autre') DEFAULT 'Autre',
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
 	);

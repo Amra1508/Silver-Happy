@@ -492,7 +492,7 @@ var idAbo sql.NullInt64
                     ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
                         Name: stripe.String("Abonnement Silver Happy (" + req.Periode + ")"),
                     },
-                    UnitAmount: stripe.Int64(prixRenouvellement * 100), // Stripe veut des centimes
+                    UnitAmount: stripe.Int64(prixRenouvellement * 100),
                     Recurring: &stripe.CheckoutSessionLineItemPriceDataRecurringParams{
                         Interval: stripe.String(interval),
                     },

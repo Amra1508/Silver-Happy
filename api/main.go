@@ -80,6 +80,8 @@ func main() {
 
 
 	http.HandleFunc("/avis/read", communication.Read_Avis)
+	http.HandleFunc("/avis/read-one/{id}", communication.Read_One_Avis)
+	http.HandleFunc("/avis/create", communication.Create_Avis)
 
 	http.HandleFunc("/prestataires/read", users.Read_Prestataire)
 	http.HandleFunc("/prestataires/create", users.Create_Prestataire)
