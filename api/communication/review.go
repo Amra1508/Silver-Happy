@@ -7,160 +7,212 @@ import (
 	"strings"
 
 	"main/db"
-	"main/models"
 	"main/utils"
 )
 
 func Read_Avis(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") { return }
+	if utils.HandleCORS(response, request, "GET") { return }
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" { fmt.Sscanf(limitStr, "%d", &limit) }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" { fmt.Sscanf(limitStr, "%d", &limit) }
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM AVIS").Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM AVIS").Scan(&total)
 
-    // La requête avec LEFT JOIN
-    querySQL := `
-        SELECT 
-            a.id_avis, a.description, a.titre, a.note, a.date, a.categorie, a.id_prestataire,
-            IFNULL(p.nom, '') as nom_presta, 
-            IFNULL(p.prenom, '') as prenom_presta
-        FROM AVIS a
-        LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
-        ORDER BY a.date DESC
-        LIMIT ? OFFSET ?`
+	querySQL := `
+		SELECT 
+			a.id_avis, a.description, a.titre, a.note, a.date, a.categorie, a.id_prestataire,
+			IFNULL(p.nom, '') as nom_presta, 
+			IFNULL(p.prenom, '') as prenom_presta
+		FROM AVIS a
+		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
+		ORDER BY a.date DESC
+		LIMIT ? OFFSET ?`
 
-    rows, errorFetch := db.DB.Query(querySQL, limit, offset)
-    if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, errorFetch := db.DB.Query(querySQL, limit, offset)
+	if errorFetch != nil {
+		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabAvis []map[string]interface{}
-    for rows.Next() {
-        // On utilise sql.NullInt64 pour id_prestataire car il peut être NULL
-        var id, note int
-        var desc, titre, date, cat, nom, prenom string
-        var idPresta interface{} // On utilise interface{} pour accepter NULL ou INT
+	var tabAvis []map[string]interface{}
+	for rows.Next() {
+		var id, note int
+		var desc, titre, date, cat, nom, prenom string
+		var idPresta interface{}
 
-        // Scan des colonnes
-        if err := rows.Scan(&id, &desc, &titre, &note, &date, &cat, &idPresta, &nom, &prenom); err != nil {
-            fmt.Println("Erreur Scan:", err) // Pour debug si besoin
-            continue 
-        }
+		if err := rows.Scan(&id, &desc, &titre, &note, &date, &cat, &idPresta, &nom, &prenom); err != nil {
+			continue 
+		}
 
-        tabAvis = append(tabAvis, map[string]interface{}{
-            "id_avis":            id,
-            "description":        desc,
-            "titre":              titre,
-            "note":               note,
-            "date":               date,
-            "categorie":          cat,
-            "id_prestataire":     idPresta,
-            "nom_prestataire":    nom,
-            "prenom_prestataire": prenom,
-        })
-    }
+		tabAvis = append(tabAvis, map[string]interface{}{
+			"id_avis":            id,
+			"description":        desc,
+			"titre":              titre,
+			"note":               note,
+			"date":               date,
+			"categorie":          cat,
+			"id_prestataire":     idPresta,
+			"nom_prestataire":    nom,
+			"prenom_prestataire": prenom,
+		})
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        tabAvis,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        tabAvis,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Read_One_Avis(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") { return }
 
-    id := request.PathValue("id")
+	id := request.PathValue("id")
 
-    sqlQuery := `
-        SELECT 
-            a.id_avis, a.description, a.titre, a.note, a.date, a.categorie, a.id_prestataire,
-            IFNULL(p.nom, '') as nom_presta, 
-            IFNULL(p.prenom, '') as prenom_presta
-        FROM AVIS a
-        LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
-        WHERE a.id_avis = ?`
+	sqlQuery := `
+		SELECT 
+			a.id_avis, a.description, a.titre, a.note, a.date, a.categorie, a.id_prestataire,
+			IFNULL(p.nom, '') as nom_presta, IFNULL(p.prenom, '') as prenom_presta
+		FROM AVIS a
+		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
+		WHERE a.id_avis = ?`
 
-    var idAvis, note int
-    var desc, titre, date, cat, nom, prenom string
-    var idPresta interface{}
+	var idAvis, note int
+	var desc, titre, date, cat, nom, prenom string
+	var idPresta interface{}
 
-    err := db.DB.QueryRow(sqlQuery, id).Scan(
-        &idAvis, &desc, &titre, &note, &date, &cat, &idPresta, &nom, &prenom,
-    )
-    
-    if err != nil {
-        http.Error(response, "Avis non trouvé", http.StatusNotFound)
-        return
-    }
+	err := db.DB.QueryRow(sqlQuery, id).Scan(&idAvis, &desc, &titre, &note, &date, &cat, &idPresta, &nom, &prenom)
+	if err != nil {
+		http.Error(response, "Avis non trouvé", http.StatusNotFound)
+		return
+	}
 
-    avisMap := map[string]interface{}{
-        "id_avis":            idAvis,
-        "description":        desc,
-        "titre":              titre,
-        "note":               note,
-        "date":               date,
-        "categorie":          cat,
-        "id_prestataire":     idPresta,
-        "nom_prestataire":    nom,
-        "prenom_prestataire": prenom,
-    }
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"id_avis": idAvis, "description": desc, "titre": titre, "note": note,
+		"date": date, "categorie": cat, "id_prestataire": idPresta,
+		"nom_prestataire": nom, "prenom_prestataire": prenom,
+	})
+}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(avisMap)
+func Read_My_Avis(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") { return }
+
+	userID := request.PathValue("id")
+
+	query := `
+		SELECT a.id_avis, a.description, a.titre, a.note, a.date, a.categorie,
+				IFNULL(p.nom, '') as nom_p, IFNULL(p.prenom, '') as prenom_p
+		FROM AVIS a
+		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
+		WHERE a.id_utilisateur = ?
+		ORDER BY a.date DESC`
+
+	rows, err := db.DB.Query(query, userID)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var reviews []map[string]interface{}
+	for rows.Next() {
+		var id, note int
+		var desc, titre, date, cat, nomP, prenomP string
+		rows.Scan(&id, &desc, &titre, &note, &date, &cat, &nomP, &prenomP)
+		reviews = append(reviews, map[string]interface{}{
+			"id_avis": id, "titre": titre, "description": desc, "note": note,
+			"date": date, "categorie": cat, "prestataire": prenomP + " " + nomP,
+		})
+	}
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(reviews)
 }
 
 func Create_Avis(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") {
+    if utils.HandleCORS(response, request, "POST") { return }
+
+    var data map[string]interface{}
+    if err := json.NewDecoder(request.Body).Decode(&data); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+    titre := strings.TrimSpace(fmt.Sprintf("%v", data["titre"]))
+    description := strings.TrimSpace(fmt.Sprintf("%v", data["description"]))
+    categorie := strings.TrimSpace(fmt.Sprintf("%v", data["categorie"]))
+    
+    note, _ := data["note"].(float64)
+    idUser, _ := data["id_utilisateur"].(float64)
+
+    var idPresta interface{}
+    if val, ok := data["id_prestataire"]; ok && val != nil {
+        idPresta, _ = val.(float64)
+    } else {
+        idPresta = nil
+    }
+
+    _, err := db.DB.Exec("INSERT INTO AVIS (description, titre, note, categorie, id_prestataire, id_utilisateur) VALUES (?, ?, ?, ?, ?, ?)", 
+        description, titre, int(note), categorie, idPresta, int(idUser))
+    
+    if err != nil {
+        fmt.Println("Erreur SQL:", err)
+        http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
+        return
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    response.WriteHeader(http.StatusCreated)
+    json.NewEncoder(response).Encode(map[string]interface{}{"status": "success"})
+}
+
+func Update_Avis(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "PUT") { return }
+
+	idAvis := request.PathValue("id")
+
+	var data map[string]interface{}
+	json.NewDecoder(request.Body).Decode(&data)
+
+	query := "UPDATE AVIS SET titre=?, description=?, note=?, categorie=? WHERE id_avis=? AND id_utilisateur=?"
+	_, err := db.DB.Exec(query, data["titre"], data["description"], data["note"], data["categorie"], idAvis, data["id_utilisateur"])
+
+	if err != nil {
+		http.Error(response, "Erreur modification", http.StatusInternalServerError)
 		return
 	}
+	json.NewEncoder(response).Encode(map[string]string{"message": "Avis mis à jour"})
+}
 
-	var avis models.Avis
-	if err := json.NewDecoder(request.Body).Decode(&avis); err != nil {
-		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+func Dlete_Avis(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "DELETE") { return }
+
+	idAvis := request.PathValue("id")
+	idUser := request.URL.Query().Get("user_id") 
+
+	query := "DELETE FROM AVIS WHERE id_avis = ? AND id_utilisateur = ?"
+	_, err := db.DB.Exec(query, idAvis, idUser)
+
+	if err != nil {
+		http.Error(response, "Erreur suppression", http.StatusInternalServerError)
 		return
 	}
-
-	avis.Titre = strings.TrimSpace(avis.Titre)
-	avis.Description = strings.TrimSpace(avis.Description)
-	avis.Categorie = strings.TrimSpace(avis.Categorie)
-
-	if avis.Titre == "" || avis.Description == "" || avis.Categorie == "" {
-		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
-		return
-	}
-
-	res, errorCreate := db.DB.Exec("INSERT INTO AVIS (description, titre, note, categorie, id_prestataire) VALUES (?, ?, ?, ?, ?)", avis.Description, avis.Titre, avis.Note, avis.Categorie, avis.Prestataire)
-	if errorCreate != nil {
-		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
-		return
-	}
-
-	id, _ := res.LastInsertId()
-	avis.ID = id
-
-	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(http.StatusCreated)
-	json.NewEncoder(response).Encode(avis)
+	json.NewEncoder(response).Encode(map[string]string{"message": "Avis supprimé"})
 }

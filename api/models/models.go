@@ -142,6 +142,7 @@ type Avis struct {
 	Note   		int64  `json:"note"`
 	Categorie   string  `json:"categorie"`
 	Prestataire *int64  `json:"id_prestataire"`
+	Utilisateur int64  `json:"id_utilisateur"`
 }
 
 type Planning struct {

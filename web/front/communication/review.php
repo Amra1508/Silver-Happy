@@ -38,9 +38,15 @@ $is_logged_in = isset($_COOKIE['session_token']);
             </p>
 
             <?php if ($is_logged_in): ?>
-                <button onclick="toggleModal(true)" class="rounded-full px-8 py-3 bg-[#E1AB2B] font-bold text-white hover:bg-[#1C5B8F] transition-all shadow-lg transform hover:scale-105">
-                    Laisser mon avis
-                </button>
+                <div class="flex justify-center items-center gap-4">
+                    <button onclick="toggleModal(true)" class="rounded-full px-8 py-3 bg-[#E1AB2B] font-bold text-white hover:bg-[#1C5B8F] transition-all shadow-lg transform hover:scale-105">
+                        Laisser mon avis
+                    </button>
+
+                    <a href="/front/communication/my_reviews.php" class="rounded-full px-8 py-3 border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-all shadow-md transform hover:scale-105">
+                        Voir mes avis
+                    </a>
+                </div>
             <?php endif; ?>
         </div>
 
@@ -150,15 +156,28 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         async function submitAvis(event) {
             event.preventDefault();
+
+            // Récupération de l'ID utilisateur (on vérifie s'il existe)
+            const userId = window.currentUserId;
+
+            if (!userId) {
+                alert("Session expirée ou utilisateur non reconnu. Reconnectez-vous.");
+                return;
+            }
+
             const idPresta = document.getElementById('review-id-prestataire').value;
             const categorie = document.getElementById('review-categorie').value;
+
             const data = {
                 titre: document.getElementById('review-titre').value,
                 description: document.getElementById('review-desc').value,
                 note: parseInt(document.getElementById('review-note').value),
                 categorie: categorie,
-                id_prestataire: (categorie === "Prestataire" && idPresta) ? parseInt(idPresta) : null
+                // Si c'est pas un prestataire, on envoie strictement null
+                id_prestataire: (categorie === "Prestataire" && idPresta) ? parseInt(idPresta) : null,
+                id_utilisateur: parseInt(userId)
             };
+
             try {
                 const response = await fetch(`${API_BASE}/avis/create`, {
                     method: 'POST',
@@ -167,13 +186,17 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     },
                     body: JSON.stringify(data)
                 });
+
                 if (response.ok) {
                     alert("Avis publié avec succès !");
                     toggleModal(false);
                     fetchAvis(1);
+                } else {
+                    const errorText = await response.text();
+                    alert("Erreur serveur : " + errorText);
                 }
             } catch (err) {
-                alert("Erreur serveur.");
+                alert("Impossible de joindre le serveur.");
             }
         }
 

@@ -266,8 +266,10 @@ func InitDB() {
 		note INT,
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		categorie ENUM('Service', 'Evenement', 'Prestataire', 'Communication', 'Autre') DEFAULT 'Autre',
-		id_prestataire INT NOT NULL,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
+		id_prestataire INT,
+		id_utilisateur INT NOT NULL,
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
 	CREATE TABLE IF NOT EXISTS FACTURE(
 		id_facture INT AUTO_INCREMENT PRIMARY KEY,
