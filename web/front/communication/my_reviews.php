@@ -1,6 +1,5 @@
 <?php
 $is_logged_in = isset($_COOKIE['session_token']);
-// Si pas connecté, redirection ou message d'erreur
 if (!$is_logged_in) {
     header("Location: /front/account/signin.php");
     exit();
@@ -42,9 +41,13 @@ if (!$is_logged_in) {
                     <h2 class="text-4xl font-bold text-[#1C5B8F]">Mes avis publiés</h2>
                     <p class="text-gray-600 mt-2">Gérez vos retours d'expérience et aidez la communauté.</p>
                 </div>
-                <a href="review.php" class="text-[#1C5B8F] font-bold hover:underline flex items-center gap-2">
-                    ← Retour à tous les avis
-                </a>
+                <div class="p-3 flex justify-between items-center mb-6">
+                    <a href="/front/communication/review.php">
+                        <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
+                            <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir aux avis
+                        </button>
+                    </a>
+                </div>
             </div>
         </div>
 

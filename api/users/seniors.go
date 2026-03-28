@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -360,26 +361,70 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 	}
 	id := request.PathValue("id")
 
+	tx, err := db.DB.Begin()
+	if err != nil {
+		http.Error(response, "Erreur serveur (Transaction)", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
 	var idPlanning, idAdresse int
-
-	db.DB.QueryRow("SELECT id_planning, id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&idPlanning, &idAdresse)
-
-	_, errMsg := db.DB.Exec("DELETE FROM MESSAGE_ADMIN WHERE id_utilisateur1 = ? OR id_utilisateur2 = ?", id, id)
-	if errMsg != nil {
-		http.Error(response, "Erreur lors de la suppression des messages de l'utilisateur", http.StatusInternalServerError)
+	err = tx.QueryRow("SELECT id_planning, id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&idPlanning, &idAdresse)
+	if err != nil {
+		http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
 		return
 	}
 
-	_, err := db.DB.Exec("DELETE FROM UTILISATEUR WHERE id_utilisateur = ?", id)
+	_, err = tx.Exec("DELETE FROM LIGNE_COMMANDE WHERE id_commande IN (SELECT id_commande FROM COMMANDE WHERE id_utilisateur = ?)", id)
+	if err != nil { log.Println("Erreur LIGNE_COMMANDE:", err); return }
+
+	queries := []string{
+		"DELETE FROM COMMANDE WHERE id_utilisateur = ?",
+		"DELETE FROM PANIER WHERE id_utilisateur = ?",
+		"DELETE FROM RECEPTION WHERE id_utilisateur = ?",
+		"DELETE FROM LIKE_CONSEIL WHERE id_utilisateur = ?",
+		"DELETE FROM INSCRIPTION WHERE id_utilisateur = ?",
+		"DELETE FROM MESSAGE_PRESTATAIRE WHERE id_utilisateur = ?",
+		"DELETE FROM RESERVATION_SERVICE WHERE id_utilisateur = ?",
+		"DELETE FROM DOCUMENT_UTILISATEUR WHERE id_utilisateur = ?",
+		"DELETE FROM AVIS WHERE id_utilisateur = ?",
+		"DELETE FROM DEVIS WHERE id_utilisateur = ?",
+		"DELETE FROM RESERVE WHERE id_utilisateur = ?",
+	}
+
+	for _, query := range queries {
+		_, err = tx.Exec(query, id)
+		if err != nil {
+			log.Printf("Erreur sur la requête %s : %v", query, err)
+			http.Error(response, "Erreur lors du nettoyage des données", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	_, err = tx.Exec("DELETE FROM MESSAGE_ADMIN WHERE id_utilisateur1 = ? OR id_utilisateur2 = ?", id, id)
+	if err != nil { log.Println("Erreur MESSAGE_ADMIN:", err); return }
+
+	_, err = tx.Exec("DELETE FROM UTILISATEUR WHERE id_utilisateur = ?", id)
 	if err != nil {
 		http.Error(response, "Erreur lors de la suppression de l'utilisateur", http.StatusInternalServerError)
 		return
 	}
 
-	db.DB.Exec("DELETE FROM PLANNING WHERE id_planning = ?", idPlanning)
-	db.DB.Exec("DELETE FROM ADRESSE WHERE id_adresse = ?", idAdresse)
+	if idPlanning != 0 {
+		_, err = tx.Exec("DELETE FROM PLANNING WHERE id_planning = ?", idPlanning)
+	}
+	if idAdresse != 0 {
+		_, err = tx.Exec("DELETE FROM ADRESSE WHERE id_adresse = ?", idAdresse)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		http.Error(response, "Erreur lors de la validation finale", http.StatusInternalServerError)
+		return
+	}
 
 	response.WriteHeader(http.StatusNoContent)
+	fmt.Println("Utilisateur", id, "et toutes ses traces ont été désintégrés avec succès.")
 }
 
 func Ban_User(response http.ResponseWriter, request *http.Request) {

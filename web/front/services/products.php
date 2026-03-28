@@ -57,7 +57,6 @@
 
         window.addEventListener('auth_ready', () => {
             fetchProduits();
-            setInterval(fetchProduits, 2000);
         });
 
         async function fetchProduits(page = 1) {

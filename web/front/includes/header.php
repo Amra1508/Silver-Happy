@@ -3,7 +3,7 @@
         <?php include("front.css") ?>
     </style>
 
-    <div class="bg-[#E1AB2B]/60 py-2 px-6 flex justify-end gap-4">
+    <div class="bg-[#E1AB2B]/60 py-2 px-6 flex justify-end gap-4 items-center">
         <?php if (isset($_COOKIE['session_token'])): ?>
             <button id="btn_logout" class="header-button" data-i18n="nav_logout">Déconnexion</button>
             <a href="/front/account/profile.php">
@@ -18,9 +18,11 @@
             </a>
         <?php endif; ?>
 
-        <button class="border border-[#AA1114] text-[#AA1114] px-4 py-1 rounded-full text-xl font-semibold hover:bg-[#AA1114] hover:text-white" data-i18n="nav_emergency">Urgence</button>
+        <button id="btn_urgence" class="bg-red-600 text-white px-4 py-1.5 rounded-full font-bold ml-2 hover:bg-red-700">
+            Urgence
+        </button>
 
-        <button onclick="toggleZoom()" class="header-button transition-all group" title="Modifier la taille du texte">
+        <button onclick="toggleZoom()" class="header-button transition-all group ml-2" title="Modifier la taille du texte">
             <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
 
@@ -30,10 +32,10 @@
                 <img src="/front/icons/dropdown.svg" alt="dropdown" class="w-5 h-5 object-contain transition-all group-hover:brightness-0 group-hover:invert">
             </button>
             <div class="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg hidden group-hover:block overflow-hidden border border-gray-100">
-                <button onclick="changeLanguage('fr')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white transition-colors">
+                <button onclick="changeLanguage('fr')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white">
                     <img src="/front/icons/france.png" class="h-4 w-4"> Français
                 </button>
-                <button onclick="changeLanguage('en')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white transition-colors">
+                <button onclick="changeLanguage('en')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white">
                     <img src="/front/icons/angleterre.png" class="h-4 w-4"> English
                 </button>
             </div>
@@ -55,136 +57,101 @@
             <input type="text"
                 data-i18n-placeholder="nav_search"
                 placeholder="Rechercher..."
-                class="focus:outline-none w-full border border-[#1C5B8F] rounded-full px-6 py-2 
-                      hover:placeholder:text-[#E1AB2B] hover:border-[#E1AB2B] focus:placeholder:text-[#E1AB2B] focus:border-[#E1AB2B] 
-                      placeholder:text-[#1C5B8F] placeholder:text-2xl placeholder:font-medium lg:placeholder:text-3xl text-xl">
+                class="focus:outline-none w-full border border-[#1C5B8F] rounded-full px-6 py-2 hover:border-[#E1AB2B] focus:border-[#E1AB2B] placeholder:text-[#1C5B8F] text-xl">
+        </div>
+    </div>
+
+    <div id="modal_urgence" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-lg w-full max-w-md border-2 border-red-500 text-center">
+            <h2 class="text-2xl font-bold text-red-600 mb-2">Besoin d'aide ?</h2>
+            <p class="mb-6 text-gray-600">Appelez les secours immédiatement :</p>
+            
+            <div class="flex flex-col gap-3">
+                <a href="tel:15" class="bg-blue-100 border border-blue-400 text-blue-800 text-xl font-bold py-3 rounded hover:bg-blue-200">
+                    🚑 15 - SAMU
+                </a>
+                <a href="tel:18" class="bg-red-100 border border-red-400 text-red-800 text-xl font-bold py-3 rounded hover:bg-red-200">
+                    🚒 18 - Pompiers
+                </a>
+                <a href="tel:112" class="bg-gray-100 border border-gray-400 text-gray-800 text-xl font-bold py-3 rounded hover:bg-gray-200">
+                    📞 112 - Urgences
+                </a>
+            </div>
+
+            <button id="btn_fermer_urgence" class="mt-6 px-6 py-2 bg-gray-200 text-gray-800 rounded font-bold hover:bg-gray-300">
+                Annuler
+            </button>
         </div>
     </div>
 
     <script>
         const zoomLevels = [1, 1.2, 1.4];
         let currentZoomIndex = 0;
-
         function toggleZoom() {
-            currentZoomIndex++;
-            if (currentZoomIndex >= zoomLevels.length) {
-                currentZoomIndex = 0;
-            }
-            applyZoom(zoomLevels[currentZoomIndex]);
-        }
-
-        function applyZoom(level) {
-            document.body.style.zoom = level;
-            if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-                document.body.style.transform = `scale(${level})`;
-                document.body.style.transformOrigin = 'top left';
-                document.body.style.width = `${100 / level}%`;
-            }
+            currentZoomIndex = (currentZoomIndex + 1) % zoomLevels.length;
+            document.body.style.zoom = zoomLevels[currentZoomIndex];
         }
 
         async function changeLanguage(lang) {
             localStorage.setItem('user_lang', lang);
             document.documentElement.lang = lang;
-
             const flagImg = document.getElementById('current-lang-flag');
-            if (flagImg) {
-                flagImg.src = lang === 'fr' ? '/front/icons/france.png' : '/front/icons/angleterre.png';
-            }
+            if (flagImg) flagImg.src = lang === 'fr' ? '/front/icons/france.png' : '/front/icons/angleterre.png';
 
             try {
                 const response = await fetch(`/locales/${lang}.json`);
-
-                if (!response.ok && lang === 'fr') {
-                    location.reload();
-                    return;
-                }
-                if (!response.ok) throw new Error(`Fichier ${lang}.json introuvable.`);
-
+                if (!response.ok && lang === 'fr') return location.reload();
                 const translations = await response.json();
 
                 document.querySelectorAll('[data-i18n]').forEach(el => {
-                    const key = el.getAttribute('data-i18n');
-                    if (translations[key]) el.innerHTML = translations[key];
+                    if (translations[el.dataset.i18n]) el.innerHTML = translations[el.dataset.i18n];
                 });
-
                 document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                    const key = el.getAttribute('data-i18n-placeholder');
-                    if (translations[key]) el.placeholder = translations[key];
+                    if (translations[el.dataset.i18nPlaceholder]) el.placeholder = translations[el.dataset.i18nPlaceholder];
                 });
-
-            } catch (error) {
-                console.error("Erreur de traduction :", error);
-            }
+            } catch (err) { console.error(err); }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-
             const savedLang = localStorage.getItem('user_lang');
-            if (savedLang && savedLang !== 'fr') {
-                changeLanguage(savedLang);
+            if (savedLang && savedLang !== 'fr') changeLanguage(savedLang);
+
+            const btnUrgence = document.getElementById('btn_urgence');
+            const modalUrgence = document.getElementById('modal_urgence');
+            const btnFermer = document.getElementById('btn_fermer_urgence');
+
+            if(btnUrgence && modalUrgence && btnFermer) {
+                btnUrgence.addEventListener('click', () => {
+                    modalUrgence.classList.remove('hidden');
+                });
+                btnFermer.addEventListener('click', () => {
+                    modalUrgence.classList.add('hidden');
+                });
             }
 
             const btnLogout = document.getElementById('btn_logout');
-
             if (btnLogout) {
                 btnLogout.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        const response = await fetch('http://localhost:8082/auth/logout', {
-                            method: 'POST',
-                            credentials: 'include'
-                        });
-
-                        if (response.ok) {
-                            window.location.href = "/front/index.php";
-                        } else {
-                            alert("Erreur lors de la déconnexion.");
-                        }
-                    } catch (error) {
-                        console.error("Erreur réseau lors de la déconnexion :", error);
-                    }
+                        const res = await fetch('http://localhost:8082/auth/logout', { method: 'POST', credentials: 'include' });
+                        if (res.ok) window.location.href = "/front/index.php";
+                    } catch (err) { console.error(err); }
                 });
             }
 
             try {
-                const response = await fetch('http://localhost:8082/auth/me', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include'
-                });
-
-                if (!response.ok) {
-                    throw new Error("Utilisateur non connecté ou session invalide");
-                }
-
-                const user = await response.json();
-
-                if (user.statut === 'admin') {
-                    window.location.href = "../../back/dashboard.php";
-                    return;
-                }
-
-                if (user.statut === 'banni') {
-                    window.location.href = "/front/ban.php";
-                    return;
-                }
+                const res = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
+                if (!res.ok) return;
+                
+                const user = await res.json();
+                if (user.statut === 'admin') return window.location.href = "../../back/dashboard.php";
+                if (user.statut === 'banni') return window.location.href = "/front/ban.php";
 
                 window.userData = user;
-
                 window.currentUserId = user.id;
-                window.isSubscribed = (user.id_abonnement !== null && user.id_abonnement !== undefined && user.id_abonnement !== 0);
                 window.dispatchEvent(new Event('auth_ready'));
-
-                const nameDisplay = document.getElementById('header-user-name');
-                if (nameDisplay) {
-                    nameDisplay.textContent = `${user.prenom} ${user.nom.toUpperCase()}`;
-                }
-
-            } catch (error) {
-                console.error("Erreur d'authentification :", error);
-            }
+            } catch (err) { console.error(err); }
         });
     </script>
 </header>
