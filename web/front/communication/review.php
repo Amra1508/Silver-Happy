@@ -26,87 +26,79 @@ $is_logged_in = isset($_COOKIE['session_token']);
     </script>
 </head>
 
-<body>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
     <?php include("../includes/header.php") ?>
-    <main class="p-8 bg-white">
-        <div class="max-w-6xl mx-auto">
+
+    <main class="flex-1 relative">
+        <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
+            <h2 class="text-4xl font-bold mb-4 text-[#1C5B8F]">Avis de la communauté</h2>
+            <p class="text-lg max-w-4xl mx-auto text-gray-600 mb-8">
+                Découvrez les retours d'expérience de nos membres ou partagez le vôtre pour aider la communauté.
+            </p>
+
             <?php if ($is_logged_in): ?>
-                <div class="max-w-6xl mx-auto px-4">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-gray-200">
-                        <h1 class="big-text text-center">Liste des avis</h1>
-                        <button onclick="toggleModal(true)" class="rounded-full px-6 py-3 bg-[#E1AB2B] font-semibold text-xl text-white hover:bg-[#1C5B8F] transition-colors">
-                            Laisser mon avis
-                        </button>
-                    </div>
-                    <div id="list-review" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 items-stretch">
-
-                    </div>
-
-                    <div id="pagination-controls"></div>
-                </div>
-                <div id="modal-review" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div class="add-modal">
-                        <button onclick="toggleModal(false)" class="absolute top-4 right-6 text-2xl text-gray-400 hover:text-red-500">&times;</button>
-
-                        <h2 class="text-2xl font-bold text-[#1C5B8F] mb-6">Votre avis nous intéresse</h2>
-
-                        <form id="form-review" onsubmit="submitAvis(event)" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Catégorie</label>
-                                <select id="review-categorie" onchange="handleCategoryChange()" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
-                                    <option value="Service">Service</option>
-                                    <option value="Evènement">Evènement</option>
-                                    <option value="Prestataire">Prestataire</option>
-                                    <option value="Autre">Autre</option>
-                                </select>
-                            </div>
-
-                            <div id="prestataire-selection" class="hidden mt-4">
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Nom du Prestataire</label>
-                                <select id="review-id-prestataire" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
-                                    <option value="">Sélectionner un prestataire</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Titre</label>
-                                <input type="text" id="review-titre" required placeholder="ex.Sortie au Louvre"
-                                    class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Note (0 à 5)</label>
-                                <input type="number" id="review-note" min="0" max="5" value="5" required
-                                    class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-                                <textarea id="review-desc" rows="4" required
-                                    class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none"></textarea>
-                            </div>
-
-                            <button type="submit" class="w-full bg-[#1C5B8F] text-white font-semibold py-3 rounded-xl hover:bg-[#E1AB2B] transition-all">
-                                Publier l'avis
-                            </button>
-                            <button onclick="toggleModal(false)" class="w-full bg-[#1C5B8F] text-white font-semibold py-3 rounded-xl hover:bg-[#E1AB2B] transition-all">
-                                Annuler
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <?php else: ?>
-                <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
-                    <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
-                        Vous devez être connecté(e) pour consulter les avis des autres adhérents.</p>
-                    <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
-                        Je me connecte
-                    </a>
-                </div>
+                <button onclick="toggleModal(true)" class="rounded-full px-8 py-3 bg-[#E1AB2B] font-bold text-white hover:bg-[#1C5B8F] transition-all shadow-lg transform hover:scale-105">
+                    Laisser mon avis
+                </button>
             <?php endif; ?>
         </div>
 
+        <?php if ($is_logged_in): ?>
+            <div id="list-review" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
+            </div>
+
+            <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
+
+            <div id="modal-review" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-[2rem] p-8 max-w-lg w-full relative shadow-2xl">
+                    <button onclick="toggleModal(false)" class="absolute top-4 right-6 text-2xl text-gray-400 hover:text-red-500">&times;</button>
+                    <h2 class="text-2xl font-bold text-[#1C5B8F] mb-6">Votre avis nous intéresse</h2>
+                    <form id="form-review" onsubmit="submitAvis(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Catégorie</label>
+                            <select id="review-categorie" onchange="handleCategoryChange()" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 outline-none focus:border-[#1C5B8F]">
+                                <option value="Service">Service</option>
+                                <option value="Evènement">Evènement</option>
+                                <option value="Prestataire">Prestataire</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                        <div id="prestataire-selection" class="hidden mt-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nom du Prestataire</label>
+                            <select id="review-id-prestataire" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
+                                <option value="">Sélectionner un prestataire</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Titre</label>
+                            <input type="text" id="review-titre" required placeholder="ex. Sortie au Louvre" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Note (0 à 5)</label>
+                            <input type="number" id="review-note" min="0" max="5" value="5" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                            <textarea id="review-desc" rows="4" required class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-[#1C5B8F] text-white font-semibold py-3 rounded-xl hover:bg-[#E1AB2B] transition-all">Publier l'avis</button>
+                    </form>
+                </div>
+            </div>
+
+        <?php else: ?>
+            <div class="flex flex-col items-center justify-center py-20 mx-16 bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/10">
+                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
+                    Vous devez être connecté(e) pour consulter les avis.
+                </p>
+                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white font-bold hover:bg-[#E1AB2B] transition-all" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
+                    Je me connecte
+                </a>
+            </div>
+        <?php endif; ?>
     </main>
+
     <?php include("../includes/footer.php") ?>
 
     <script>
@@ -116,9 +108,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         function toggleModal(show) {
             const modal = document.getElementById('modal-review');
-            if (show) {
-                modal.classList.remove('hidden');
-            } else {
+            if (show) modal.classList.remove('hidden');
+            else {
                 modal.classList.add('hidden');
                 document.getElementById('form-review').reset();
             }
@@ -128,34 +119,27 @@ $is_logged_in = isset($_COOKIE['session_token']);
             try {
                 const response = await fetch(`${API_BASE}/prestataires/read?limit=500&status=valide`);
                 const result = await response.json();
-
-                const prestataires = result.data || [];
                 const select = document.getElementById('review-id-prestataire');
-
                 select.innerHTML = '<option value="">Sélectionner un prestataire</option>';
-
-                prestataires.forEach(p => {
-                    const option = document.createElement('option');
-
+                (result.data || []).forEach(p => {
                     const id = p.id_prestataire || p.ID || p.id;
                     const nom = p.nom || p.Nom || '';
                     const prenom = p.prenom || p.Prenom || '';
-
                     if (id) {
+                        const option = document.createElement('option');
                         option.value = id;
                         option.textContent = `${prenom} ${nom}`.trim();
                         select.appendChild(option);
                     }
                 });
             } catch (err) {
-                console.error("Erreur chargement prestataires:", err);
+                console.error(err);
             }
         }
 
         function handleCategoryChange() {
             const categorie = document.getElementById('review-categorie').value;
             const div = document.getElementById('prestataire-selection');
-
             if (categorie === "Prestataire") {
                 div.classList.remove('hidden');
                 loadPrestataires();
@@ -166,10 +150,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         async function submitAvis(event) {
             event.preventDefault();
-
             const idPresta = document.getElementById('review-id-prestataire').value;
             const categorie = document.getElementById('review-categorie').value;
-
             const data = {
                 titre: document.getElementById('review-titre').value,
                 description: document.getElementById('review-desc').value,
@@ -177,7 +159,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 categorie: categorie,
                 id_prestataire: (categorie === "Prestataire" && idPresta) ? parseInt(idPresta) : null
             };
-
             try {
                 const response = await fetch(`${API_BASE}/avis/create`, {
                     method: 'POST',
@@ -186,30 +167,20 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     },
                     body: JSON.stringify(data)
                 });
-
                 if (response.ok) {
                     alert("Avis publié avec succès !");
                     toggleModal(false);
                     fetchAvis(1);
-                } else {
-                    const error = await response.text();
-                    alert("Erreur : " + error);
                 }
             } catch (err) {
-                console.error(err);
-                alert("Impossible de contacter le serveur.");
+                alert("Erreur serveur.");
             }
         }
 
         function formatDisplayDate(dateStr) {
             if (!dateStr) return "Date inconnue";
-
-            const safeDateStr = String(dateStr).replace(' ', 'T');
-            const d = new Date(safeDateStr);
-
-            if (isNaN(d)) return "Date invalide";
-
-            return d.toLocaleDateString('fr-FR', {
+            const d = new Date(dateStr.replace(' ', 'T'));
+            return isNaN(d) ? "Date invalide" : d.toLocaleDateString('fr-FR', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'
@@ -220,76 +191,74 @@ $is_logged_in = isset($_COOKIE['session_token']);
             try {
                 currentPage = page;
                 const response = await fetch(`${API_BASE}/avis/read?page=${currentPage}&limit=${limit}`);
-
-                if (!response.ok) throw new Error("Erreur de récupération des données");
-
                 const result = await response.json();
                 const avis = result.data || [];
                 const container = document.getElementById('list-review');
                 container.innerHTML = '';
 
-                if (avis.length === 0) {
-                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun avis disponible pour le moment.</p>';
-                    return;
-                }
-
                 avis.forEach(c => {
-                    const id = c.id_avis || c.ID || c.id;
-                    const titre = c.titre || c.Titre || 'Sans titre';
-                    const description = c.description || c.Description || '';
+                    const id = c.id_avis || c.id;
+                    const titre = c.titre || 'Sans titre';
                     const note = c.note || 0;
-                    const categorie = c.categorie || c.Categorie || 'Général';
+                    const stars = "★".repeat(note) + "☆".repeat(5 - note);
+                    const datePub = formatDisplayDate(c.date);
 
-                    const rawDate = c.Date || c.date;
-                    const datePub = formatDisplayDate(rawDate);
+                    const fullNom = `${c.prenom_prestataire || ''} ${c.nom_prestataire || ''}`.trim();
+
+                    const labelPrestataire = (c.categorie === "Prestataire" && fullNom !== "") ?
+                        `<div class="flex items-center gap-2 mb-2">
+                            <span class="text-[11px] font-bold text-[#1C5B8F] bg-blue-50 px-2 py-0.5 rounded">${fullNom}</span>
+                        </div>` :
+                        "";
 
                     container.innerHTML += `
-                        <div class="bg-white border-l-8 border-[#1C5B8F] rounded-xl shadow-md p-6 flex flex-col hover:shadow-xl transition-all h-full">
-                            <div class="flex justify-between items-start mb-3">
-                                <span class="text-[#E1AB2B] border border-[#E1AB2B] text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                                    ${"★".repeat(note)}${"☆".repeat(5 - note)}
+                        <div class="w-[380px] bg-white border border-gray-100 flex flex-col p-8 rounded-[2.5rem] shadow-xl hover:-translate-y-2 transition-all relative">
+                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
+                            
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                    ${c.categorie || 'Général'}
                                 </span>
-                                <span class="text-sm text-gray-400 font-semibold">${datePub}</span>
+                                <span class="text-[11px] text-gray-400 font-bold">${datePub}</span>
                             </div>
-                            
-                            <span class="text-[#1C5B8F] text-xs font-bold uppercase tracking-widest mb-1 italic">
-                                ${categorie}
-                            </span>
 
-                            <h3 class="text-2xl text-[#1C5B8F] font-bold mb-4 leading-snug">${titre}</h3>
-                            <p class="text-gray-600 leading-relaxed flex-grow text-lg mb-4 break-words line-clamp-1">${description}</p>
+                            ${labelPrestataire}
+
+                            <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2 leading-tight">${titre}</h3>
+                            <div class="text-[#E1AB2B] text-lg mb-4">${stars}</div>
                             
-                            <a href="detail_review.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2 mt-auto pt-4">
-                                    Lire la suite <span class="text-xl">→</span>
-                            </a>
+                            <p class="text-gray-500 mb-8 flex-grow leading-relaxed line-clamp-1 italic">
+                                "${c.description || ''}"
+                            </p>
+                            
+                            <div class="mt-auto pt-4 border-t border-gray-50">
+                                <a href="detail_review.php?id=${id}" class="inline-flex items-center text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors group">
+                                    Lire le témoignage <span class="ml-2 transition-transform group-hover:translate-x-1">→</span>
+                                </a>
+                            </div>
                         </div>
                     `;
                 });
-
                 renderPagination(result.totalPages);
             } catch (err) {
                 console.error(err);
-                document.getElementById('list-review').innerHTML = `
-                    <div class="w-full text-center py-10">
-                        <p class="text-xl text-red-500 font-bold">Impossible de charger les avis.</p>
-                        <p class="text-gray-500 mt-2">Veuillez vérifier votre connexion au serveur.</p>
-                    </div>`;
             }
         }
 
         function renderPagination(totalPages) {
-            const paginationContainer = document.getElementById('pagination-controls');
-            paginationContainer.innerHTML = '';
-
+            const container = document.getElementById('pagination-controls');
+            container.innerHTML = '';
             if (totalPages <= 1) return;
 
-            const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
-            paginationContainer.innerHTML += `<button onclick="fetchAvis(${currentPage - 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${prevDisabled}" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>`;
+            const btnClass = "px-6 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-all hover:bg-[#1C5B8F] hover:text-white";
 
-            paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F]">${currentPage}</strong> sur ${totalPages}</span>`;
-
-            const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
-            paginationContainer.innerHTML += `<button onclick="fetchAvis(${currentPage + 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${nextDisabled}" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>`;
+            if (currentPage > 1) {
+                container.innerHTML += `<button onclick="fetchAvis(${currentPage - 1})" class="${btnClass}">← Précédent</button>`;
+            }
+            container.innerHTML += `<span class="text-gray-500 font-bold px-4">Page ${currentPage} / ${totalPages}</span>`;
+            if (currentPage < totalPages) {
+                container.innerHTML += `<button onclick="fetchAvis(${currentPage + 1})" class="${btnClass}">Suivant →</button>`;
+            }
         }
 
         window.onload = () => {

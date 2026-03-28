@@ -97,15 +97,6 @@ func InitDB() {
 		description VARCHAR(200),
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
-	CREATE TABLE IF NOT EXISTS CONTIENT_EVENEMENT(
-		id_occurence INT AUTO_INCREMENT PRIMARY KEY,
-		id_evenement INT,
-		id_planning INT,
-		date_debut DATETIME DEFAULT CURRENT_TIMESTAMP,
-		date_fin DATETIME,
-		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement),
-		FOREIGN KEY (id_planning) REFERENCES PLANNING(id_planning)
-	);
 	CREATE TABLE IF NOT EXISTS ABONNEMENT(
 		id_abonnement INT AUTO_INCREMENT PRIMARY KEY,
 		description VARCHAR(200),
@@ -134,14 +125,6 @@ func InitDB() {
 		type_prestation VARCHAR(50),
 		id_abonnement INT,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement)
-	);
-	
-	CREATE TABLE IF NOT EXISTS PRESTATAIRE_EVENEMENT (
-		id_prestataire INT(11) NOT NULL,
-		id_evenement INT(11) NOT NULL,
-		PRIMARY KEY (id_prestataire, id_evenement),
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE,
-		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS UTILISATEUR(
 		id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
@@ -302,25 +285,11 @@ func InitDB() {
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
-	CREATE TABLE IF NOT EXISTS POSTE(
-		id_utilisateur INT,
-		id_avis INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_avis) REFERENCES AVIS(id_avis)
-	);
 	CREATE TABLE IF NOT EXISTS RESERVE(
 		id_utilisateur INT,
 		id_prestation INT,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_prestation) REFERENCES PRESTATION(id_prestation)
-	);
-	CREATE TABLE IF NOT EXISTS CONTIENT(
-		id_service INT,
-		id_prestation INT,
-		id_planning INT,
-		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service),
-		FOREIGN KEY (id_prestation) REFERENCES PRESTATION(id_prestation),
-		FOREIGN KEY (id_planning) REFERENCES PLANNING(id_planning)
 	);
 	CREATE TABLE IF NOT EXISTS NEWSLETTER(
   		id_newsletter INT AUTO_INCREMENT PRIMARY KEY,

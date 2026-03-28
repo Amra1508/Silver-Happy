@@ -31,27 +31,28 @@
 
     <main class="flex-1 relative">
 
-        <div class="w-full px-6 md:px-16 mt-16 mb-8">
+        <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
             <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] leading-tight mb-4">
                 Nos conseils pratiques
             </h1>
-            <p class="text-xl md:text-2xl text-gray-700 max-w-2xl mb-12">
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
                 Découvrez nos astuces, recommandations et guides pour profiter pleinement de chaque instant en toute sérénité.
             </p>
 
-            <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
-                Dernières publications
-            </h2>
+            <div class="flex justify-center">
+                <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
+                    Dernières publications
+                </h2>
+            </div>
         </div>
 
-        <div id="advice-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-16 py-4 overflow-hidden">
-            <div class="w-full text-center py-10 col-span-full">
+        <div id="advice-container" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
+            <div class="w-full text-center py-10">
                 <p class="text-xl text-gray-500 animate-pulse">Chargement de nos conseils...</p>
             </div>
         </div>
 
-        <div id="pagination-controls" class="flex justify-center items-center gap-4 py-12"></div>
-
+        <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
 
     </main>
 
@@ -62,19 +63,15 @@
         let currentPage = 1;
         const limit = 6;
 
-        window.addEventListener('DOMContentLoaded', () => { 
+        window.addEventListener('DOMContentLoaded', () => {
             fetchConseils();
-            setInterval(fetchConseils, 2000);
         });
 
         function formatDisplayDate(dateStr) {
             if (!dateStr) return "Date inconnue";
-
             const safeDateStr = String(dateStr).replace(' ', 'T');
             const d = new Date(safeDateStr);
-
             if (isNaN(d)) return "Date invalide";
-
             return d.toLocaleDateString('fr-FR', {
                 day: 'numeric',
                 month: 'long',
@@ -108,27 +105,33 @@
                     const titre = c.titre || c.Titre || 'Sans titre';
                     const description = c.description || c.Description || '';
                     const categorie = c.categorie || c.Categorie || 'Général';
-
                     const likes = c.likes || 0;
-
                     const rawDate = c.date_publication || c.Date || c.date;
                     const datePub = formatDisplayDate(rawDate);
 
                     container.innerHTML += `
-                        <div class="bg-white border-l-8 border-[#1C5B8F] rounded-xl shadow-md p-6 flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full">
+                        <div class="w-[380px] bg-white border border-gray-100 flex flex-col p-8 rounded-[2.5rem] shadow-xl hover:-translate-y-2 transition-all relative">
+                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
                             
-                            <div class="absolute top-4 right-4 flex items-center gap-1 bg-gray-100 rounded-full px-3 py-1 cursor-default shadow-sm">
-                                <span class="text-red-500 text-lg">❤️</span>
-                                <span class="font-bold text-gray-700">${likes}</span>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                    ${categorie}
+                                </span>
+                                <div class="flex items-center gap-1 text-gray-400 font-bold text-[11px]">
+                                     <span>❤️ ${likes}</span>
+                                </div>
                             </div>
 
-                            <div class="mt-4 flex flex-col flex-grow">
-                                <span class="text-xs font-bold text-[#E1AB2B] uppercase tracking-wider mb-2 block pr-16">${categorie}</span>
-                                <h3 class="text-2xl text-[#1C5B8F] font-bold mb-4 leading-snug pr-10">${titre}</h3>
-                                <p class="text-gray-600 leading-relaxed flex-grow text-lg mb-4 line-clamp-3">${description || "Aucune description disponible."}</p>
-                                
-                                <a href="detail_advice.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2 mt-auto pt-4">
-                                    Lire la suite <span class="text-xl">→</span>
+                            <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2 leading-tight">${titre}</h3>
+                            <p class="text-[11px] text-gray-400 font-bold mb-4 uppercase">${datePub}</p>
+                            
+                            <p class="text-gray-500 mb-8 flex-grow leading-relaxed line-clamp-3">
+                                ${description || "Aucune description disponible."}
+                            </p>
+                            
+                            <div class="mt-auto pt-4 border-t border-gray-50">
+                                <a href="detail_advice.php?id=${id}" class="inline-flex items-center text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors group">
+                                    Lire la suite <span class="ml-2 transition-transform group-hover:translate-x-1">→</span>
                                 </a>
                             </div>
                         </div>
@@ -139,34 +142,29 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('advice-container').innerHTML = `
-                    <div class="w-full text-center py-10 col-span-full">
+                    <div class="w-full text-center py-10">
                         <p class="text-xl text-red-500 font-bold">Impossible de charger les conseils.</p>
-                        <p class="text-gray-500 mt-2">Veuillez vérifier votre connexion au serveur.</p>
+                        <p class="text-gray-500 mt-2">Vérifiez que votre API est bien lancée.</p>
                     </div>`;
             }
         }
 
         function renderPagination(totalPages) {
-            const paginationContainer = document.getElementById('pagination-controls');
-            if (!paginationContainer) return;
-            paginationContainer.innerHTML = '';
-
+            const container = document.getElementById('pagination-controls');
+            if (!container) return;
+            container.innerHTML = '';
             if (totalPages <= 1) return;
 
-            const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
-            paginationContainer.innerHTML += `<button onclick="fetchConseils(${currentPage - 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${prevDisabled}" ${currentPage === 1 ? 'disabled' : ''}>← Précédent</button>`;
+            const btnClass = "px-6 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-all hover:bg-[#1C5B8F] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#1C5B8F]";
 
-            paginationContainer.innerHTML += `<span class="text-gray-500 font-medium px-4">Page <strong class="text-[#1C5B8F]">${currentPage}</strong> sur ${totalPages}</span>`;
+            const prevDisabled = currentPage === 1 ? 'disabled' : '';
+            container.innerHTML += `<button onclick="fetchConseils(${currentPage - 1})" class="${btnClass}" ${prevDisabled}>← Précédent</button>`;
 
-            const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
-            paginationContainer.innerHTML += `<button onclick="fetchConseils(${currentPage + 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${nextDisabled}" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>`;
+            container.innerHTML += `<span class="text-gray-500 font-bold px-4">Page ${currentPage} / ${totalPages}</span>`;
+
+            const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+            container.innerHTML += `<button onclick="fetchConseils(${currentPage + 1})" class="${btnClass}" ${nextDisabled}>Suivant →</button>`;
         }
-
-        window.onload = () => {
-            if (document.getElementById('advice-container')) {
-                fetchConseils(1);
-            }
-        };
     </script>
 </body>
 
