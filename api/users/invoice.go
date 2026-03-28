@@ -10,60 +10,67 @@ import (
 )
 
 func GetUserInvoices(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	userID := request.PathValue("id")
+    userID := request.PathValue("id")
 
-	query := `
-		SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, a.description
-		FROM PAIEMENT p
-		JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
-		JOIN UTILISATEUR u ON u.id_abonnement = a.id_abonnement
-		WHERE u.id_utilisateur = ? AND p.statut = 'valide'
+    query := `
+        SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, a.description
+        FROM PAIEMENT p
+        JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
+        JOIN UTILISATEUR u ON u.id_abonnement = a.id_abonnement
+        WHERE u.id_utilisateur = ? AND p.statut = 'valide'
 
-		UNION ALL
+        UNION ALL
 
-		SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, CONCAT('Inscription : ', e.nom) AS description
-		FROM PAIEMENT p
-		JOIN INSCRIPTION i ON p.id_paiement = i.id_paiement
-		JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
-		WHERE i.id_utilisateur = ? AND p.statut = 'valide'
+        SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, CONCAT('Inscription : ', e.nom) AS description
+        FROM PAIEMENT p
+        JOIN INSCRIPTION i ON p.id_paiement = i.id_paiement
+        JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
+        WHERE i.id_utilisateur = ? AND p.statut = 'valide'
 
-		ORDER BY date_paiement DESC
-	`
+        UNION ALL
 
-	rows, err := db.DB.Query(query, userID, userID)
-	if err != nil {
-		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+        SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, CONCAT('Commande n°', c.id_commande) AS description
+        FROM PAIEMENT p
+        JOIN COMMANDE c ON p.id_paiement = c.id_paiement
+        WHERE c.id_utilisateur = ? AND p.statut = 'valide'
 
-	var factures []map[string]interface{}
-	for rows.Next() {
-		var id int
-		var prix float64
-		var date sql.NullString
-		var url sql.NullString
-		var desc string
+        ORDER BY date_paiement DESC
+    `
 
-		if err := rows.Scan(&id, &prix, &date, &url, &desc); err == nil {
-			factures = append(factures, map[string]interface{}{
-				"id":          id,
-				"montant":     prix,
-				"date":        date.String,
-				"description": desc,
-				"url":         url.String,
-			})
-		}
-	}
+    rows, err := db.DB.Query(query, userID, userID, userID)
+    if err != nil {
+        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-	if factures == nil {
-		factures = []map[string]interface{}{}
-	}
+    var factures []map[string]interface{}
+    for rows.Next() {
+        var id int
+        var prix float64
+        var date sql.NullString
+        var url sql.NullString
+        var desc string
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(factures)
+        if err := rows.Scan(&id, &prix, &date, &url, &desc); err == nil {
+            factures = append(factures, map[string]interface{}{
+                "id":          id,
+                "montant":     prix,
+                "date":        date.String,
+                "description": desc,
+                "url":         url.String,
+            })
+        }
+    }
+
+    if factures == nil {
+        factures = []map[string]interface{}{}
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(factures)
 }
