@@ -63,8 +63,11 @@
         const limit = 6;
 
         window.addEventListener('DOMContentLoaded', () => { 
-            fetchConseils();
-            setInterval(fetchConseils, 2000);
+            fetchConseils(currentPage); 
+            
+            setInterval(() => {
+                fetchConseils(currentPage);
+            }, 2000);
         });
 
         function formatDisplayDate(dateStr) {
@@ -161,12 +164,6 @@
             const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 text-[#1C5B8F]';
             paginationContainer.innerHTML += `<button onclick="fetchConseils(${currentPage + 1})" class="px-4 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-colors ${nextDisabled}" ${currentPage === totalPages ? 'disabled' : ''}>Suivant →</button>`;
         }
-
-        window.onload = () => {
-            if (document.getElementById('advice-container')) {
-                fetchConseils(1);
-            }
-        };
     </script>
 </body>
 
