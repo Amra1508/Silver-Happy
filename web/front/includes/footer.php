@@ -2,8 +2,8 @@
     <div class="flex flex-wrap gap-6 py-10 mt-10 justify-between items-start text-center bg-[#1C5B8F] font-semibold">
         <div class="flex-1 justify-center min-w-[300px] space-y-10">
             <h3 class="font-bold text-3xl text-[#E1AB2B]">Silver Happy</h3>
-            <a href="#" class="footer-text" data-i18n="footer_about">A propos</a><br>
-            <a href="#" class="footer-text" data-i18n="footer_mission">Notre mission</a><br>
+            <a href="/front/help/about.php" class="footer-text" data-i18n="footer_about">A propos</a><br>
+            <a href="/front/help/mission.php" class="footer-text" data-i18n="footer_mission">Notre mission</a><br>
             <a href="#" class="footer-text" data-i18n="footer_providers">Nos prestataires</a><br>
             <a href="/front/communication/review.php" class="footer-text" data-i18n="footer_testimonials">Témoignages</a><br>
         </div>
@@ -19,9 +19,9 @@
         <div class="flex-1 justify-center min-w-[300px] space-y-10">
             <h3 class="font-bold text-3xl text-[#E1AB2B]" data-i18n="footer_help">Aide & Support</h3>
             <a href="#" onclick="initTour(); return false;" class="footer-text" data-i18n="footer_tutorial">Tutoriel</a><br>
-            <a href="#" class="footer-text">FAQ</a><br>
+            <a href="/front/help/faq.php" class="footer-text">FAQ</a><br>
             <a href="https://mail.google.com/mail/?view=cm&fs=1&to=contact@silver-happy.fr" target="_blank" class="footer-text" data-i18n="footer_contact">Nous contacter</a><br>
-            <a href="#" class="footer-text" data-i18n="footer_accessibility">Accessibilité</a><br>
+            <a href="/front/help/accessibility.php" class="footer-text" data-i18n="footer_accessibility">Accessibilité</a><br>
         </div>
 
         <div class="flex-1 justify-center min-w-[300px] space-y-10">
