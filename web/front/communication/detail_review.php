@@ -99,28 +99,39 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const titre = c.titre || "Titre absent";
             const description = c.description || "";
             const categorie = c.categorie || "Général";
-            const note = c.note || null;
+            const note = c.note || 0;
+
+            // Récupération et formatage du nom du prestataire
+            const fullNom = `${c.prenom_prestataire || ''} ${c.nom_prestataire || ''}`.trim();
+            const prestaHTML = (c.categorie === "Prestataire" && fullNom !== "") ?
+                `<div class="mb-4 flex items-center gap-2">
+            <span class="text-blue-600 font-bold">Prestataire concerné :</span>
+            <span class="bg-blue-50 text-[#1C5B8F] px-3 py-1 rounded-lg border border-blue-100">${fullNom}</span>
+           </div>` :
+                "";
 
             container.innerHTML = `
                 <article class="bg-white rounded-2xl shadow-xl overflow-hidden relative">
                     <div class="p-8 md:p-12 relative">
 
-                        <div class="flex items-center gap-4 mb-6 mt-6 md:mt-0">
-                                <span class="text-[#E1AB2B] border border-[#E1AB2B] text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                                    ${"★".repeat(note)}${"☆".repeat(5 - note)}
-                                </span>
+                        <div class="flex flex-wrap items-center gap-4 mb-6 mt-6 md:mt-0">
+                            <span class="text-[#E1AB2B] border border-[#E1AB2B] text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                                ${"★".repeat(note)}${"☆".repeat(5 - note)}
+                            </span>
                             <span class="bg-[#E1AB2B] text-white px-4 py-1 rounded-full text-sm font-bold uppercase">
                                 ${categorie}
                             </span>
                             <span class="text-gray-400 font-medium">Publié le ${dateStr}</span>
                         </div>
 
-                        <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] mb-8 leading-tight pr-24">
+                        ${prestaHTML} <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] mb-8 leading-tight">
                             ${titre}
                         </h1>
 
                         <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-                            <p class="leading-relaxed flex-grow mb-4 break-words text-xl mb-6 font-semibold text-gray-800">${description || "Aucune description détaillée disponible."}</p>
+                            <p class="leading-relaxed flex-grow mb-4 break-words text-xl font-semibold text-gray-800">
+                                ${description || "Aucune description détaillée disponible."}
+                            </p>
                         </div>
                     </div>
                 </article>

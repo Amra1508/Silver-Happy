@@ -4,7 +4,7 @@
             <h3 class="font-bold text-3xl text-[#E1AB2B]">Silver Happy</h3>
             <a href="/front/help/about.php" class="footer-text" data-i18n="footer_about">A propos</a><br>
             <a href="/front/help/mission.php" class="footer-text" data-i18n="footer_mission">Notre mission</a><br>
-            <a href="#" class="footer-text" data-i18n="footer_providers">Nos prestataires</a><br>
+            <a href="/front/services/providers.php" class="footer-text" data-i18n="footer_providers">Nos prestataires</a><br>
             <a href="/front/communication/review.php" class="footer-text" data-i18n="footer_testimonials">Témoignages</a><br>
         </div>
 
