@@ -34,15 +34,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
             <?php if ($is_logged_in): ?>
                 <h1 class="big-text mb-8 text-center">Discuter avec notre équipe</h1>
 
-                <div id="no-sub-container" class="hidden flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
-                    <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
-                        Vous devez posséder un abonnement Silver Happy pour accéder à la messagerie.
-                    </p>
-                    <a class="rounded-full px-8 py-3 button-blue text-lg" href="/front/services/subscription.php">
-                        Découvrir nos abonnements
-                    </a>
-                </div>
-
                 <div id="contacts-container" class="hidden">
                     <div id="list-user-body" class="grid gap-6">
                     </div>
@@ -75,16 +66,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
             
             currentUserId = window.currentUserId;
 
-            const user = window.userData;
-            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
-
-            if (!hasSubscription) {
-                if (noSubContainer) noSubContainer.classList.remove('hidden');
-                if (contactsContainer) contactsContainer.classList.add('hidden'); 
-                return;
-            }
-
-            if (noSubContainer) noSubContainer.classList.add('hidden');
             if (contactsContainer) {
                 contactsContainer.classList.remove('hidden');
                 fetchAdmins(1);
@@ -117,21 +98,21 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         : '';
 
                     const cardHtml = `
-                        <div class="flex flex-col md:flex-row items-center justify-between index-components bg-white border border-gray-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex flex-col md:flex-row items-center justify-between index-components">
                             <div class="flex items-center gap-5 flex-1">
                                 <div>
-                                    <h2 class="text-xl font-bold text-[#1C5B8F] flex items-center">
+                                    <h2 class="small-text flex items-center">
                                         ${s.prenom} <span class="uppercase ml-1">${s.nom}</span>
                                         ${badgeHtml}
                                     </h2>
-                                    <p class="text-gray-500 flex items-center gap-2 mt-1">
+                                    <p class="text-black flex items-center gap-2">
                                         ${s.email}
                                     </p>
                                 </div>
                             </div>
                             <div class="mt-4 md:mt-0">
                                 <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${id}" class="inline-block">
-                                    <button class="rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-sm">
+                                    <button class="rounded-full px-6 button-blue">
                                         Voir la discussion
                                     </button>
                                 </a>
@@ -144,9 +125,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 renderPagination(result.totalPages, result.total);
 
             } catch (err) {
-                console.error("Erreur lors de la connexion à l'API", err);
-                const tbody = document.getElementById('list-user-body');
-                if (tbody) tbody.innerHTML = '<div class="p-8 text-center text-red-500 font-bold">Erreur de chargement. Vérifiez que l\'API est lancée.</div>';
+                console.error("Erreur lors de la connexion à l'API");
             }
         }
 
@@ -169,21 +148,27 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 <div class="flex justify-between items-center mt-6 px-4 text-sm">
                     <span class="text-gray-500 font-semibold">Total : ${totalItems} admin(s)</span>
                     <div class="flex gap-2">
-                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchAdmins(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">Précédent</button>
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchAdmins(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
             `;
 
             for (let i = 1; i <= totalPages; i++) {
                 const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
-                html += `<button onclick="fetchAdmins(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition-colors ${activeClass}">${i}</button>`;
+                html += `<button onclick="fetchAdmins(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
             }
 
             html += `
-                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchAdmins(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">Suivant</button>
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchAdmins(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
                     </div>
                 </div>
             `;
             paginationContainer.innerHTML = html;
         }
+
+        setTimeout(() => {
+            const isLogged = "<?php echo $is_logged_in ? '1' : '0'; ?>";
+            if (isLogged === '1' && !window.currentUserId) {
+            }
+        }, 1500);
     </script>
 </body>
 

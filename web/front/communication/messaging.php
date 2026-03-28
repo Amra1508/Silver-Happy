@@ -38,15 +38,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <?php include("../includes/header.php") ?>
     <main class="p-8 bg-gray-50">
         <?php if ($is_logged_in): ?>
-            
-            <div id="no-sub-container" class="hidden flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10 bg-white mx-8">
-                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8 px-4">
-                    Vous devez posséder un abonnement Silver Happy pour accéder à la messagerie.
-                </p>
-                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white hover:bg-[#154670] transition font-bold text-lg" href="/front/services/subscription.php">
-                    Découvrir nos abonnements
-                </a>
-            </div>
 
             <div id="chat-container" class="hidden">
                 <div class="flex justify-between items-center mx-8 mb-8">
@@ -104,133 +95,91 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const noSubContainer = document.getElementById('no-sub-container');
             const chatContainer = document.getElementById('chat-container');
 
-            const user = window.userData;
-            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
-
-            if (!hasSubscription) {
-                if (noSubContainer) noSubContainer.classList.remove('hidden');
-                if (chatContainer) chatContainer.classList.add('hidden'); 
-                return;
-            }
-
-            if (noSubContainer) noSubContainer.classList.add('hidden');
             if (chatContainer) chatContainer.classList.remove('hidden');
 
             id1 = window.currentUserId;
-            
-            const chatTitle = document.getElementById('chat-title');
-            if (chatTitle && firstname && name) {
-                chatTitle.innerText = `Discussion avec ${decodeURIComponent(firstname)} ${decodeURIComponent(name)}`;
-            } else if (chatTitle) {
-                chatTitle.innerText = "Discussion";
-            }
-
+            document.getElementById('chat-title').innerText = `Discussion avec ${firstname} ${name}`;
             message();
             setInterval(message, 2000);
         });
 
         async function message() {
-            if (!id1 || !id2) return; 
+            const response = await fetch(`${API_BASE}/get/${id1}/with/${id2}`);
 
-            try {
-                const response = await fetch(`${API_BASE}/get/${id1}/with/${id2}`);
-                if (!response.ok) return;
-                
-                let list = await response.json();
+            if (!response.ok) return;
+            let list = await response.json();
 
-                if (!list) list = [];
-
-                if (Array.isArray(list)) {
-                    list.sort((a, b) => a.id - b.id);
-                }
-
-                let page = "";
-                list.forEach(msg => {
-                    const isMe = msg.id_expediteur == id1;
-
-                    const alignClass = isMe ? 'items-end' : 'items-start';
-                    const bubbleBg = isMe ? 'bg-[#1C5B8F] text-white' : 'bg-gray-200 text-[#1C5B8F]';
-                    const roundedClass = isMe ? 'rounded-l-lg rounded-tr-lg' : 'rounded-r-lg rounded-tl-lg';
-
-                    const deleteButton = isMe ? `
-                            <button type='button' 
-                                    class='p-1 ml-2 transition-colors duration-200 rounded-full hover:bg-black/20 focus:outline-none flex-shrink-0' 
-                                    onclick='delete_message(${msg.id})'>
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>` : '';
-
-                    page += `
-                        <div class='w-full flex flex-col ${alignClass} mb-4'>
-                            <div class='relative max-w-[80%] md:max-w-md px-4 py-2 shadow-sm ${bubbleBg} ${roundedClass} flex items-center justify-between gap-2'>
-                                <span class="text-sm break-words">${msg.contenu}</span>
-                                ${deleteButton}
-                            </div>
-                        </div>`;
-                });
-
-                const container = document.getElementById("message_user");
-                
-                const isScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 50;
-                
-                container.innerHTML = page;
-
-                if (isScrolledToBottom) {
-                    container.scrollTop = container.scrollHeight;
-                }
-
-            } catch (err) {
-                console.error("Erreur de rafraîchissement des messages", err);
+            if (!list) {
+                list = [];
             }
+
+            if (Array.isArray(list)) {
+                list.sort((a, b) => a.id - b.id);
+            }
+
+            let page = "";
+            list.forEach(msg => {
+                const isMe = msg.id_expediteur == id1;
+
+                const alignClass = isMe ? 'items-end' : 'items-start';
+                const bubbleBg = isMe ? 'bg-[#1C5B8F] text-white' : 'bg-gray-200 text-[#1C5B8F]';
+                const roundedClass = isMe ? 'rounded-l-lg rounded-tr-lg' : 'rounded-r-lg rounded-tl-lg';
+
+                const deleteButton = isMe ? `
+                        <button type='button' 
+                                class='p-1 transition-colors duration-200 rounded-full hover:bg-black/20' 
+                                onclick='delete_message(${msg.id})'>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>` : '';
+
+                page += `
+                    <div class='w-full flex flex-col ${alignClass} mb-4'>
+                        <div class='relative max-w-[80%] md:max-w-md px-4 py-2 shadow-sm ${bubbleBg} ${roundedClass} flex items-center gap-3'>
+                            <span class="text-sm">${msg.contenu}</span>
+                            ${deleteButton}
+                        </div>
+                    </div>`;
+            });
+
+            document.getElementById("message_user").innerHTML = page;
+
+            const container = document.getElementById("message_user");
+            container.scrollTop = container.scrollHeight;
         }
 
         async function add_message() {
-            if (!id1 || !id2) return;
-
             const input = document.getElementById("add");
             const contenu = input.value.trim();
 
             if (contenu === "") return;
 
-            try {
-                const response = await fetch(`${API_BASE}/add`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        Contenu: contenu,
-                        ID_Expediteur: parseInt(id1),
-                        ID_Destinataire: parseInt(id2)
-                    })
-                });
+            const response = await fetch(`${API_BASE}/add`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    Contenu: contenu,
+                    ID_Expediteur: parseInt(id1),
+                    ID_Destinataire: parseInt(id2)
+                })
+            });
 
-                if (response.ok) {
-                    input.value = "";
-                    await message();
-                    
-                    const container = document.getElementById("message_user");
-                    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
-                }
-            } catch (err) {
-                console.error("Erreur lors de l'envoi du message", err);
+            if (response.ok) {
+                input.value = "";
+                await message();
             }
         }
 
         async function delete_message(message_id) {
-            if (!confirm("Voulez-vous vraiment supprimer ce message ?")) return;
-            
-            try {
-                const response = await fetch(`${API_BASE}/delete/${message_id}`, {
-                    method: "DELETE"
-                });
+            const response = await fetch(`${API_BASE}/delete/${message_id}`, {
+                method: "DELETE"
+            });
 
-                if (response.ok) {
-                    await message();
-                }
-            } catch (err) {
-                console.error("Erreur lors de la suppression du message", err);
+            if (response.ok) {
+                await message();
             }
         }
     </script>
