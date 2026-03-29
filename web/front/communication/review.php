@@ -120,7 +120,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 if (!hasSubscription) {
                     alert("Seuls les membres possédant un abonnement Silver Happy peuvent laisser un avis sur notre plateforme.");
                     window.location.href = "/front/services/subscription.php";
-                    return; 
+                    return;
                 }
             }
 
@@ -222,7 +222,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
         async function fetchAvis(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/avis/read?page=${currentPage}&limit=${limit}`);
+                const userid = window.currentUserId;
+                const response = await fetch(`${API_BASE}/avis/read?page=${currentPage}&limit=${limit}&user=${userid}`);
                 const result = await response.json();
                 const avis = result.data || [];
                 const container = document.getElementById('list-review');
@@ -294,7 +295,9 @@ $is_logged_in = isset($_COOKIE['session_token']);
         }
 
         window.onload = () => {
-            fetchAvis(1);
+            setTimeout(() => {
+                if (window.currentUserId) fetchAvis();
+            }, 500);
         };
     </script>
 </body>

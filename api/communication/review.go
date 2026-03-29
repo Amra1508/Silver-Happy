@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"main/db"
@@ -16,6 +17,7 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	limitStr := query.Get("limit")
 	pageStr := query.Get("page")
+	user, _ := strconv.Atoi(query.Get("user"))
 
 	limit := 10
 	offset := 0
@@ -28,7 +30,7 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM AVIS").Scan(&total)
+	db.DB.QueryRow("SELECT COUNT(*) FROM AVIS WHERE id_utilisateur != ?", user).Scan(&total)
 
 	querySQL := `
 		SELECT 
@@ -37,10 +39,11 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 			IFNULL(p.prenom, '') as prenom_presta
 		FROM AVIS a
 		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
+		WHERE a.id_utilisateur != ?
 		ORDER BY a.date DESC
 		LIMIT ? OFFSET ?`
 
-	rows, errorFetch := db.DB.Query(querySQL, limit, offset)
+	rows, errorFetch := db.DB.Query(querySQL, user, limit, offset)
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
