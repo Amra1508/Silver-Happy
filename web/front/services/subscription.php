@@ -67,9 +67,9 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     </div>
                     <p class="text-gray-500 mb-10 text-center" id="period-normal">/ mois</p>
                     <ul class="text-gray-600 mb-10 space-y-3 w-full px-4 text-center text-lg">
-                        <li>✓ Accès complet aux activités</li>
-                        <li>✓ Messagerie incluse</li>
-                        <li>✓ Support prioritaire</li>
+                        <li>Accès complet au catalogue</li>
+                        <li>Consultation de tous nos conseils</li>
+                        <li>Messagerie intégrée avec nos équipes</li>
                         <li class="italic text-sm text-[#1C5B8F] pt-4">Renouvellement automatique, sans engagement.</li>
                     </ul>
                     <button onclick="openSubModal()" class="w-full rounded-full py-4 px-6 bg-[#1C5B8F] text-white font-bold text-xl mt-auto hover:bg-[#154670] transition-colors shadow-md">

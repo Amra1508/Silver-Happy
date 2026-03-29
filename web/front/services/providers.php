@@ -110,7 +110,7 @@
                                     ${stars}
                                 </div>
                                 
-                                <a href="profil_prestataire.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2 mt-auto pt-4 border-t w-full">
+                                <a href="profile_provider.php?id=${id}" class="self-start text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors flex items-center gap-2 mt-auto pt-4 border-t w-full">
                                     Voir le profil complet <span class="text-xl">→</span>
                                 </a>
                             </div>

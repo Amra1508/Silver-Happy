@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -374,4 +375,78 @@ func Delete_Prestataire_Document(response http.ResponseWriter, request *http.Req
 	db.DB.Exec("DELETE FROM DOCUMENT_PRESTATAIRE WHERE id_document = ?", idDoc)
 
 	json.NewEncoder(response).Encode("OK")
+}
+
+func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    idStr := request.PathValue("id")
+
+    // 1. Infos du prestataire
+    var p struct {
+        ID             int     `json:"id_prestataire"`
+        Prenom         string  `json:"prenom"`
+        Nom            string  `json:"nom"`
+        Email          string  `json:"email"`
+        NumTelephone   string  `json:"num_telephone"`
+        TypePrestation string  `json:"type_prestation"`
+        Tarifs         float64 `json:"tarifs"`
+    }
+
+    err := db.DB.QueryRow(`
+        SELECT id_prestataire, IFNULL(prenom, ''), IFNULL(nom, ''), IFNULL(email, ''), 
+               IFNULL(num_telephone, ''), IFNULL(type_prestation, ''), IFNULL(tarifs, 0)
+        FROM PRESTATAIRE 
+        WHERE id_prestataire = ? AND status = 'validé'
+    `, idStr).Scan(&p.ID, &p.Prenom, &p.Nom, &p.Email, &p.NumTelephone, &p.TypePrestation, &p.Tarifs)
+
+    if err != nil {
+        http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
+        return
+    }
+
+    rows, err := db.DB.Query(`
+        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin 
+        FROM evenement e
+        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+        WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
+        ORDER BY e.date_debut ASC
+    `, idStr)
+
+    var events []map[string]interface{}
+    if err == nil {
+        defer rows.Close()
+        for rows.Next() {
+            var id, places int
+            var nom, desc, lieu string
+            var prix float64
+            var debut, fin sql.NullString
+
+            if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin); errScan == nil {
+                evt := map[string]interface{}{
+                    "id_evenement": id,
+                    "nom":          nom,
+                    "description":  desc,
+                    "lieu":         lieu,
+                    "nombre_place": places,
+                    "prix":         prix,
+                }
+                if debut.Valid { evt["date_debut"] = debut.String }
+                if fin.Valid { evt["date_fin"] = fin.String }
+                events = append(events, evt)
+            }
+        }
+    }
+    
+    if events == nil {
+        events = []map[string]interface{}{}
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]interface{}{
+        "prestataire": p,
+        "evenements":  events,
+    })
 }

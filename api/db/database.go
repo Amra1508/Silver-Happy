@@ -201,6 +201,7 @@ func InitDB() {
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_utilisateur1 INT,
 		id_utilisateur2 INT,
+		est_lu TINYINT(1) DEFAULT 0,
 		FOREIGN KEY (id_utilisateur1) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_utilisateur2) REFERENCES UTILISATEUR(id_utilisateur)
 	);
