@@ -32,7 +32,7 @@ if (!isset($_COOKIE['session_token'])) {
     </script>
 </head>
 
-<body>
+<body class="bg-gray-50">
 
     <?php include("../includes/header.php") ?>
 
@@ -48,7 +48,7 @@ if (!isset($_COOKIE['session_token'])) {
 
             <div id="response_message" class="hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold shadow-sm"></div>
 
-            <div class="border border-[#1C5B8F] rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6 bg-white shadow-sm">
+            <div class="border border-[#1C5B8F] rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6 bg-white shadow-sm max-w-5xl mx-auto">
                 <div class="sm:col-span-3">
                     <label class="text-sm text-gray-600 font-bold">Prénom</label>
                     <div class="mt-2">
@@ -100,8 +100,9 @@ if (!isset($_COOKIE['session_token'])) {
 
                 <div class="sm:col-span-3">
                     <label class="text-sm text-gray-600 font-bold">Adresse</label>
-                    <div class="mt-2">
+                    <div class="mt-2 relative">
                         <input id="address" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
+                        <ul id="address_suggestions" class="absolute w-full bg-white rounded-md shadow-lg max-h-60 overflow-y-auto mt-1"></ul>
                     </div>
                 </div>
 
@@ -119,7 +120,7 @@ if (!isset($_COOKIE['session_token'])) {
                     </div>
                 </div>
 
-                <div class="sm:col-span-6 flex flex-col sm:flex-row justify-center gap-4 mt-2">
+                <div class="sm:col-span-6 flex flex-col sm:flex-row justify-center gap-4 mt-4">
                     <a href="/front/account/planification.php" class="text-center px-10 py-3 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors shadow-sm">
                         Consulter mon planning
                     </a>
@@ -131,13 +132,39 @@ if (!isset($_COOKIE['session_token'])) {
                     </button>
                 </div>
 
+                <div class="sm:col-span-6 flex justify-center mt-2">
+                    <button type="button" id="btn_delete_account_trigger" class="text-red-500 hover:text-red-700 underline text-sm font-bold transition-colors">
+                        Supprimer définitivement mon compte
+                    </button>
+                </div>
+
             </div>
         </div>
     </main>
 
+    <div id="delete_modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4 border border-red-100">
+            <h3 class="text-2xl font-bold text-red-600 mb-4 text-center">Supprimer le compte ?</h3>
+            <p class="text-gray-700 mb-6 text-center">
+                Êtes-vous sûr de vouloir supprimer définitivement votre compte ? <br><br>
+                <span class="font-bold">Cette action est irréversible</span> et toutes vos données seront perdues.
+            </p>
+            <div class="flex flex-col-reverse sm:flex-row justify-center gap-4">
+                <button id="btn_cancel_delete" class="px-6 py-2 bg-gray-200 text-gray-800 rounded-full font-bold hover:bg-gray-300 transition-colors">
+                    Annuler
+                </button>
+                <button id="btn_confirm_delete" class="px-6 py-2 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 transition-colors shadow-md">
+                    Oui, supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
     <?php include("../includes/footer.php") ?>
 
     <script>
+        let currentUserId = null;
+
         document.addEventListener('DOMContentLoaded', async () => {
             const messageBox = document.getElementById('response_message');
             const authBadge = document.getElementById('auth_status_badge');
@@ -150,6 +177,8 @@ if (!isset($_COOKIE['session_token'])) {
 
                 if (type === 'abonnement_valide') {
                     messageBox.textContent = "Félicitations ! Votre abonnement a bien été activé.";
+                } else if (type === 'resiliation_validee') {
+                    messageBox.textContent = "Votre abonnement a bien été résilié.";
                 } else {
                     messageBox.textContent = "Opération réussie !";
                 }
@@ -180,6 +209,8 @@ if (!isset($_COOKIE['session_token'])) {
 
                 if (response.ok) {
                     const user = await response.json();
+                    
+                    currentUserId = user.id_utilisateur || user.id;
 
                     if (user.id_abonnement && user.id_abonnement !== null && user.id_abonnement !== 0) {
                         let isExpired = false;
@@ -199,11 +230,7 @@ if (!isset($_COOKIE['session_token'])) {
                                 isExpired = true;
                             }
 
-                            const options = {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            };
+                            const options = { year: 'numeric', month: 'long', day: 'numeric' };
                             dateFinFormatee = debutDate.toLocaleDateString('fr-FR', options);
                         }
 
@@ -212,15 +239,14 @@ if (!isset($_COOKIE['session_token'])) {
                             authBadge.className = "cursor-pointer text-sm px-4 py-1 bg-red-100 border border-red-300 text-red-600 rounded-full font-bold shadow-sm hover:bg-red-200 transition-colors";
                             authBadge.onclick = () => window.location.href = "/front/services/subscription.php";
                         } else {
-                        authBadge.innerHTML = `
-                            Abonné(e) jusqu'au ${dateFinFormatee} 
-                            <span onclick="cancelSubscription()" class="ml-3 text-red-500 hover:text-red-700 underline text-xs cursor-pointer transition-colors">
-                                Résilier
-                            </span>
-                        `;
-                        authBadge.className = "text-sm pl-4 pr-3 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm flex items-center";
-                    }
-
+                            authBadge.innerHTML = `
+                                Abonné(e) jusqu'au ${dateFinFormatee} 
+                                <span onclick="cancelSubscription()" class="ml-3 text-red-500 hover:text-red-700 underline text-xs cursor-pointer transition-colors">
+                                    Résilier
+                                </span>
+                            `;
+                            authBadge.className = "text-sm pl-4 pr-3 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm flex items-center";
+                        }
                     } else {
                         authBadge.innerHTML = "Non abonné(e) <span class='ml-1 text-[#1C5B8F] underline text-xs'>S'abonner</span>";
                         authBadge.className = "cursor-pointer text-sm px-4 py-1 bg-gray-100 border border-gray-300 text-gray-500 rounded-full font-bold shadow-sm hover:bg-gray-200 transition-colors";
@@ -249,10 +275,8 @@ if (!isset($_COOKIE['session_token'])) {
             }
 
             const btnSubmit = document.getElementById('btn_update');
-
             btnSubmit.addEventListener('click', async (e) => {
                 e.preventDefault();
-
                 messageBox.className = "hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold shadow-sm";
 
                 const data = {
@@ -282,9 +306,7 @@ if (!isset($_COOKIE['session_token'])) {
                 try {
                     const response = await fetch('http://localhost:8082/auth/update', {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
                         body: JSON.stringify(data)
                     });
@@ -306,33 +328,117 @@ if (!isset($_COOKIE['session_token'])) {
                     messageBox.classList.remove('hidden');
                 }
             });
+            
+            const btnDeleteTrigger = document.getElementById('btn_delete_account_trigger');
+            const btnCancelDelete = document.getElementById('btn_cancel_delete');
+            const btnConfirmDelete = document.getElementById('btn_confirm_delete');
+            const deleteModal = document.getElementById('delete_modal');
+
+            btnDeleteTrigger.addEventListener('click', () => {
+                deleteModal.classList.remove('hidden');
+            });
+
+            btnCancelDelete.addEventListener('click', () => {
+                deleteModal.classList.add('hidden');
+            });
+
+            btnConfirmDelete.addEventListener('click', async () => {
+                if (!currentUserId) {
+                    alert("Erreur : Impossible d'identifier l'utilisateur pour la suppression.");
+                    return;
+                }
+
+                try {
+                    const deleteRes = await fetch(`http://localhost:8082/seniors/delete/${currentUserId}`, {
+                        method: 'DELETE', 
+                        credentials: 'include'
+                    });
+
+                    if (!deleteRes.ok) {
+                        const errText = await deleteRes.text();
+                        alert("Erreur lors de la suppression : " + errText);
+                        deleteModal.classList.add('hidden');
+                        return;
+                    }
+
+                    await fetch('http://localhost:8082/auth/logout', {
+                        method: 'POST', 
+                        credentials: 'include'
+                    });
+
+                    window.location.href = "/front/account/signin.php";
+
+                } catch (error) {
+                    console.error("Erreur de suppression :", error);
+                    alert("Impossible de joindre le serveur pour la suppression.");
+                    deleteModal.classList.add('hidden');
+                }
+            });
         });
 
         window.cancelSubscription = async function() {
-        if (!confirm("Êtes-vous sûr de vouloir annuler le renouvellement automatique de votre abonnement ?")) {
-            return;
-        }
-
-        try {
-            const responseMe = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
-            const user = await responseMe.json();
-
-            const response = await fetch('http://localhost:8082/abonnement/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_utilisateur: user.id_utilisateur || user.id })
-            });
-
-            if (response.ok) {
-                window.location.href = "/front/account/profile.php?success=resiliation_validee";
-            } else {
-                const errText = await response.text();
-                alert("Erreur : " + errText);
+            if (!confirm("Êtes-vous sûr de vouloir annuler le renouvellement automatique de votre abonnement ?")) {
+                return;
             }
-        } catch (err) {
-            alert("Erreur de connexion au serveur.");
-        }
-    };
+
+            try {
+                const responseMe = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
+                const user = await responseMe.json();
+
+                const response = await fetch('http://localhost:8082/abonnement/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_utilisateur: user.id_utilisateur || user.id })
+                });
+
+                if (response.ok) {
+                    window.location.href = "/front/account/profile.php?success=resiliation_validee";
+                } else {
+                    const errText = await response.text();
+                    alert("Erreur : " + errText);
+                }
+            } catch (err) {
+                alert("Erreur de connexion au serveur.");
+            }
+        };
+
+
+        const addressInput = document.getElementById('address');
+        const resultBox = document.getElementById('address_suggestions');
+
+            addressInput.addEventListener('input', async () => {
+                const typedText = addressInput.value;
+
+            if (typedText.length < 3) {
+                resultBox.innerHTML = '';
+                return;
+            }
+
+            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);            
+            const data = await response.json();
+
+            resultBox.innerHTML = '';
+
+            data.features.forEach(foundAddress => {
+                
+                const clickableItem = document.createElement('li'); 
+                
+                clickableItem.className = "px-4 py-2 cursor-pointer hover:bg-[#1C5B8F] hover:text-white border-b text-sm";
+                clickableItem.textContent = foundAddress.properties.label; 
+                
+                clickableItem.onclick = () => {
+                    addressInput.value = foundAddress.properties.name;
+                    document.getElementById('city').value = foundAddress.properties.city;
+                    document.getElementById('zip_code').value = foundAddress.properties.postcode;
+                    document.getElementById('country').value = "France";
+                    
+                    resultBox.innerHTML = ''; 
+                };
+                
+                resultBox.appendChild(clickableItem);
+            });
+        });
+
     </script>
 </body>
 

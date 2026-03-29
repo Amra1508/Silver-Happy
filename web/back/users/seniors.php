@@ -79,8 +79,9 @@
                             </div>
                             <div class="border-t border-gray-100 pt-4 mt-2">
                                 <label class="text-sm text-[#1C5B8F] font-bold">Adresse</label>
-                                <div class="grid grid-cols-1 mt-2 mb-4">
-                                    <input type="text" id="add-adresse" placeholder="N° et Rue" class="add-input">
+                                <div class="grid grid-cols-1 mt-2 mb-4 relative">
+                                    <input type="text" id="add-adresse" placeholder="N° et Rue" class="add-input" oninput="searchAddress('add-adresse', 'add-suggestions', 'add-ville', 'add-cp', 'add-pays')">
+                                    <ul id="add-suggestions" class="absolute top-full z-10 w-full bg-white rounded-md shadow-lg max-h-60 overflow-y-auto mt-1"></ul>
                                 </div>
                                 <div class="grid grid-cols-3 gap-4">
                                     <input type="text" id="add-cp" placeholder="Code Postal" class="add-input">
@@ -120,8 +121,9 @@
                             </div>
                             <div class="border-t border-gray-100 pt-4 mt-2">
                                 <label class="text-sm text-[#E1AB2B] font-bold">Adresse</label>
-                                <div class="grid grid-cols-1 mt-2 mb-4">
-                                    <input type="text" id="edit-adresse" class="edit-input">
+                                <div class="grid grid-cols-1 mt-2 mb-4 relative">
+                                    <input type="text" id="edit-adresse" class="edit-input" oninput="searchAddress('edit-adresse', 'edit-suggestions', 'edit-ville', 'edit-cp', 'edit-pays')">
+                                    <ul id="edit-suggestions" class="absolute top-full z-10 w-full bg-white rounded-md shadow-lg max-h-60 overflow-y-auto mt-1"></ul>
                                 </div>
                                 <div class="grid grid-cols-3 gap-4">
                                     <input type="text" id="edit-cp" class="edit-input">
@@ -520,6 +522,41 @@
                 showAlert(err.message || "Erreur réseau", false);
             }
         });
+
+        async function searchAddress(ChampSelected, suggestionsId, cityId, zipCodeId, countryId) {
+        
+            const addressInput = document.getElementById(ChampSelected);
+            const resultBox = document.getElementById(suggestionsId);
+            const typedText = addressInput.value;
+
+            if (typedText.length < 3) {
+                resultBox.innerHTML = '';
+                return;
+            }
+            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);
+            const data = await response.json();
+
+            resultBox.innerHTML = '';
+
+            data.features.forEach(foundAddress => {
+                
+                const clickableItem = document.createElement('li'); 
+                
+                clickableItem.className = "px-4 py-2 cursor-pointer hover:bg-[#1C5B8F] hover:text-white border-b text-sm";
+                clickableItem.textContent = foundAddress.properties.label; 
+                
+                clickableItem.onclick = () => {
+                    addressInput.value = foundAddress.properties.name; 
+                    document.getElementById(cityId).value = foundAddress.properties.city; 
+                    document.getElementById(zipCodeId).value = foundAddress.properties.postcode;
+                    document.getElementById(countryId).value = "France";
+                    
+                    resultBox.innerHTML = '';
+                };
+                
+                resultBox.appendChild(clickableItem);
+            });
+        }
 
         window.onload = () => fetchSeniors(1);
     </script>
