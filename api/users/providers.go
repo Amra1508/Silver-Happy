@@ -100,7 +100,6 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	limitStr := query.Get("limit")
 	pageStr := query.Get("page")
-	statusFilter := query.Get("status")
 
 	limit := 10
 	offset := 0
@@ -114,18 +113,8 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 		offset = (page - 1) * limit
 	}
 
-	whereClause := ""
-	var argsCount []interface{}
-	var argsQuery []interface{}
-
-	if statusFilter != "" && statusFilter != "tous" {
-		whereClause = " WHERE p.status = ?"
-		argsCount = append(argsCount, statusFilter)
-		argsQuery = append(argsQuery, statusFilter)
-	}
-
 	var total int
-	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p"+whereClause, argsCount...).Scan(&total)
+	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE status = 'valide'").Scan(&total)
 	if errTotal != nil {
 		http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
 		return
@@ -137,14 +126,12 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 		       COUNT(a.id_avis) as nombre_avis 
 		FROM PRESTATAIRE AS p 
 		LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
-		` + whereClause + `
+		WHERE status = 'valide'
 		GROUP BY p.id_prestataire 
 		ORDER BY moyenne DESC 
 		LIMIT ? OFFSET ?`
 
-	argsQuery = append(argsQuery, limit, offset)
-
-	rows, err := db.DB.Query(sqlQuery, argsQuery...)
+	rows, err := db.DB.Query(sqlQuery, limit, offset)
 	if err != nil {
 		fmt.Println("Erreur SQL:", err)
 		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
@@ -152,7 +139,7 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 	}
 	defer rows.Close()
 
-	var list []map[string]interface{}
+	list := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var id int64
 		var prenom, nom, typePresta string

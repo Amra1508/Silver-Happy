@@ -194,8 +194,8 @@ func Update_Avis(response http.ResponseWriter, request *http.Request) {
 	var data map[string]interface{}
 	json.NewDecoder(request.Body).Decode(&data)
 
-	query := "UPDATE AVIS SET titre=?, description=?, note=?, categorie=? WHERE id_avis=? AND id_utilisateur=?"
-	_, err := db.DB.Exec(query, data["titre"], data["description"], data["note"], data["categorie"], idAvis, data["id_utilisateur"])
+	query := "UPDATE AVIS SET titre=?, description=?, note=?, categorie=?, id_prestataire=? WHERE id_avis=? AND id_utilisateur=?"
+	_, err := db.DB.Exec(query, data["titre"], data["description"], data["note"], data["categorie"], data["id_prestataire"], idAvis, data["id_utilisateur"])
 
 	if err != nil {
 		http.Error(response, "Erreur modification", http.StatusInternalServerError)

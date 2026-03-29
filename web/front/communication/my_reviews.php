@@ -83,6 +83,11 @@ if (!$is_logged_in) {
                             </select>
                         </div>
                     </div>
+                    <div id="container-edit-presta" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Prestataire concerné</label>
+                        <select id="edit-id-prestataire" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-[#1C5B8F] outline-none">
+                        </select>
+                    </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
@@ -160,15 +165,58 @@ if (!$is_logged_in) {
             }
         }
 
+        async function fillPrestatairesList(selectedId) {
+            try {
+                const response = await fetch(`${API_BASE}/prestataires/read?limit=500&status=valide`);
+                const result = await response.json();
+                const select = document.getElementById('edit-id-prestataire');
+
+                select.innerHTML = '<option value="">Sélectionner un prestataire</option>';
+
+                (result.data || []).forEach(p => {
+                    const id = p.id_prestataire || p.ID || p.id;
+                    if (id) {
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = `${p.prenom || ''} ${p.nom || ''}`.trim();
+                        if (id == selectedId) option.selected = true;
+                        select.appendChild(option);
+                    }
+                });
+            } catch (err) {
+                console.error("Erreur chargement prestataires:", err);
+            }
+        }
+
+        document.getElementById('edit-categorie').addEventListener('change', function() {
+            const container = document.getElementById('container-edit-presta');
+            if (this.value === "Prestataire") {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        });
+
         async function openEditModal(id) {
             try {
                 const response = await fetch(`${API_BASE}/avis/read-one/${id}`);
                 const a = await response.json();
+
                 document.getElementById('edit-id').value = a.id_avis;
                 document.getElementById('edit-titre').value = a.titre;
                 document.getElementById('edit-note').value = a.note;
                 document.getElementById('edit-categorie').value = a.categorie;
                 document.getElementById('edit-desc').value = a.description;
+
+                const container = document.getElementById('container-edit-presta');
+                if (a.categorie === "Prestataire") {
+                    container.classList.remove('hidden');
+                    await fillPrestatairesList(a.id_prestataire);
+                } else {
+                    container.classList.add('hidden');
+                    await fillPrestatairesList(null);
+                }
+
                 toggleModal(true);
             } catch (err) {
                 alert("Erreur de chargement");
@@ -179,13 +227,15 @@ if (!$is_logged_in) {
             event.preventDefault();
             const userId = getUserId();
             const idAvis = document.getElementById('edit-id').value;
+            const categorie = document.getElementById('edit-categorie').value;
 
             const data = {
                 titre: document.getElementById('edit-titre').value,
                 description: document.getElementById('edit-desc').value,
                 note: parseInt(document.getElementById('edit-note').value),
-                categorie: document.getElementById('edit-categorie').value,
-                id_utilisateur: parseInt(userId)
+                categorie: categorie,
+                id_utilisateur: parseInt(userId),
+                id_prestataire: categorie === "Prestataire" ? parseInt(document.getElementById('edit-id-prestataire').value) : null
             };
 
             try {
