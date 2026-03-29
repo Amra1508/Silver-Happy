@@ -57,10 +57,15 @@
         </nav>
 
         <div class="w-full md:w-auto flex-1 max-w-md">
-            <input type="text"
-                data-i18n-placeholder="nav_search"
-                placeholder="Rechercher..."
-                class="focus:outline-none w-full border border-[#1C5B8F] rounded-full px-6 py-2 hover:border-[#E1AB2B] focus:border-[#E1AB2B] placeholder:text-[#1C5B8F] text-xl">
+            <form action="/front/search.php" method="GET" class="w-full m-0 p-0 relative">
+                <input type="text"
+                    name="q"
+                    required
+                    data-i18n-placeholder="nav_search"
+                    placeholder="Faire une recherche..."
+                    class="focus:outline-none w-full border border-[#1C5B8F] rounded-full px-6 py-2 hover:border-[#E1AB2B] focus:border-[#E1AB2B] placeholder:text-[#1C5B8F] text-xl">
+                <button type="submit" class="hidden">Chercher</button>
+            </form>
         </div>
     </div>
 
@@ -68,22 +73,12 @@
         <div class="bg-white p-6 rounded-lg w-full max-w-md border-2 border-red-500 text-center">
             <h2 class="text-2xl font-bold text-red-600 mb-2">Besoin d'aide ?</h2>
             <p class="mb-6 text-gray-600">Appelez les secours immédiatement :</p>
-            
             <div class="flex flex-col gap-3">
-                <a href="tel:15" class="bg-blue-100 border border-blue-400 text-blue-800 text-xl font-bold py-3 rounded hover:bg-blue-200">
-                    🚑 15 - SAMU
-                </a>
-                <a href="tel:18" class="bg-red-100 border border-red-400 text-red-800 text-xl font-bold py-3 rounded hover:bg-red-200">
-                    🚒 18 - Pompiers
-                </a>
-                <a href="tel:112" class="bg-gray-100 border border-gray-400 text-gray-800 text-xl font-bold py-3 rounded hover:bg-gray-200">
-                    📞 112 - Urgences
-                </a>
+                <a href="tel:15" class="bg-blue-100 border border-blue-400 text-blue-800 text-xl font-bold py-3 rounded hover:bg-blue-200">🚑 15 - SAMU</a>
+                <a href="tel:18" class="bg-red-100 border border-red-400 text-red-800 text-xl font-bold py-3 rounded hover:bg-red-200">🚒 18 - Pompiers</a>
+                <a href="tel:112" class="bg-gray-100 border border-gray-400 text-gray-800 text-xl font-bold py-3 rounded hover:bg-gray-200">📞 112 - Urgences</a>
             </div>
-
-            <button id="btn_fermer_urgence" class="mt-6 px-6 py-2 bg-gray-200 text-gray-800 rounded font-bold hover:bg-gray-300">
-                Annuler
-            </button>
+            <button id="btn_fermer_urgence" class="mt-6 px-6 py-2 bg-gray-200 text-gray-800 rounded font-bold hover:bg-gray-300">Annuler</button>
         </div>
     </div>
 
@@ -124,12 +119,8 @@
             const btnFermer = document.getElementById('btn_fermer_urgence');
 
             if(btnUrgence && modalUrgence && btnFermer) {
-                btnUrgence.addEventListener('click', () => {
-                    modalUrgence.classList.remove('hidden');
-                });
-                btnFermer.addEventListener('click', () => {
-                    modalUrgence.classList.add('hidden');
-                });
+                btnUrgence.addEventListener('click', () => modalUrgence.classList.remove('hidden'));
+                btnFermer.addEventListener('click', () => modalUrgence.classList.add('hidden'));
             }
 
             const btnLogout = document.getElementById('btn_logout');

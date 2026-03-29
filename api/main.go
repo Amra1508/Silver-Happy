@@ -54,6 +54,7 @@ func main() {
 	http.HandleFunc("/factures/user/{id}", users.GetUserInvoices)
 
 	http.HandleFunc("/planning", users.Read_User_Planning)
+	http.HandleFunc("/search", users.SearchAll)
 
 	http.HandleFunc("/service/read", services.Read_Service)
 	http.HandleFunc("/service/create", services.Create_Service)

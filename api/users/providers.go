@@ -384,23 +384,14 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
 
     idStr := request.PathValue("id")
 
-    // 1. Infos du prestataire
-    var p struct {
-        ID             int     `json:"id_prestataire"`
-        Prenom         string  `json:"prenom"`
-        Nom            string  `json:"nom"`
-        Email          string  `json:"email"`
-        NumTelephone   string  `json:"num_telephone"`
-        TypePrestation string  `json:"type_prestation"`
-        Tarifs         float64 `json:"tarifs"`
-    }
+    prestataire := models.Prestataire{}
 
     err := db.DB.QueryRow(`
         SELECT id_prestataire, IFNULL(prenom, ''), IFNULL(nom, ''), IFNULL(email, ''), 
                IFNULL(num_telephone, ''), IFNULL(type_prestation, ''), IFNULL(tarifs, 0)
         FROM PRESTATAIRE 
         WHERE id_prestataire = ? AND status = 'validé'
-    `, idStr).Scan(&p.ID, &p.Prenom, &p.Nom, &p.Email, &p.NumTelephone, &p.TypePrestation, &p.Tarifs)
+    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.TypePrestation, &prestataire.Tarifs)
 
     if err != nil {
         http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
@@ -446,7 +437,7 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
 
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(map[string]interface{}{
-        "prestataire": p,
+        "prestataire": prestataire,
         "evenements":  events,
     })
 }

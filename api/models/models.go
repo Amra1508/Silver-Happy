@@ -178,3 +178,20 @@ type Livraison struct {
     CP      string `json:"cp"`       
     Ville   string `json:"ville"`    
 }
+
+type Recherche struct {
+	ID          int     `json:"id"`
+	Titre       string  `json:"titre"`
+	Description string  `json:"description"`
+	Prix        float64 `json:"prix"` 
+	Lien        string  `json:"lien"` 
+}
+
+type RechercheGlobale struct {
+	Produits   []Recherche `json:"produits"`
+	Evenements []Recherche `json:"evenements"`
+	Services   []Recherche `json:"services"`
+	Avis       []Recherche `json:"avis"`
+	Conseils       []Recherche `json:"conseils"`
+
+}
