@@ -43,9 +43,19 @@
 
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="title-text">Gestion des Produits</h1>
-                    <button onclick="toggleModal('add-modal')" class="add-button" type="button">
-                        + Ajouter un Produit
-                    </button>
+                    <div class="flex items-center gap-4">
+                        <a href="/back/services/code.php">
+                            <button class="edit-button" type="button">
+                                Voir les Codes Promo
+                            </button>
+                        </a>
+                        <button onclick="toggleModal('add-code-modal')" class="add-button" type="button">
+                            + Ajouter un Code Promo
+                        </button>
+                        <button onclick="toggleModal('add-modal')" class="add-button" type="button">
+                            + Ajouter un Produit
+                        </button>
+                    </div>
                 </div>
 
                 <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
@@ -101,56 +111,91 @@
                     </div>
                 </div>
 
-                <div id="edit-modal" class="hidden modal">
-                    <div class="edit-modal">
-                        <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Produit</h3>
-                        <form id="edit-form" class="space-y-6">
-                            <input type="hidden" id="edit-id">
+                <div id="add-code-modal" class="hidden modal">
+                    <div class="add-modal">
+                        <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Code Promo</h3>
+                        <form id="add-code-form" class="space-y-6">
                             <div>
-                                <label class="text-sm text-gray-500">Nom</label>
-                                <input type="text" id="edit-nom" class="edit-input" required>
+                                <label class="text-sm text-gray-500">Code</label>
+                                <input type="text" id="add-code" class="add-input" required>
                             </div>
                             <div>
-                                <label class="text-sm text-gray-500">Description</label>
-                                <textarea id="edit-description" class="edit-input" required></textarea>
+                                <label class="text-sm text-gray-500">Valeur</label>
+                                <input type="number" min="5" step="5" id="add-valeur" class="add-input" required>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-sm text-gray-500">Prix (€)</label>
-                                    <input type="number" id="edit-prix" min="1" step="0.01" class="edit-input" required>
+                                    <label class="text-sm text-gray-500">Type</label>
+                                    <select id="add-type" class="add-input">
+                                        <option value="fixe">Fixe</option>
+                                        <option value="pourcentage">Pourcentage</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label class="text-sm text-gray-500">Stock</label>
-                                    <input type="number" id="edit-stock" min="1" step="1" class="edit-input" required>
+                                    <label class="text-sm text-gray-500">Date d'expiration</label>
+                                    <input type="datetime-local" id="add-date" class="add-input" required>
                                 </div>
                             </div>
-                            <div>
-                                <label class="text-sm text-gray-500">Nouvelle image (laisser vide pour conserver l'actuelle)</label>
-                                <input type="file" id="edit-image" accept="image/*" class="edit-input w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#D9D9D9]/40 file:text-[#1C5B8F] hover:file:bg-[#D9D9D9]/80">
-                            </div>
+
                             <div class="flex justify-end gap-4 mt-8 pt-4">
-                                <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
-                                <button type="submit" class="edit-button">Sauvegarder</button>
+                                <button type="button" onclick="toggleModal('add-code-modal')" class="text-gray-400">Annuler</button>
+                                <button type="submit" class="add-button">Ajouter</button>
                             </div>
                         </form>
                     </div>
                 </div>
+        </div>
 
-                <div id="delete-modal" class="hidden modal">
-                    <div class="delete-modal">
-                        <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
-                        <h3 class="text-2xl font-semibold mb-2">Supprimer le produit ?</h3>
-                        <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
-                        <input type="hidden" id="delete-id">
-                        <div class="flex justify-center gap-6">
-                            <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
-                            <button type="button" id="confirm-delete" class="delete-button">Oui, supprimer</button>
+        <div id="edit-modal" class="hidden modal">
+            <div class="edit-modal">
+                <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Produit</h3>
+                <form id="edit-form" class="space-y-6">
+                    <input type="hidden" id="edit-id">
+                    <div>
+                        <label class="text-sm text-gray-500">Nom</label>
+                        <input type="text" id="edit-nom" class="edit-input" required>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Description</label>
+                        <textarea id="edit-description" class="edit-input" required></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm text-gray-500">Prix (€)</label>
+                            <input type="number" id="edit-prix" min="1" step="0.01" class="edit-input" required>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-500">Stock</label>
+                            <input type="number" id="edit-stock" min="1" step="1" class="edit-input" required>
                         </div>
                     </div>
-                </div>
-
-            </main>
+                    <div>
+                        <label class="text-sm text-gray-500">Nouvelle image (laisser vide pour conserver l'actuelle)</label>
+                        <input type="file" id="edit-image" accept="image/*" class="edit-input w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#D9D9D9]/40 file:text-[#1C5B8F] hover:file:bg-[#D9D9D9]/80">
+                    </div>
+                    <div class="flex justify-end gap-4 mt-8 pt-4">
+                        <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
+                        <button type="submit" class="edit-button">Sauvegarder</button>
+                    </div>
+                </form>
+            </div>
         </div>
+
+        <div id="delete-modal" class="hidden modal">
+            <div class="delete-modal">
+                <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
+                <h3 class="text-2xl font-semibold mb-2">Supprimer le produit ?</h3>
+                <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
+                <input type="hidden" id="delete-id">
+                <div class="flex justify-center gap-6">
+                    <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
+                    <button type="button" id="confirm-delete" class="delete-button">Oui, supprimer</button>
+                </div>
+            </div>
+        </div>
+
+        </main>
+    </div>
     </div>
 
     <script>
@@ -159,12 +204,60 @@
         const limit = 10;
         const messageBox = document.getElementById('api-message');
 
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const minDT = now.toISOString().slice(0, 16);
+        document.getElementById('add-date').min = minDT;
+
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
             messageBox.className = `max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
             messageBox.classList.remove('hidden');
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
+
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return "";
+            const d = new Date(dateStr);
+            if (isNaN(d)) return "";
+
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        document.getElementById('add-code-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('code', document.getElementById('add-code').value);
+            formData.append('valeur', document.getElementById('add-valeur').value);
+            formData.append('type', document.getElementById('add-type').value);
+            formData.append('date_expiration', document.getElementById('add-date').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/code/create`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    toggleModal('add-code-modal');
+                    e.target.reset();
+                    showAlert(`Code créé avec succès !`, true);
+                } else {
+                    const errorText = await response.text();
+                    showAlert("Erreur : " + errorText, false);
+                }
+            } catch (err) {
+                showAlert("Erreur de connexion à l'API.", false);
+            }
+        });
 
         async function fetchProduits(page = 1) {
             try {

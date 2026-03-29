@@ -58,6 +58,11 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 <button onclick="payerStripe()" class="w-full mt-6 bg-[#1C5B8F] text-white py-4 rounded-full font-bold text-lg hover:bg-green-600 transition-all">
                     Payer avec Stripe
                 </button>
+                <a href="/front/services/basket.php">
+                    <button class="w-full mt-6 bg-[#1C5B8F] text-white py-4 rounded-full font-bold text-lg hover:bg-green-600 transition-all">
+                        Retour au panier
+                    </button>
+                </a>
             </div>
         </div>
     </main>

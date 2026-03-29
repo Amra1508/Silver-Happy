@@ -193,5 +193,13 @@ type RechercheGlobale struct {
 	Services   []Recherche `json:"services"`
 	Avis       []Recherche `json:"avis"`
 	Conseils       []Recherche `json:"conseils"`
+}
 
+
+type Code struct {
+	IdCode  		int    `json:"id_reduction"`
+    Code  			string `json:"code"`   
+    Valeur 			int    `json:"valeur"`  
+    Type    		string `json:"type"`       
+    DateExpiration  string `json:"date_expiration"` 
 }

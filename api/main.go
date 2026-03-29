@@ -34,6 +34,10 @@ func main() {
 	http.HandleFunc("/produit/read-one/{id}", services.Read_One_Produit)
 	http.HandleFunc("/produit/delete/{id}", services.Delete_Produit)
 	http.HandleFunc("/produit/update/{id}", services.Update_Produit)
+	http.HandleFunc("/code/create", services.Create_Code)
+	http.HandleFunc("/code/read", services.Read_Code)
+	http.HandleFunc("/code/delete/{id}", services.Delete_Code)
+	http.HandleFunc("/code/update/{id}", services.Update_Code)
 
 	http.HandleFunc("/panier/add", services.Add_Panier)
 	http.HandleFunc("/panier/get", services.Get_Panier)

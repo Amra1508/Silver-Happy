@@ -244,3 +244,135 @@ func Update_Produit(response http.ResponseWriter, request *http.Request) {
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Produit mis à jour avec succès"})
 }
+
+func Read_Code(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
+
+	limit := 10
+	offset := 0
+	page := 1
+
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
+
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM CODE_REDUCTION").Scan(&total)
+
+	rows, errorFetch := db.DB.Query("SELECT id_reduction, code, valeur, type, date_expiration FROM CODE_REDUCTION LIMIT ? OFFSET ?", limit, offset)
+	if errorFetch != nil {
+		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var tabCode []models.Code
+	for rows.Next() {
+		var code models.Code
+		if err := rows.Scan(&code.IdCode, &code.Code, &code.Valeur, &code.Type, &code.DateExpiration); err != nil {
+			continue
+		}
+		tabCode = append(tabCode, code)
+	}
+
+	if tabCode == nil {
+		tabCode = []models.Code{}
+	}
+
+	dataResponse := map[string]interface{}{
+		"data":        tabCode,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
+}
+
+func Create_Code(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
+
+	code := strings.TrimSpace(request.FormValue("code"))
+	valeur := strings.TrimSpace(request.FormValue("valeur"))
+	types := strings.TrimSpace(request.FormValue("type"))
+	date := strings.TrimSpace(request.FormValue("date_expiration"))
+
+	if code == "" || valeur == "" || types == ""|| date == ""{
+		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
+
+	res, err := db.DB.Exec("INSERT INTO CODE_REDUCTION (code, valeur, type, date_expiration) VALUES (?, ?, ?, ?)",
+		code, valeur, types, date)
+
+	if err != nil {
+		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+		return
+	}
+
+	id, _ := res.LastInsertId()
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(map[string]interface{}{"id": id, "status": "success"})
+}
+
+func Delete_Code(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "DELETE") {
+		return
+	}
+
+	id := request.PathValue("id")
+	if id == "" {
+        http.Error(response, "ID manquant", http.StatusBadRequest)
+        return
+    }
+
+	_, errDelete := db.DB.Exec("DELETE FROM CODE_REDUCTION WHERE id_reduction = ?", id)
+	if errDelete != nil {
+		http.Error(response, "Erreur lors de la suppression en BDD", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func Update_Code(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "PUT") {
+		return
+	}
+
+	err := request.ParseMultipartForm(10 << 20)
+    if err != nil {
+        http.Error(response, "Erreur lors de l'analyse du formulaire", http.StatusBadRequest)
+        return
+    }
+
+	id := request.PathValue("id")
+
+	code := strings.TrimSpace(request.FormValue("code"))
+	valeur := strings.TrimSpace(request.FormValue("valeur"))
+	types := strings.TrimSpace(request.FormValue("type"))
+	date := strings.TrimSpace(request.FormValue("date_expiration"))
+
+	if code == "" || valeur == "" || types == ""|| date == ""{
+		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
+		return
+	}
+
+	db.DB.Exec("UPDATE CODE_REDUCTION SET code=?, valeur=?, type=?, date_expiration=? WHERE id_reduction=?",
+		code, valeur, types, date, id)
+
+	json.NewEncoder(response).Encode("OK")
+}
