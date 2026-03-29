@@ -297,6 +297,13 @@
             return null;
         }
 
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() - 18);
+
+        const simpleMax = maxDate.toISOString().split('T')[0];
+
+        document.getElementById('add-date').max = simpleMax;
+
         async function loadProviders(page = 1) {
             currentPage = page;
 
@@ -572,7 +579,7 @@
             if (provider.date_naissance) {
                 document.getElementById('edit-date').value = provider.date_naissance.substring(0, 10);
             } else {
-                document.getElementById('edit-date').value = "";
+                document.getElementById('edit-date').max = simpleMax;
             }
 
             const statusMenu = document.getElementById('edit-status');

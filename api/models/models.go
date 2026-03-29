@@ -178,3 +178,11 @@ type Livraison struct {
     CP      string `json:"cp"`       
     Ville   string `json:"ville"`    
 }
+
+type Code struct {
+	IdCode  		int    `json:"id_reduction"`
+    Code  			string `json:"code"`   
+    Valeur 			int    `json:"valeur"`  
+    Type    		string `json:"type"`       
+    DateExpiration  string `json:"date_expiration"` 
+}
