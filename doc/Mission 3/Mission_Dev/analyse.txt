@@ -1,0 +1,30 @@
+Module 1 Bloc Développement : Axel MICK 
+
+Analyse technique : Application Silver-Appy pour les Seniors 
+
+1. Architecture et Technologies
+
+Le développement sera réalisé en Kotlin. Le design des écrans ne se fera pas avec Jetpack Compose, qui n'est pas étudié dans ce module , mais via le système des Android Views 
+décrit dans des fichiers XML (Layouts). L'architecture s'appuiera sur l'utilisation d'une Activity principale servant de conteneur à plusieurs Fragments. 
+Cette approche permet une meilleure réutilisabilité du code et une grande flexibilité des interfaces, ce qui est indispensable si les seniors utilisent l'application sur une tablette.
+
+2. Gestion et Persistance des Données
+
+Pour sauvegarder le profil utilisateur et ses préférences (données simples), nous utiliserons les SharedPreferences. 
+Bien que la bibliothèque Room soit évoquée comme le standard Google pour les bases de données SQLite , nous pourrons également nous appuyer sur le stockage local par Fichiers. 
+La synchronisation de l'historique des activités avec un serveur distant s'effectuera via une API REST échangeant des données au format JSON. Cette communication sera gérée par 
+la librairie Retrofit, associée aux Coroutines pour un traitement asynchrone.
+
+3. Sécurité et Réseau
+
+Pour que l'application puisse communiquer avec le serveur, il faudra impérativement déclarer la permission android.permission.INTERNET dans le fichier AndroidManifest.xml. 
+Concernant la sécurité locale, les fichiers et SharedPreferences utiliseront le mode MODE_PRIVATE pour être inaccessibles aux autres applications. 
+De plus, il faudra veiller à ne jamais stocker d'informations sensibles sur un support de stockage externe (comme une carte SD).
+
+4. Accessibilité et Interface (Défi Technique Principal)
+
+Le véritable défi technique se situera au niveau de l'accessibilité visuelle. Il faudra utiliser l'unité dp pour l'espacement et les composants , 
+mais impérativement privilégier l'unité sp (Scale-independent Pixels) pour les textes. Cette unité garantit l'adaptation dynamique de l'affichage selon les réglages 
+du smartphone du senior. L'attribut android:contentDescription sera systématiquement renseigné sur les images (ImageView) pour fournir un texte descriptif aux outils 
+d'accessibilité. Enfin, pour un code propre, toutes les données (textes, couleurs, dimensions) seront externalisées dans les dossiers de ressources (res/values/) 
+afin de faciliter la maintenance.
