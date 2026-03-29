@@ -31,13 +31,16 @@
                 <img id="current-lang-flag" src="/front/icons/france.png" alt="Lang" class="h-6 w-6 object-contain">
                 <img src="/front/icons/dropdown.svg" alt="dropdown" class="w-5 h-5 object-contain transition-all group-hover:brightness-0 group-hover:invert">
             </button>
-            <div class="absolute right-0 mt-1 w-32 bg-white rounded-md shadow-lg hidden group-hover:block overflow-hidden border border-gray-100">
-                <button onclick="changeLanguage('fr')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white">
-                    <img src="/front/icons/france.png" class="h-4 w-4"> Français
-                </button>
-                <button onclick="changeLanguage('en')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white">
-                    <img src="/front/icons/angleterre.png" class="h-4 w-4"> English
-                </button>
+
+            <div class="absolute right-0 top-full pt-2 w-32 hidden group-hover:block">
+                <div class="bg-white rounded-md shadow-lg overflow-hidden border border-gray-100">
+                    <button onclick="changeLanguage('fr')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white transition-colors">
+                        <img src="/front/icons/france.png" class="h-4 w-4"> Français
+                    </button>
+                    <button onclick="changeLanguage('en')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#1C5B8F] hover:text-white transition-colors">
+                        <img src="/front/icons/angleterre.png" class="h-4 w-4"> English
+                    </button>
+                </div>
             </div>
         </div>
     </div>

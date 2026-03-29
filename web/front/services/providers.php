@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nos Prestataires les mieux notés</title>
+    <title>Prestataires</title>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil du Prestataire - Silver Happy</title>
+    <title>Profil du Prestataire</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
     </style>
@@ -74,6 +74,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const prestataireId = urlParams.get('id');
         let currentUserId = null;
+        let isUserSubscribed = false;
 
         function formatDate(dateString) {
             if (!dateString) return "Date non définie";
@@ -86,7 +87,8 @@
             box.textContent = msg;
             box.className = `max-w-2xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold shadow-sm block ${
                 type === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 
-                type === 'error' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-yellow-100 border-yellow-400 text-yellow-700'
+                type === 'warning' ? 'bg-yellow-100 border-yellow-400 text-yellow-700' : 
+                'bg-red-100 border-red-400 text-red-700'
             }`;
             setTimeout(() => { box.classList.add('hidden'); }, 4000);
         }
@@ -97,6 +99,19 @@
                 if (res.ok) {
                     const user = await res.json();
                     currentUserId = user.id_utilisateur || user.id;
+
+                    if (user.id_abonnement && user.id_abonnement !== null && user.id_abonnement !== 0 && user.debut_abonnement) {
+                        const debutDate = new Date(user.debut_abonnement);
+                        if (user.type_paiement === 'mensuel') {
+                            debutDate.setMonth(debutDate.getMonth() + 1);
+                        } else if (user.type_paiement === 'annuel') {
+                            debutDate.setFullYear(debutDate.getFullYear() + 1);
+                        }
+                        
+                        if (new Date() <= debutDate) {
+                            isUserSubscribed = true;
+                        }
+                    }
                 }
             } catch (err) {
                 console.log("Non connecté.");
@@ -169,6 +184,12 @@
             if (!currentUserId) {
                 showAlert("Vous devez être connecté pour vous inscrire.", "error");
                 setTimeout(() => window.location.href = '/front/account/signin.php', 2000);
+                return;
+            }
+
+            if (!isUserSubscribed) {
+                showAlert("Vous devez avoir un abonnement actif pour participer aux événements.", "alert");
+                setTimeout(() => window.location.href = '/front/services/subscription.php', 2500);
                 return;
             }
 
