@@ -100,8 +100,9 @@ if (!isset($_COOKIE['session_token'])) {
 
                 <div class="sm:col-span-3">
                     <label class="text-sm text-gray-600 font-bold">Adresse</label>
-                    <div class="mt-2">
+                    <div class="mt-2 relative">
                         <input id="address" type="text" class="form-input w-full border border-gray-300 focus:border-[#1C5B8F] rounded-md px-3 py-2 outline-none" required />
+                        <ul id="address_suggestions" class="absolute w-full bg-white rounded-md shadow-lg max-h-60 overflow-y-auto mt-1"></ul>
                     </div>
                 </div>
 
@@ -400,6 +401,44 @@ if (!isset($_COOKIE['session_token'])) {
                 alert("Erreur de connexion au serveur.");
             }
         };
+
+
+        const addressInput = document.getElementById('address');
+        const resultBox = document.getElementById('address_suggestions');
+
+            addressInput.addEventListener('input', async () => {
+                const typedText = addressInput.value;
+
+            if (typedText.length < 3) {
+                resultBox.innerHTML = '';
+                return;
+            }
+
+            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);            
+            const data = await response.json();
+
+            resultBox.innerHTML = '';
+
+            data.features.forEach(foundAddress => {
+                
+                const clickableItem = document.createElement('li'); 
+                
+                clickableItem.className = "px-4 py-2 cursor-pointer hover:bg-[#1C5B8F] hover:text-white border-b text-sm";
+                clickableItem.textContent = foundAddress.properties.label; 
+                
+                clickableItem.onclick = () => {
+                    addressInput.value = foundAddress.properties.name;
+                    document.getElementById('city').value = foundAddress.properties.city;
+                    document.getElementById('zip_code').value = foundAddress.properties.postcode;
+                    document.getElementById('country').value = "France";
+                    
+                    resultBox.innerHTML = ''; 
+                };
+                
+                resultBox.appendChild(clickableItem);
+            });
+        });
+
     </script>
 </body>
 
