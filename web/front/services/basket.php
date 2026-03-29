@@ -47,9 +47,11 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     <div class="text-2xl font-bold text-[#1C5B8F]">
                         Total : <span id="total-price" class="text-[#E1AB2B]">0.00</span> €
                     </div>
-                    <button onclick="validerCommande()" class="px-10 py-3 rounded-full bg-[#1C5B8F] text-white text-xl font-bold hover:bg-green-600 transition-all shadow-lg">
-                        Valider ma commande
-                    </button>
+                    <a href="/front/services/delivery.php">
+                        <button class="px-10 py-3 rounded-full bg-[#1C5B8F] text-white text-xl font-bold hover:bg-green-600 transition-all shadow-lg">
+                            Valider ma commande
+                        </button>
+                    </a>
                 </div>
             <?php else: ?>
                 <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
@@ -133,42 +135,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 method: 'DELETE'
             });
             fetchPanier();
-        }
-
-        async function validerCommande() {
-            const userId = window.currentUserId;
-            if (!userId) return;
-
-            const user = window.userData;
-            const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
-
-            if (!hasSubscription) {
-                alert("Vous devez posséder un abonnement Silver Happy pour valider votre commande.");
-                window.location.href = "/front/services/subscription.php";
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/paiement-panier`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: parseInt(userId)
-                    })
-                });
-
-                const data = await response.json();
-                if (data.url) {
-                    window.location.href = data.url;
-                } else {
-                    alert("Erreur lors de la création de la session de paiement.");
-                }
-            } catch (err) {
-                console.error("Erreur:", err);
-                alert("Impossible de contacter le serveur de paiement.");
-            }
         }
     </script>
 </body>

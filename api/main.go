@@ -38,6 +38,7 @@ func main() {
 	http.HandleFunc("/panier/add", services.Add_Panier)
 	http.HandleFunc("/panier/get", services.Get_Panier)
 	http.HandleFunc("/panier/delete", services.Delete_Panier)
+	http.HandleFunc("/panier/check", services.Check_Panier)
 	http.HandleFunc("/paiement-panier", services.Paiement_Panier)
 	http.HandleFunc("/success-basket", services.Success_Basket)
 
@@ -77,7 +78,6 @@ func main() {
 	http.HandleFunc("/conseil/delete/{id}", communication.Delete_Conseil)
 	http.HandleFunc("/conseil/like/{id}", communication.Like_Conseil)
 	http.HandleFunc("/conseil/unlike/{id}", communication.Unlike_Conseil)
-
 
 	http.HandleFunc("/avis/read", communication.Read_Avis)
 	http.HandleFunc("/avis/read-one/{id}", communication.Read_One_Avis)

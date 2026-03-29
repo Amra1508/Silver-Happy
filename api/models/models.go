@@ -170,3 +170,11 @@ type Panier struct {
         Prix     float64 `json:"prix"`
         Image    string  `json:"image"`
 }
+
+type Livraison struct {
+    UserID  int    `json:"user_id"`
+    Code  	string `json:"code"`   
+    Adresse string `json:"adresse"`  
+    CP      string `json:"cp"`       
+    Ville   string `json:"ville"`    
+}

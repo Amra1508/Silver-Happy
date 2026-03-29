@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/charge"
 	"github.com/stripe/stripe-go/v78/checkout/session"
+	"github.com/stripe/stripe-go/v78/coupon"
 	"github.com/stripe/stripe-go/v78/invoice"
 	"github.com/stripe/stripe-go/v78/paymentintent"
 )
@@ -105,6 +107,35 @@ func Delete_Panier(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(map[string]string{"message": "Article supprimé"})
 }
 
+func Check_Panier(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    code := request.URL.Query().Get("code")
+    id_user := request.URL.Query().Get("id_utilisateur")
+
+    var idCode int
+    var valeur float64
+    var typeReduc string
+
+    err := db.DB.QueryRow("SELECT id_reduction, valeur, type FROM CODE_REDUCTION WHERE code = ? AND actif = 1", code).Scan(&idCode, &valeur, &typeReduc)
+    if err != nil {
+        http.Error(response, "Code invalide", http.StatusNotFound)
+        return
+    }
+
+    var exists int
+    db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATION_PROMO WHERE id_utilisateur = ? AND id_reduction = ?", id_user, idCode).Scan(&exists)
+    
+    if exists > 0 {
+        http.Error(response, "Vous avez déjà utilisé ce code promo", http.StatusForbidden)
+        return
+    }
+
+    json.NewEncoder(response).Encode(map[string]interface{}{"valeur": valeur, "type": typeReduc})
+}
+
 func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "POST") {
         return
@@ -112,9 +143,9 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 
     stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
-	req := models.Req{}
-    
-    if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+    var livraison models.Livraison 
+
+    if err := json.NewDecoder(request.Body).Decode(&livraison); err != nil {
         http.Error(response, "Format JSON invalide", http.StatusBadRequest)
         return
     }
@@ -122,7 +153,7 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 	rows, errDB := db.DB.Query(`
 		SELECT p.id_produit, p.quantite, pr.id_produit, pr.nom, pr.prix, pr.stock 
         FROM PANIER AS p JOIN PRODUIT pr ON p.id_produit = pr.id_produit
-		WHERE p.id_utilisateur = ?`, req.UserID)
+		WHERE p.id_utilisateur = ?`, livraison.UserID)
 
     if errDB != nil {
 		if errDB == sql.ErrNoRows {
@@ -171,14 +202,59 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
         lineItems = append(lineItems, item)
     }
 
-    params := &stripe.CheckoutSessionParams{
-        PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
-        Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
-        ClientReferenceID:  stripe.String(strconv.Itoa(req.UserID)),
-        LineItems: lineItems,
-        SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f", req.UserID, total)),
-    	CancelURL:  stripe.String("http://localhost/front/services/basket.php"),
+    var discounts []*stripe.CheckoutSessionDiscountParams
+
+if livraison.Code != "" {
+    var valeur float64
+    var typeReduc string
+    
+    err := db.DB.QueryRow("SELECT valeur, type FROM CODE_REDUCTION WHERE code = ? AND actif = 1", livraison.Code).Scan(&valeur, &typeReduc)
+    
+    if err == nil {
+        couponParams := &stripe.CouponParams{
+            Duration: stripe.String("once"),
+        }
+
+        if typeReduc == "pourcentage" {
+            couponParams.PercentOff = stripe.Float64(valeur)
+        } else {
+            couponParams.AmountOff = stripe.Int64(int64(valeur * 100))
+            couponParams.Currency = stripe.String("eur")
+        }
+
+        stCoupon, errCoupon := coupon.New(couponParams)
+
+        if errCoupon == nil {
+            discounts = append(discounts, &stripe.CheckoutSessionDiscountParams{
+                Coupon: stripe.String(stCoupon.ID),
+            })
+            
+            if typeReduc == "pourcentage" {
+                total = total * (1 - (valeur / 100))
+            } else {
+                total = total - valeur
+            }
+        }
     }
+}
+if total < 0 { total = 0 }
+
+    params := &stripe.CheckoutSessionParams{
+    PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+    Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
+    ClientReferenceID:  stripe.String(strconv.Itoa(livraison.UserID)),
+    LineItems:          lineItems, 
+    Discounts:          discounts, 
+    SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&adresse=%s&ville=%s&cp=%s&code=%s", 
+        livraison.UserID, 
+        total, 
+        url.QueryEscape(livraison.Adresse), 
+        url.QueryEscape(livraison.Ville), 
+        url.QueryEscape(livraison.CP),
+        url.QueryEscape(livraison.Code),
+    )),
+    CancelURL: stripe.String("http://localhost/front/services/basket.php"),
+}
 
     s, err := session.New(params)
 	if err != nil {
@@ -201,6 +277,10 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	sessionID := request.URL.Query().Get("session_id")
 	userID := request.URL.Query().Get("user_id")
 	totalStr := request.URL.Query().Get("total")
+    adresse := request.URL.Query().Get("adresse")
+    ville := request.URL.Query().Get("ville")
+    cp := request.URL.Query().Get("cp")
+    codePromoUtilise := request.URL.Query().Get("code")
 
 	total, err := strconv.ParseFloat(totalStr, 64)
 	if err != nil {
@@ -245,14 +325,15 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	resCmd, errCmd := db.DB.Exec(`
-    INSERT INTO COMMANDE (id_utilisateur, id_paiement, total)
-    VALUES(?, ?, ?)`, userID, idPaiement, total)
+        INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal)
+        VALUES(?, ?, ?, ?, ?, ?)`, 
+        userID, idPaiement, total, adresse, ville, cp)
 
-	if errCmd != nil {
-		fmt.Println("Erreur insertion commande :", errCmd)
-		http.Error(response, "Erreur base de données (Commande)", http.StatusInternalServerError)
-		return
-	}
+    if errCmd != nil {
+        fmt.Println("Erreur insertion commande :", errCmd)
+        http.Error(response, "Erreur base de données (Commande)", http.StatusInternalServerError)
+        return
+    }
 
     idCommande, _ := resCmd.LastInsertId()
 
@@ -266,6 +347,15 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
     if errLines != nil {
         fmt.Println("Erreur lignes:", errLines)
+    }
+
+    if codePromoUtilise != "" {
+        var idCode int
+        err := db.DB.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE code = ?", codePromoUtilise).Scan(&idCode)
+        
+        if err == nil {
+            db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idCode)
+        }
     }
 
     db.DB.Exec(`

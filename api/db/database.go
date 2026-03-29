@@ -278,6 +278,22 @@ func InitDB() {
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
 	);
+	CREATE TABLE IF NOT EXISTS CODE_REDUCTION (
+		id_reduction INT AUTO_INCREMENT PRIMARY KEY,
+		code VARCHAR(50) UNIQUE NOT NULL,
+		valeur INT NOT NULL,
+		type ENUM('pourcentage', 'fixe') DEFAULT 'pourcentage',
+		actif BOOLEAN DEFAULT TRUE,
+		date_expiration DATETIME
+	);
+	CREATE TABLE IF NOT EXISTS UTILISATION_PROMO (
+		id_promo INT AUTO_INCREMENT PRIMARY KEY,
+		id_utilisateur INT,
+		id_reduction INT,
+		date_utilisation DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
+		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
+	);
 	CREATE TABLE IF NOT EXISTS DEVIS(
 		id_devis INT AUTO_INCREMENT PRIMARY KEY,
 		description VARCHAR(200),
