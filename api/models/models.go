@@ -79,12 +79,14 @@ type Prestataire struct {
 	Nom            string  `json:"nom"`
 	Prenom         string  `json:"prenom"`
 	Email          string  `json:"email"`
+	Mdp            string `json:"mdp,omitempty"`			
 	NumTelephone   string  `json:"num_telephone"`
 	DateNaissance  string  `json:"date_naissance"`
 	Status         string  `json:"status"`
 	MotifRefus     string  `json:"motif_refus"`
 	Tarifs         float64 `json:"tarifs"`
-	TypePrestation string  `json:"type_prestation"`
+	IdCategorie    int     `json:"id_categorie"`
+	CategorieNom string `json:"categorie,omitempty"`
 	DateCreation   string  `json:"date_creation"`
 }
 

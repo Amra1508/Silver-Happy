@@ -22,6 +22,8 @@ func main() {
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 	http.HandleFunc("/create-checkout", users.Paiement_Abonnement)
 
+	// Endpoint Seniors 
+
 	http.HandleFunc("/auth/register", auth.Register)
 	http.HandleFunc("/auth/login", auth.Login)
 	http.HandleFunc("/auth/logout", auth.Logout)
@@ -124,6 +126,11 @@ func main() {
 
 	http.HandleFunc("/evenement/checkout/{id}", services.CreateEventCheckoutSession)
 	http.HandleFunc("/success-event", services.Success_Event_Payment)
+
+	// Endpoint Prestataire 
+
+	http.HandleFunc("/auth/register-provider", auth.RegisterPrestataire)
+
 
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {

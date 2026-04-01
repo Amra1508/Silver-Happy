@@ -44,24 +44,26 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	var argsQuery []interface{}
 
 	if statusFilter != "" && statusFilter != "tous" {
-		whereClause = " WHERE status = ?"
+		whereClause = " WHERE p.status = ?"
 		argsCount = append(argsCount, statusFilter)
 		argsQuery = append(argsQuery, statusFilter)
 	}
 
 	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE"+whereClause, argsCount...).Scan(&total)
+	db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE p"+whereClause, argsCount...).Scan(&total)
 
 	argsQuery = append(argsQuery, limit, offset)
+	
 	sqlQuery := `
-        SELECT id_prestataire, IFNULL(siret, ''), IFNULL(nom, ''), IFNULL(prenom, ''), 
-               IFNULL(email, ''), IFNULL(num_telephone, ''), IFNULL(DATE_FORMAT(date_naissance, '%Y-%m-%d'), ''), 
-               IFNULL(status, 'en attente'), IFNULL(motif_refus, ''), IFNULL(tarifs, 0), 
-               IFNULL(type_prestation, ''), IFNULL(DATE_FORMAT(date_creation, '%d/%m/%Y à %H:%i'), '') 
-        FROM PRESTATAIRE
-        ` + whereClause + `
-        LIMIT ? OFFSET ?
-    `
+		SELECT p.id_prestataire, IFNULL(p.siret, ''), IFNULL(p.nom, ''), IFNULL(p.prenom, ''), 
+			   IFNULL(p.email, ''), IFNULL(p.num_telephone, ''), IFNULL(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
+			   IFNULL(p.status, 'en attente'), IFNULL(p.motif_refus, ''), IFNULL(p.tarifs, 0), 
+			   IFNULL(p.id_categorie, 0), IFNULL(c.nom, ''), IFNULL(DATE_FORMAT(p.date_creation, '%d/%m/%Y à %H:%i'), '') 
+		FROM PRESTATAIRE p
+		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+		` + whereClause + `
+		LIMIT ? OFFSET ?
+	`
 
 	rows, err := db.DB.Query(sqlQuery, argsQuery...)
 	if err != nil {
@@ -73,7 +75,7 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	var list []models.Prestataire
 	for rows.Next() {
 		var p models.Prestataire
-		rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.TypePrestation, &p.DateCreation)
+		rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.IdCategorie, &p.CategorieNom, &p.DateCreation)
 		list = append(list, p)
 	}
 
@@ -114,19 +116,20 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE status = 'valide'").Scan(&total)
+	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE p.status = 'valide'").Scan(&total)
 	if errTotal != nil {
 		http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
 		return
 	}
 
 	sqlQuery := `
-		SELECT p.id_prestataire, p.prenom, p.nom, p.type_prestation, 
-		       IFNULL(AVG(a.note), 0) as moyenne, 
-		       COUNT(a.id_avis) as nombre_avis 
+		SELECT p.id_prestataire, p.prenom, p.nom, c.nom AS categorie, 
+			   IFNULL(AVG(a.note), 0) as moyenne, 
+			   COUNT(a.id_avis) as nombre_avis 
 		FROM PRESTATAIRE AS p 
 		LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
-		WHERE status = 'valide'
+		LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
+		WHERE p.status = 'valide'
 		GROUP BY p.id_prestataire 
 		ORDER BY moyenne DESC 
 		LIMIT ? OFFSET ?`
@@ -154,7 +157,7 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 			"id_prestataire":  id,
 			"prenom":          prenom,
 			"nom":             nom,
-			"type_prestation": typePresta,
+			"categorie":       typePresta,
 			"moyenne":         moyenne,
 			"nombre_avis":     nbAvis,
 		})
@@ -191,7 +194,6 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 	p.Email = strings.TrimSpace(p.Email)
 	p.NumTelephone = strings.TrimSpace(p.NumTelephone)
 	p.Siret = strings.TrimSpace(p.Siret)
-	p.TypePrestation = strings.TrimSpace(p.TypePrestation)
 
 	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
@@ -228,8 +230,8 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, type_prestation, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
-		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.TypePrestation, string(hashMdp))
+	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, id_categorie, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
+		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.IdCategorie, string(hashMdp))
 
 	if err != nil {
 		http.Error(response, "Erreur création prestataire", http.StatusInternalServerError)
@@ -257,15 +259,14 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 	p.Email = strings.TrimSpace(p.Email)
 	p.NumTelephone = strings.TrimSpace(p.NumTelephone)
 	p.Siret = strings.TrimSpace(p.Siret)
-	p.TypePrestation = strings.TrimSpace(p.TypePrestation)
 
 	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
 		return
 	}
 
-	db.DB.Exec("UPDATE PRESTATAIRE SET siret=?, nom=?, prenom=?, email=?, num_telephone=?, date_naissance=NULLIF(?, ''), status=?, motif_refus=?, tarifs=?, type_prestation=? WHERE id_prestataire=?",
-		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.TypePrestation, id)
+	db.DB.Exec("UPDATE PRESTATAIRE SET siret=?, nom=?, prenom=?, email=?, num_telephone=?, date_naissance=NULLIF(?, ''), status=?, motif_refus=?, tarifs=?, id_categorie=? WHERE id_prestataire=?",
+		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.IdCategorie, id)
 
 	json.NewEncoder(response).Encode("OK")
 }
@@ -365,66 +366,71 @@ func Delete_Prestataire_Document(response http.ResponseWriter, request *http.Req
 }
 
 func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    idStr := request.PathValue("id")
+	idStr := request.PathValue("id")
 
-    prestataire := models.Prestataire{}
+	prestataire := models.Prestataire{}
 
-    err := db.DB.QueryRow(`
-        SELECT id_prestataire, IFNULL(prenom, ''), IFNULL(nom, ''), IFNULL(email, ''), 
-               IFNULL(num_telephone, ''), IFNULL(type_prestation, ''), IFNULL(tarifs, 0)
-        FROM PRESTATAIRE 
-        WHERE id_prestataire = ? AND status = 'validé'
-    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.TypePrestation, &prestataire.Tarifs)
+	err := db.DB.QueryRow(`
+		SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
+			   IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), IFNULL(p.tarifs, 0)
+		FROM PRESTATAIRE p
+		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+		WHERE p.id_prestataire = ? AND p.status = 'validé'
+	`, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &prestataire.Tarifs)
 
-    if err != nil {
-        http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
-        return
-    }
+	if err != nil {
+		http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
+		return
+	}
 
-    rows, err := db.DB.Query(`
-        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin 
-        FROM evenement e
-        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
-        WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
-        ORDER BY e.date_debut ASC
-    `, idStr)
+	rows, err := db.DB.Query(`
+		SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin 
+		FROM evenement e
+		INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+		WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
+		ORDER BY e.date_debut ASC
+	`, idStr)
 
-    var events []map[string]interface{}
-    if err == nil {
-        defer rows.Close()
-        for rows.Next() {
-            var id, places int
-            var nom, desc, lieu string
-            var prix float64
-            var debut, fin sql.NullString
+	var events []map[string]interface{}
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var id, places int
+			var nom, desc, lieu string
+			var prix float64
+			var debut, fin sql.NullString
 
-            if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin); errScan == nil {
-                evt := map[string]interface{}{
-                    "id_evenement": id,
-                    "nom":          nom,
-                    "description":  desc,
-                    "lieu":         lieu,
-                    "nombre_place": places,
-                    "prix":         prix,
-                }
-                if debut.Valid { evt["date_debut"] = debut.String }
-                if fin.Valid { evt["date_fin"] = fin.String }
-                events = append(events, evt)
-            }
-        }
-    }
-    
-    if events == nil {
-        events = []map[string]interface{}{}
-    }
+			if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin); errScan == nil {
+				evt := map[string]interface{}{
+					"id_evenement": id,
+					"nom":          nom,
+					"description":  desc,
+					"lieu":         lieu,
+					"nombre_place": places,
+					"prix":         prix,
+				}
+				if debut.Valid {
+					evt["date_debut"] = debut.String
+				}
+				if fin.Valid {
+					evt["date_fin"] = fin.String
+				}
+				events = append(events, evt)
+			}
+		}
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(map[string]interface{}{
-        "prestataire": prestataire,
-        "evenements":  events,
-    })
+	if events == nil {
+		events = []map[string]interface{}{}
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"prestataire": prestataire,
+		"evenements":  events,
+	})
 }
