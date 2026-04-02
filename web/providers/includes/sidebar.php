@@ -1,10 +1,14 @@
 <aside class="w-64 bg-[#1C5B8F] text-white min-h-screen flex flex-col shadow-xl font-sans shrink-0 sticky top-0">
     
-    <div class="p-6 flex items-center justify-center border-b border-white/10">
-        <h2 class="text-2xl font-bold tracking-wider text-center">
+    <div class="p-6 flex flex-col items-center justify-center border-b border-white/10">
+        <h2 class="text-2xl font-bold tracking-wider text-center mb-2">
             Silver<span class="text-[#E1AB2B]">Happy</span><br>
             <span class="text-sm font-normal text-gray-300">Espace Pro</span>
         </h2>
+        
+        <div id="provider-name-display" class="mt-4 px-4 py-2 bg-white/10 rounded-lg text-center w-full">
+            <span class="text-sm text-gray-300">Chargement...</span>
+        </div>
     </div>
 
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -47,10 +51,44 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Mon Profil
         </a>
-        <a href="/front/auth/logout.php" class="flex items-center gap-3 px-4 py-3 text-red-300 hover:bg-red-500/20 hover:text-red-200 rounded-xl transition-all">
+        <button id="btn-logout-provider" class="w-full flex items-center gap-3 px-4 py-3 text-red-300 hover:bg-red-500/20 hover:text-red-200 rounded-xl transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             Déconnexion
-        </a>
+        </button>
     </div>
 
 </aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const providerNameDisplay = document.getElementById('provider-name-display');
+
+        try {
+            const response = await fetch('http://localhost:8082/auth/me-provider', {
+                method: 'GET',
+                credentials: 'include' 
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                providerNameDisplay.innerHTML = `<span class="font-bold text-[#E1AB2B]">${data.prenom} ${data.nom}</span><br><span class="text-xs text-gray-300">${data.categorie || 'Pro'}</span>`;
+            } else {
+                window.location.href = "/front/providers/account/signin.php"; 
+            }
+        } catch (error) {
+            console.error("Serveur inaccessible :", error);
+            window.location.href = "/front/providers/account/signin.php";
+        }
+
+        const btnLogout = document.getElementById('btn-logout-provider');
+        if (btnLogout) {
+            btnLogout.addEventListener('click', async () => {
+                await fetch('http://localhost:8082/auth/logout-provider', {
+                    method: 'POST',
+                    credentials: 'include' 
+                });
+                window.location.href = "/providers/account/signin.php";
+            });
+        }
+    });
+</script>

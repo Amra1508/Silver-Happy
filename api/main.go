@@ -130,6 +130,9 @@ func main() {
 	// Endpoint Prestataire 
 
 	http.HandleFunc("/auth/register-provider", auth.RegisterPrestataire)
+	http.HandleFunc("/auth/login-provider", auth.LoginPrestataire)
+    http.HandleFunc("/auth/logout-provider", auth.LogoutPrestataire)
+    http.HandleFunc("/auth/me-provider", auth.MePrestataire)
 
 
 

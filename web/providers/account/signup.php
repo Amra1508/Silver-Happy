@@ -37,7 +37,7 @@
                 </div>
                 <nav class="hidden md:flex space-x-8 items-center">
                     <a href="/front/index.php" class="text-gray-600 hover:text-[#1C5B8F] font-medium transition-colors">Espace Senior</a>
-                    <a href="/providers/account.signin.php" class="px-5 py-2 bg-[#1C5B8F]/10 text-[#1C5B8F] rounded-full font-bold hover:bg-[#1C5B8F]/20 transition-colors">Connexion Pro</a>
+                    <a href="/providers/account/signin.php" class="px-5 py-2 bg-[#1C5B8F]/10 text-[#1C5B8F] rounded-full font-bold hover:bg-[#1C5B8F]/20 transition-colors">Connexion Pro</a>
                 </nav>
             </div>
         </div>
