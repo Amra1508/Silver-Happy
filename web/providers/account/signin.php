@@ -1,10 +1,11 @@
+<!DOCTYPE html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription Prestataire</title>
+    <title>Connexion Prestataire</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
@@ -23,223 +24,126 @@
     </script>
 </head>
 
-<body>
+<body class="flex flex-col min-h-screen bg-gray-50">
 
-    <?php include("../includes/header.php") ?>
-
-    <main>
-        <div class="px-16 pt-10 pb-16">
-
-            <h2 class="text-3xl text-center mb-10 font-semibold text-[#1C5B8F]">Devenir Prestataire :</h2>
-
-            <div id="response_message" class="hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border"></div>
-
-            <div class="border border-[#1C5B8F] rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6">
-                
-                <div class="sm:col-span-3">
-                    <label class="small-text">Prénom</label>
-                    <div class="mt-2">
-                        <input id="first_name" type="text" class="form-input w-full border rounded-md p-2" required />
-                    </div>
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="/index.php" class="text-3xl font-bold tracking-wider text-[#1C5B8F]">
+                        Silver<span class="text-[#E1AB2B]">Happy</span>
+                    </a>
                 </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Nom</label>
-                    <div class="mt-2">
-                        <input id="last_name" type="text" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Date de naissance</label>
-                    <div class="mt-2">
-                        <input id="birth_date" type="date" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Numéro de téléphone</label>
-                    <div class="mt-2">
-                        <input id="phone_number" type="tel" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Adresse mail pro</label>
-                    <div class="mt-2">
-                        <input id="signup_email" type="email" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Mot de passe</label>
-                    <div class="mt-2">
-                        <input id="signup_password" type="password" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Numéro SIRET (14 chiffres)</label>
-                    <div class="mt-2">
-                        <input id="siret" type="text" maxlength="14" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Catégorie de prestation</label>
-                    <div class="mt-2">
-                        <select id="id_categorie" class="form-input w-full border rounded-md p-2 bg-white" required>
-                            <option value="" disabled selected>Chargement des catégories...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="sm:col-span-3">
-                    <label class="small-text">Tarif horaire/forfait (€)</label>
-                    <div class="mt-2">
-                        <input id="tarif" type="number" step="0.01" min="0" placeholder="Ex: 25.50" class="form-input w-full border rounded-md p-2" required />
-                    </div>
-                </div>
-
-                <div class="sm:col-span-6 justify-self-center mt-4">
-                    <div class="cf-turnstile" data-sitekey="0x4AAAAAACpHSvX9fEtYZZTy" data-theme="light"></div>
-                </div>
-
-                <button id="btn_register" class="sm:col-span-6 justify-self-center px-14 py-3 bg-[#1C5B8F] text-white rounded-md hover:bg-blue-800 transition-colors">Envoyer ma demande</button>
+                <nav class="hidden md:flex space-x-8 items-center">
+                    <a href="/front/index.php" class="text-gray-600 hover:text-[#1C5B8F] font-medium transition-colors">Espace Senior</a>
+                    <a href="providers/account/signup.php" class="px-5 py-2 bg-[#E1AB2B]/10 text-[#E1AB2B] rounded-full font-bold hover:bg-[#E1AB2B]/20 transition-colors">Devenir Pro</a>
+                </nav>
             </div>
         </div>
+    </header>
 
-        <div class="mt-8 text-center">
-            <span class="text-gray-600">Vous êtes un senior cherchant de l'aide ?</span>
-            <a href="/front/users/signup.php" class="text-[#1C5B8F] font-semibold hover:underline ml-1 transition-all">
-                Je m'inscris ici
-            </a>
+    <main class="flex-grow flex items-center justify-center py-16 px-4">
+        
+        <div class="w-full max-w-md bg-white border border-gray-200 rounded-[2.5rem] p-10 shadow-xl">
+            
+            <h2 class="text-3xl text-center mb-2 font-semibold text-[#1C5B8F]">Espace Pro</h2>
+            <p class="text-center text-gray-500 mb-8 text-sm">Connectez-vous pour gérer vos prestations</p>
+
+            <div id="login_message" class="hidden mb-6 p-4 rounded-lg border text-center font-bold text-sm"></div>
+
+            <form id="login_form" class="space-y-6">
+                
+                <div>
+                    <label for="email" class="block text-sm text-gray-600 font-semibold mb-2">Adresse mail pro</label>
+                    <input type="email" id="email" class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:border-[#1C5B8F]" required>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm text-gray-600 font-semibold mb-2">Mot de passe</label>
+                    <input type="password" id="password" class="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:border-[#1C5B8F]" required>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-[#1C5B8F] text-white font-semibold rounded-md hover:bg-blue-800 transition-colors shadow-md">
+                    Me connecter
+                </button>
+
+            </form>
+
+            <div class="mt-8 text-center pt-6 border-t border-gray-100">
+                <span class="text-gray-600 text-sm">Vous n'avez pas encore de compte pro ?</span><br>
+                <a href="signup.php" class="text-[#E1AB2B] font-semibold hover:underline transition-all mt-2 inline-block">
+                    Déposer mon dossier d'inscription
+                </a>
+            </div>
+
         </div>
 
     </main>
-    <?php include("../includes/footer.php") ?>
+
+    <footer class="bg-[#1C5B8F] text-white py-10 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-center md:text-left">
+                <span class="text-2xl font-bold tracking-wider">
+                    Silver<span class="text-[#E1AB2B]">Happy</span>
+                </span>
+                <p class="text-sm text-blue-200 mt-2">Accompagner nos aînés au quotidien.</p>
+                <p class="text-sm text-blue-300 mt-1">&copy; 2026 Silver Happy. Tous droits réservés.</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-blue-200">
+                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Mentions légales</a>
+                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Politique de confidentialité</a>
+                <a href="#" class="hover:text-[#E1AB2B] transition-colors">CGU Prestataires</a>
+                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Nous contacter</a>
+            </div>
+        </div>
+    </footer>
 
     <script>
-        const limitDate = new Date();
-        limitDate.setFullYear(limitDate.getFullYear() - 18);
-        const strMax = limitDate.toISOString().split('T')[0];
-        document.getElementById('birth_date').max = strMax;
-
-        const btnSubmit = document.getElementById('btn_register');
-
-        btnSubmit.addEventListener('click', async (e) => {
+        document.getElementById('login_form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const messageBox = document.getElementById('response_message');
-            const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]')?.value;
+            const messageBox = document.getElementById('login_message');
+            const email = document.getElementById('email').value;
+            const mdp = document.getElementById('password').value;
 
-            const inputBirth = document.getElementById('birth_date').value;
-            if (inputBirth > strMax) {
-                messageBox.textContent = "Désolé, vous devez avoir au moins 18 ans pour devenir prestataire.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
-            }
-
-            const data = {
-                prenom: document.getElementById('first_name').value,
-                nom: document.getElementById('last_name').value,
-                date_naissance: document.getElementById('birth_date').value,
-                num_telephone: document.getElementById('phone_number').value,
-                email: document.getElementById('signup_email').value,
-                mdp: document.getElementById('signup_password').value,
-                siret: document.getElementById('siret').value,
-                id_categorie: parseInt(document.getElementById('id_categorie').value),
-                tarifs: parseFloat(document.getElementById('tarif').value),
-                "cf-turnstile-response": turnstileResponse
-            };
-
-            if (!data.prenom || !data.nom || !data.date_naissance || !data.email || !data.mdp || !data.siret || !data.id_categorie || isNaN(data.tarifs)) {
-                messageBox.textContent = "Veuillez remplir tous les champs.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
-            }
-
-            if (data.siret.length !== 14 || isNaN(data.siret)) {
-                messageBox.textContent = "Le numéro SIRET doit contenir exactement 14 chiffres.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
-            }
-
-            if (!turnstileResponse) {
-                messageBox.textContent = "Veuillez valider la vérification de sécurité (Captcha).";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
+            if (!email || !mdp) {
+                messageBox.textContent = "Veuillez saisir vos identifiants.";
+                messageBox.className = "mb-6 p-3 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700 text-sm";
                 messageBox.classList.remove('hidden');
                 return;
             }
 
             try {
-                const response = await fetch('http://localhost:8082/auth/register-provider', {
+                const response = await fetch('http://localhost:8082/auth/login-provider', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ email: email, mdp: mdp })
                 });
 
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold";
-
                 if (response.ok) {
-                    const result = await response.json();
-
-                    messageBox.textContent = "Demande envoyée ! Bienvenue " + (result.prenom || data.prenom) + ". Votre compte est en attente de validation.";
-                    messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+                    messageBox.textContent = "Connexion réussie. Redirection...";
+                    messageBox.className = "mb-6 p-3 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700 text-sm";
                     messageBox.classList.remove('hidden');
 
                     setTimeout(() => {
-                        window.location.href = "signin.php";
-                    }, 3000);
+                        window.location.href = "dashboard.php"; 
+                    }, 1500);
                 } else {
                     const errorText = await response.text();
-
-                    messageBox.textContent = "Erreur : " + errorText;
-                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                    
+                    messageBox.textContent = errorText.length < 50 ? errorText : "Identifiants incorrects ou compte non validé.";
+                    messageBox.className = "mb-6 p-3 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700 text-sm";
                     messageBox.classList.remove('hidden');
                 }
             } catch (error) {
                 messageBox.textContent = "Impossible de joindre le serveur.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
+                messageBox.className = "mb-6 p-3 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700 text-sm";
                 messageBox.classList.remove('hidden');
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const selectCategorie = document.getElementById('id_categorie');
-            
-            try {
-                const res = await fetch('http://localhost:8082/categorie/read');
-                if (res.ok) {
-                    const jsonResponse = await res.json();
-                    
-                    const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
-                    
-                    selectCategorie.innerHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
-                    
-                    if (categories.length > 0) {
-                        categories.forEach(cat => {
-                            const option = document.createElement('option');
-                            option.value = cat.id_categorie || cat.id || cat.ID; 
-                            option.textContent = cat.nom || cat.Nom;
-                            selectCategorie.appendChild(option);
-                        });
-                    } else {
-                        selectCategorie.innerHTML = '<option value="" disabled>Aucune catégorie disponible</option>';
-                    }
-                } else {
-                    selectCategorie.innerHTML = '<option value="" disabled>Erreur de chargement</option>';
-                }
-            } catch (err) {
-                console.error("Erreur serveur:", err);
-                selectCategorie.innerHTML = '<option value="" disabled>Serveur injoignable</option>';
             }
         });
     </script>
 
 </body>
+</html>
