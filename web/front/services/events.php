@@ -27,16 +27,6 @@
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1 relative">
-        <?php if(isset($_GET['success']) && $_GET['success'] == 'inscription_validee'): ?>
-            <div class="bg-green-100 border-green-400 text-green-700 w-full max-w-xl mx-auto mt-4 p-4 rounded-lg border text-center font-bold shadow-md">
-                Paiement réussi ! Votre inscription est validée.
-            </div>
-        <?php endif; ?>
-        <?php if(isset($_GET['error']) && $_GET['error'] == 'paiement_echoue'): ?>
-            <div class="bg-red-100 border-red-400 text-red-700 w-full max-w-xl mx-auto mt-4 p-4 rounded-lg border text-center font-bold shadow-md">
-                Le paiement a échoué ou a été annulé.
-            </div>
-        <?php endif; ?>
         <div class="p-3 flex justify-between items-center mx-8">
             <a href="/front/services/menu_activity.php">
                 <button class="flex items-center rounded-full px-6 button-blue">
@@ -272,9 +262,18 @@
             try {
                 const response = await fetch(`${API_BASE}/evenement/checkout/${eventId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId)
+                    }),
                 });
+
+                if (response.status === 409) {
+                    showAlert("Vous êtes déjà inscrit à un autre événement sur ce créneau horaire.", false);
+                    return;
+                }
 
                 if (!response.ok) {
                     const errText = await response.text();
@@ -347,7 +346,7 @@
                     const prix = parseFloat(e.prix || e.Prix || 0);
                     const displayPrix = prix > 0 ? `${prix.toFixed(2)} €` : 'Gratuit';
                     const prixBadge = `<span class="text-xs ${prix > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'} px-3 py-1 rounded-full mb-3 inline-block font-bold border ml-2">${displayPrix}</span>`;
-                    
+
                     let badgeHTML = places > 0 ?
                         `<span class="bg-[#E1AB2B]/90 text-white shadow-md text-sm px-4 py-2 rounded-full font-bold backdrop-blur-sm">Il reste ${places} place(s)</span>` :
                         `<span class="bg-red-500/90 text-white shadow-md text-sm px-4 py-2 rounded-full font-bold backdrop-blur-sm">Complet</span>`;
@@ -409,6 +408,14 @@
         window.onload = async () => {
             await fetchCategories();
             fetchEvenements(1);
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (urlParams.get('success') === 'inscription_validee') {
+                showAlert("Paiement réussi ! Votre inscription est validée.", true);
+            } else if (urlParams.get('error') === 'paiement_echoue') {
+                showAlert("Le paiement a échoué ou a été annulé.", false);
+            }
 
             setTimeout(() => {
                 if (window.currentUserId) fetchMyEvenements();

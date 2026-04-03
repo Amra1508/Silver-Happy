@@ -496,45 +496,34 @@ func Register_Evenement(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    var count int
-    errCheck := db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
-    if errCheck == nil && count > 0 {
+	var count int
+    db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
+    if count > 0 {
         http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
         return
     }
 
-	query := `SELECT e.id_evenement, e.date_debut FROM EVENEMENT AS e 
-	JOIN INSCRIPTION AS i ON e.id_evenement = i.id_evenement WHERE i.id_utilisateur = ?`
-
-	var tests []models.Test
-	rows, errorFetch := db.DB.Query(query, idUser)
-	if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+    var dateCible string
+    errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
+    if errDate != nil {
+        http.Error(response, "Événement introuvable", http.StatusNotFound)
         return
     }
-    defer rows.Close()
 
-	for rows.Next(){
-		var test models.Test
-		if err := rows.Scan(&test.Id, &test.Date); err != nil {
-            return
-        }
-        tests = append(tests, test)
-	}
+    var conflictCount int
+    queryConflict := `
+        SELECT COUNT(*) 
+        FROM INSCRIPTION i
+        JOIN evenement e ON i.id_evenement = e.id_evenement
+        WHERE i.id_utilisateur = ? 
+        AND DATE_FORMAT(e.date_debut, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')`
 
-	if err := rows.Err(); err != nil {
-    http.Error(response, "Erreur lors du parcours des résultats", http.StatusInternalServerError)
-    return
-}
+    db.DB.QueryRow(queryConflict, idUser, dateCible).Scan(&conflictCount)
 
-	for i := 0; i < len(tests)-1; i++{
-		for j := 0; j < len(tests)-1; j++{
-			if(tests[i].Date == tests[j+1].Date){
-				http.Error(response, "Vous êtes déjà inscrit à un événement pour cet horaire.", http.StatusConflict)
-				return
-			}
-		}
-	}
+    if conflictCount > 0 {
+        http.Error(response, "Conflit d'horaire : vous avez déjà une activité à cette heure-là.", http.StatusConflict)
+        return
+    }
 
     var places int
     err := db.DB.QueryRow("SELECT nombre_place FROM evenement WHERE id_evenement = ?", idEvt).Scan(&places)
@@ -643,11 +632,33 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 	}
 
 	var count int
-	db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
-	if count > 0 {
-		http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
-		return
-	}
+    db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
+    if count > 0 {
+        http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
+        return
+    }
+
+    var dateCible string
+    errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
+    if errDate != nil {
+        http.Error(response, "Événement introuvable", http.StatusNotFound)
+        return
+    }
+
+    var conflictCount int
+    queryConflict := `
+        SELECT COUNT(*) 
+        FROM INSCRIPTION i
+        JOIN evenement e ON i.id_evenement = e.id_evenement
+        WHERE i.id_utilisateur = ? 
+        AND DATE_FORMAT(e.date_debut, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')`
+
+    db.DB.QueryRow(queryConflict, idUser, dateCible).Scan(&conflictCount)
+
+    if conflictCount > 0 {
+        http.Error(response, "Conflit d'horaire : vous avez déjà une activité à cette heure-là.", http.StatusConflict)
+        return
+    }
 
 	var nomEvt string
 	var places int
