@@ -10,6 +10,7 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASS}
+      - TZ=Europe/Paris
     volumes:
       - ./mariadb:/var/lib/mysql
 
@@ -26,6 +27,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+      - TZ=Europe/Paris
 
   api-silver-happy:
     build: ./api
@@ -40,6 +42,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+      - TZ=Europe/Paris
     env_file:
       - .env
 
