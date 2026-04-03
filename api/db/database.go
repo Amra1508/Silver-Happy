@@ -130,8 +130,8 @@ func InitDB() {
 		motif_refus VARCHAR(250) DEFAULT NULL,
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		tarifs DOUBLE,
-		type_prestation INT NULL,
 		id_abonnement INT,
+		id_categorie INT,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
 	);
