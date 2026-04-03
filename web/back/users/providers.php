@@ -164,14 +164,21 @@
                             </div>
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="add-siret" class="add-input"></div>
-                                <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="add-type" class="add-input"></div>
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="add-tarifs" class="add-input"></div>
+                                
+                                <div>
+                                    <label class="text-sm text-gray-500">Catégorie prestation *</label>
+                                    <select id="add-type" class="add-input bg-white" required>
+                                        <option value="" disabled selected>Chargement...</option>
+                                    </select>
+                                </div>
+
+                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="0" step="0.01" id="add-tarifs" class="add-input"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="add-date" class="add-input" required></div>
                                 <div>
                                     <label class="text-sm text-gray-500">Statut initial</label>
-                                    <select id="add-status" class="add-input">
+                                    <select id="add-status" class="add-input bg-white">
                                         <option value="en attente">En attente</option>
                                         <option value="validé">Validé</option>
                                         <option value="refusé">Refusé</option>
@@ -213,14 +220,21 @@
                             </div>
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="edit-siret" class="edit-input"></div>
-                                <div><label class="text-sm text-gray-500">Type de prestation</label><input type="text" id="edit-type" class="edit-input"></div>
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="1" step="0.01" id="edit-tarifs" class="edit-input"></div>
+                                
+                                <div>
+                                    <label class="text-sm text-gray-500">Catégorie prestation *</label>
+                                    <select id="edit-type" class="edit-input bg-white" required>
+                                        <option value="" disabled selected>Chargement...</option>
+                                    </select>
+                                </div>
+
+                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="0" step="0.01" id="edit-tarifs" class="edit-input"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="edit-date" class="edit-input" required></div>
                                 <div>
                                     <label class="text-sm text-gray-500">Statut</label>
-                                    <select id="edit-status" class="edit-input">
+                                    <select id="edit-status" class="edit-input bg-white">
                                     </select>
                                 </div>
                             </div>
@@ -267,6 +281,7 @@
 
     <script>
         const API_BASE = "http://localhost:8082/prestataires";
+        const API_CATEGORIES = "http://localhost:8082/categorie/read"; 
         const messageBox = document.getElementById('api-message');
 
         let allProviders = [];
@@ -289,20 +304,48 @@
         }
 
         function getProviderById(searchId) {
-            for (let i = 0; i < allProviders.length; i++) {
-                if (allProviders[i].id === searchId) {
-                    return allProviders[i];
-                }
-            }
-            return null;
+            return allProviders.find(p => p.id === searchId) || null;
         }
 
         const maxDate = new Date();
         maxDate.setFullYear(maxDate.getFullYear() - 18);
-
         const simpleMax = maxDate.toISOString().split('T')[0];
-
         document.getElementById('add-date').max = simpleMax;
+
+        async function loadCategories() {
+            try {
+                const res = await fetch(API_CATEGORIES);
+                if (res.ok) {
+                    const jsonResponse = await res.json();
+                    
+                    const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
+
+                    let optionsHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
+                    
+                    if (categories && categories.length > 0) {
+                        categories.forEach(cat => {
+                            const catId = cat.id_categorie || cat.id || cat.ID;
+                            const catNom = cat.nom || cat.Nom;
+                            optionsHTML += `<option value="${catId}">${catNom}</option>`;
+                        });
+                    } else {
+                        optionsHTML = '<option value="" disabled selected>Aucune catégorie trouvée</option>';
+                    }
+
+                    document.getElementById('add-type').innerHTML = optionsHTML;
+                    document.getElementById('edit-type').innerHTML = optionsHTML;
+                } else {
+                    const errorHTML = '<option value="" disabled selected>Erreur serveur</option>';
+                    document.getElementById('add-type').innerHTML = errorHTML;
+                    document.getElementById('edit-type').innerHTML = errorHTML;
+                }
+            } catch (err) {
+                console.error("Erreur de chargement des catégories", err);
+                const errorHTML = '<option value="" disabled selected>Serveur injoignable</option>';
+                document.getElementById('add-type').innerHTML = errorHTML;
+                document.getElementById('edit-type').innerHTML = errorHTML;
+            }
+        }
 
         async function loadProviders(page = 1) {
             currentPage = page;
@@ -339,6 +382,8 @@
 
                     let phone = provider.num_telephone ? provider.num_telephone : "-";
                     let price = provider.tarifs ? provider.tarifs : 0;
+                    
+                    let categoryName = provider.categorie ? provider.categorie : "Non définie";
 
                     let detailsButton = "<button onclick='openDetailsModal(" + provider.id + ")' class='add-button text-sm'>Voir détails</button>";
 
@@ -351,7 +396,7 @@
                             </td>
                             <td class="p-4">${phone}</td>
                             <td class="p-4">
-                                <span class="font-semibold">${provider.type_prestation}</span><br>
+                                <span class="font-semibold">${categoryName}</span><br>
                                 <span class="text-sm text-gray-500">Tarifs: ${price} €</span>
                             </td>
                             <td class="p-4">${badge}</td>
@@ -415,7 +460,9 @@
             document.getElementById('vp-date').textContent = provider.date_naissance ? provider.date_naissance.substring(0, 10) : "-";
             document.getElementById('vp-date-creation').textContent = provider.date_creation ? provider.date_creation : "-";
             document.getElementById('vp-siret').textContent = provider.siret;
-            document.getElementById('vp-type').textContent = provider.type_prestation;
+            
+            document.getElementById('vp-type').textContent = provider.categorie || "Non définie";
+            
             document.getElementById('vp-tarifs').textContent = provider.tarifs;
 
             if (provider.status === 'validé') {
@@ -532,7 +579,7 @@
                 num_telephone: currentProvider.num_telephone,
                 date_naissance: currentProvider.date_naissance,
                 siret: currentProvider.siret,
-                type_prestation: currentProvider.type_prestation,
+                id_categorie: currentProvider.id_categorie,
                 tarifs: currentProvider.tarifs,
                 status: newStatus,
                 motif_refus: currentMotif
@@ -572,7 +619,9 @@
             document.getElementById('edit-email').value = provider.email;
             document.getElementById('edit-tel').value = provider.num_telephone;
             document.getElementById('edit-siret').value = provider.siret;
-            document.getElementById('edit-type').value = provider.type_prestation;
+            
+            document.getElementById('edit-type').value = provider.id_categorie; 
+            
             document.getElementById('edit-tarifs').value = provider.tarifs;
             document.getElementById('edit-motif').value = provider.motif_refus;
 
@@ -616,7 +665,7 @@
                 num_telephone: document.getElementById('add-tel').value,
                 date_naissance: document.getElementById('add-date').value,
                 siret: document.getElementById('add-siret').value,
-                type_prestation: document.getElementById('add-type').value,
+                id_categorie: parseInt(document.getElementById('add-type').value),
                 tarifs: parseFloat(document.getElementById('add-tarifs').value) || 0,
                 status: document.getElementById('add-status').value,
                 motif_refus: ""
@@ -667,7 +716,7 @@
                 num_telephone: document.getElementById('edit-tel').value,
                 date_naissance: document.getElementById('edit-date').value,
                 siret: document.getElementById('edit-siret').value,
-                type_prestation: document.getElementById('edit-type').value,
+                id_categorie: parseInt(document.getElementById('edit-type').value),
                 tarifs: parseFloat(document.getElementById('edit-tarifs').value) || 0,
                 status: document.getElementById('edit-status').value,
                 motif_refus: document.getElementById('edit-motif').value
@@ -754,9 +803,11 @@
             }
         });
 
-        window.onload = () => loadProviders(1);
+        window.onload = () => {
+            loadCategories();
+            loadProviders(1);
+        };
     </script>
 
 </body>
-
 </html>

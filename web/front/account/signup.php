@@ -113,6 +113,14 @@
                 <button id="btn_register" class="sm:col-span-6 justify-self-center px-14 rounded-md button-blue">Je m'inscris</button>
             </div>
         </div>
+
+        <div class="mt-8 text-center">
+            <span class="text-gray-600">Vous proposez des services ?</span>
+            <a href="/providers/account/signin.php" class="text-[#1C5B8F] font-semibold hover:underline ml-1 transition-all">
+                Je suis prestataire
+            </a>
+        </div>
+
     </main>
     <?php include("../includes/footer.php") ?>
 

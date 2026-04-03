@@ -64,6 +64,11 @@ func InitDB() {
 		statut ENUM('lu','envoye','en attente') DEFAULT 'en attente',
 		priorite INT
 	);
+	CREATE TABLE IF NOT EXISTS CATEGORIE (
+		id_categorie INT AUTO_INCREMENT PRIMARY KEY,
+		nom VARCHAR(100) NOT NULL,
+		description TEXT
+	);
 	CREATE TABLE IF NOT EXISTS CONSEIL(
 		id_conseil INT AUTO_INCREMENT PRIMARY KEY,
 		titre VARCHAR(80),
@@ -125,9 +130,10 @@ func InitDB() {
 		motif_refus VARCHAR(250) DEFAULT NULL,
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		tarifs DOUBLE,
-		type_prestation VARCHAR(50),
+		type_prestation INT NULL,
 		id_abonnement INT,
-		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement)
+		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
+		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
 	);
 	CREATE TABLE IF NOT EXISTS UTILISATEUR(
 		id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
@@ -219,11 +225,6 @@ func InitDB() {
 		id_utilisateur INT,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
-	);
-	CREATE TABLE IF NOT EXISTS CATEGORIE (
-		id_categorie INT AUTO_INCREMENT PRIMARY KEY,
-		nom VARCHAR(100) NOT NULL,
-		description TEXT
 	);
 	CREATE TABLE IF NOT EXISTS SERVICE (
 		id_service INT AUTO_INCREMENT PRIMARY KEY,
