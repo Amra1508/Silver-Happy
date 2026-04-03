@@ -203,3 +203,8 @@ type Code struct {
     Type    		string `json:"type"`       
     DateExpiration  string `json:"date_expiration"` 
 }
+
+type Test struct {
+	Id int `json:"id"`
+	Date string `json:"date"`
+}

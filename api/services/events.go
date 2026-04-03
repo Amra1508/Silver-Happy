@@ -503,6 +503,39 @@ func Register_Evenement(response http.ResponseWriter, request *http.Request) {
         return
     }
 
+	query := `SELECT e.id_evenement, e.date_debut FROM EVENEMENT AS e 
+	JOIN INSCRIPTION AS i ON e.id_evenement = i.id_evenement WHERE i.id_utilisateur = ?`
+
+	var tests []models.Test
+	rows, errorFetch := db.DB.Query(query, idUser)
+	if errorFetch != nil {
+        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+	for rows.Next(){
+		var test models.Test
+		if err := rows.Scan(&test.Id, &test.Date); err != nil {
+            return
+        }
+        tests = append(tests, test)
+	}
+
+	if err := rows.Err(); err != nil {
+    http.Error(response, "Erreur lors du parcours des résultats", http.StatusInternalServerError)
+    return
+}
+
+	for i := 0; i < len(tests)-1; i++{
+		for j := 0; j < len(tests)-1; j++{
+			if(tests[i].Date == tests[j+1].Date){
+				http.Error(response, "Vous êtes déjà inscrit à un événement pour cet horaire.", http.StatusConflict)
+				return
+			}
+		}
+	}
+
     var places int
     err := db.DB.QueryRow("SELECT nombre_place FROM evenement WHERE id_evenement = ?", idEvt).Scan(&places)
     if err != nil {
