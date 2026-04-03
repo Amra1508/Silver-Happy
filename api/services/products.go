@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -82,8 +83,8 @@ func Create_Produit(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := strings.TrimSpace(request.FormValue("nom"))
-	desc := strings.TrimSpace(request.FormValue("description"))
+	nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
+	desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
 	prix := strings.TrimSpace(request.FormValue("prix"))
 	stock := strings.TrimSpace(request.FormValue("stock"))
 
@@ -185,8 +186,8 @@ func Update_Produit(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := strings.TrimSpace(request.FormValue("nom"))
-	desc := strings.TrimSpace(request.FormValue("description"))
+	nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
+	desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
 	prix := strings.TrimSpace(request.FormValue("prix"))
 	stock := strings.TrimSpace(request.FormValue("stock"))
 
@@ -305,9 +306,9 @@ func Create_Code(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	code := strings.TrimSpace(request.FormValue("code"))
+	code := html.EscapeString(strings.ToUpper(strings.TrimSpace(request.FormValue("code"))))
 	valeur := strings.TrimSpace(request.FormValue("valeur"))
-	types := strings.TrimSpace(request.FormValue("type"))
+	types := html.EscapeString(strings.TrimSpace(request.FormValue("type")))
 	date := strings.TrimSpace(request.FormValue("date_expiration"))
 
 	if code == "" || valeur == "" || types == ""|| date == ""{
@@ -361,9 +362,9 @@ func Update_Code(response http.ResponseWriter, request *http.Request) {
 
 	id := request.PathValue("id")
 
-	code := strings.TrimSpace(request.FormValue("code"))
+	code := html.EscapeString(strings.ToUpper(strings.TrimSpace(request.FormValue("code"))))
 	valeur := strings.TrimSpace(request.FormValue("valeur"))
-	types := strings.TrimSpace(request.FormValue("type"))
+	types := html.EscapeString(strings.TrimSpace(request.FormValue("type")))
 	date := strings.TrimSpace(request.FormValue("date_expiration"))
 
 	if code == "" || valeur == "" || types == ""|| date == ""{

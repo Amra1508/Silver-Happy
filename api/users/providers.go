@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -189,11 +191,11 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	p.Nom = strings.TrimSpace(p.Nom)
-	p.Prenom = strings.TrimSpace(p.Prenom)
-	p.Email = strings.TrimSpace(p.Email)
+	p.Nom = html.EscapeString(strings.TrimSpace(p.Nom))
+	p.Prenom = html.EscapeString(strings.TrimSpace(p.Prenom))
+	p.Email = strings.ToLower(strings.TrimSpace(p.Email))
 	p.NumTelephone = strings.TrimSpace(p.NumTelephone)
-	p.Siret = strings.TrimSpace(p.Siret)
+	p.Siret = html.EscapeString(strings.TrimSpace(p.Siret))
 
 	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
@@ -254,11 +256,11 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	p.Nom = strings.TrimSpace(p.Nom)
-	p.Prenom = strings.TrimSpace(p.Prenom)
-	p.Email = strings.TrimSpace(p.Email)
+	p.Nom = html.EscapeString(strings.TrimSpace(p.Nom))
+	p.Prenom = html.EscapeString(strings.TrimSpace(p.Prenom))
+	p.Email = strings.ToLower(strings.TrimSpace(p.Email))
 	p.NumTelephone = strings.TrimSpace(p.NumTelephone)
-	p.Siret = strings.TrimSpace(p.Siret)
+	p.Siret = html.EscapeString(strings.TrimSpace(p.Siret))
 
 	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
@@ -324,26 +326,38 @@ func Read_Prestataire_Documents(response http.ResponseWriter, request *http.Requ
 }
 
 func Upload_Prestataire_Document(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") {
+	if utils.HandleCORS(response, request, "POST") { return }
+	
+	id := request.PathValue("id")
+	if err := request.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(response, "Fichier trop volumineux", http.StatusBadRequest)
 		return
 	}
-	id := request.PathValue("id")
-	request.ParseMultipartForm(10 << 20)
 
-	file, handler, _ := request.FormFile("fichier_document")
+	file, handler, err := request.FormFile("fichier_document")
+	if err != nil {
+		http.Error(response, "Fichier manquant", http.StatusBadRequest)
+		return
+	}
 	defer file.Close()
 
-	typeDoc := request.FormValue("type_document")
-	fileName := id + "_" + handler.Filename
+	safeFileName := id + "_" + filepath.Base(handler.Filename)
+	uploadPath := "./uploads/documents"
+	os.MkdirAll(uploadPath, os.ModePerm)
 
-	os.MkdirAll("/api/uploads", os.ModePerm)
-	newFile, _ := os.Create("/api/uploads/" + fileName)
-	defer newFile.Close()
-	io.Copy(newFile, file)
+	dst, err := os.Create(filepath.Join(uploadPath, safeFileName))
+	if err != nil {
+		http.Error(response, "Erreur création fichier", http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+	io.Copy(dst, file)
 
-	db.DB.Exec("INSERT INTO DOCUMENT_PRESTATAIRE (type, nom, id_prestataire) VALUES (?, ?, ?)", typeDoc, "uploads/"+fileName, id)
+	typeDoc := html.EscapeString(request.FormValue("type_document"))
+	db.DB.Exec("INSERT INTO DOCUMENT_PRESTATAIRE (type, nom, id_prestataire) VALUES (?, ?, ?)", 
+        typeDoc, "uploads/documents/"+safeFileName, id)
 
-	json.NewEncoder(response).Encode("OK")
+	json.NewEncoder(response).Encode(map[string]string{"message": "Document uploadé"})
 }
 
 func Delete_Prestataire_Document(response http.ResponseWriter, request *http.Request) {

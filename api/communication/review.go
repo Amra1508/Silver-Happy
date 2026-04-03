@@ -3,6 +3,7 @@ package communication
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strconv"
 	"strings"
@@ -158,9 +159,9 @@ func Create_Avis(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    titre := strings.TrimSpace(fmt.Sprintf("%v", data["titre"]))
-    description := strings.TrimSpace(fmt.Sprintf("%v", data["description"]))
-    categorie := strings.TrimSpace(fmt.Sprintf("%v", data["categorie"]))
+    titre := html.EscapeString(strings.TrimSpace(fmt.Sprintf("%v", data["titre"])))
+	description := html.EscapeString(strings.TrimSpace(fmt.Sprintf("%v", data["description"])))
+	categorie := html.EscapeString(strings.TrimSpace(fmt.Sprintf("%v", data["categorie"])))
     
     note, _ := data["note"].(float64)
     idUser, _ := data["id_utilisateur"].(float64)
@@ -192,19 +193,28 @@ func Update_Avis(response http.ResponseWriter, request *http.Request) {
 	idAvis := request.PathValue("id")
 
 	var data map[string]interface{}
-	json.NewDecoder(request.Body).Decode(&data)
+	if err := json.NewDecoder(request.Body).Decode(&data); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	titre := html.EscapeString(strings.TrimSpace(fmt.Sprintf("%v", data["titre"])))
+	description := html.EscapeString(strings.TrimSpace(fmt.Sprintf("%v", data["description"])))
+	categorie := html.EscapeString(strings.TrimSpace(fmt.Sprintf("%v", data["categorie"])))
 
 	query := "UPDATE AVIS SET titre=?, description=?, note=?, categorie=?, id_prestataire=? WHERE id_avis=? AND id_utilisateur=?"
-	_, err := db.DB.Exec(query, data["titre"], data["description"], data["note"], data["categorie"], data["id_prestataire"], idAvis, data["id_utilisateur"])
+	_, err := db.DB.Exec(query, titre, description, data["note"], categorie, data["id_prestataire"], idAvis, data["id_utilisateur"])
 
 	if err != nil {
 		http.Error(response, "Erreur modification", http.StatusInternalServerError)
 		return
 	}
+	
+	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]string{"message": "Avis mis à jour"})
 }
 
-func Dlete_Avis(response http.ResponseWriter, request *http.Request) {
+func Delete_Avis(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "DELETE") { return }
 
 	idAvis := request.PathValue("id")

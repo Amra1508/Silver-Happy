@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"log"
 	"net/http"
 	"net/url"
@@ -237,14 +238,14 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	user.Nom = strings.TrimSpace(user.Nom)
-	user.Prenom = strings.TrimSpace(user.Prenom)
-	user.Email = strings.TrimSpace(user.Email)
+	user.Nom = html.EscapeString(strings.TrimSpace(user.Nom))
+	user.Prenom = html.EscapeString(strings.TrimSpace(user.Prenom))
+	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
 	user.NumTelephone = strings.TrimSpace(user.NumTelephone)
 	user.CodePostal = strings.TrimSpace(user.CodePostal)
-	user.Adresse = strings.TrimSpace(user.Adresse)
-	user.Ville = strings.TrimSpace(user.Ville)
-	user.Pays = strings.TrimSpace(user.Pays)
+	user.Adresse = html.EscapeString(strings.TrimSpace(user.Adresse))
+	user.Ville = html.EscapeString(strings.TrimSpace(user.Ville))
+	user.Pays = html.EscapeString(strings.TrimSpace(user.Pays))
 
 	if user.Nom == "" || user.Prenom == "" || user.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires et ne peuvent pas être vides", http.StatusBadRequest)
@@ -319,14 +320,14 @@ func Update_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	user.Nom = strings.TrimSpace(user.Nom)
-	user.Prenom = strings.TrimSpace(user.Prenom)
-	user.Email = strings.TrimSpace(user.Email)
+	user.Nom = html.EscapeString(strings.TrimSpace(user.Nom))
+	user.Prenom = html.EscapeString(strings.TrimSpace(user.Prenom))
+	user.Email = strings.ToLower(strings.TrimSpace(user.Email))
 	user.NumTelephone = strings.TrimSpace(user.NumTelephone)
 	user.CodePostal = strings.TrimSpace(user.CodePostal)
-	user.Adresse = strings.TrimSpace(user.Adresse)
-	user.Ville = strings.TrimSpace(user.Ville)
-	user.Pays = strings.TrimSpace(user.Pays)
+	user.Adresse = html.EscapeString(strings.TrimSpace(user.Adresse))
+	user.Ville = html.EscapeString(strings.TrimSpace(user.Ville))
+	user.Pays = html.EscapeString(strings.TrimSpace(user.Pays))
 
 	if user.Nom == "" || user.Prenom == "" || user.Email == "" {
 		http.Error(response, "Le nom, prénom et email ne peuvent pas être vides", http.StatusBadRequest)

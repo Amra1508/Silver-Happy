@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 
@@ -85,8 +86,8 @@ func Create_Service(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	service.Nom = strings.TrimSpace(service.Nom)
-	service.Description = strings.TrimSpace(service.Description)
+	service.Nom = html.EscapeString(strings.TrimSpace(service.Nom))
+	service.Description = html.EscapeString(strings.TrimSpace(service.Description))
 
 	if service.Nom == "" || service.Description == "" {
 		http.Error(response, "Le nom et la description sont requis.", http.StatusBadRequest)
@@ -120,8 +121,8 @@ func Update_Service(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	service.Nom = strings.TrimSpace(service.Nom)
-	service.Description = strings.TrimSpace(service.Description)
+	service.Nom = html.EscapeString(strings.TrimSpace(service.Nom))
+	service.Description = html.EscapeString(strings.TrimSpace(service.Description))
 
 	res, err := db.DB.Exec("UPDATE SERVICE SET nom = ?, description = ?, id_categorie = ? WHERE id_service = ?", service.Nom, service.Description, service.IDCategorie, id)
 

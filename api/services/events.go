@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -145,14 +146,14 @@ func Create_Evenement(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := strings.TrimSpace(request.FormValue("nom"))
-	desc := strings.TrimSpace(request.FormValue("description"))
-	lieu := strings.TrimSpace(request.FormValue("lieu"))
-	places := request.FormValue("nombre_place")
-	debut := request.FormValue("date_debut")
-	fin := request.FormValue("date_fin")
-	catStr := request.FormValue("id_categorie")
-	prixStr := request.FormValue("prix")
+	nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
+	desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
+	lieu := html.EscapeString(strings.TrimSpace(request.FormValue("lieu")))
+	places := strings.TrimSpace(request.FormValue("nombre_place"))
+	debut := strings.TrimSpace(request.FormValue("date_debut"))
+	fin := strings.TrimSpace(request.FormValue("date_fin"))
+	catStr := strings.TrimSpace(request.FormValue("id_categorie"))
+	prixStr := strings.TrimSpace(request.FormValue("prix"))
 
 	if nom == "" || desc == "" || lieu == "" {
 		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
@@ -253,14 +254,14 @@ func Update_Evenement(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	nom := strings.TrimSpace(request.FormValue("nom"))
-	desc := strings.TrimSpace(request.FormValue("description"))
-	lieu := strings.TrimSpace(request.FormValue("lieu"))
-	places := request.FormValue("nombre_place")
-	debut := request.FormValue("date_debut")
-	fin := request.FormValue("date_fin")
-	catStr := request.FormValue("id_categorie")
-	prixStr := request.FormValue("prix")
+	nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
+	desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
+	lieu := html.EscapeString(strings.TrimSpace(request.FormValue("lieu")))
+	places := strings.TrimSpace(request.FormValue("nombre_place"))
+	debut := strings.TrimSpace(request.FormValue("date_debut"))
+	fin := strings.TrimSpace(request.FormValue("date_fin"))
+	catStr := strings.TrimSpace(request.FormValue("id_categorie"))
+	prixStr := strings.TrimSpace(request.FormValue("prix"))
 
 	if nom == "" || desc == "" || lieu == "" {
 		http.Error(response, "Champs requis", http.StatusBadRequest)

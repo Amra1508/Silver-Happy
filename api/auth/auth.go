@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"regexp"
 	"strings"
@@ -30,14 +31,14 @@ func Register(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    user.Prenom = strings.TrimSpace(user.Prenom)
-    user.Nom = strings.TrimSpace(user.Nom)
-    user.Email = strings.TrimSpace(user.Email)
+    user.Prenom = html.EscapeString(strings.TrimSpace(user.Prenom))
+    user.Nom = html.EscapeString(strings.TrimSpace(user.Nom))
+    user.Email = strings.ToLower(strings.TrimSpace(user.Email))
     user.NumTelephone = strings.TrimSpace(user.NumTelephone)
     user.CodePostal = strings.TrimSpace(user.CodePostal)
-    user.Pays = strings.TrimSpace(user.Pays)
-    user.Ville = strings.TrimSpace(user.Ville)
-    user.Adresse = strings.TrimSpace(user.Adresse)
+    user.Pays = html.EscapeString(strings.TrimSpace(user.Pays))
+    user.Ville = html.EscapeString(strings.TrimSpace(user.Ville))
+    user.Adresse = html.EscapeString(strings.TrimSpace(user.Adresse))
 
     if strings.Contains(user.Prenom, " ") || strings.Contains(user.Nom, " ") || strings.Contains(user.Email, " ") || strings.Contains(user.NumTelephone, " ") || strings.Contains(user.CodePostal, " ") {
         http.Error(response, "Les espaces ne sont pas autorisés pour ces champs.", http.StatusConflict)
@@ -359,14 +360,14 @@ func Update(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    user.Prenom = strings.TrimSpace(user.Prenom)
-    user.Nom = strings.TrimSpace(user.Nom)
-    user.Email = strings.TrimSpace(user.Email)
+    user.Prenom = html.EscapeString(strings.TrimSpace(user.Prenom))
+    user.Nom = html.EscapeString(strings.TrimSpace(user.Nom))
+    user.Email = strings.ToLower(strings.TrimSpace(user.Email))
     user.NumTelephone = strings.TrimSpace(user.NumTelephone)
     user.CodePostal = strings.TrimSpace(user.CodePostal)
-    user.Pays = strings.TrimSpace(user.Pays)
-    user.Ville = strings.TrimSpace(user.Ville)
-    user.Adresse = strings.TrimSpace(user.Adresse)
+    user.Pays = html.EscapeString(strings.TrimSpace(user.Pays))
+    user.Ville = html.EscapeString(strings.TrimSpace(user.Ville))
+    user.Adresse = html.EscapeString(strings.TrimSpace(user.Adresse))
 
     if strings.Contains(user.Prenom, " ") || strings.Contains(user.Nom, " ") || strings.Contains(user.Email, " ") || strings.Contains(user.NumTelephone, " ") || strings.Contains(user.CodePostal, " ") {
         http.Error(response, "Les espaces ne sont pas autorisés pour ces champs.", http.StatusConflict)

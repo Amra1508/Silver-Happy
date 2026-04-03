@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 
@@ -78,8 +79,8 @@ func Create_Categorie(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	categorie.Nom = strings.TrimSpace(categorie.Nom)
-	categorie.Description = strings.TrimSpace(categorie.Description)
+	categorie.Nom = html.EscapeString(strings.TrimSpace(categorie.Nom))
+	categorie.Description = html.EscapeString(strings.TrimSpace(categorie.Description))
 
 	if categorie.Nom == "" {
 		http.Error(response, "Le nom de la catégorie ne peut pas être vide.", http.StatusBadRequest)
@@ -132,8 +133,8 @@ func Update_Categorie(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	categorie.Nom = strings.TrimSpace(categorie.Nom)
-	categorie.Description = strings.TrimSpace(categorie.Description)
+	categorie.Nom = html.EscapeString(strings.TrimSpace(categorie.Nom))
+	categorie.Description = html.EscapeString(strings.TrimSpace(categorie.Description))
 
 	if categorie.Nom == "" {
 		http.Error(response, "Le nom ne peut pas être vide.", http.StatusBadRequest)

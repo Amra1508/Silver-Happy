@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"html"
 	"net/http"
 	"regexp"
 	"strings"
@@ -26,9 +27,9 @@ func RegisterPrestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	provider.Prenom = strings.TrimSpace(provider.Prenom)
-	provider.Nom = strings.TrimSpace(provider.Nom)
-	provider.Email = strings.TrimSpace(provider.Email)
+	provider.Prenom = html.EscapeString(strings.TrimSpace(provider.Prenom))
+	provider.Nom = html.EscapeString(strings.TrimSpace(provider.Nom))
+	provider.Email = strings.ToLower(strings.TrimSpace(provider.Email))
 	provider.NumTelephone = strings.TrimSpace(provider.NumTelephone)
 	provider.Siret = strings.TrimSpace(provider.Siret)
 

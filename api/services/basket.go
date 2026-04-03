@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"main/db"
 	"main/models"
@@ -26,10 +28,10 @@ func Add_Panier(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    id_produit := request.FormValue("id_produit")
-    id_user := request.FormValue("id_utilisateur")
-    quantityStr := request.FormValue("quantite")
-    action := request.FormValue("action")
+    id_produit := strings.TrimSpace(request.FormValue("id_produit"))
+	id_user := strings.TrimSpace(request.FormValue("id_utilisateur"))
+	quantityStr := strings.TrimSpace(request.FormValue("quantite"))
+	action := strings.TrimSpace(request.FormValue("action"))
 
     quantity, _ := strconv.Atoi(quantityStr)
 
@@ -162,6 +164,11 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
         return
     }
 
+    livraison.Adresse = html.EscapeString(strings.TrimSpace(livraison.Adresse))
+	livraison.Ville = html.EscapeString(strings.TrimSpace(livraison.Ville))
+	livraison.CP = html.EscapeString(strings.TrimSpace(livraison.CP))
+	livraison.Code = strings.ToUpper(strings.TrimSpace(livraison.Code))
+
 	rows, errDB := db.DB.Query(`
 		SELECT p.id_produit, p.quantite, pr.id_produit, pr.nom, pr.prix, pr.stock 
         FROM PANIER AS p JOIN PRODUIT pr ON p.id_produit = pr.id_produit
@@ -287,12 +294,12 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
 	sessionID := request.URL.Query().Get("session_id")
-	userID := request.URL.Query().Get("user_id")
+	userID := html.EscapeString(request.URL.Query().Get("user_id"))
 	totalStr := request.URL.Query().Get("total")
-    adresse := request.URL.Query().Get("adresse")
-    ville := request.URL.Query().Get("ville")
-    cp := request.URL.Query().Get("cp")
-    codePromoUtilise := request.URL.Query().Get("code")
+	adresse := html.EscapeString(request.URL.Query().Get("adresse"))
+	ville := html.EscapeString(request.URL.Query().Get("ville"))
+	cp := html.EscapeString(request.URL.Query().Get("cp"))
+	codePromoUtilise := strings.ToUpper(strings.TrimSpace(request.URL.Query().Get("code")))
 
 	total, err := strconv.ParseFloat(totalStr, 64)
 	if err != nil {

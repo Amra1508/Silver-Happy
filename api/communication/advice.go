@@ -3,6 +3,7 @@ package communication
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 
@@ -91,9 +92,9 @@ func Create_Conseil(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	conseil.Titre = strings.TrimSpace(conseil.Titre)
-	conseil.Description = strings.TrimSpace(conseil.Description)
-	conseil.Categorie = strings.TrimSpace(conseil.Categorie)
+	conseil.Titre = html.EscapeString(strings.TrimSpace(conseil.Titre))
+    conseil.Description = html.EscapeString(strings.TrimSpace(conseil.Description))
+    conseil.Categorie = html.EscapeString(strings.TrimSpace(conseil.Categorie))
 
 	if conseil.Titre == "" || conseil.Description == "" || conseil.Categorie == "" {
 		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)
@@ -185,9 +186,9 @@ func Update_Conseil(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	conseil.Titre = strings.TrimSpace(conseil.Titre)
-	conseil.Description = strings.TrimSpace(conseil.Description)
-	conseil.Categorie = strings.TrimSpace(conseil.Categorie)
+	conseil.Titre = html.EscapeString(strings.TrimSpace(conseil.Titre))
+    conseil.Description = html.EscapeString(strings.TrimSpace(conseil.Description))
+    conseil.Categorie = html.EscapeString(strings.TrimSpace(conseil.Categorie))
 
 	if conseil.Titre == "" || conseil.Description == "" || conseil.Categorie == "" {
 		http.Error(response, "Les champs ne peuvent pas être vides.", http.StatusBadRequest)

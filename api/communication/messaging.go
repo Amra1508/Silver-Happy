@@ -3,6 +3,7 @@ package communication
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 
@@ -57,6 +58,7 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
 	}
 
 	message.Contenu = strings.TrimSpace(message.Contenu)
+	message.Contenu = html.EscapeString(message.Contenu)
 
 	if message.Contenu == "" {
 		http.Error(response, "Le message ne peut pas être vide.", http.StatusBadRequest)
