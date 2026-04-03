@@ -28,37 +28,49 @@ func Add_Panier(response http.ResponseWriter, request *http.Request) {
 
     id_produit := request.FormValue("id_produit")
     id_user := request.FormValue("id_utilisateur")
-    quantity := request.FormValue("quantite")
+    quantityStr := request.FormValue("quantite")
+    action := request.FormValue("action")
+
+    quantity, _ := strconv.Atoi(quantityStr)
 
     var id_panier int
-    var quantitePanier int
-    err := db.DB.QueryRow("SELECT id_panier, quantite FROM PANIER WHERE id_utilisateur = ? AND id_produit = ?", id_user, id_produit).Scan(&id_panier, &quantitePanier)
+    var currentQty int
+    err := db.DB.QueryRow("SELECT id_panier, quantite FROM PANIER WHERE id_utilisateur = ? AND id_produit = ?", id_user, id_produit).Scan(&id_panier, &currentQty)
     
     if err == nil {
-        result, err := db.DB.Exec("UPDATE PANIER SET quantite = quantite + ? WHERE id_panier = ? AND (quantite + ?) <= (SELECT stock FROM PRODUIT WHERE id_produit = ?)", quantity, id_panier, quantity, id_produit)
-        if err != nil {
-            http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
-            return
+        query := ""
+        if action == "update" {
+            query = "UPDATE PANIER SET quantite = ? WHERE id_panier = ? AND ? <= (SELECT stock FROM PRODUIT WHERE id_produit = ?)"
+            result, err := db.DB.Exec(query, quantity, id_panier, quantity, id_produit)
+            Error_Stock(result, err, response)
+        } else {
+            query = "UPDATE PANIER SET quantite = quantite + ? WHERE id_panier = ? AND (quantite + ?) <= (SELECT stock FROM PRODUIT WHERE id_produit = ?)"
+            result, err := db.DB.Exec(query, quantity, id_panier, quantity, id_produit)
+            Error_Stock(result, err, response)
         }
-        rows, _ := result.RowsAffected()
-        if rows == 0 {
-            http.Error(response, "Stock insuffisant", http.StatusConflict)
-            return
-        }
-        json.NewEncoder(response).Encode(map[string]string{"message": "Quantité mise à jour !"})
         return
     } else {
         _, err = db.DB.Exec("INSERT INTO PANIER (id_utilisateur, id_produit, quantite) VALUES (?, ?, ?)", id_user, id_produit, quantity)
-    
         if err != nil {
             http.Error(response, "Impossible d'ajouter au panier", http.StatusBadRequest)
             return
         }
     }
-
     json.NewEncoder(response).Encode(map[string]string{"message": "Ajouté au panier !"})
 }
 
+func Error_Stock(result sql.Result, err error, response http.ResponseWriter) {
+    if err != nil {
+        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+        return
+    }
+    rows, _ := result.RowsAffected()
+    if rows == 0 {
+        http.Error(response, "Stock insuffisant !", http.StatusConflict)
+        return
+    }
+    json.NewEncoder(response).Encode(map[string]string{"message": "Quantité mise à jour !"})
+}
 
 func Get_Panier(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "GET") {

@@ -67,10 +67,69 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
     <script>
         const API_BASE = "http://localhost:8082";
+        const messageBox = document.getElementById('api-message');
+
+        function showAlert(msg, isSuccess) {
+            messageBox.textContent = msg;
+            messageBox.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-xl p-4 rounded-lg border text-center font-bold shadow-2xl transition-all duration-300 ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('opacity-0');
+                setTimeout(() => {
+                    messageBox.classList.add('hidden');
+                    messageBox.classList.remove('opacity-0');
+                }, 300);
+            }, 4000);
+        }
 
         window.addEventListener('auth_ready', () => {
             fetchPanier();
         });
+
+        let quantite = 1;
+        let maxStock = 0;
+        let quantitePanier = 0;
+
+        function showStockError(stock) {
+            maxStock = Number(stock);
+            const msg = quantitePanier > 0 ?
+                `Vous avez déjà ${quantitePanier} articles au panier. Stock max : ${maxStock}.` :
+                "Limite de stock atteinte.";
+            showAlert(msg, false);
+        }
+
+        async function changeQuantity(idPanier, nouvelleQuantite, idProduit) {
+            if (nouvelleQuantite <= 0) {
+                removeProduit(idPanier);
+                return;
+            }
+
+            const idUtilisateur = window.currentUserId;
+            const donnees = new FormData();
+            donnees.append("id_panier", idPanier);
+            donnees.append("id_produit", idProduit);
+            donnees.append("id_utilisateur", idUtilisateur);
+            donnees.append("quantite", nouvelleQuantite);
+            donnees.append("action", "update");
+
+            try {
+                const response = await fetch(`${API_BASE}/panier/add`, {
+                    method: 'POST',
+                    body: donnees
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    fetchPanier();
+                } else {
+                    const errorText = await response.text();
+                    showAlert(errorText, false);
+                }
+            } catch (err) {
+                console.error("Erreur Fetch:", err);
+                showAlert("Impossible de joindre le serveur", false);
+            }
+        }
 
         async function fetchPanier() {
             const userId = window.currentUserId;
@@ -106,8 +165,14 @@ $is_logged_in = isset($_COOKIE['session_token']);
                                 <h3 class="text-xl font-bold text-[#1C5B8F]">${item.nom}</h3>
                                 <p class="text-gray-500">Prix unitaire : ${parseFloat(item.prix).toFixed(2)} €</p>
                             </div>
-                            <div class="flex items-center gap-4">
-                                <span class="font-semibold">Qté: ${item.quantite}</span>
+                            <div class="flex items-center gap-4 rounded-lg p-1">
+                                <button onclick="changeQuantity('${item.id_panier}', ${item.quantite - 1}, ${item.id_produit})" 
+                                        class="w-10 h-10 text-xl font-bold hover:bg-gray-200 rounded-full transition-colors">-</button>
+                                
+                                <span class="font-semibold text-lg w-8 text-center">${item.quantite}</span>
+                                
+                                <button onclick="changeQuantity('${item.id_panier}', ${item.quantite + 1}, ${item.id_produit})" 
+                                        class="w-10 h-10 text-xl font-bold hover:bg-gray-200 rounded-full transition-colors">+</button>
                             </div>
                             <div class="w-32 text-right">
                                 <span class="text-xl font-bold text-[#E1AB2B]">${subtotal.toFixed(2)} €</span>
