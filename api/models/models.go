@@ -86,7 +86,8 @@ type Prestataire struct {
 	MotifRefus     string  `json:"motif_refus"`
 	Tarifs         float64 `json:"tarifs"`
 	IdCategorie    int     `json:"id_categorie"`
-	CategorieNom string `json:"categorie,omitempty"`
+	IdAbonnement 	int		`json:"id_abonnement"`
+	CategorieNom 	string `json:"categorie,omitempty"`
 	DateCreation   string  `json:"date_creation"`
 }
 

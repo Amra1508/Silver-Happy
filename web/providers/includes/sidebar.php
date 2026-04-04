@@ -19,24 +19,24 @@
             Tableau de bord
         </a>
 
-        <a href="/front/providers/prestations.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
-            Mes services
+        <a href="/providers/services/events.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
+            Mes Evenements
         </a>
 
-        <a href="/front/providers/planning.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
-            Planning & Résas
+        <a href="/providers/planning.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
+            Mon Planning
             <span class="ml-auto bg-[#E1AB2B] text-[#1C5B8F] text-xs font-bold px-2 py-0.5 rounded-full">3</span>
         </a>
 
-        <a href="/front/providers/messages.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
+        <a href="/providers/messages.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
             Messagerie
         </a>
 
-        <a href="/front/providers/avis.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
+        <a href="/providers/avis.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
             Mes avis
         </a>
 
-        <a href="/front/providers/factures.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
+        <a href="/providers/factures.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
             Facturation
         </a>
 
@@ -103,11 +103,11 @@
                 }
 
             } else {
-                window.location.href = "/front/providers/account/signin.php"; 
+                window.location.href = "/front/account/signin.php"; 
             }
         } catch (error) {
             console.error("Serveur inaccessible :", error);
-            window.location.href = "/front/providers/account/signin.php";
+            window.location.href = "/front/account/signin.php";
         }
 
         const btnLogout = document.getElementById('btn-logout-provider');

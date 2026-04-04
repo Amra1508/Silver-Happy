@@ -20,164 +20,205 @@ import (
 )
 
 func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	query := request.URL.Query()
-	limitStr := query.Get("limit")
-	pageStr := query.Get("page")
-	statusFilter := query.Get("status")
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
+    statusFilter := query.Get("status")
 
-	limit := 10
-	offset := 0
-	page := 1
+    limit := 10
+    offset := 0
+    page := 1
 
-	if limitStr != "" {
-		fmt.Sscanf(limitStr, "%d", &limit)
-	}
-	if pageStr != "" {
-		fmt.Sscanf(pageStr, "%d", &page)
-		offset = (page - 1) * limit
-	}
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
 
-	whereClause := ""
-	var argsCount []interface{}
-	var argsQuery []interface{}
+    whereClause := ""
+    var argsCount []interface{}
+    var argsQuery []interface{}
 
-	if statusFilter != "" && statusFilter != "tous" {
-		whereClause = " WHERE p.status = ?"
-		argsCount = append(argsCount, statusFilter)
-		argsQuery = append(argsQuery, statusFilter)
-	}
+    if statusFilter != "" && statusFilter != "tous" {
+        whereClause = " WHERE p.status = ?"
+        argsCount = append(argsCount, statusFilter)
+        argsQuery = append(argsQuery, statusFilter)
+    }
 
-	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE p"+whereClause, argsCount...).Scan(&total)
+    var total int
+    errCount := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE p"+whereClause, argsCount...).Scan(&total)
+    if errCount != nil {
+        http.Error(response, "Erreur lors du comptage", http.StatusInternalServerError)
+        return
+    }
 
-	argsQuery = append(argsQuery, limit, offset)
-	
-	sqlQuery := `
-		SELECT p.id_prestataire, IFNULL(p.siret, ''), IFNULL(p.nom, ''), IFNULL(p.prenom, ''), 
-			   IFNULL(p.email, ''), IFNULL(p.num_telephone, ''), IFNULL(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
-			   IFNULL(p.status, 'en attente'), IFNULL(p.motif_refus, ''), IFNULL(p.tarifs, 0), 
-			   IFNULL(p.id_categorie, 0), IFNULL(c.nom, ''), IFNULL(DATE_FORMAT(p.date_creation, '%d/%m/%Y à %H:%i'), '') 
-		FROM PRESTATAIRE p
-		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
-		` + whereClause + `
-		LIMIT ? OFFSET ?
-	`
+    argsQuery = append(argsQuery, limit, offset)
+    
+    sqlQuery := `
+        SELECT 
+            p.id_prestataire, 
+            COALESCE(p.siret, ''), 
+            COALESCE(p.prenom, ''), 
+            COALESCE(p.nom, ''), 
+            COALESCE(p.email, ''), 
+            COALESCE(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
+            COALESCE(p.num_telephone, ''), 
+            COALESCE(p.status, 'en attente'), 
+            COALESCE(p.motif_refus, ''), 
+            COALESCE(DATE_FORMAT(p.date_creation, '%d/%m/%Y %H:%i:%s'), ''), 
+            COALESCE(p.tarifs, 0.0), 
+            COALESCE(p.id_abonnement, 0), 
+            COALESCE(p.id_categorie, 0), 
+            COALESCE(c.nom, '') 
+        FROM PRESTATAIRE p
+        LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+        ` + whereClause + `
+        LIMIT ? OFFSET ?
+    `
 
-	rows, err := db.DB.Query(sqlQuery, argsQuery...)
-	if err != nil {
-		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    rows, err := db.DB.Query(sqlQuery, argsQuery...)
+    if err != nil {
+        http.Error(response, "Erreur BDD lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-	var list []models.Prestataire
-	for rows.Next() {
-		var p models.Prestataire
-		rows.Scan(&p.ID, &p.Siret, &p.Nom, &p.Prenom, &p.Email, &p.NumTelephone, &p.DateNaissance, &p.Status, &p.MotifRefus, &p.Tarifs, &p.IdCategorie, &p.CategorieNom, &p.DateCreation)
-		list = append(list, p)
-	}
+    var list []models.Prestataire
+    for rows.Next() {
+        var p models.Prestataire
+        
+        errScan := rows.Scan(
+            &p.ID, 
+            &p.Siret, 
+            &p.Prenom, 
+            &p.Nom, 
+            &p.Email, 
+            &p.DateNaissance, 
+            &p.NumTelephone, 
+            &p.Status, 
+            &p.MotifRefus, 
+            &p.DateCreation, 
+            &p.Tarifs, 
+            &p.IdAbonnement, 
+            &p.IdCategorie, 
+            &p.CategorieNom,
+        )
+        
+        if errScan != nil {
+            fmt.Println("Ligne ignorée ! Erreur de Scan sur le Prestataire :", errScan)
+            continue
+        }
+        
+        list = append(list, p)
+    }
 
-	if list == nil {
-		list = []models.Prestataire{}
-	}
+    if list == nil {
+        list = []models.Prestataire{}
+    }
 
-	dataResponse := map[string]interface{}{
-		"data":        list,
-		"total":       total,
-		"currentPage": page,
-		"totalPages":  (total + limit - 1) / limit,
-	}
+    dataResponse := map[string]interface{}{
+        "data":        list,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(dataResponse)
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	query := request.URL.Query()
-	limitStr := query.Get("limit")
-	pageStr := query.Get("page")
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
 
-	limit := 10
-	offset := 0
-	page := 1
+    limit := 10
+    offset := 0
+    page := 1
 
-	if limitStr != "" {
-		fmt.Sscanf(limitStr, "%d", &limit)
-	}
-	if pageStr != "" {
-		fmt.Sscanf(pageStr, "%d", &page)
-		offset = (page - 1) * limit
-	}
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
 
-	var total int
-	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE p.status = 'valide'").Scan(&total)
-	if errTotal != nil {
-		http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
-		return
-	}
+    var total int
+    errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE p.status = 'valide'").Scan(&total)
+    if errTotal != nil {
+        http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
+        return
+    }
 
-	sqlQuery := `
-		SELECT p.id_prestataire, p.prenom, p.nom, c.nom AS categorie, 
-			   IFNULL(AVG(a.note), 0) as moyenne, 
-			   COUNT(a.id_avis) as nombre_avis 
-		FROM PRESTATAIRE AS p 
-		LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
-		LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
-		WHERE p.status = 'valide'
-		GROUP BY p.id_prestataire 
-		ORDER BY moyenne DESC 
-		LIMIT ? OFFSET ?`
+    sqlQuery := `
+        SELECT p.id_prestataire, 
+               COALESCE(p.prenom, ''), 
+               COALESCE(p.nom, ''), 
+               COALESCE(c.nom, ''), 
+               COALESCE(AVG(a.note), 0) as moyenne, 
+               COUNT(a.id_avis) as nombre_avis 
+        FROM PRESTATAIRE AS p 
+        LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
+        LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
+        WHERE p.status = 'valide'
+        GROUP BY p.id_prestataire 
+        ORDER BY moyenne DESC 
+        LIMIT ? OFFSET ?`
 
-	rows, err := db.DB.Query(sqlQuery, limit, offset)
-	if err != nil {
-		fmt.Println("Erreur SQL:", err)
-		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    rows, err := db.DB.Query(sqlQuery, limit, offset)
+    if err != nil {
+        fmt.Println("Erreur SQL:", err)
+        http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-	list := make([]map[string]interface{}, 0)
-	for rows.Next() {
-		var id int64
-		var prenom, nom, typePresta string
-		var moyenne float64
-		var nbAvis int
+    list := make([]map[string]interface{}, 0)
+    for rows.Next() {
+        var id int64
+        var prenom, nom, typePresta string
+        var moyenne float64
+        var nbAvis int
 
-		if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis); err != nil {
-			continue
-		}
+        if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis); err != nil {
+            fmt.Println("Ligne ignorée dans le Top ! Erreur de Scan :", err)
+            continue
+        }
 
-		list = append(list, map[string]interface{}{
-			"id_prestataire":  id,
-			"prenom":          prenom,
-			"nom":             nom,
-			"categorie":       typePresta,
-			"moyenne":         moyenne,
-			"nombre_avis":     nbAvis,
-		})
-	}
+        list = append(list, map[string]interface{}{
+            "id_prestataire":  id,
+            "prenom":          prenom,
+            "nom":             nom,
+            "type_prestation": typePresta,
+            "moyenne":         moyenne,
+            "nombre_avis":     nbAvis,
+        })
+    }
 
-	if list == nil {
-		list = []map[string]interface{}{}
-	}
+    if len(list) == 0 {
+        list = []map[string]interface{}{}
+    }
 
-	dataResponse := map[string]interface{}{
-		"data":        list,
-		"total":       total,
-		"currentPage": page,
-		"totalPages":  (total + limit - 1) / limit,
-	}
+    dataResponse := map[string]interface{}{
+        "data":        list,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(dataResponse)
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
@@ -380,71 +421,77 @@ func Delete_Prestataire_Document(response http.ResponseWriter, request *http.Req
 }
 
 func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	idStr := request.PathValue("id")
+    idStr := request.PathValue("id")
 
-	prestataire := models.Prestataire{}
+    prestataire := models.Prestataire{}
 
-	err := db.DB.QueryRow(`
-		SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
-			   IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), IFNULL(p.tarifs, 0)
-		FROM PRESTATAIRE p
-		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
-		WHERE p.id_prestataire = ? AND p.status = 'validé'
-	`, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &prestataire.Tarifs)
+    err := db.DB.QueryRow(`
+        SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
+               IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), IFNULL(p.tarifs, 0)
+        FROM PRESTATAIRE p
+        LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+        WHERE p.id_prestataire = ? AND p.status = 'validé'
+    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &prestataire.Tarifs)
 
-	if err != nil {
-		http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
-		return
-	}
+    if err != nil {
+        http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
+        return
+    }
 
-	rows, err := db.DB.Query(`
-		SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin 
-		FROM evenement e
-		INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
-		WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
-		ORDER BY e.date_debut ASC
-	`, idStr)
+    rows, err := db.DB.Query(`
+        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image 
+        FROM evenement e
+        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+        WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
+        ORDER BY e.date_debut ASC
+    `, idStr)
 
-	var events []map[string]interface{}
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var id, places int
-			var nom, desc, lieu string
-			var prix float64
-			var debut, fin sql.NullString
+    var events []map[string]interface{}
+    if err == nil {
+        defer rows.Close()
+        for rows.Next() {
+            var id, places int
+            var nom, desc, lieu string
+            var prix float64
+            var debut, fin, image sql.NullString 
 
-			if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin); errScan == nil {
-				evt := map[string]interface{}{
-					"id_evenement": id,
-					"nom":          nom,
-					"description":  desc,
-					"lieu":         lieu,
-					"nombre_place": places,
-					"prix":         prix,
-				}
-				if debut.Valid {
-					evt["date_debut"] = debut.String
-				}
-				if fin.Valid {
-					evt["date_fin"] = fin.String
-				}
-				events = append(events, evt)
-			}
-		}
-	}
+            if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image); errScan == nil {
+                evt := map[string]interface{}{
+                    "id_evenement": id,
+                    "nom":          nom,
+                    "description":  desc,
+                    "lieu":         lieu,
+                    "nombre_place": places,
+                    "prix":         prix,
+                }
+                if debut.Valid {
+                    evt["date_debut"] = debut.String
+                }
+                if fin.Valid {
+                    evt["date_fin"] = fin.String
+                }
+                if image.Valid && image.String != "" {
+                    evt["image"] = image.String
+                }
+                
+                events = append(events, evt)
+            } else {
+                fmt.Println("Erreur Scan Evenement:", errScan)
+            }
+        }
+    }
 
-	if events == nil {
-		events = []map[string]interface{}{}
-	}
+    if events == nil {
+        events = []map[string]interface{}{}
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(map[string]interface{}{
-		"prestataire": prestataire,
-		"evenements":  events,
-	})
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]interface{}{
+        "prestataire": prestataire,
+        "evenements":  events,
+    })
 }

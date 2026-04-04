@@ -63,76 +63,80 @@ func validateDates(debut, fin string) error {
 }
 
 func Read_Evenement(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	query := request.URL.Query()
-	limitStr := query.Get("limit")
-	pageStr := query.Get("page")
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
 
-	limit := 10
-	offset := 0
-	page := 1
+    limit := 10
+    offset := 0
+    page := 1
 
-	if limitStr != "" {
-		fmt.Sscanf(limitStr, "%d", &limit)
-	}
-	if pageStr != "" {
-		fmt.Sscanf(pageStr, "%d", &page)
-		offset = (page - 1) * limit
-	}
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
 
-	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM evenement").Scan(&total)
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM evenement").Scan(&total)
 
-	rows, errorFetch := db.DB.Query(
-		"SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix FROM evenement LIMIT ? OFFSET ?",
-		limit, offset,
-	)
-	if errorFetch != nil {
-		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    sqlQuery := `
+        SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
+        FROM evenement 
+        ORDER BY date_debut ASC 
+        LIMIT ? OFFSET ?
+    `
 
-	var tabEvenement []models.Evenement
-	for rows.Next() {
-		var evt models.Evenement
-		var imagePath sql.NullString
-		var dateDebut sql.NullString
-		var dateFin sql.NullString
+    rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
+    if errorFetch != nil {
+        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-		if err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &evt.NombrePlace, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix); err != nil {
-			continue
-		}
+    var tabEvenement []models.Evenement
+    for rows.Next() {
+        var evt models.Evenement
+        var imagePath sql.NullString
+        var dateDebut sql.NullString
+        var dateFin sql.NullString
 
-		if imagePath.Valid {
-			evt.Image = imagePath.String
-		}
-		if dateDebut.Valid {
-			evt.DateDebut = dateDebut.String
-		}
-		if dateFin.Valid {
-			evt.DateFin = dateFin.String
-		}
+        if err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &evt.NombrePlace, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix); err != nil {
+            continue
+        }
 
-		tabEvenement = append(tabEvenement, evt)
-	}
+        if imagePath.Valid {
+            evt.Image = imagePath.String
+        }
+        if dateDebut.Valid {
+            evt.DateDebut = dateDebut.String
+        }
+        if dateFin.Valid {
+            evt.DateFin = dateFin.String
+        }
 
-	if tabEvenement == nil {
-		tabEvenement = []models.Evenement{}
-	}
+        tabEvenement = append(tabEvenement, evt)
+    }
 
-	dataResponse := map[string]interface{}{
-		"data":        tabEvenement,
-		"total":       total,
-		"currentPage": page,
-		"totalPages":  (total + limit - 1) / limit,
-	}
+    if tabEvenement == nil {
+        tabEvenement = []models.Evenement{}
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(dataResponse)
+    dataResponse := map[string]interface{}{
+        "data":        tabEvenement,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Evenement(response http.ResponseWriter, request *http.Request) {

@@ -1,4 +1,4 @@
-package auth
+package providers
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"main/auth"
 	"main/db"
 	"main/models"
 	"main/utils"
@@ -56,18 +57,29 @@ func RegisterPrestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	var count int
-	checkQuery := `SELECT COUNT(*) FROM PRESTATAIRE WHERE email = ? OR num_telephone = ? OR siret = ?`
-	err := db.DB.QueryRow(checkQuery, provider.Email, provider.NumTelephone, provider.Siret).Scan(&count)
-	if err != nil {
-		http.Error(response, "Erreur lors de la vérification des données", http.StatusInternalServerError)
-		return
-	}
+	var countPresta int
+    checkPrestaQuery := `SELECT COUNT(*) FROM PRESTATAIRE WHERE email = ? OR num_telephone = ? OR siret = ?`
+    err := db.DB.QueryRow(checkPrestaQuery, provider.Email, provider.NumTelephone, provider.Siret).Scan(&countPresta)
+    if err != nil {
+        http.Error(response, "Erreur lors de la vérification des données", http.StatusInternalServerError)
+        return
+    }
+    if countPresta > 0 {
+        http.Error(response, "Cet email, téléphone ou numéro SIRET est déjà utilisé par un autre prestataire.", http.StatusConflict)
+        return
+    }
 
-	if count > 0 {
-		http.Error(response, "Cet email, téléphone ou numéro SIRET est déjà utilisé.", http.StatusConflict)
-		return
-	}
+    var countUser int
+    checkUserQuery := `SELECT COUNT(*) FROM UTILISATEUR WHERE email = ? OR num_telephone = ?`
+    err = db.DB.QueryRow(checkUserQuery, provider.Email, provider.NumTelephone).Scan(&countUser)
+    if err != nil {
+        http.Error(response, "Erreur lors de la vérification des données (Seniors)", http.StatusInternalServerError)
+        return
+    }
+    if countUser > 0 {
+        http.Error(response, "Cet email ou numéro de téléphone est déjà utilisé par un compte client/senior.", http.StatusConflict)
+        return
+    }
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(provider.Mdp), bcrypt.DefaultCost)
 	if err != nil {
@@ -126,7 +138,7 @@ func LoginPrestataire(response http.ResponseWriter, request *http.Request) {
 	}
 
 	dummyUser := models.Utilisateur{ID: provider.ID, Email: provider.Email, Statut: "prestataire"}
-	tokenString, err := generateJWT(dummyUser)
+	tokenString, err := auth.GenerateJWT(dummyUser)
 	if err != nil {
 		http.Error(response, "Erreur lors de la création de la session", http.StatusInternalServerError)
 		return
@@ -179,7 +191,7 @@ func MePrestataire(response http.ResponseWriter, request *http.Request) {
 	tokenString := cookie.Value
 	claims := &models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return auth.JwtKey, nil
 	})
 
 	if err != nil || !token.Valid {
@@ -229,12 +241,12 @@ func UpdatePrestataire(response http.ResponseWriter, request *http.Request) {
 
     tokenString := cookie.Value
     claims := &models.Claims{}
-    token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, jwt.ErrSignatureInvalid
-        }
-        return jwtKey, nil
-    })
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return auth.JwtKey, nil
+	})
 
     if err != nil || !token.Valid {
         http.Error(response, "Session invalide ou expirée", http.StatusUnauthorized)
@@ -280,6 +292,28 @@ func UpdatePrestataire(response http.ResponseWriter, request *http.Request) {
         return
     }
 
+    var countPresta int
+    errPresta := db.DB.QueryRow(`SELECT COUNT(*) FROM PRESTATAIRE WHERE (email = ? OR num_telephone = ? OR siret = ?) AND id_prestataire != ?`, p.Email, p.NumTelephone, p.Siret, providerID).Scan(&countPresta)
+    if errPresta != nil {
+        http.Error(response, "Erreur lors de la vérification des données (Prestataires)", http.StatusInternalServerError)
+        return
+    }
+    if countPresta > 0 {
+        http.Error(response, "Cet email, numéro de téléphone ou SIRET est déjà utilisé par un autre prestataire.", http.StatusConflict)
+        return
+    }
+
+    var countUser int
+    errUser := db.DB.QueryRow(`SELECT COUNT(*) FROM UTILISATEUR WHERE email = ? OR num_telephone = ?`, p.Email, p.NumTelephone).Scan(&countUser)
+    if errUser != nil {
+        http.Error(response, "Erreur lors de la vérification des données (Seniors)", http.StatusInternalServerError)
+        return
+    }
+    if countUser > 0 {
+        http.Error(response, "Cet email ou numéro de téléphone est déjà utilisé par un compte client/senior.", http.StatusConflict)
+        return
+    }
+
     var query string
     var args []interface{}
 
@@ -303,11 +337,7 @@ func UpdatePrestataire(response http.ResponseWriter, request *http.Request) {
 
     _, err = db.DB.Exec(query, args...)
     if err != nil {
-        if strings.Contains(err.Error(), "Duplicate entry") {
-            http.Error(response, "Cette adresse email, numéro de téléphone ou SIRET est déjà utilisé(e).", http.StatusConflict)
-        } else {
-            http.Error(response, "Erreur lors de la mise à jour du profil : "+err.Error(), http.StatusBadRequest)
-        }
+        http.Error(response, "Erreur lors de la mise à jour du profil : "+err.Error(), http.StatusBadRequest)
         return
     }
 

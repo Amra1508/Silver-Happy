@@ -8,6 +8,7 @@ import (
 	"main/communication"
 	"main/dashboard"
 	"main/db"
+	"main/providers"
 	"main/services"
 	"main/users"
 )
@@ -125,11 +126,13 @@ func main() {
 	http.HandleFunc("/evenement/checkout/{id}", services.CreateEventCheckoutSession)
 	http.HandleFunc("/success-event", services.Success_Event_Payment)
 
-	http.HandleFunc("/auth/register-provider", auth.RegisterPrestataire)
-	http.HandleFunc("/auth/login-provider", auth.LoginPrestataire)
-    http.HandleFunc("/auth/logout-provider", auth.LogoutPrestataire)
-    http.HandleFunc("/auth/me-provider", auth.MePrestataire)
-	http.HandleFunc("/auth/update-provider", auth.UpdatePrestataire)
+	http.HandleFunc("/auth/register-provider", providers.RegisterPrestataire)
+	http.HandleFunc("/auth/login-provider", providers.LoginPrestataire)
+    http.HandleFunc("/auth/logout-provider", providers.LogoutPrestataire)
+    http.HandleFunc("/auth/me-provider", providers.MePrestataire)
+	http.HandleFunc("/auth/update-provider", providers.UpdatePrestataire)
+
+	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

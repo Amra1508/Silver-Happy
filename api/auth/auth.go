@@ -198,7 +198,7 @@ func Login(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    tokenString, err := generateJWT(user)
+    tokenString, err := GenerateJWT(user)
     if err != nil {
         http.Error(response, "Erreur lors de la création de la session", http.StatusInternalServerError)
         return
@@ -262,7 +262,7 @@ func Me(response http.ResponseWriter, request *http.Request) {
         if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
             return nil, jwt.ErrSignatureInvalid
         }
-        return jwtKey, nil
+        return JwtKey, nil
     })
 
     if err != nil || !token.Valid {
@@ -344,7 +344,7 @@ func Update(response http.ResponseWriter, request *http.Request) {
         if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
             return nil, jwt.ErrSignatureInvalid
         }
-        return jwtKey, nil
+        return JwtKey, nil
     })
 
     if err != nil || !token.Valid {
@@ -468,7 +468,7 @@ func TutorialSeen(response http.ResponseWriter, request *http.Request) {
 
     claims := &models.Claims{}
     token, _ := jwt.ParseWithClaims(cookie.Value, claims, func(t *jwt.Token) (interface{}, error) {
-        return jwtKey, nil
+        return JwtKey, nil
     })
 
     if !token.Valid {

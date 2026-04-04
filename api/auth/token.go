@@ -7,9 +7,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("ma_cle_secrete_super_robuste_123!")
+var JwtKey = []byte("ma_cle_secrete_super_robuste_123!")
 
-func generateJWT(user models.Utilisateur) (string, error) {
+func GenerateJWT(user models.Utilisateur) (string, error) {
     expirationTime := time.Now().Add(24 * time.Hour)
 
     claims := &models.Claims{
@@ -24,7 +24,7 @@ func generateJWT(user models.Utilisateur) (string, error) {
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-    tokenString, err := token.SignedString(jwtKey)
+    tokenString, err := token.SignedString(JwtKey)
     if err != nil {
         return "", err
     }

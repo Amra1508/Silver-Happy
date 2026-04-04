@@ -47,6 +47,7 @@ func Read_Conseil(response http.ResponseWriter, request *http.Request) {
             (SELECT COUNT(*) FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil) AS likes,
             (SELECT COUNT(*) > 0 FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil AND id_utilisateur = ?) AS is_liked
         FROM CONSEIL c 
+        ORDER BY c.date_publication DESC
         LIMIT ? OFFSET ?
     `
 
