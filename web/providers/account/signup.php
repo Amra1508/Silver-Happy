@@ -117,6 +117,34 @@
                     </div>
                 </div>
 
+                <div class="sm:col-span-6 mt-4 border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-semibold text-[#1C5B8F] mb-4">Documents justificatifs</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-sm text-gray-600 font-semibold">Pièce d'identité <span class="text-red-500">*</span></label>
+                            <div class="mt-2">
+                                <input id="doc_identite" type="file" accept=".pdf,.png,.jpg,.jpeg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#1C5B8F]/10 file:text-[#1C5B8F] hover:file:bg-[#1C5B8F]/20 cursor-pointer" required />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600 font-semibold">Extrait KBIS <span class="text-red-500">*</span></label>
+                            <div class="mt-2">
+                                <input id="doc_kbis" type="file" accept=".pdf,.png,.jpg,.jpeg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#1C5B8F]/10 file:text-[#1C5B8F] hover:file:bg-[#1C5B8F]/20 cursor-pointer" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="extra_docs_container" class="mt-6 space-y-4"></div>
+
+                    <button type="button" id="btn_add_doc" class="mt-4 text-sm font-semibold text-[#E1AB2B] hover:text-yellow-600 transition-colors flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Ajouter un autre document (Attestation, Diplôme...)
+                    </button>
+                </div>
+
                 <div class="sm:col-span-6 flex justify-center mt-4">
                     <div class="cf-turnstile" data-sitekey="0x4AAAAAACpHSvX9fEtYZZTy" data-theme="light"></div>
                 </div>
@@ -154,127 +182,172 @@
     </footer>
 
     <script>
-        const limitDate = new Date();
-        limitDate.setFullYear(limitDate.getFullYear() - 18);
-        const strMax = limitDate.toISOString().split('T')[0];
-        document.getElementById('birth_date').max = strMax;
+    document.addEventListener('DOMContentLoaded', async () => {
+    const selectCategorie = document.getElementById('id_categorie');
+    try {
+        const res = await fetch('http://localhost:8082/categorie/read');
+        if (res.ok) {
+            const jsonResponse = await res.json();
+            const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
+            selectCategorie.innerHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
+            if (categories.length > 0) {
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id_categorie || cat.id || cat.ID; 
+                    option.textContent = cat.nom || cat.Nom;
+                    selectCategorie.appendChild(option);
+                });
+            } else {
+                selectCategorie.innerHTML = '<option value="" disabled>Aucune catégorie disponible</option>';
+            }
+        }
+    } catch (err) {
+        selectCategorie.innerHTML = '<option value="" disabled>Serveur injoignable</option>';
+    }
 
-        const btnSubmit = document.getElementById('btn_register');
+    const limitDate = new Date();
+    limitDate.setFullYear(limitDate.getFullYear() - 18);
+    const strMax = limitDate.toISOString().split('T')[0];
+    document.getElementById('birth_date').max = strMax;
 
-        btnSubmit.addEventListener('click', async (e) => {
-            e.preventDefault();
+    const btnAddDoc = document.getElementById('btn_add_doc');
+    const extraDocsContainer = document.getElementById('extra_docs_container');
 
-            const messageBox = document.getElementById('response_message');
-            const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]')?.value;
+    btnAddDoc.addEventListener('click', () => {
+        const div = document.createElement('div');
+        div.className = 'grid grid-cols-1 sm:grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200';
+        
+        div.innerHTML = `
+            <div class="sm:col-span-5">
+                <label class="text-sm text-gray-600 font-semibold">Nom du document</label>
+                <input type="text" class="extra-doc-name w-full border border-gray-300 rounded-md p-2 mt-2 focus:outline-none focus:border-[#1C5B8F]" placeholder="Ex: Attestation RC Pro" required />
+            </div>
+            <div class="sm:col-span-6">
+                <label class="text-sm text-gray-600 font-semibold">Fichier</label>
+                <input type="file" accept=".pdf,.png,.jpg,.jpeg" class="extra-doc-file w-full mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer" required />
+            </div>
+            <div class="sm:col-span-1 flex justify-end pb-1">
+                <button type="button" class="btn-remove-doc text-red-500 hover:text-red-700 p-2" title="Supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            </div>
+        `;
+        extraDocsContainer.appendChild(div);
 
-            const inputBirth = document.getElementById('birth_date').value;
-            if (inputBirth > strMax) {
-                messageBox.textContent = "Désolé, vous devez avoir au moins 18 ans pour devenir prestataire.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
+        div.querySelector('.btn-remove-doc').addEventListener('click', () => {
+            div.remove();
+        });
+    });
+
+    const btnSubmit = document.getElementById('btn_register');
+    
+    btnSubmit.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        const messageBox = document.getElementById('response_message');
+        const showError = (msg) => {
+            messageBox.textContent = msg;
+            messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
+            messageBox.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        const inputBirth = document.getElementById('birth_date').value;
+        if (inputBirth > strMax) {
+            return showError("Désolé, vous devez avoir au moins 18 ans pour devenir prestataire.");
+        }
+
+        const data = {
+            prenom: document.getElementById('first_name').value,
+            nom: document.getElementById('last_name').value,
+            date_naissance: inputBirth,
+            num_telephone: document.getElementById('phone_number').value,
+            email: document.getElementById('signup_email').value,
+            mdp: document.getElementById('signup_password').value,
+            siret: document.getElementById('siret').value,
+            id_categorie: parseInt(document.getElementById('id_categorie').value),
+            tarifs: parseFloat(document.getElementById('tarif').value),
+            "cf-turnstile-response": document.querySelector('[name="cf-turnstile-response"]')?.value
+        };
+
+        if (!data.prenom || !data.nom || !data.date_naissance || !data.email || !data.mdp || !data.siret || !data.id_categorie || isNaN(data.tarifs)) {
+            return showError("Veuillez remplir tous les champs obligatoires du formulaire.");
+        }
+        if (data.siret.length !== 14 || isNaN(data.siret)) {
+            return showError("Le numéro SIRET doit contenir exactement 14 chiffres.");
+        }
+        if (!data["cf-turnstile-response"]) {
+            return showError("Veuillez valider la vérification de sécurité (Captcha).");
+        }
+
+        const fileIdentite = document.getElementById('doc_identite').files[0];
+        const fileKbis = document.getElementById('doc_kbis').files[0];
+
+        if (!fileIdentite || !fileKbis) {
+            return showError("Vous devez obligatoirement fournir votre pièce d'identité et votre extrait KBIS.");
+        }
+
+        const extraNames = document.querySelectorAll('.extra-doc-name');
+        const extraFiles = document.querySelectorAll('.extra-doc-file');
+        
+        for (let i = 0; i < extraNames.length; i++) {
+            if (!extraNames[i].value.trim() || !extraFiles[i].files[0]) {
+                return showError("Veuillez renseigner un nom et sélectionner un fichier pour tous vos documents supplémentaires.");
+            }
+        }
+
+        try {
+            const response = await fetch('http://localhost:8082/auth/register-provider', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                return showError("Erreur : " + errorText);
             }
 
-            const data = {
-                prenom: document.getElementById('first_name').value,
-                nom: document.getElementById('last_name').value,
-                date_naissance: document.getElementById('birth_date').value,
-                num_telephone: document.getElementById('phone_number').value,
-                email: document.getElementById('signup_email').value,
-                mdp: document.getElementById('signup_password').value,
-                siret: document.getElementById('siret').value,
-                id_categorie: parseInt(document.getElementById('id_categorie').value),
-                tarifs: parseFloat(document.getElementById('tarif').value),
-                "cf-turnstile-response": turnstileResponse
+            const result = await response.json();
+            const newProviderId = result.ID || result.id || result.id_prestataire; 
+
+            const uploadPromises = [];
+
+            const uploadDoc = async (file, typeDoc) => {
+                const formData = new FormData();
+                formData.append('fichier_document', file);
+                formData.append('type_document', typeDoc);
+
+                return fetch(`http://localhost:8082/prestataires/upload/${newProviderId}`, { 
+                    method: 'POST',
+                    body: formData 
+                });
             };
 
-            if (!data.prenom || !data.nom || !data.date_naissance || !data.email || !data.mdp || !data.siret || !data.id_categorie || isNaN(data.tarifs)) {
-                messageBox.textContent = "Veuillez remplir tous les champs obligatoires.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
+            uploadPromises.push(uploadDoc(fileIdentite, "Pièce d'identité"));
+            uploadPromises.push(uploadDoc(fileKbis, "KBIS"));
+
+            for (let i = 0; i < extraNames.length; i++) {
+                uploadPromises.push(uploadDoc(extraFiles[i].files[0], extraNames[i].value.trim()));
             }
 
-            if (data.siret.length !== 14 || isNaN(data.siret)) {
-                messageBox.textContent = "Le numéro SIRET doit contenir exactement 14 chiffres.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
-            }
+            await Promise.all(uploadPromises);
 
-            if (!turnstileResponse) {
-                messageBox.textContent = "Veuillez valider la vérification de sécurité (Captcha).";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-                return;
-            }
+            messageBox.textContent = "Demande envoyée avec succès ! Vos documents ont bien été joints. Votre compte est en attente de validation.";
+            messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700";
+            messageBox.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            try {
-                const response = await fetch('http://localhost:8082/auth/register-provider', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
+            setTimeout(() => {
+                window.location.href = "signin.php";
+            }, 3000);
 
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold";
-
-                if (response.ok) {
-                    const result = await response.json();
-
-                    messageBox.textContent = "Demande envoyée ! Bienvenue " + (result.prenom || data.prenom) + ". Votre compte est en attente de validation.";
-                    messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-                    messageBox.classList.remove('hidden');
-
-                    setTimeout(() => {
-                        window.location.href = "signin.php";
-                    }, 3000);
-                } else {
-                    const errorText = await response.text();
-
-                    messageBox.textContent = "Erreur : " + errorText;
-                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-                    messageBox.classList.remove('hidden');
-                }
-            } catch (error) {
-                messageBox.textContent = "Impossible de joindre le serveur.";
-                messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-                messageBox.classList.remove('hidden');
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const selectCategorie = document.getElementById('id_categorie');
-            
-            try {
-                const res = await fetch('http://localhost:8082/categorie/read');
-                if (res.ok) {
-                    const jsonResponse = await res.json();
-                    
-                    const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
-                    
-                    selectCategorie.innerHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
-                    
-                    if (categories.length > 0) {
-                        categories.forEach(cat => {
-                            const option = document.createElement('option');
-                            option.value = cat.id_categorie || cat.id || cat.ID; 
-                            option.textContent = cat.nom || cat.Nom;
-                            selectCategorie.appendChild(option);
-                        });
-                    } else {
-                        selectCategorie.innerHTML = '<option value="" disabled>Aucune catégorie disponible</option>';
-                    }
-                } else {
-                    selectCategorie.innerHTML = '<option value="" disabled>Erreur de chargement</option>';
-                }
-            } catch (err) {
-                console.error("Erreur serveur:", err);
-                selectCategorie.innerHTML = '<option value="" disabled>Serveur injoignable</option>';
-            }
-        });
-    </script>
+        } catch (error) {
+            showError("Impossible de joindre le serveur. Vérifiez votre connexion.");
+        }
+    });
+});
+</script>
 
 </body>
 </html>

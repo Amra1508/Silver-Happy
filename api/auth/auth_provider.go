@@ -125,14 +125,6 @@ func LoginPrestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if provider.Status == "en attente" {
-		http.Error(response, "Votre compte est en cours de validation.", http.StatusForbidden)
-		return
-	} else if provider.Status == "refusé" {
-		http.Error(response, "Votre demande d'inscription a été refusée.", http.StatusForbidden)
-		return
-	}
-
 	dummyUser := models.Utilisateur{ID: provider.ID, Email: provider.Email, Statut: "prestataire"}
 	tokenString, err := generateJWT(dummyUser)
 	if err != nil {

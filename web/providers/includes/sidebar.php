@@ -9,9 +9,11 @@
         <div id="provider-name-display" class="mt-4 px-4 py-2 bg-white/10 rounded-lg text-center w-full">
             <span class="text-sm text-gray-300">Chargement...</span>
         </div>
+
+        <div id="provider-status-badge" class="mt-2 text-xs px-3 py-1 rounded-full hidden"></div>
     </div>
 
-    <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+    <nav id="sidebar-nav" class="flex-1 px-4 py-6 space-y-2 overflow-y-auto hidden">
         
         <a href="/front/providers/dashboard.php" class="flex items-center gap-3 px-4 py-3 bg-white/10 text-[#E1AB2B] rounded-xl font-semibold transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -46,7 +48,7 @@
 
     </nav>
 
-    <div class="p-4 border-t border-white/10">
+    <div class="p-4 border-t border-white/10 mt-auto">
         <a href="/front/providers/profil.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all mb-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Mon Profil
@@ -57,11 +59,17 @@
         </button>
     </div>
 
-</aside>
+    </aside>
 
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
         const providerNameDisplay = document.getElementById('provider-name-display');
+        const badgeStatus = document.getElementById('provider-status-badge');
+        
+        const navSidebar = document.getElementById('sidebar-nav');
+        const contentValide = document.getElementById('main-content-valide');
+        const contentAttente = document.getElementById('main-content-attente');
+        const contentRefuse = document.getElementById('main-content-refuse');
 
         try {
             const response = await fetch('http://localhost:8082/auth/me-provider', {
@@ -71,7 +79,37 @@
 
             if (response.ok) {
                 const data = await response.json();
-                providerNameDisplay.innerHTML = `<span class="font-bold text-[#E1AB2B]">${data.prenom} ${data.nom}</span><br><span class="text-xs text-gray-300">${data.categorie || 'Pro'}</span>`;
+                
+                providerNameDisplay.innerHTML = `<span class="font-bold text-[#E1AB2B]">${data.prenom} ${data.nom}</span><br><span class="text-xs text-gray-300">${data.categorie_nom || 'Pro'}</span>`;
+
+                const status = data.status ? data.status.toLowerCase() : 'en attente';
+
+                if (status === 'validé' || status === 'valide') {
+                    navSidebar.classList.remove('hidden'); 
+                    if(contentValide) contentValide.classList.remove('hidden');
+                    
+                    badgeStatus.textContent = "Compte Validé";
+                    badgeStatus.className = "mt-2 text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 border border-green-500/30 uppercase tracking-wide font-bold";
+                    badgeStatus.classList.remove('hidden');
+
+                } else if (status === 'en attente') {
+                    if(contentAttente) contentAttente.classList.remove('hidden');
+                    
+                    badgeStatus.textContent = "En attente";
+                    badgeStatus.className = "mt-2 text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 uppercase tracking-wide font-bold";
+                    badgeStatus.classList.remove('hidden');
+
+                } else if (status === 'refusé' || status === 'refuse') {
+                    if(contentRefuse) {
+                        contentRefuse.classList.remove('hidden');
+                        document.getElementById('motif-refus-text').textContent = "Motif : " + (data.motif_refus || "Non précisé");
+                    }
+                    
+                    badgeStatus.textContent = "Refusé";
+                    badgeStatus.className = "mt-2 text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 uppercase tracking-wide font-bold";
+                    badgeStatus.classList.remove('hidden');
+                }
+
             } else {
                 window.location.href = "/front/providers/account/signin.php"; 
             }
