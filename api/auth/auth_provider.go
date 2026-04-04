@@ -211,3 +211,109 @@ func MePrestataire(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(provider)
 }
+
+func UpdatePrestataire(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "PUT") {
+        return
+    }
+
+    cookie, err := request.Cookie("provider_token")
+    if err != nil {
+        if err == http.ErrNoCookie {
+            http.Error(response, "Non authentifié (aucun cookie)", http.StatusUnauthorized)
+            return
+        }
+        http.Error(response, "Erreur serveur", http.StatusBadRequest)
+        return
+    }
+
+    tokenString := cookie.Value
+    claims := &models.Claims{}
+    token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            return nil, jwt.ErrSignatureInvalid
+        }
+        return jwtKey, nil
+    })
+
+    if err != nil || !token.Valid {
+        http.Error(response, "Session invalide ou expirée", http.StatusUnauthorized)
+        return
+    }
+
+    providerID := claims.UserID 
+
+    var p models.Prestataire
+    if err := json.NewDecoder(request.Body).Decode(&p); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+        return
+    }
+
+    p.Prenom = html.EscapeString(strings.TrimSpace(p.Prenom))
+    p.Nom = html.EscapeString(strings.TrimSpace(p.Nom))
+    p.Email = strings.ToLower(strings.TrimSpace(p.Email))
+    p.NumTelephone = strings.TrimSpace(p.NumTelephone)
+    p.Siret = html.EscapeString(strings.TrimSpace(p.Siret))
+
+    if strings.Contains(p.Prenom, " ") || strings.Contains(p.Nom, " ") || strings.Contains(p.Email, " ") || strings.Contains(p.NumTelephone, " ") || strings.Contains(p.Siret, " ") {
+        http.Error(response, "Les espaces ne sont pas autorisés pour ces champs.", http.StatusConflict)
+        return
+    }
+
+    if strings.ContainsAny(p.Prenom, "0123456789") || strings.ContainsAny(p.Nom, "0123456789") {
+        http.Error(response, "Le nom et le prénom ne doivent pas contenir de chiffres.", http.StatusConflict)
+        return
+    }
+
+    if len(p.Prenom) < 2 || len(p.Prenom) > 50 || len(p.Nom) < 2 || len(p.Nom) > 50 {
+        http.Error(response, "Le nom et le prénom doivent contenir entre 2 et 50 caractères", http.StatusConflict)
+        return
+    }
+
+    if len(p.NumTelephone) != 10 {
+        http.Error(response, "Le numéro de téléphone est invalide (10 chiffres attendus).", http.StatusConflict)
+        return
+    }
+
+    if len(p.Siret) != 14 || strings.ContainsAny(p.Siret, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+        http.Error(response, "Le numéro SIRET doit contenir exactement 14 chiffres.", http.StatusConflict)
+        return
+    }
+
+    var query string
+    var args []interface{}
+
+    if p.Mdp != "" {
+        hashedPassword, errHash := bcrypt.GenerateFromPassword([]byte(p.Mdp), bcrypt.DefaultCost)
+        if errHash != nil {
+            http.Error(response, "Erreur lors du hashage du mot de passe", http.StatusInternalServerError)
+            return
+        }
+        
+        query = `UPDATE PRESTATAIRE 
+                 SET prenom = ?, nom = ?, email = ?, num_telephone = ?, siret = ?, tarifs = ?, id_categorie = ?, mdp = ? 
+                 WHERE id_prestataire = ?`
+        args = []interface{}{p.Prenom, p.Nom, p.Email, p.NumTelephone, p.Siret, p.Tarifs, p.IdCategorie, string(hashedPassword), providerID}
+    } else {
+        query = `UPDATE PRESTATAIRE 
+                 SET prenom = ?, nom = ?, email = ?, num_telephone = ?, siret = ?, tarifs = ?, id_categorie = ? 
+                 WHERE id_prestataire = ?`
+        args = []interface{}{p.Prenom, p.Nom, p.Email, p.NumTelephone, p.Siret, p.Tarifs, p.IdCategorie, providerID}
+    }
+
+    _, err = db.DB.Exec(query, args...)
+    if err != nil {
+        if strings.Contains(err.Error(), "Duplicate entry") {
+            http.Error(response, "Cette adresse email, numéro de téléphone ou SIRET est déjà utilisé(e).", http.StatusConflict)
+        } else {
+            http.Error(response, "Erreur lors de la mise à jour du profil : "+err.Error(), http.StatusBadRequest)
+        }
+        return
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{
+        "message": "Profil mis à jour avec succès",
+    })
+}

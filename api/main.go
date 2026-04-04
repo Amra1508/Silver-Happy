@@ -129,6 +129,7 @@ func main() {
 	http.HandleFunc("/auth/login-provider", auth.LoginPrestataire)
     http.HandleFunc("/auth/logout-provider", auth.LogoutPrestataire)
     http.HandleFunc("/auth/me-provider", auth.MePrestataire)
+	http.HandleFunc("/auth/update-provider", auth.UpdatePrestataire)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
