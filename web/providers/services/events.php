@@ -207,7 +207,7 @@
     <script>
         let currentProviderId = null;
         let allEvents = [];
-        const API_URL = 'http://localhost:8082';
+        const API_URL = window.API_BASE_URL;
 
         function showAlert(msg, type = "success") {
             const pageAlert = document.getElementById('page-alert');

@@ -121,7 +121,7 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:8082";
+        const API_URL = window.API_BASE_URL;
         const ROUTE_PLANNING = "/prestataire/planning"; 
 
         document.addEventListener('DOMContentLoaded', async () => {

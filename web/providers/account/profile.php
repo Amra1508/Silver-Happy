@@ -109,7 +109,7 @@
             const selectCategorie = document.getElementById('id_categorie');
 
             try {
-                const catRes = await fetch('http://localhost:8082/categorie/read');
+                const catRes = await fetch(`${window.API_BASE_URL}/categorie/read`);
                 if (catRes.ok) {
                     const jsonResponse = await catRes.json();
                     const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
@@ -126,7 +126,7 @@
             }
 
             try {
-                const res = await fetch('http://localhost:8082/auth/me-provider', {
+                const res = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -179,7 +179,7 @@
                 }
 
                 try {
-                    const updateRes = await fetch(`http://localhost:8082/auth/update-provider`, {
+                    const updateRes = await fetch(`${window.API_BASE_URL}/auth/update-provider`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',

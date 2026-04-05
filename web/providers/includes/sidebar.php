@@ -1,3 +1,11 @@
+<?php 
+require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+?>
+
+<script>
+    window.API_BASE_URL = "<?php echo API_BASE_URL; ?>"; 
+</script>
+
 <aside class="w-64 bg-[#1C5B8F] text-white min-h-screen flex flex-col shadow-xl font-sans shrink-0 sticky top-0">
     
     <div class="p-6 flex flex-col items-center justify-center border-b border-white/10">
@@ -64,7 +72,7 @@
         const contentRefuse = document.getElementById('main-content-refuse');
 
         try {
-            const response = await fetch('http://localhost:8082/auth/me-provider', {
+            const response = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
                 method: 'GET',
                 credentials: 'include' 
             });
@@ -113,7 +121,7 @@
         const btnLogout = document.getElementById('btn-logout-provider');
         if (btnLogout) {
             btnLogout.addEventListener('click', async () => {
-                await fetch('http://localhost:8082/auth/logout-provider', {
+                await fetch(`${window.API_BASE_URL}/auth/logout-provider`, {
                     method: 'POST',
                     credentials: 'include' 
                 });

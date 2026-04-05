@@ -1,3 +1,6 @@
+<?php 
+require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -12,6 +15,8 @@
     </style>
 
     <script>
+        window.API_BASE_URL = "<?php echo API_BASE_URL; ?>";
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -96,7 +101,7 @@
             const mdp = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://localhost:8082/auth/login-provider', {
+                const response = await fetch(`${window.API_BASE_URL}/auth/login-provider`, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',

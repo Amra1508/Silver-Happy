@@ -171,7 +171,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             
             try {
-                const meRes = await fetch('http://localhost:8082/auth/me-provider', {
+                const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
                     method: 'GET',
                     credentials: 'include' 
                 });
@@ -183,7 +183,7 @@
                         
                         document.getElementById('welcome-text').textContent = `Bonjour ${meData.prenom}, voici l'activité de votre activité de ${meData.categorie_nom || 'prestation'}.`;
                         
-                        const profileRes = await fetch(`http://localhost:8082/prestataire/${meData.id_prestataire || meData.id || meData.ID}/profile`, {
+                        const profileRes = await fetch(`${window.API_BASE_URL}/prestataire/${meData.id_prestataire || meData.id || meData.ID}/profile`, {
                             method: 'GET'
                         });
 

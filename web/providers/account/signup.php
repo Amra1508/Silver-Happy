@@ -1,3 +1,6 @@
+<?php 
+require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -13,6 +16,8 @@
     </style>
 
     <script>
+        window.API_BASE_URL = "<?php echo API_BASE_URL; ?>";
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -185,7 +190,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
     const selectCategorie = document.getElementById('id_categorie');
     try {
-        const res = await fetch('http://localhost:8082/categorie/read');
+        const res = await fetch(`${window.API_BASE_URL}/categorie/read`);
         if (res.ok) {
             const jsonResponse = await res.json();
             const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
@@ -297,7 +302,7 @@
         }
 
         try {
-            const response = await fetch('http://localhost:8082/auth/register-provider', {
+            const response = await fetch(`${window.API_BASE_URL}/auth/register-provider`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -318,7 +323,7 @@
                 formData.append('fichier_document', file);
                 formData.append('type_document', typeDoc);
 
-                return fetch(`http://localhost:8082/prestataires/upload/${newProviderId}`, { 
+                return fetch(`${window.API_BASE_URL}/prestataires/upload/${newProviderId}`, { 
                     method: 'POST',
                     body: formData 
                 });
