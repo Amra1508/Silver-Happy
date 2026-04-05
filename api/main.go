@@ -134,6 +134,8 @@ func main() {
 
 	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
 
+	http.HandleFunc("/prestataire/planning", providers.Read_Provider_Planning)
+
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
 	}

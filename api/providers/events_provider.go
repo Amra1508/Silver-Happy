@@ -61,6 +61,30 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
         return
     }
 
+    var overlapCount int
+    overlapQuery := `
+        SELECT COUNT(*) 
+        FROM evenement e
+        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+        WHERE pe.id_prestataire = ?
+          -- L'évènement existant commence AVANT que le nouveau ne se termine
+          AND e.date_debut < IFNULL(NULLIF(?, ''), DATE_ADD(?, INTERVAL 1 HOUR))
+          -- ET l'évènement existant se termine APRÈS que le nouveau ne commence
+          AND IFNULL(e.date_fin, DATE_ADD(e.date_debut, INTERVAL 1 HOUR)) > ?
+    `
+    err = db.DB.QueryRow(overlapQuery, providerID, dateFin, dateDebut, dateDebut).Scan(&overlapCount)
+    
+    if err != nil {
+        fmt.Println("Erreur lors de la vérification des conflits horaires:", err)
+        http.Error(response, "Erreur lors de la vérification du planning", http.StatusInternalServerError)
+        return
+    }
+
+    if overlapCount > 0 {
+        http.Error(response, "Vous êtes déjà pris sur ce créneau horaire.", http.StatusConflict)
+        return
+    }
+    
     var imagePath string
     file, handler, err := request.FormFile("image")
     if err == nil { 
@@ -87,7 +111,7 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
             return
         }
 
-        imagePath = "/uploads/" + filename 
+        imagePath = filepath.ToSlash("/uploads/" + filename) 
     } else if err != http.ErrMissingFile {
         http.Error(response, "Erreur avec le fichier image", http.StatusBadRequest)
         return

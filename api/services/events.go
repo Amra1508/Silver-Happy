@@ -246,105 +246,159 @@ func Read_One_Evenement(response http.ResponseWriter, request *http.Request) {
 }
 
 func Update_Evenement(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "PUT") {
-		return
-	}
+    if utils.HandleCORS(response, request, "PUT") {
+        return
+    }
 
-	id := request.PathValue("id")
+    id := request.PathValue("id")
 
-	err := request.ParseMultipartForm(10 << 20)
-	if err != nil {
-		http.Error(response, "Erreur de formulaire", http.StatusBadRequest)
-		return
-	}
+    err := request.ParseMultipartForm(10 << 20)
+    if err != nil {
+        http.Error(response, "Erreur de formulaire", http.StatusBadRequest)
+        return
+    }
 
-	nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
-	desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
-	lieu := html.EscapeString(strings.TrimSpace(request.FormValue("lieu")))
-	places := strings.TrimSpace(request.FormValue("nombre_place"))
-	debut := strings.TrimSpace(request.FormValue("date_debut"))
-	fin := strings.TrimSpace(request.FormValue("date_fin"))
-	catStr := strings.TrimSpace(request.FormValue("id_categorie"))
-	prixStr := strings.TrimSpace(request.FormValue("prix"))
+    nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
+    desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
+    lieu := html.EscapeString(strings.TrimSpace(request.FormValue("lieu")))
+    placesStr := strings.TrimSpace(request.FormValue("nombre_place"))
+    debut := strings.TrimSpace(request.FormValue("date_debut"))
+    fin := strings.TrimSpace(request.FormValue("date_fin"))
+    catStr := strings.TrimSpace(request.FormValue("id_categorie"))
+    prixStr := strings.TrimSpace(request.FormValue("prix"))
 
-	if nom == "" || desc == "" || lieu == "" {
-		http.Error(response, "Champs requis", http.StatusBadRequest)
-		return
-	}
+    if nom == "" || desc == "" || lieu == "" {
+        http.Error(response, "Champs requis manquants", http.StatusBadRequest)
+        return
+    }
 
-	var prix float64
-	if prixStr != "" {
-		prix, _ = strconv.ParseFloat(prixStr, 64)
-	}
+    places, _ := strconv.Atoi(placesStr)
 
-	if errDate := validateDates(debut, fin); errDate != nil {
-		http.Error(response, errDate.Error(), http.StatusBadRequest)
-		return
-	}
+    var prix float64
+    if prixStr != "" {
+        prix, _ = strconv.ParseFloat(prixStr, 64)
+    }
 
-	var idCategorie *int
-	if catStr != "" && catStr != "null" {
-		idCat, err := strconv.Atoi(catStr)
-		if err == nil {
-			idCategorie = &idCat
-		}
-	}
+    if errDate := validateDates(debut, fin); errDate != nil {
+        http.Error(response, errDate.Error(), http.StatusBadRequest)
+        return
+    }
 
-	file, handler, errFile := request.FormFile("image")
-	var imagePath string
+    var dateFinPtr *string
+    if fin != "" {
+        dateFinPtr = &fin
+    }
 
-	if errFile == nil {
-		defer file.Close()
-		os.MkdirAll(uploadDir, os.ModePerm)
-		fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
-		imagePath = filepath.Join(uploadDir, fileName)
-		dst, _ := os.Create(imagePath)
-		defer dst.Close()
-		io.Copy(dst, file)
-	}
+    var idCategorie *int
+    if catStr != "" && catStr != "null" {
+        idCat, err := strconv.Atoi(catStr)
+        if err == nil {
+            idCategorie = &idCat
+        }
+    }
 
-	var res sql.Result
-	var errDb error
+    file, handler, errFile := request.FormFile("image")
+    var imagePath string
 
-	if imagePath != "" {
-		res, errDb = db.DB.Exec(
-			"UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, image = ?, date_debut = ?, date_fin = ?, id_categorie = ? , prix = ? WHERE id_evenement = ?",
-			nom, desc, lieu, places, imagePath, debut, fin, idCategorie, prix, id, 
-		)
-	} else {
-		res, errDb = db.DB.Exec(
-			"UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, date_debut = ?, date_fin = ?, id_categorie = ? , prix = ? WHERE id_evenement = ?",
-			nom, desc, lieu, places, debut, fin, idCategorie, prix, id,
-		)
-	}
+    if errFile == nil {
+        defer file.Close()
+        os.MkdirAll(uploadDir, os.ModePerm)
+        
+        cleanFileName := filepath.Base(handler.Filename)
+        fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), cleanFileName)
+        imagePath = filepath.ToSlash(filepath.Join(uploadDir, fileName))
+        
+        dst, errCreate := os.Create(imagePath)
+        if errCreate != nil {
+            fmt.Println("Erreur création fichier image :", errCreate)
+            http.Error(response, "Erreur lors de la sauvegarde de l'image", http.StatusInternalServerError)
+            return
+        }
+        defer dst.Close()
+        
+        _, errCopy := io.Copy(dst, file)
+        if errCopy != nil {
+            fmt.Println("Erreur copie fichier image :", errCopy)
+            http.Error(response, "Erreur lors de la copie de l'image", http.StatusInternalServerError)
+            return
+        }
+    } else if errFile != http.ErrMissingFile {
+        fmt.Println("Erreur FormFile :", errFile)
+        http.Error(response, "Fichier invalide", http.StatusBadRequest)
+        return
+    }
 
-	if errDb != nil {
-		http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
-		return
-	}
+    var errDb error
 
-    rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
-		http.Error(response, "Aucun événement trouvé avec cet ID", http.StatusNotFound)
-		return
-	}
+    if imagePath != "" {
+        var oldImage sql.NullString
+        db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&oldImage)
+        if oldImage.Valid && oldImage.String != "" {
+            os.Remove(oldImage.String)
+        }
 
-	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(map[string]string{"message": "Mise à jour réussie"})
+        _, errDb = db.DB.Exec(
+            "UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, image = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
+            nom, desc, lieu, places, imagePath, debut, dateFinPtr, idCategorie, prix, id, 
+        )
+    } else {
+        _, errDb = db.DB.Exec(
+            "UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
+            nom, desc, lieu, places, debut, dateFinPtr, idCategorie, prix, id,
+        )
+    }
+
+    if errDb != nil {
+        fmt.Println("Erreur UPDATE MySQL :", errDb)
+        http.Error(response, "Erreur serveur lors de la mise à jour", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Mise à jour réussie"})
 }
 
 func Delete_Evenement(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "DELETE") {
-		return
-	}
-	id := request.PathValue("id")
-	var imagePath sql.NullString
-	db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&imagePath)
-	db.DB.Exec("DELETE FROM evenement WHERE id_evenement = ?", id)
-	if imagePath.Valid && imagePath.String != "" {
-		os.Remove(imagePath.String)
-	}
-	response.WriteHeader(http.StatusNoContent)
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
+    
+    id := request.PathValue("id")
+    
+    var imagePath sql.NullString
+    err := db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&imagePath)
+    if err != nil && err != sql.ErrNoRows {
+        fmt.Println("Erreur SELECT image :", err)
+        http.Error(response, "Erreur lors de la lecture de l'évènement", http.StatusInternalServerError)
+        return
+    }
+
+    _, err = db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ?", id)
+    if err != nil {
+        fmt.Println("Erreur DELETE PRESTATAIRE_EVENEMENT :", err)
+        http.Error(response, "Erreur lors de la suppression des liens prestataires", http.StatusInternalServerError)
+        return
+    }
+
+    _, err = db.DB.Exec("DELETE FROM inscription WHERE id_evenement = ?", id)
+    if err != nil {
+        fmt.Println("Erreur DELETE inscription :", err)
+        http.Error(response, "Erreur lors de la suppression des inscriptions", http.StatusInternalServerError)
+        return
+    }
+
+    _, err = db.DB.Exec("DELETE FROM evenement WHERE id_evenement = ?", id)
+    if err != nil {
+        fmt.Println("Erreur DELETE evenement :", err)
+        http.Error(response, "Erreur lors de la suppression de l'évènement", http.StatusInternalServerError)
+        return
+    }
+
+    if imagePath.Valid && imagePath.String != "" {
+        os.Remove(imagePath.String)
+    }
+
+    response.WriteHeader(http.StatusNoContent)
 }
 
 func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {

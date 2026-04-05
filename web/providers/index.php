@@ -35,7 +35,7 @@
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Vue d'ensemble</h1>
                             <p class="text-gray-500 mt-1" id="welcome-text">Bienvenue dans votre espace de gestion.</p>
                         </div>
-                        <a href="/front/providers/prestations.php" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center gap-2">
+                        <a href="/providers/services/events.php" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-2 px-6 rounded-xl shadow-sm transition-colors flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             Nouvelle Prestation
                         </a>
@@ -90,7 +90,7 @@
                         <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold text-[#1C5B8F]">Vos prochaines interventions</h2>
-                                <a href="/front/providers/planning.php" class="text-sm text-[#E1AB2B] font-semibold hover:underline">Voir tout le planning</a>
+                                <a href="/providers/account/planning.php" class="text-sm text-[#E1AB2B] font-semibold hover:underline">Voir tout le planning</a>
                             </div>
                             
                             <div class="overflow-x-auto">
