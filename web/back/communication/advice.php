@@ -137,8 +137,8 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/conseil";
-        const API_CATEGORIE_BASE = "http://localhost:8082/categorie"; 
+        const API_BASE = `${window.API_BASE_URL}/conseil`;
+        const API_CATEGORIE_BASE = `${window.API_BASE_URL}/categorie`; 
         let currentPage = 1;
         const limit = 10;
         const messageBox = document.getElementById('api-message');

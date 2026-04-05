@@ -75,7 +75,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/dashboard";
+        const API_BASE = `${window.API_BASE_URL}/dashboard`; 
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {

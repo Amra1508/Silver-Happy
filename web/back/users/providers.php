@@ -280,8 +280,8 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/prestataires";
-        const API_CATEGORIES = "http://localhost:8082/categorie/read"; 
+        const API_BASE = `${window.API_BASE_URL}/prestataires`;
+        const API_CATEGORIES = `${window.API_BASE_URL}/categorie/read`; 
         const messageBox = document.getElementById('api-message');
 
         let allProviders = [];

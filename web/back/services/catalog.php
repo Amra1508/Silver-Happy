@@ -134,8 +134,8 @@
 </div>
 
 <script>
-    const API_BASE_SERVICE = "http://localhost:8082/service";
-    const API_BASE_CATEGORIE = "http://localhost:8082/categorie";
+    const API_BASE_SERVICE = `${window.API_BASE_URL}/service`;
+    const API_BASE_CATEGORIE = `${window.API_BASE_URL}/categorie`;
     
     let currentPage = 1;
     const limit = 10;

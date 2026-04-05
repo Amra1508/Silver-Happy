@@ -1,4 +1,14 @@
+<?php 
+require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+?>
 <header>
+    <script>
+        window.API_BASE_URL = "<?php echo API_BASE_URL; ?>"
+        console.log(API_BASE_URL);
+    </script>
+
+
+
     <style type="text/tailwindcss">
         <?php include("back.css") ?>
     </style>
@@ -24,7 +34,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('http://localhost:8082/auth/me', {
+                const response = await fetch(`${window.API_BASE_URL}/auth/me`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'

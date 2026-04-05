@@ -71,7 +71,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/message";
+        const API_BASE = `${window.API_BASE_URL}/message`;
 
         let id1 = null;
         const path = window.location.pathname;

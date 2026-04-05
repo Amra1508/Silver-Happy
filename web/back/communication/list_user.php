@@ -59,7 +59,7 @@
     </div>
 
     <script>
-        const API_BASE = "http://localhost:8082/seniors";
+        const API_BASE = `${window.API_BASE_URL}/seniors`;
         const messageBox = document.getElementById('api-message');
 
         let currentPage = 1;
