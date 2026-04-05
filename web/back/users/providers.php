@@ -489,7 +489,7 @@
                         let documentItem = documentList[i];
                         documentsArea.innerHTML += `
                             <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                                <a href="http://localhost:8082/${documentItem.lien}" target="_blank" class="text-[#1C5B8F] font-semibold text-sm hover:underline truncate">
+                                <a href=`${window.API_BASE_URL}/${documentItem.lien}` target="_blank" class="text-[#1C5B8F] font-semibold text-sm hover:underline truncate">
                                     📄 ${documentItem.type}
                                 </a>
                                 <button type="button" onclick="prepareDeleteDoc(${documentItem.id_document})" class="text-red-400 font-bold hover:text-red-600 px-2 text-xl transition">

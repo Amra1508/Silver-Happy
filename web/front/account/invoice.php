@@ -93,7 +93,7 @@ if (!isset($_COOKIE['session_token'])) {
             invoicesContainer.classList.remove('hidden');
 
             try {
-                const res = await fetch(`http://localhost:8082/factures/user/${window.currentUserId}`, { 
+                const res = await fetch(`${window.API_BASE_URL}/factures/user/${window.currentUserId}`, { 
                     credentials: 'include' 
                 });
                 

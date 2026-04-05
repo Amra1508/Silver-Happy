@@ -72,7 +72,7 @@
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const API_BASE = "http://localhost:8082";
+        const API_BASE = window.API_BASE_URL;
         const limit = 6;
 
         const urlParams = new URLSearchParams(window.location.search);

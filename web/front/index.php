@@ -306,7 +306,7 @@
                 }
 
                 try {
-                    await fetch('http://localhost:8082/auth/tutorial-seen', {
+                    await fetch(`${window.API_BASE_URL}/auth/tutorial-seen`, {
                         method: 'POST',
                         credentials: 'include'
                     });

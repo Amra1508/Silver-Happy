@@ -68,7 +68,7 @@
 
         async function fetchSearchResults(query) {
             try {
-                const response = await fetch(`http://localhost:8082/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`${window.API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error("Erreur serveur");
                 
                 const data = await response.json();

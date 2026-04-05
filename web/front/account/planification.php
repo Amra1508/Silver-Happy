@@ -106,7 +106,7 @@ if (!isset($_COOKIE['session_token'])) {
             const noSubContainer = document.getElementById('no-sub-container');
 
             try {
-                const authResponse = await fetch('http://localhost:8082/auth/me', {
+                const authResponse = await fetch(`${window.API_BASE_URL}/auth/me`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include'
@@ -128,7 +128,7 @@ if (!isset($_COOKIE['session_token'])) {
 
                 const userId = user.id_utilisateur || user.id; 
 
-                const planningResponse = await fetch(`http://localhost:8082/planning?user_id=${userId}`, {
+                const planningResponse = await fetch(`${window.API_BASE_URL}/planning?user_id=${userId}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include'

@@ -1,3 +1,12 @@
+<?php 
+require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+?>
+
+<script>
+    window.API_BASE_URL = "<?php echo API_BASE_URL; ?>"; 
+    console.log(API_BASE_URL)
+</script>
+
 <header>
     <style type="text/tailwindcss">
         <?php include("front.css") ?>
@@ -128,14 +137,14 @@
                 btnLogout.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        const res = await fetch('http://localhost:8082/auth/logout', { method: 'POST', credentials: 'include' });
+                        const res = await fetch(`${window.API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
                         if (res.ok) window.location.href = "/front/index.php";
                     } catch (err) { console.error(err); }
                 });
             }
 
             try {
-                const res = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
+                const res = await fetch(`${window.API_BASE_URL}/auth/me`, { credentials: 'include' });
                 if (!res.ok) return;
                 
                 const user = await res.json();

@@ -95,7 +95,7 @@
 
         async function fetchCurrentUser() {
             try {
-                const res = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
+                const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
                 if (res.ok) {
                     const user = await res.json();
                     currentUserId = user.id_utilisateur || user.id;
@@ -125,7 +125,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:8082/prestataire/${prestataireId}/profile`);
+                const response = await fetch(`${window.API_BASE_URL}/prestataire/${prestataireId}/profile`);
                 if (!response.ok) throw new Error("Prestataire introuvable");
                 
                 const data = await response.json();
@@ -194,7 +194,7 @@
             }
 
             try {
-                const response = await fetch(`http://localhost:8082/evenement/checkout/${eventId}`, {
+                const response = await fetch(`${window.API_BASE_URL}/evenement/checkout/${eventId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',

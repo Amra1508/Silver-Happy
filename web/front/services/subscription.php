@@ -175,7 +175,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
             };
 
             try {
-                const response = await fetch('http://localhost:8082/create-checkout', {
+                const response = await fetch(`${window.API_BASE_URL}/create-checkout`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)

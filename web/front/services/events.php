@@ -68,7 +68,7 @@
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const API_BASE = "http://localhost:8082";
+        const API_BASE = window.API_BASE_URL;
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');

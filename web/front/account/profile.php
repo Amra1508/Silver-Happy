@@ -199,7 +199,7 @@ if (!isset($_COOKIE['session_token'])) {
             }
 
             try {
-                const response = await fetch('http://localhost:8082/auth/me', {
+                const response = await fetch(`${window.API_BASE_URL}/auth/me`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -304,7 +304,7 @@ if (!isset($_COOKIE['session_token'])) {
                 }
 
                 try {
-                    const response = await fetch('http://localhost:8082/auth/update', {
+                    const response = await fetch(`${window.API_BASE_URL}/auth/update`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
@@ -349,7 +349,7 @@ if (!isset($_COOKIE['session_token'])) {
                 }
 
                 try {
-                    const deleteRes = await fetch(`http://localhost:8082/seniors/delete/${currentUserId}`, {
+                    const deleteRes = await fetch(`${window.API_BASE_URL}/seniors/delete/${currentUserId}`, {
                         method: 'DELETE', 
                         credentials: 'include'
                     });
@@ -361,7 +361,7 @@ if (!isset($_COOKIE['session_token'])) {
                         return;
                     }
 
-                    await fetch('http://localhost:8082/auth/logout', {
+                    await fetch(`${window.API_BASE_URL}/auth/logout`, {
                         method: 'POST', 
                         credentials: 'include'
                     });
@@ -382,10 +382,10 @@ if (!isset($_COOKIE['session_token'])) {
             }
 
             try {
-                const responseMe = await fetch('http://localhost:8082/auth/me', { credentials: 'include' });
+                const responseMe = await fetch(`${window.API_BASE_URL}/auth/me`, { credentials: 'include' });
                 const user = await responseMe.json();
 
-                const response = await fetch('http://localhost:8082/abonnement/cancel', {
+                const response = await fetch(`${window.API_BASE_URL}/abonnement/cancel`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_utilisateur: user.id_utilisateur || user.id })

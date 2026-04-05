@@ -105,7 +105,7 @@ if (!$is_logged_in) {
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const API_BASE = "http://localhost:8082";
+        const API_BASE = window.API_BASE_URL;
 
         function getUserId() {
             return window.currentUserId || null;

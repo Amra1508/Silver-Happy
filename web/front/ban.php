@@ -45,7 +45,7 @@
         document.getElementById('btn_ban_logout').addEventListener('click', async (e) => {
             e.preventDefault();
             try {
-                const response = await fetch('http://localhost:8082/auth/logout', {
+                const response = await fetch(`${window.API_BASE_URL}/auth/logout`, {
                     method: 'POST',
                     credentials: 'include'
                 });
