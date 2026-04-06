@@ -66,6 +66,28 @@
 
                         <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                             <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                Gestion de l'abonnement
+                            </h2>
+                            
+                            <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600 font-semibold">Statut actuel</p>
+                                    <div id="subscription-status" class="mt-1 flex items-center gap-2">
+                                        <span class="inline-block w-3 h-3 rounded-full bg-gray-300 animate-pulse"></span>
+                                        <span class="text-gray-500 italic">Vérification...</span>
+                                    </div>
+                                </div>
+
+                                <button type="button" id="btn-cancel-sub" class="hidden text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl transition-all border border-red-200">
+                                    Résilier l'abonnement à la fin du mois
+                                </button>
+                            </div>
+                            <p id="sub-info-text" class="text-xs text-gray-400 mt-3"></p>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                 Activité Professionnelle
                             </h2>
@@ -107,6 +129,34 @@
         document.addEventListener('DOMContentLoaded', async () => {
             let providerData = null;
             const selectCategorie = document.getElementById('id_categorie');
+            const alertBox = document.getElementById('alert-box');
+            const subStatusDiv = document.getElementById('subscription-status');
+            const btnCancelSub = document.getElementById('btn-cancel-sub');
+            const subInfoText = document.getElementById('sub-info-text');
+
+            const getLastDayOfMonth = () => {
+                const now = new Date();
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                return lastDay.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+            };
+
+            const updateSubscriptionUI = (isSubscribed) => {
+                if (isSubscribed) {
+                    subStatusDiv.innerHTML = `
+                        <span class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                        <span class="font-bold text-green-700">Abonnement Actif (Premium)</span>
+                    `;
+                    btnCancelSub.classList.remove('hidden');
+                    subInfoText.textContent = "Profitez de votre visibilité prioritaire. Résiliation possible à tout moment.";
+                } else {
+                    subStatusDiv.innerHTML = `
+                        <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                        <span class="font-bold text-gray-600">Aucun abonnement actif</span>
+                    `;
+                    btnCancelSub.classList.add('hidden');
+                    subInfoText.textContent = "Abonnez-vous pour être mis en avant sur la plateforme.";
+                }
+            };
 
             try {
                 const catRes = await fetch(`${window.API_BASE_URL}/categorie/read`);
@@ -121,11 +171,7 @@
                         selectCategorie.appendChild(option);
                     });
                 }
-            } catch (err) {
-                console.error("Erreur chargement catégories:", err);
-            }
 
-            try {
                 const res = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
                     method: 'GET',
                     credentials: 'include'
@@ -145,15 +191,41 @@
                         selectCategorie.value = providerData.id_categorie || providerData.IdCategorie;
                     }
 
+                    const isSub = providerData.id_abonnement != 0;
+                    updateSubscriptionUI(isSub);
+
                 } else {
                     window.location.href = "/front/providers/account/signin.php";
                 }
             } catch (err) {
-                console.error("Erreur :", err);
+                console.error("Erreur initialisation :", err);
             }
 
+            btnCancelSub.addEventListener('click', async () => {
+                const dateFin = getLastDayOfMonth();
+                if (confirm(`Confirmez-vous la résiliation ? Votre accès Premium restera actif jusqu'au ${dateFin}.`)) {
+                    try {
+                        const res = await fetch(`${window.API_BASE_URL}/prestataire/cancel-subscription`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ id_prestataire: providerData.id_prestataire || providerData.id || providerData.ID })
+                        });
+
+                        if (res.ok) {
+                            alert(`Résiliation enregistrée. Fin d'abonnement : ${dateFin}.`);
+                            providerData.id_abonnement = 0;
+                            updateSubscriptionUI(false);
+                        } else {
+                            alert("Erreur lors de la résiliation.");
+                        }
+                    } catch (error) {
+                        console.error("Erreur API résiliation :", error);
+                    }
+                }
+            });
+
             const form = document.getElementById('form-profil');
-            const alertBox = document.getElementById('alert-box');
             const btnSave = document.getElementById('btn-save');
 
             form.addEventListener('submit', async (e) => {
@@ -162,7 +234,6 @@
                 btnSave.innerHTML = "Sauvegarde...";
 
                 const pwd = document.getElementById('mdp').value.trim();
-
                 const updatedData = {
                     ...providerData,
                     prenom: document.getElementById('prenom').value.trim(),
@@ -174,9 +245,7 @@
                     id_categorie: parseInt(selectCategorie.value)
                 };
 
-                if (pwd !== "") {
-                    updatedData.mdp = pwd;
-                }
+                if (pwd !== "") updatedData.mdp = pwd;
 
                 try {
                     const updateRes = await fetch(`${window.API_BASE_URL}/auth/update-provider`, {
@@ -191,12 +260,7 @@
                         alertBox.className = "p-4 rounded-xl font-bold text-green-700 bg-green-100 border border-green-400";
                         alertBox.classList.remove('hidden');
                         document.getElementById('mdp').value = "";
-                        
-                        const nameDisplay = document.getElementById('provider-name-display');
-                        if(nameDisplay) {
-                            const catText = selectCategorie.options[selectCategorie.selectedIndex].text;
-                            nameDisplay.innerHTML = `<span class="font-bold text-[#E1AB2B]">${updatedData.prenom} ${updatedData.nom}</span><br><span class="text-xs text-gray-300">${catText}</span>`;
-                        }
+                        providerData = updatedData;
                     } else {
                         const errorMsg = await updateRes.text();
                         alertBox.textContent = "Erreur : " + errorMsg;
@@ -204,8 +268,7 @@
                         alertBox.classList.remove('hidden');
                     }
                 } catch (err) {
-                    alertBox.textContent = "Impossible de joindre le serveur.";
-                    alertBox.className = "p-4 rounded-xl font-bold text-red-700 bg-red-100 border border-red-400";
+                    alertBox.textContent = "Erreur de connexion au serveur.";
                     alertBox.classList.remove('hidden');
                 } finally {
                     window.scrollTo({ top: 0, behavior: 'smooth' });

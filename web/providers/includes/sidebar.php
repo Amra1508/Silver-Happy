@@ -1,5 +1,7 @@
 <?php 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+
+$is_logged_in = isset($_COOKIE['session_token']);
 ?>
 
 <script>
@@ -19,6 +21,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
         </div>
 
         <div id="provider-status-badge" class="mt-2 text-xs px-3 py-1 rounded-full hidden"></div>
+
+        <a href="/providers/services/subscription.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/5 hover:text-white rounded-xl transition-all">
+            S'abonner
+        </a>
     </div>
 
     <nav id="sidebar-nav" class="flex-1 px-4 py-6 space-y-2 overflow-y-auto hidden">
@@ -79,6 +85,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 
             if (response.ok) {
                 const data = await response.json();
+
+                window.currentUserId = data.id
                 
                 providerNameDisplay.innerHTML = `<span class="font-bold text-[#E1AB2B]">${data.prenom} ${data.nom}</span><br><span class="text-xs text-gray-300">${data.categorie_nom || 'Pro'}</span>`;
 

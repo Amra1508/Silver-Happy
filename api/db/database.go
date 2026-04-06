@@ -131,6 +131,7 @@ func InitDB() {
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		tarifs DOUBLE,
 		id_abonnement INT,
+		debut_abonnement DATETIME NULL, 
 		id_categorie INT,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)

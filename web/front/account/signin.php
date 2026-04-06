@@ -53,6 +53,13 @@
                 <a class="sm:col-span-6 justify-self-center">
                     <button id="btn_login" class="px-14 rounded-md button-blue">Je me connecte</button>
                 </a>
+
+            </div>
+            <div class="mt-8 text-center">
+                <span class="text-gray-600">Vous proposez des services ?</span>
+                <a href="/providers/account/signin.php" class="text-[#1C5B8F] font-semibold hover:underline ml-1 transition-all">
+                    Je suis prestataire
+                </a>
             </div>
         </div>
     </main>
