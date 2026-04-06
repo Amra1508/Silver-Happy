@@ -209,6 +209,35 @@
         let allEvents = [];
         const API_URL = window.API_BASE_URL;
 
+        async function acheterBoost(typeBoost, targetId = 0) {
+            const providerId = window.currentUserId || currentProviderId; 
+            if (!providerId) return alert("Vous devez être connecté.");
+
+            const data = {
+                provider_id: parseInt(providerId),
+                type_boost: typeBoost,
+                target_id: parseInt(targetId)
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/paiement-boost`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    window.location.href = result.url; 
+                } else {
+                    alert("Erreur lors de l'initialisation du paiement du boost.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Serveur inaccessible.");
+            }
+        }
+
         function showAlert(msg, type = "success") {
             const pageAlert = document.getElementById('page-alert');
             pageAlert.textContent = msg;
@@ -257,9 +286,23 @@
                             const badgePrice = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
                             const imgSrc = evt.image ? `${API_URL}${evt.image}` : null;
                             
+                            // NOUVEAU : Logique de vérification du boost
+                            const boostDate = evt.date_fin_boost || evt.DateFinBoost;
+                            const isBoosted = boostDate && new Date(boostDate) > new Date();
+
+                            // Badge visuel sur l'image
+                            let boostBadge = isBoosted 
+                                ? `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` 
+                                : '';
+
+                            // Bouton d'action (Acheter vs Date d'expiration)
+                            let boostActionBtn = isBoosted
+                                ? `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate).toLocaleDateString('fr-FR')}</span>`
+                                : `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-300">⭐ Booster (5€)</button>`;
+
                             let imageBlock = imgSrc 
-                                ? `<img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">` 
-                                : `<div class="h-40 w-full bg-gradient-to-r from-[#1C5B8F] to-blue-600 cursor-pointer" onclick="openDetailsModal(${evtId})"></div>`;
+                                ? `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` 
+                                : `<div class="relative h-40 w-full bg-gradient-to-r from-[#1C5B8F] to-blue-600 cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
 
                             card.innerHTML = `
                                 ${imageBlock}
@@ -277,11 +320,12 @@
                                         <div class="flex items-center"><span class="truncate">📅 ${formatDateTime(evt.date_debut)}</span></div>
                                     </div>
 
-                                    <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
-                                        <button onclick="openDetailsModal(${evtId})" class="text-[#1C5B8F] font-bold text-sm hover:underline">Détails</button>
-                                        <div class="flex gap-3">
-                                            <button onclick="openEditModal(${evtId})" class="text-[#E1AB2B] font-bold text-sm hover:underline flex items-center gap-1">Modifier</button>
-                                            <button onclick="openDeleteModal(${evtId})" class="text-red-500 font-bold text-sm hover:underline flex items-center gap-1">Supprimer</button>
+                                    <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center gap-2">
+                                        <button onclick="openDetailsModal(${evtId})" class="text-gray-500 font-bold text-xs hover:underline">Détails</button>
+                                        <div class="flex gap-2 flex-wrap justify-end items-center">
+                                            ${boostActionBtn}
+                                            <button onclick="openEditModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>
+                                            <button onclick="openDeleteModal(${evtId})" class="text-red-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Supprimer</button>
                                         </div>
                                     </div>
                                 </div>
@@ -304,6 +348,9 @@
                     if (data.status && (data.status.toLowerCase() === 'validé' || data.status.toLowerCase() === 'valide')) {
                         document.getElementById('main-content-valide').classList.remove('hidden');
                         currentProviderId = data.id_prestataire || data.id || data.ID;
+                        
+                        window.currentUserId = currentProviderId; 
+                        
                         loadEvents(currentProviderId);
                     }
                 } else {

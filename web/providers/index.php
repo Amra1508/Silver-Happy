@@ -41,6 +41,18 @@
                         </a>
                     </div>
 
+                    <div class="bg-gradient-to-r from-[#1C5B8F] to-blue-800 rounded-[2rem] p-8 shadow-lg flex flex-col md:flex-row items-center justify-between border border-blue-400">
+                        <div class="text-white mb-4 md:mb-0">
+                            <h3 class="text-2xl font-bold flex items-center gap-2">
+                                <span class="text-[#E1AB2B]">⭐</span> Manque de visibilité ?
+                            </h3>
+                            <p class="text-blue-100 mt-2">Faites apparaître votre profil en tête de liste dans l'Espace Senior pendant 7 jours.</p>
+                        </div>
+                        <button onclick="acheterBoost('compte')" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-6 rounded-full shadow-md transition-transform hover:scale-105 whitespace-nowrap">
+                            Booster mon profil (10€)
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -168,6 +180,36 @@
     </div>
 
     <script>
+        async function acheterBoost(typeBoost, targetId = 0) {
+            const providerId = window.currentUserId; 
+            if (!providerId) return alert("Vous devez être connecté pour effectuer cette action.");
+
+            const data = {
+                provider_id: parseInt(providerId),
+                type_boost: typeBoost,
+                target_id: parseInt(targetId)
+            };
+
+            try {
+                const apiBase = window.API_BASE_URL || 'http://localhost:8082';
+                const response = await fetch(`${apiBase}/prestataire/paiement-boost`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    window.location.href = result.url; 
+                } else {
+                    alert("Erreur lors de l'initialisation du paiement du boost.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Serveur inaccessible.");
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             
             try {
@@ -178,6 +220,8 @@
 
                 if (meRes.ok) {
                     const meData = await meRes.json();
+                    
+                    window.currentUserId = meData.id_prestataire || meData.id || meData.ID;
                     
                     if (meData.status && (meData.status.toLowerCase() === 'validé' || meData.status.toLowerCase() === 'valide')) {
                         

@@ -89,6 +89,8 @@ type Prestataire struct {
 	IdAbonnement 	int		`json:"id_abonnement"`
 	CategorieNom 	string `json:"categorie,omitempty"`
 	DateCreation   string  `json:"date_creation"`
+	DateFinBoost   string  `json:"date_fin_boost"`
+
 }
 
 type Document struct {
@@ -207,7 +209,8 @@ type Code struct {
     DateExpiration  string `json:"date_expiration"` 
 }
 
-type Test struct {
-	Id int `json:"id"`
-	Date string `json:"date"`
+type BoostRequest struct {
+	ProviderID int    `json:"provider_id"`
+	TypeBoost  string `json:"type_boost"` 
+	TargetID   int    `json:"target_id"`
 }

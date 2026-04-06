@@ -89,7 +89,9 @@ func Read_Evenement(response http.ResponseWriter, request *http.Request) {
     sqlQuery := `
         SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
         FROM evenement 
-        ORDER BY date_debut ASC 
+        ORDER BY 
+            (date_fin_boost IS NOT NULL AND date_fin_boost > NOW()) DESC,
+            date_debut ASC 
         LIMIT ? OFFSET ?
     `
 

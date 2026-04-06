@@ -97,6 +97,7 @@ func InitDB() {
 		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_categorie INT,
 		prix FLOAT DEFAULT 0.0,
+		date_fin_boost DATETIME NULL DEFAULT NULL,
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL
 	);
 	CREATE TABLE IF NOT EXISTS PLANNING(
@@ -133,6 +134,7 @@ func InitDB() {
 		id_abonnement INT,
 		debut_abonnement DATETIME NULL, 
 		id_categorie INT,
+		date_fin_boost DATETIME NULL DEFAULT NULL,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
 	);

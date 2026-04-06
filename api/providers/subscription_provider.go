@@ -284,3 +284,89 @@ func Cancel_Subscription_Prestataire(response http.ResponseWriter, request *http
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Renouvellement automatique désactivé."})
 }
+
+func Paiement_Boost(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "POST") { return }
+
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+
+	var req models.BoostRequest
+	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	var nomProduit string
+	var prixBoost int64
+
+	if req.TypeBoost == "evenement" {
+		nomProduit = "Boost de l'événement pour 7 jours"
+		prixBoost = 500
+	} else {
+		nomProduit = "Boost du profil Prestataire pour 7 jours"
+		prixBoost = 1000
+	}
+
+	params := &stripe.CheckoutSessionParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)), 
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency: stripe.String("eur"),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: stripe.String(nomProduit),
+					},
+					UnitAmount: stripe.Int64(prixBoost),
+				},
+				Quantity: stripe.Int64(1),
+			},
+		},
+		SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/prestataire/success-boost?session_id={CHECKOUT_SESSION_ID}&provider_id=%d&type=%s&target_id=%d", req.ProviderID, req.TypeBoost, req.TargetID)),
+		CancelURL:  stripe.String("http://localhost/providers/index.php"),
+	}
+
+	s, err := session.New(params)
+	if err != nil {
+		http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]string{"url": s.URL})
+}
+
+func Success_Boost(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") { return }
+
+	sessionID := request.URL.Query().Get("session_id")
+	providerID := request.URL.Query().Get("provider_id")
+	typeBoost := request.URL.Query().Get("type")
+	targetID := request.URL.Query().Get("target_id")
+
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+	s, err := session.Get(sessionID, nil)
+
+	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
+		http.Redirect(response, request, "http://localhost/providers/index.php?error=paiement_echoue", http.StatusSeeOther)
+		return
+	}
+
+	if typeBoost == "evenement" {
+		_, errDB := db.DB.Exec(`UPDATE evenement SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_evenement = ?`, targetID)
+		
+        if errDB != nil {
+            fmt.Println("Erreur MAJ événement boost:", errDB) 
+			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(response, request, "http://localhost/providers/services/events.php?success=boost_valide", http.StatusSeeOther)
+	} else {
+		_, errDB := db.DB.Exec(`UPDATE PRESTATAIRE SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_prestataire = ?`, providerID)
+		if errDB != nil {
+			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(response, request, "http://localhost/providers/account/profile.php?success=boost_valide", http.StatusSeeOther)
+	}
+}

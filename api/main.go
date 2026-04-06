@@ -139,6 +139,8 @@ func main() {
 	http.HandleFunc("/prestataire/paiement-abonnement", providers.Paiement_Abonnement_Prestataire)
 	http.HandleFunc("/prestataire/success-subscription", providers.Success_Subscription_Prestataire)
 	http.HandleFunc("/prestataire/cancel-subscription", providers.Cancel_Subscription_Prestataire)
+	http.HandleFunc("/prestataire/paiement-boost", providers.Paiement_Boost)
+	http.HandleFunc("/prestataire/success-boost", providers.Success_Boost)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

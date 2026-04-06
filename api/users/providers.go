@@ -428,14 +428,15 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
     idStr := request.PathValue("id")
 
     prestataire := models.Prestataire{}
+    var dateFinBoostPresta sql.NullString 
 
     err := db.DB.QueryRow(`
         SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
-               IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), IFNULL(p.tarifs, 0)
+               IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), IFNULL(p.tarifs, 0), p.date_fin_boost
         FROM PRESTATAIRE p
         LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
         WHERE p.id_prestataire = ? AND p.status = 'validé'
-    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &prestataire.Tarifs)
+    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &prestataire.Tarifs, &dateFinBoostPresta)
 
     if err != nil {
         http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
@@ -443,11 +444,13 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
     }
 
     rows, err := db.DB.Query(`
-        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image 
+        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image, e.date_fin_boost
         FROM evenement e
         INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
         WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
-        ORDER BY e.date_debut ASC
+        ORDER BY 
+            (e.date_fin_boost IS NOT NULL AND e.date_fin_boost > NOW()) DESC,
+            e.date_debut ASC
     `, idStr)
 
     var events []map[string]interface{}
@@ -457,9 +460,9 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
             var id, places int
             var nom, desc, lieu string
             var prix float64
-            var debut, fin, image sql.NullString 
+            var debut, fin, image, dateFinBoostEvt sql.NullString 
 
-            if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image); errScan == nil {
+            if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image, &dateFinBoostEvt); errScan == nil {
                 evt := map[string]interface{}{
                     "id_evenement": id,
                     "nom":          nom,
@@ -477,6 +480,9 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
                 if image.Valid && image.String != "" {
                     evt["image"] = image.String
                 }
+                if dateFinBoostEvt.Valid {
+                    evt["date_fin_boost"] = dateFinBoostEvt.String
+                }
                 
                 events = append(events, evt)
             } else {
@@ -489,9 +495,21 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
         events = []map[string]interface{}{}
     }
 
+    type PrestataireWithBoost struct {
+        models.Prestataire
+        DateFinBoost string `json:"date_fin_boost,omitempty"`
+    }
+
+    responsePresta := PrestataireWithBoost{
+        Prestataire: prestataire,
+    }
+    if dateFinBoostPresta.Valid {
+        responsePresta.DateFinBoost = dateFinBoostPresta.String
+    }
+
     response.Header().Set("Content-Type", "application/json")
     json.NewEncoder(response).Encode(map[string]interface{}{
-        "prestataire": prestataire,
+        "prestataire": responsePresta,
         "evenements":  events,
     })
 }

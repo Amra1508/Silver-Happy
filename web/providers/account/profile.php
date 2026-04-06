@@ -67,28 +67,43 @@
                         <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                             <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                                Gestion de l'abonnement
+                                Gestion de l'abonnement & Visibilité
                             </h2>
                             
                             <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4">
                                 <div>
-                                    <p class="text-sm text-gray-600 font-semibold">Statut actuel</p>
+                                    <p class="text-sm text-gray-600 font-semibold">Abonnement Pro</p>
                                     <div id="subscription-status" class="mt-1 flex items-center gap-2">
                                         <span class="inline-block w-3 h-3 rounded-full bg-gray-300 animate-pulse"></span>
                                         <span class="text-gray-500 italic">Vérification...</span>
                                     </div>
                                 </div>
-
                                 <button type="button" id="btn-cancel-sub" class="hidden text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl transition-all border border-red-200">
-                                    Résilier l'abonnement à la fin du mois
+                                    Résilier l'abonnement
                                 </button>
                             </div>
-                            <p id="sub-info-text" class="text-xs text-gray-400 mt-3"></p>
+                            <p id="sub-info-text" class="text-xs text-gray-400 mt-2 mb-6"></p>
+
+                            <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-yellow-50/50 rounded-2xl border border-yellow-100 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600 font-semibold flex items-center gap-2">
+                                        Visibilité Boostée
+                                    </p>
+                                    <div id="boost-status" class="mt-1 flex items-center gap-2">
+                                        <span class="inline-block w-3 h-3 rounded-full bg-gray-300 animate-pulse"></span>
+                                        <span class="text-gray-500 italic">Vérification...</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="btn-buy-boost" onclick="acheterBoost('compte')" class="hidden text-sm font-bold text-[#1C5B8F] hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-xl transition-all border border-blue-300 shadow-sm">
+                                    ⭐ Booster mon profil (10€)
+                                </button>
+                            </div>
+                            <p id="boost-info-text" class="text-xs text-gray-400 mt-2"></p>
                         </div>
 
                         <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                             <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931A23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                 Activité Professionnelle
                             </h2>
                             
@@ -126,6 +141,36 @@
     </div>
 
     <script>
+        async function acheterBoost(typeBoost, targetId = 0) {
+            const providerId = window.currentUserId; 
+            if (!providerId) return alert("Vous devez être connecté.");
+
+            const data = {
+                provider_id: parseInt(providerId),
+                type_boost: typeBoost,
+                target_id: parseInt(targetId)
+            };
+
+            try {
+                const apiBase = window.API_BASE_URL || 'http://localhost:8082';
+                const response = await fetch(`${apiBase}/paiement-boost`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    window.location.href = result.url;
+                } else {
+                    alert("Erreur lors de l'initialisation du paiement du boost.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Serveur inaccessible.");
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             let providerData = null;
             const selectCategorie = document.getElementById('id_categorie');
@@ -133,6 +178,10 @@
             const subStatusDiv = document.getElementById('subscription-status');
             const btnCancelSub = document.getElementById('btn-cancel-sub');
             const subInfoText = document.getElementById('sub-info-text');
+
+            const boostStatusDiv = document.getElementById('boost-status');
+            const btnBuyBoost = document.getElementById('btn-buy-boost');
+            const boostInfoText = document.getElementById('boost-info-text');
 
             const getLastDayOfMonth = () => {
                 const now = new Date();
@@ -147,14 +196,35 @@
                         <span class="font-bold text-green-700">Abonnement Actif (Premium)</span>
                     `;
                     btnCancelSub.classList.remove('hidden');
-                    subInfoText.textContent = "Profitez de votre visibilité prioritaire. Résiliation possible à tout moment.";
+                    subInfoText.textContent = "Profitez de votre accès Premium complet.";
                 } else {
                     subStatusDiv.innerHTML = `
                         <span class="w-3 h-3 rounded-full bg-gray-400"></span>
                         <span class="font-bold text-gray-600">Aucun abonnement actif</span>
                     `;
                     btnCancelSub.classList.add('hidden');
-                    subInfoText.textContent = "Abonnez-vous pour être mis en avant sur la plateforme.";
+                    subInfoText.textContent = "Abonnez-vous pour profiter d'outils exclusifs.";
+                }
+            };
+
+            const updateBoostUI = (dateFinBoost) => {
+                if (dateFinBoost && new Date(dateFinBoost) > new Date()) {
+                    const d = new Date(dateFinBoost);
+                    const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+                    
+                    boostStatusDiv.innerHTML = `
+                        <span class="w-3 h-3 rounded-full bg-[#E1AB2B] shadow-[0_0_8px_rgba(225,171,43,0.6)]"></span>
+                        <span class="font-bold text-yellow-700">Boost Actif</span>
+                    `;
+                    btnBuyBoost.classList.add('hidden');
+                    boostInfoText.textContent = `Votre profil est mis en avant jusqu'au ${dateStr}.`;
+                } else {
+                    boostStatusDiv.innerHTML = `
+                        <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                        <span class="font-bold text-gray-600">Non boosté</span>
+                    `;
+                    btnBuyBoost.classList.remove('hidden');
+                    boostInfoText.textContent = "Améliorez votre visibilité et remontez dans les recherches de nos Seniors.";
                 }
             };
 
@@ -179,6 +249,7 @@
 
                 if (res.ok) {
                     providerData = await res.json();
+                    window.currentUserId = providerData.id_prestataire || providerData.id || providerData.ID;
 
                     document.getElementById('prenom').value = providerData.prenom || '';
                     document.getElementById('nom').value = providerData.nom || '';
@@ -194,6 +265,9 @@
                     const isSub = providerData.id_abonnement != 0;
                     updateSubscriptionUI(isSub);
 
+                    const boostDate = providerData.date_fin_boost || providerData.DateFinBoost;
+                    updateBoostUI(boostDate);
+
                 } else {
                     window.location.href = "/front/providers/account/signin.php";
                 }
@@ -205,7 +279,7 @@
                 const dateFin = getLastDayOfMonth();
                 if (confirm(`Confirmez-vous la résiliation ? Votre accès Premium restera actif jusqu'au ${dateFin}.`)) {
                     try {
-                        const res = await fetch(`${window.API_BASE_URL}/prestataire/cancel-subscription`, {
+                        const res = await fetch(`${window.API_BASE_URL}/cancel-subscription-prestataire`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             credentials: 'include',
