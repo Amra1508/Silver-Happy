@@ -337,7 +337,9 @@ func Paiement_Boost(response http.ResponseWriter, request *http.Request) {
 }
 
 func Success_Boost(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") { return }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
 	sessionID := request.URL.Query().Get("session_id")
 	providerID := request.URL.Query().Get("provider_id")
@@ -351,19 +353,45 @@ func Success_Boost(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, "http://localhost/providers/index.php?error=paiement_echoue", http.StatusSeeOther)
 		return
 	}
+	
+	var urlFacture string
+	if s.PaymentIntent != nil {
+		pi, errPI := paymentintent.Get(s.PaymentIntent.ID, nil)
+		if errPI == nil && pi.LatestCharge != nil {
+			ch, errC := charge.Get(pi.LatestCharge.ID, nil)
+			if errC == nil {
+				urlFacture = ch.ReceiptURL
+			}
+		}
+	}
+
+	prix := float64(s.AmountTotal) / 100.0
+
+	_, errP := db.DB.Exec(`
+		INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture) 
+		VALUES (?, 'valide', 'carte', ?)`,
+		prix, urlFacture)
+
+	if errP != nil {
+		fmt.Println("Erreur création paiement boost :", errP)
+		http.Error(response, "Erreur base de données (Paiement)", http.StatusInternalServerError)
+		return
+	}
 
 	if typeBoost == "evenement" {
 		_, errDB := db.DB.Exec(`UPDATE evenement SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_evenement = ?`, targetID)
-		
-        if errDB != nil {
-            fmt.Println("Erreur MAJ événement boost:", errDB) 
+
+		if errDB != nil {
+			fmt.Println("Erreur MAJ événement boost:", errDB)
 			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(response, request, "http://localhost/providers/services/events.php?success=boost_valide", http.StatusSeeOther)
 	} else {
 		_, errDB := db.DB.Exec(`UPDATE PRESTATAIRE SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_prestataire = ?`, providerID)
+		
 		if errDB != nil {
+			fmt.Println("Erreur MAJ prestataire boost:", errDB)
 			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
 			return
 		}
