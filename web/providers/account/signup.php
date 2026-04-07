@@ -143,9 +143,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                     <div id="extra_docs_container" class="mt-6 space-y-4"></div>
 
                     <button type="button" id="btn_add_doc" class="mt-4 text-sm font-semibold text-[#E1AB2B] hover:text-yellow-600 transition-colors flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
                         Ajouter un autre document (Attestation, Diplôme...)
                     </button>
                 </div>
@@ -167,24 +164,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
         </div>
 
     </main>
-
-    <footer class="bg-[#1C5B8F] text-white py-10 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-center md:text-left">
-                <span class="text-2xl font-bold tracking-wider">
-                    Silver<span class="text-[#E1AB2B]">Happy</span>
-                </span>
-                <p class="text-sm text-blue-200 mt-2">Accompagner nos aînés au quotidien.</p>
-                <p class="text-sm text-blue-300 mt-1">&copy; 2026 Silver Happy. Tous droits réservés.</p>
-            </div>
-            <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-blue-200">
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Mentions légales</a>
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Politique de confidentialité</a>
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">CGU Prestataires</a>
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Nous contacter</a>
-            </div>
-        </div>
-    </footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -233,7 +212,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             </div>
             <div class="sm:col-span-1 flex justify-end pb-1">
                 <button type="button" class="btn-remove-doc text-red-500 hover:text-red-700 p-2" title="Supprimer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
             </div>
         `;

@@ -74,25 +74,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             </div>
         </div>
     </main>
-
-    <footer class="bg-[#1C5B8F] text-white py-10 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-center md:text-left">
-                <span class="text-2xl font-bold tracking-wider">
-                    Silver<span class="text-[#E1AB2B]">Happy</span>
-                </span>
-                <p class="text-sm text-blue-200 mt-2">Accompagner nos aînés au quotidien.</p>
-                <p class="text-sm text-blue-300 mt-1">&copy; 2026 Silver Happy. Tous droits réservés.</p>
-            </div>
-            <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-blue-200">
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Mentions légales</a>
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Politique de confidentialité</a>
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">CGU Prestataires</a>
-                <a href="#" class="hover:text-[#E1AB2B] transition-colors">Nous contacter</a>
-            </div>
-        </div>
-    </footer>
-
     <script>
         document.getElementById('login_form').addEventListener('submit', async (e) => {
             e.preventDefault();
