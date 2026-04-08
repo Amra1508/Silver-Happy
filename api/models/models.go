@@ -214,3 +214,19 @@ type BoostRequest struct {
 	TypeBoost  string `json:"type_boost"` 
 	TargetID   int    `json:"target_id"`
 }
+
+type InvoiceResponse struct {
+	ID          int     `json:"id_paiement"`
+	DatePaiement string `json:"date_paiement"`
+	Prix        float64 `json:"prix"`
+	Statut      string  `json:"statut"`
+	URLFacture  string  `json:"url_facture"`
+	Description string  `json:"description"`
+}
+
+type Participant struct {
+	ID     int    `json:"id"`
+	Nom    string `json:"nom"`
+	Prenom string `json:"prenom"`
+	Email  string `json:"email"`
+}

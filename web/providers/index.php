@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tableau de bord</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
     </style>
@@ -53,10 +54,8 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                            <div class="bg-blue-100 p-4 rounded-full text-[#1C5B8F]">
-                            </div>
+                            <div class="bg-blue-100 p-4 rounded-full text-[#1C5B8F]"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Prochaines interventions</p>
                                 <p class="text-2xl font-bold text-gray-800" id="stat-events-count">-</p>
@@ -64,8 +63,7 @@
                         </div>
 
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                            <div class="bg-yellow-100 p-4 rounded-full text-[#E1AB2B]">
-                            </div>
+                            <div class="bg-yellow-100 p-4 rounded-full text-[#E1AB2B]"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Nouveaux messages</p>
                                 <p class="text-2xl font-bold text-gray-800">3</p>
@@ -73,8 +71,7 @@
                         </div>
 
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                            <div class="bg-green-100 p-4 rounded-full text-green-600">
-                            </div>
+                            <div class="bg-green-100 p-4 rounded-full text-green-600"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Note moyenne</p>
                                 <p class="text-2xl font-bold text-gray-800">4.8 <span class="text-sm font-normal text-gray-400">/5</span></p>
@@ -82,14 +79,22 @@
                         </div>
 
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                            <div class="bg-purple-100 p-4 rounded-full text-purple-600">
-                            </div>
+                            <div class="bg-purple-100 p-4 rounded-full text-purple-600"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Votre Tarif (Moy)</p>
                                 <p class="text-2xl font-bold text-gray-800" id="stat-tarif">- € <span class="text-sm font-normal text-gray-400">/h</span></p>
                             </div>
                         </div>
+                    </div>
 
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-[#1C5B8F]">Vos revenus (30 derniers jours)</h2>
+                            <span class="text-sm text-gray-500 italic">Net (90%) de vos prestations</span>
+                        </div>
+                        <div class="relative w-full h-72">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -131,7 +136,6 @@
                                     </button>
                                 </div>
                             </div>
-                            
                             <div class="mt-8 pt-6 border-t border-white/20">
                                 <p class="text-xs text-blue-200">Connecté en tant que prestataire vérifié.</p>
                             </div>
@@ -142,8 +146,7 @@
 
                 <div id="main-content-attente" class="hidden max-w-3xl mx-auto mt-10">
                     <div class="bg-white p-10 rounded-[2.5rem] shadow-md border-t-4 border-[#E1AB2B] text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-6">
-                        </div>
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-6"></div>
                         <h1 class="text-2xl font-bold text-gray-800 mb-4">Votre compte est en cours d'examen</h1>
                         <p class="text-gray-600 mb-6">
                             Merci d'avoir rejoint SilverHappy. Notre équipe vérifie actuellement vos documents. 
@@ -157,8 +160,7 @@
 
                 <div id="main-content-refuse" class="hidden max-w-3xl mx-auto mt-10">
                     <div class="bg-white p-10 rounded-[2.5rem] shadow-md border-t-4 border-red-500 text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-6">
-                        </div>
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-6"></div>
                         <h1 class="text-2xl font-bold text-gray-800 mb-4">Demande refusée</h1>
                         <p class="text-gray-600 mb-2">Malheureusement, votre demande d'inscription n'a pas pu être validée.</p>
                         <p id="motif-refus-text" class="text-red-600 font-semibold mb-6"></p>
@@ -201,6 +203,71 @@
             }
         }
 
+        async function loadRevenueChart(providerId) {
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/${providerId}/revenues`);
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    const labels = data.map(item => {
+                        const d = new Date(item.date);
+                        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                    });
+                    const totals = data.map(item => item.total);
+
+                    const ctx = document.getElementById('revenueChart').getContext('2d');
+                    
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels.length > 0 ? labels : ['Aucune donnée'],
+                            datasets: [{
+                                label: 'Revenus nets (€)',
+                                data: totals.length > 0 ? totals : [0],
+                                borderColor: '#1C5B8F',
+                                backgroundColor: 'rgba(28, 91, 143, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#E1AB2B',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: '#E1AB2B',
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.parsed.y + ' €';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { 
+                                    beginAtZero: true,
+                                    grid: { color: '#f3f4f6' },
+                                    ticks: { callback: function(value) { return value + ' €'; } }
+                                },
+                                x: {
+                                    grid: { display: false }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Erreur chargement du graphique :", err);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             
             try {
@@ -211,14 +278,16 @@
 
                 if (meRes.ok) {
                     const meData = await meRes.json();
-                    
-                    window.currentUserId = meData.id_prestataire || meData.id || meData.ID;
+                    const providerId = meData.id_prestataire || meData.id || meData.ID;
+                    window.currentUserId = providerId;
                     
                     if (meData.status && (meData.status.toLowerCase() === 'validé' || meData.status.toLowerCase() === 'valide')) {
                         
-                        document.getElementById('welcome-text').textContent = `Bonjour ${meData.prenom}, voici l'activité de votre activité de ${meData.categorie_nom || 'prestation'}.`;
+                        document.getElementById('welcome-text').textContent = `Bonjour ${meData.prenom}, voici l'activité de votre profil.`;
                         
-                        const profileRes = await fetch(`${window.API_BASE_URL}/prestataire/${meData.id_prestataire || meData.id || meData.ID}/profile`, {
+                        loadRevenueChart(providerId);
+
+                        const profileRes = await fetch(`${window.API_BASE_URL}/prestataire/${providerId}/profile`, {
                             method: 'GET'
                         });
 
@@ -237,7 +306,6 @@
                                 tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-500 text-sm">Aucune prestation prévue prochainement.</td></tr>`;
                             } else {
                                 evenements.slice(0, 5).forEach(evt => {
-                                    
                                     let dateText = "Non définie";
                                     if(evt.date_debut) {
                                         const d = new Date(evt.date_debut);
@@ -251,7 +319,7 @@
                                         <td class="py-4 text-sm text-[#1C5B8F] font-bold">${evt.nom}</td>
                                         <td class="py-4 text-sm text-gray-600">${evt.lieu || '-'}</td>
                                         <td class="py-4">
-                                            <span class="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">${evt.nombre_place || 0} inscrits</span>
+                                            <span class="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">${evt.nombre_place || 0} places</span>
                                         </td>
                                     `;
                                     tbody.appendChild(tr);

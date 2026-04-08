@@ -166,3 +166,40 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
         "message":   "Événement créé avec succès",
     })
 }
+
+func Get_Event_Participants(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	eventID := request.PathValue("id")
+
+	query := `
+		SELECT u.id_utilisateur, u.nom, u.prenom, u.email
+		FROM UTILISATEUR u
+		JOIN INSCRIPTION i ON u.id_utilisateur = i.id_utilisateur
+		WHERE i.id_evenement = ?
+	`
+	
+	rows, err := db.DB.Query(query, eventID)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var participants []models.Participant
+	for rows.Next() {
+		var p models.Participant
+		if err := rows.Scan(&p.ID, &p.Nom, &p.Prenom, &p.Email); err == nil {
+			participants = append(participants, p)
+		}
+	}
+
+	if participants == nil {
+		participants = []models.Participant{}
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(participants)
+}

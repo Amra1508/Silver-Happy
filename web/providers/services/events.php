@@ -131,6 +131,23 @@
             </div>
         </div>
 
+        <div id="participants-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
+            <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+                <div class="bg-[#1C5B8F] px-6 py-4 flex justify-between items-center text-white shrink-0">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Seniors Inscrits
+                    </h3>
+                    <button onclick="toggleModal('participants-modal')" class="text-white hover:text-red-300 transition-colors text-2xl leading-none">&times;</button>
+                </div>
+                <div class="p-6 overflow-y-auto bg-gray-50">
+                    <ul id="participants-list" class="space-y-3">
+                        <li class="text-center text-gray-500 py-4">Chargement...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <div id="edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
             <div class="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div class="bg-[#E1AB2B] px-6 py-4 flex justify-between items-center text-white shrink-0">
@@ -256,6 +273,48 @@
             return d.toISOString().slice(0, 16);
         }
 
+        async function openParticipantsModal(eventId) {
+            toggleModal('participants-modal');
+            const listContainer = document.getElementById('participants-list');
+            listContainer.innerHTML = '<li class="text-center text-gray-500 py-4 font-semibold">Chargement des inscrits...</li>';
+
+            try {
+                const res = await fetch(`${API_URL}/prestataire/evenement/${eventId}/participants`, { 
+                    method: 'GET', 
+                    credentials: 'include' 
+                });
+                
+                if (res.ok) {
+                    const participants = await res.json();
+                    if (participants.length === 0) {
+                        listContainer.innerHTML = '<li class="text-center text-gray-500 py-6">Aucun senior n\'est encore inscrit à cet évènement.</li>';
+                    } else {
+                        listContainer.innerHTML = '';
+                        participants.forEach(p => {
+                            const li = document.createElement('li');
+                            li.className = 'flex justify-between items-center p-4 bg-white shadow-sm rounded-xl border border-gray-100';
+                            li.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-blue-100 text-[#1C5B8F] w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">
+                                        ${p.prenom.charAt(0)}${p.nom.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-800">${p.prenom} ${p.nom}</p>
+                                        <a href="mailto:${p.email}" class="text-sm text-[#1C5B8F] hover:underline">${p.email}</a>
+                                    </div>
+                                </div>
+                            `;
+                            listContainer.appendChild(li);
+                        });
+                    }
+                } else {
+                    listContainer.innerHTML = '<li class="text-center text-red-500 py-4">Erreur lors de la récupération des inscrits.</li>';
+                }
+            } catch (err) {
+                listContainer.innerHTML = '<li class="text-center text-red-500 py-4">Serveur injoignable.</li>';
+            }
+        }
+
         async function loadEvents(providerId) {
             const container = document.getElementById('events-container');
             try {
@@ -283,19 +342,16 @@
                             const badgePrice = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
                             const imgSrc = evt.image ? `${API_URL}${evt.image}` : null;
                             
-                            // NOUVEAU : Logique de vérification du boost
                             const boostDate = evt.date_fin_boost || evt.DateFinBoost;
                             const isBoosted = boostDate && new Date(boostDate) > new Date();
 
-                            // Badge visuel sur l'image
                             let boostBadge = isBoosted 
                                 ? `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` 
                                 : '';
 
-                            // Bouton d'action (Acheter vs Date d'expiration)
                             let boostActionBtn = isBoosted
                                 ? `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate).toLocaleDateString('fr-FR')}</span>`
-                                : `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-300">⭐ Booster (5€)</button>`;
+                                : `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
 
                             let imageBlock = imgSrc 
                                 ? `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` 
@@ -318,10 +374,10 @@
                                     </div>
 
                                     <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center gap-2">
-                                        <button onclick="openDetailsModal(${evtId})" class="text-gray-500 font-bold text-xs hover:underline">Détails</button>
                                         <div class="flex gap-2 flex-wrap justify-end items-center">
                                             ${boostActionBtn}
-                                            <button onclick="openEditModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>
+                                            <button onclick="openParticipantsModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">👥 Inscrits</button>
+                                            <button onclick="openEditModal(${evtId})" class="text-blue-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>
                                             <button onclick="openDeleteModal(${evtId})" class="text-red-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Supprimer</button>
                                         </div>
                                     </div>
@@ -351,7 +407,7 @@
                         loadEvents(currentProviderId);
                     }
                 } else {
-                    window.location.href = "/front/providers/account/signin.php";
+                    window.location.href = "/providers/account/signin.php";
                 }
             } catch (err) {
                 console.error("Erreur auth :", err);

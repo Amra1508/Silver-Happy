@@ -133,6 +133,7 @@ func main() {
 	http.HandleFunc("/auth/update-provider", providers.UpdatePrestataire)
 
 	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
+	http.HandleFunc("/prestataire/evenement/{id}/participants", providers.Get_Event_Participants)
 
 	http.HandleFunc("/prestataire/planning", providers.Read_Provider_Planning)
 
@@ -141,6 +142,9 @@ func main() {
 	http.HandleFunc("/prestataire/cancel-subscription", providers.Cancel_Subscription_Prestataire)
 	http.HandleFunc("/prestataire/paiement-boost", providers.Paiement_Boost)
 	http.HandleFunc("/prestataire/success-boost", providers.Success_Boost)
+
+	http.HandleFunc("/prestataire/{id}/invoices", providers.Get_Invoices_Prestataire)
+	http.HandleFunc("/prestataire/{id}/revenues", providers.Revenus_Prestataire)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

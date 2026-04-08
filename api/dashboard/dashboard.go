@@ -69,7 +69,14 @@ func Revenus(response http.ResponseWriter, request *http.Request) {
     }
 
     query := `
-        SELECT DATE(date_paiement) as date, SUM(prix) as total 
+        SELECT 
+            DATE(date_paiement) as date, 
+            SUM(
+                CASE 
+                    WHEN id_paiement IN (SELECT id_paiement FROM INSCRIPTION WHERE id_paiement IS NOT NULL) THEN prix * 0.10
+                    ELSE prix 
+                END
+            ) as total 
         FROM PAIEMENT 
         WHERE statut = 'valide' 
           AND date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY) 
