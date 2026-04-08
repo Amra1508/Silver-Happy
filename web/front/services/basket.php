@@ -44,9 +44,11 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 </div>
 
                 <div id="panier-resume" class="hidden mt-8 flex flex-col items-end gap-4">
+                    <div id="frais-port-affichage" class="text-lg text-gray-600 font-semibold text-right"></div>
+    
                     <div class="text-2xl font-bold text-[#1C5B8F]">
                         Total : <span id="total-price" class="text-[#E1AB2B]">0.00</span> €
-                    </div>
+                    </div>  
                     <a href="/front/services/delivery.php">
                         <button class="px-10 py-3 rounded-full bg-[#1C5B8F] text-white text-xl font-bold hover:bg-green-600 transition-all shadow-lg">
                             Valider ma commande
@@ -186,8 +188,21 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                 html += '</div>';
                 container.innerHTML = html;
-                document.getElementById('total-price').textContent = total.toFixed(2);
-                resume.classList.remove('hidden');
+
+                let fraisPort = 0;
+                const affichageFrais = document.getElementById('frais-port-affichage');
+
+                if (total > 0 && total <= 100) {
+                    fraisPort = 4.99;
+                        affichageFrais.innerHTML = `Frais de livraison : 4.99 € <br><span class="text-sm text-green-500">Encore ${(100 - total).toFixed(2)} € pour la livraison gratuite !</span>`;                } else if (total > 100) {
+                    fraisPort = 0;
+                        affichageFrais.innerHTML = `<span class="text-green-500">Frais de livraison : OFFERTS</span>`;
+                }
+
+                const totalFinal = total + fraisPort;
+
+            document.getElementById('total-price').textContent = totalFinal.toFixed(2);  
+            resume.classList.remove('hidden');
 
             } catch (err) {
                 console.error(err);
