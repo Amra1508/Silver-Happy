@@ -194,7 +194,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                 if (total > 0 && total <= 100) {
                     fraisPort = 4.99;
-                        affichageFrais.innerHTML = `Frais de livraison : 4.99 € <br><span class="text-sm text-green-500">Encore ${(100 - total).toFixed(2)} € pour la livraison gratuite !</span>`;                } else if (total > 100) {
+                        affichageFrais.innerHTML = `Frais de livraison : 4.99 € (inclus dans le prix total)<br><span class="text-sm text-green-500">Encore ${(100 - total).toFixed(2)} € pour la livraison gratuite !</span>`;                } else if (total > 100) {
                     fraisPort = 0;
                         affichageFrais.innerHTML = `<span class="text-green-500">Frais de livraison : OFFERTS</span>`;
                 }

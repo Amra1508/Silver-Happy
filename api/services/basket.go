@@ -230,7 +230,7 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 				ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
 					Name: stripe.String("Frais de port"),
 				},
-				UnitAmount: stripe.Int64(499), // Attention, Stripe calcule en centimes ! (499 = 4,99€)
+				UnitAmount: stripe.Int64(499),
 			},
 			Quantity: stripe.Int64(1),
 		}
