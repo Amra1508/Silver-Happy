@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +12,11 @@
     <script>
         tailwind.config = {
             theme: {
-                extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } }
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
             }
         }
 
@@ -23,6 +28,7 @@
         }
     </script>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="flex min-h-screen relative">
@@ -30,11 +36,11 @@
         <?php include("../includes/sidebar.php"); ?>
 
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
-            
+
             <main class="p-8">
-                
+
                 <div id="main-content-valide" class="hidden space-y-8 max-w-7xl mx-auto">
-                    
+
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                         <div>
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Évènements & Services</h1>
@@ -135,7 +141,9 @@
             <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
                 <div class="bg-[#1C5B8F] px-6 py-4 flex justify-between items-center text-white shrink-0">
                     <h3 class="text-xl font-bold flex items-center gap-2">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
                         Seniors Inscrits
                     </h3>
                     <button onclick="toggleModal('participants-modal')" class="text-white hover:text-red-300 transition-colors text-2xl leading-none">&times;</button>
@@ -224,7 +232,7 @@
         const API_URL = window.API_BASE_URL;
 
         async function acheterBoost(typeBoost, targetId = 0) {
-            const providerId = window.currentUserId || currentProviderId; 
+            const providerId = window.currentUserId || currentProviderId;
             if (!providerId) return alert("Vous devez être connecté.");
 
             const data = {
@@ -236,13 +244,15 @@
             try {
                 const response = await fetch(`${API_URL}/paiement-boost`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    window.location.href = result.url; 
+                    window.location.href = result.url;
                 } else {
                     alert("Erreur lors de l'initialisation du paiement du boost.");
                 }
@@ -260,10 +270,26 @@
             setTimeout(() => pageAlert.classList.add('hidden'), 5000);
         }
 
-        function formatDateTime(dateString) {
-            if (!dateString) return "Non défini";
-            const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' };
-            return new Date(dateString).toLocaleDateString('fr-FR', options);
+        function calculateDuration(start, end) {
+            if (!start || !end) return "-";
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+
+            if (isNaN(startDate) || isNaN(endDate)) return "-";
+
+            let diffMs = endDate - startDate;
+            if (diffMs <= 0) return "0h";
+
+            const diffDays = Math.floor(diffMs / 86400000);
+            const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
+            const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
+
+            let duration = [];
+            if (diffDays > 0) duration.push(`${diffDays}j`);
+            if (diffHrs > 0) duration.push(`${diffHrs}h`);
+            if (diffMins > 0) duration.push(`${diffMins}m`);
+
+            return duration.join(' ');
         }
 
         function formatDateForInput(dateStr) {
@@ -273,17 +299,39 @@
             return d.toISOString().slice(0, 16);
         }
 
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return "-";
+            const d = new Date(dateStr);
+            if (isNaN(d)) return "-";
+            return d.toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const minDT = now.toISOString().slice(0, 16);
+
+        document.getElementById('create-debut').min = minDT;
+        document.getElementById('create-fin').min = minDT;
+        document.getElementById('edit-debut').min = minDT;
+        document.getElementById('edit-fin').min = minDT;
+
         async function openParticipantsModal(eventId) {
             toggleModal('participants-modal');
             const listContainer = document.getElementById('participants-list');
             listContainer.innerHTML = '<li class="text-center text-gray-500 py-4 font-semibold">Chargement des inscrits...</li>';
 
             try {
-                const res = await fetch(`${API_URL}/prestataire/evenement/${eventId}/participants`, { 
-                    method: 'GET', 
-                    credentials: 'include' 
+                const res = await fetch(`${API_URL}/prestataire/evenement/${eventId}/participants`, {
+                    method: 'GET',
+                    credentials: 'include'
                 });
-                
+
                 if (res.ok) {
                     const participants = await res.json();
                     if (participants.length === 0) {
@@ -318,11 +366,13 @@
         async function loadEvents(providerId) {
             const container = document.getElementById('events-container');
             try {
-                const res = await fetch(`${API_URL}/prestataire/${providerId}/profile`, { method: 'GET' });
+                const res = await fetch(`${API_URL}/prestataire/${providerId}/profile`, {
+                    method: 'GET'
+                });
                 if (res.ok) {
                     const data = await res.json();
                     allEvents = data.evenements || [];
-                    
+
                     container.innerHTML = '';
 
                     if (allEvents.length === 0) {
@@ -338,24 +388,24 @@
                             const evtId = evt.id_evenement || evt.id || evt.ID;
                             const card = document.createElement('div');
                             card.className = "bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col fade-in hover:shadow-md transition-shadow relative";
-                            
+
                             const badgePrice = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
                             const imgSrc = evt.image ? `${API_URL}${evt.image}` : null;
-                            
+
                             const boostDate = evt.date_fin_boost || evt.DateFinBoost;
                             const isBoosted = boostDate && new Date(boostDate) > new Date();
 
-                            let boostBadge = isBoosted 
-                                ? `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` 
-                                : '';
+                            let boostBadge = isBoosted ?
+                                `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` :
+                                '';
 
-                            let boostActionBtn = isBoosted
-                                ? `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate).toLocaleDateString('fr-FR')}</span>`
-                                : `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
+                            let boostActionBtn = isBoosted ?
+                                `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate).toLocaleDateString('fr-FR')}</span>` :
+                                `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
 
-                            let imageBlock = imgSrc 
-                                ? `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` 
-                                : `<div class="relative h-40 w-full bg-gradient-to-r from-[#1C5B8F] to-blue-600 cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
+                            let imageBlock = imgSrc ?
+                                `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` :
+                                `<div class="relative h-40 w-full bg-gradient-to-r from-[#1C5B8F] to-blue-600 cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
 
                             card.innerHTML = `
                                 ${imageBlock}
@@ -370,7 +420,7 @@
                                     
                                     <div class="space-y-2 mt-auto text-sm text-gray-600">
                                         <div class="flex items-start"><span class="truncate">📍 ${evt.lieu}</span></div>
-                                        <div class="flex items-center"><span class="truncate">📅 ${formatDateTime(evt.date_debut)}</span></div>
+                                        <div class="flex items-center"><span class="truncate">📅 ${formatDisplayDate(evt.date_debut)}</span></div>
                                     </div>
 
                                     <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center gap-2">
@@ -395,15 +445,18 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const meRes = await fetch(`${API_URL}/auth/me-provider`, { method: 'GET', credentials: 'include' });
+                const meRes = await fetch(`${API_URL}/auth/me-provider`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
                 if (meRes.ok) {
                     const data = await meRes.json();
                     if (data.status && (data.status.toLowerCase() === 'validé' || data.status.toLowerCase() === 'valide')) {
                         document.getElementById('main-content-valide').classList.remove('hidden');
                         currentProviderId = data.id_prestataire || data.id || data.ID;
-                        
-                        window.currentUserId = currentProviderId; 
-                        
+
+                        window.currentUserId = currentProviderId;
+
                         loadEvents(currentProviderId);
                     }
                 } else {
@@ -432,16 +485,18 @@
             formData.append('nombre_place', document.getElementById('create-places').value);
             formData.append('prix', document.getElementById('create-prix').value);
             formData.append('date_debut', document.getElementById('create-debut').value);
-            
+
             const dateFin = document.getElementById('create-fin').value;
-            if(dateFin) formData.append('date_fin', dateFin);
+            if (dateFin) formData.append('date_fin', dateFin);
 
             const fileInput = document.getElementById('create-image');
             if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
 
             try {
                 const res = await fetch(`${API_URL}/prestataire/evenement/create`, {
-                    method: 'POST', credentials: 'include', body: formData
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
                 });
 
                 if (res.ok) {
@@ -494,7 +549,7 @@
             document.getElementById('edit-prix').value = evt.prix;
             document.getElementById('edit-debut').value = formatDateForInput(evt.date_debut);
             document.getElementById('edit-fin').value = evt.date_fin ? formatDateForInput(evt.date_fin) : '';
-            document.getElementById('edit-image').value = ''; 
+            document.getElementById('edit-image').value = '';
 
             toggleModal('edit-modal');
         }
@@ -513,16 +568,18 @@
             formData.append('nombre_place', document.getElementById('edit-places').value);
             formData.append('prix', document.getElementById('edit-prix').value);
             formData.append('date_debut', document.getElementById('edit-debut').value);
-            
+
             const dateFin = document.getElementById('edit-fin').value;
-            if(dateFin) formData.append('date_fin', dateFin);
+            if (dateFin) formData.append('date_fin', dateFin);
 
             const fileInput = document.getElementById('edit-image');
             if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
 
             try {
                 const res = await fetch(`${API_URL}/evenement/update/${id}`, {
-                    method: 'PUT', credentials: 'include', body: formData
+                    method: 'PUT',
+                    credentials: 'include',
+                    body: formData
                 });
 
                 if (res.ok) {
@@ -553,7 +610,8 @@
 
             try {
                 const res = await fetch(`${API_URL}/evenement/delete/${id}`, {
-                    method: 'DELETE', credentials: 'include'
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
 
                 if (res.ok) {
@@ -572,4 +630,5 @@
         });
     </script>
 </body>
+
 </html>

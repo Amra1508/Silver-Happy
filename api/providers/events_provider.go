@@ -17,6 +17,41 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+func validateDates(debut, fin string) error {
+	formats := []string{"2006-01-02T15:04", "2006-01-02T15:04:05", "2006-01-02 15:04:05"}
+	var tDebut, tFin time.Time
+	var err error
+
+	for _, f := range formats {
+		tDebut, err = time.Parse(f, debut)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("Format de date de début invalide")
+	}
+
+	for _, f := range formats {
+		tFin, err = time.Parse(f, fin)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return fmt.Errorf("Format de date de fin invalide")
+	}
+
+	if tDebut.Before(time.Now()) {
+		return fmt.Errorf("La date de début ne peut pas être dans le passé")
+	}
+	if tFin.Before(tDebut) {
+		return fmt.Errorf("La date de fin ne peut pas être avant la date de début")
+	}
+
+	return nil
+}
+
 func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "POST") {
         return
@@ -60,6 +95,11 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
         http.Error(response, "Veuillez remplir tous les champs obligatoires", http.StatusBadRequest)
         return
     }
+
+    if errDate := validateDates(dateDebut, dateFin); errDate != nil {
+		http.Error(response, errDate.Error(), http.StatusBadRequest)
+		return
+	}
 
     var overlapCount int
     overlapQuery := `

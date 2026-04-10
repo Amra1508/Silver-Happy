@@ -138,6 +138,12 @@ func InitDB() {
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
 	);
+	CREATE TABLE IF NOT EXISTS PRESTATAIRE_EVENEMENT (
+  		id_prestataire INT NOT NULL,
+  		id_evenement INT NOT NULL,
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
+		FOREIGN KEY (id_evenement) REFERENCES EVENEMENT(id_evenement)
+	);
 	CREATE TABLE IF NOT EXISTS UTILISATEUR(
 		id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
 		prenom VARCHAR(55),

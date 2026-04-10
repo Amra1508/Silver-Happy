@@ -150,6 +150,40 @@ func Read_My_Avis(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(reviews)
 }
 
+func Read_Prestataire_Avis(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") { return }
+
+	prestaID := request.PathValue("id")
+
+	query := `
+		SELECT a.id_avis, a.description, a.titre, a.note, a.date, a.categorie,
+				IFNULL(p.nom, '') as nom_p, IFNULL(p.prenom, '') as prenom_p
+		FROM AVIS a
+		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
+		WHERE a.id_prestataire = ?
+		ORDER BY a.date DESC`
+
+	rows, err := db.DB.Query(query, prestaID)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var reviews []map[string]interface{}
+	for rows.Next() {
+		var id, note int
+		var desc, titre, date, cat, nomP, prenomP string
+		rows.Scan(&id, &desc, &titre, &note, &date, &cat, &nomP, &prenomP)
+		reviews = append(reviews, map[string]interface{}{
+			"id_avis": id, "titre": titre, "description": desc, "note": note,
+			"date": date, "categorie": cat, "prestataire": prenomP + " " + nomP,
+		})
+	}
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(reviews)
+}
+
 func Create_Avis(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "POST") { return }
 

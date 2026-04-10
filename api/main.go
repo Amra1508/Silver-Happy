@@ -100,7 +100,6 @@ func main() {
 	http.HandleFunc("/prestataires/documents/{id}", users.Read_Prestataire_Documents)
 	http.HandleFunc("/prestataires/upload/{id}", users.Upload_Prestataire_Document)
 	http.HandleFunc("/prestataires/document/delete/{id}", users.Delete_Prestataire_Document)
-	http.HandleFunc("/prestataire/{id}/profile", users.Read_One_Prestataire_Profile)
 
 	http.HandleFunc("/dashboard/seniors", dashboard.Seniors_Count)
 	http.HandleFunc("/dashboard/prestataires", dashboard.Prestataires_Count)
@@ -136,6 +135,8 @@ func main() {
 	http.HandleFunc("/prestataire/evenement/{id}/participants", providers.Get_Event_Participants)
 
 	http.HandleFunc("/prestataire/planning", providers.Read_Provider_Planning)
+	
+	http.HandleFunc("/prestataire/{id}/profile", users.Read_One_Prestataire_Profile)
 
 	http.HandleFunc("/prestataire/paiement-abonnement", providers.Paiement_Abonnement_Prestataire)
 	http.HandleFunc("/prestataire/success-subscription", providers.Success_Subscription_Prestataire)
@@ -145,6 +146,7 @@ func main() {
 
 	http.HandleFunc("/prestataire/{id}/invoices", providers.Get_Invoices_Prestataire)
 	http.HandleFunc("/prestataire/{id}/revenues", providers.Revenus_Prestataire)
+	http.HandleFunc("/prestataire/{id}/read-avis", communication.Read_Prestataire_Avis)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
