@@ -750,6 +750,23 @@ func Success_Subscription(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	var nomU, prenomU string
+	errInfo := db.DB.QueryRow("SELECT nom, prenom FROM UTILISATEUR WHERE id = ?", userID).Scan(&nomU, &prenomU)
+	
+	if errInfo == nil {
+		formule := "Abonnement Senior Silver Happy (" + periode + ")" 
+		prixStr := fmt.Sprintf("%.2f", tarif)
+		
+		userIDInt, _ := strconv.ParseInt(userID, 10, 64)
+		cheminContrat, errPdf := utils.GenerateSubscriptionContract(userIDInt, nomU, prenomU, "Senior", formule, prixStr)
+		
+		if errPdf == nil {
+			db.DB.Exec("UPDATE ABONNEMENT SET url_contrat = ? WHERE id_abonnement = ?", cheminContrat, idAbonnement)
+		} else {
+			fmt.Println("Erreur génération contrat senior :", errPdf)
+		}
+	}
+
 	http.Redirect(response, request, "http://localhost/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
 }
 
