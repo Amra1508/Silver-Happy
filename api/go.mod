@@ -8,6 +8,8 @@ require (
 	golang.org/x/crypto v0.48.0
 )
 
+require github.com/jung-kurt/gofpdf v1.16.2 // indirect
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/stripe/stripe-go/v78 v78.12.0

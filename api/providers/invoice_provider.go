@@ -16,10 +16,11 @@ func Get_Invoices_Prestataire(response http.ResponseWriter, request *http.Reques
 	providerID := request.PathValue("id")
 
 	sqlQuery := `
-		SELECT p.id_paiement, IFNULL(p.date_paiement, NOW()), p.prix, p.statut, IFNULL(p.url_facture, ''), a.description
+		SELECT p.id_paiement, IFNULL(p.date_paiement, NOW()), p.prix, p.statut, IFNULL(p.url_facture, ''), a.description, COALESCE(a.url_contrat, '')
 		FROM PAIEMENT p
 		JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
-		WHERE a.id_abonnement IN (SELECT id_abonnement FROM PRESTATAIRE WHERE id_prestataire = ?)
+		JOIN PRESTATAIRE pr ON pr.id_abonnement = a.id_abonnement
+		WHERE pr.id_prestataire = ?
 		ORDER BY p.date_paiement DESC
 	`
 
@@ -34,7 +35,12 @@ func Get_Invoices_Prestataire(response http.ResponseWriter, request *http.Reques
 
 	for rows.Next() {
 		var inv models.InvoiceResponse
-		if err := rows.Scan(&inv.ID, &inv.DatePaiement, &inv.Prix, &inv.Statut, &inv.URLFacture, &inv.Description); err == nil {
+		var urlContrat string
+
+		if err := rows.Scan(&inv.ID, &inv.DatePaiement, &inv.Prix, &inv.Statut, &inv.URLFacture, &inv.Description, &urlContrat); err == nil {
+			if urlContrat != "" {
+				inv.URLContrat = "http://localhost:8082" + urlContrat
+			}
 			invoices = append(invoices, inv)
 		}
 	}

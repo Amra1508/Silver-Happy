@@ -44,7 +44,7 @@
                                             <th class="pb-4 font-medium px-4">Description</th>
                                             <th class="pb-4 font-medium px-4">Montant</th>
                                             <th class="pb-4 font-medium px-4">Statut</th>
-                                            <th class="pb-4 font-medium text-right px-4">Reçu Stripe</th>
+                                            <th class="pb-4 font-medium text-right px-4">Reçu</th>
                                         </tr>
                                     </thead>
                                     <tbody id="invoices-table-body">
@@ -96,6 +96,7 @@
                     
                     if (invRes.ok) {
                         const invoices = await invRes.json();
+                        console.log(invoices);
                         tbody.innerHTML = '';
 
                         if (!invoices || invoices.length === 0) {
@@ -111,8 +112,8 @@
                                 ? `<span class="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">Payé</span>`
                                 : `<span class="bg-red-100 text-red-700 py-1 px-3 rounded-full text-xs font-bold">Échoué</span>`;
 
-                            const linkBtn = inv.url_facture 
-                                ? `<a href="${inv.url_facture}" target="_blank" class="text-[#1C5B8F] hover:text-blue-800 font-bold text-sm underline flex items-center justify-end gap-1">
+                            const linkBtn = inv.url_contrat 
+                                ? `<a href="${inv.url_contrat}" target="_blank" class="text-[#1C5B8F] hover:text-blue-800 font-bold text-sm underline flex items-center justify-end gap-1">
                                     Télécharger
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                    </a>`

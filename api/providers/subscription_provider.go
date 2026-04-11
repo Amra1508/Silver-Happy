@@ -228,6 +228,23 @@ func Success_Subscription_Prestataire(response http.ResponseWriter, request *htt
 		return
 	}
 
+	var nomP, prenomP string
+	errInfo := db.DB.QueryRow("SELECT nom, prenom FROM PRESTATAIRE WHERE id_prestataire = ?", providerID).Scan(&nomP, &prenomP)
+	
+	if errInfo == nil {
+		formule := "Abonnement Pro Silver Happy (" + periode + ")"
+		prixStr := fmt.Sprintf("%.2f", tarif)
+		
+		providerIDInt, _ := strconv.ParseInt(providerID, 10, 64)
+		cheminContrat, errPdf := utils.GenerateSubscriptionContract(providerIDInt, nomP, prenomP, "Prestataire", formule, prixStr)
+		
+		if errPdf == nil {
+			db.DB.Exec("UPDATE ABONNEMENT SET url_contrat = ? WHERE id_abonnement = ?", cheminContrat, idAbonnement)
+		} else {
+			fmt.Println("Erreur génération contrat prestataire :", errPdf)
+		}
+	}
+
 	http.Redirect(response, request, "http://localhost/providers/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
 }
 

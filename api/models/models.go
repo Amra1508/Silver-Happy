@@ -222,6 +222,7 @@ type InvoiceResponse struct {
 	Statut      string  `json:"statut"`
 	URLFacture  string  `json:"url_facture"`
 	Description string  `json:"description"`
+	URLContrat  string  `json:"url_contrat"`
 }
 
 type Participant struct {
