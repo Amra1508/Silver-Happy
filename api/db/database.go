@@ -222,7 +222,7 @@ func InitDB() {
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_utilisateur1 INT,
 		id_utilisateur2 INT,
-		est_lu TINYINT(1) DEFAULT 0,
+		est_lu BOOLEAN DEFAULT 0,
 		FOREIGN KEY (id_utilisateur1) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_utilisateur2) REFERENCES UTILISATEUR(id_utilisateur)
 	);
@@ -232,6 +232,8 @@ func InitDB() {
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_prestataire INT,
 		id_utilisateur INT,
+		expediteur BOOLEAN DEFAULT 0,
+		est_lu BOOLEAN DEFAULT 0,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);

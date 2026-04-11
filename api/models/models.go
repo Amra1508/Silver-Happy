@@ -117,6 +117,7 @@ type Message struct {
 	Prénom          string `json:"prenom"`
 	Nom             string `json:"nom"`
 	Est_Lu			bool 	`json:"est_lu"`
+	Expediteur		bool 	`json:"expediteur"`
 }
 
 type Evenement struct {

@@ -47,7 +47,8 @@ func main() {
 	http.HandleFunc("/paiement-panier", services.Paiement_Panier)
 	http.HandleFunc("/success-basket", services.Success_Basket)
 
-	http.HandleFunc("/seniors/read", users.Read_User)
+	http.HandleFunc("/seniors/read", users.Read_User_Admin)
+	http.HandleFunc("/seniors/read-presta", users.Read_User_Prestataire)
 	http.HandleFunc("/admin/read", users.Read_Admin)
 	http.HandleFunc("/seniors/create", users.Create_User)
 	http.HandleFunc("/seniors/update/{id}", users.Update_User)
@@ -147,6 +148,9 @@ func main() {
 	http.HandleFunc("/prestataire/{id}/invoices", providers.Get_Invoices_Prestataire)
 	http.HandleFunc("/prestataire/{id}/revenues", providers.Revenus_Prestataire)
 	http.HandleFunc("/prestataire/{id}/read-avis", communication.Read_Prestataire_Avis)
+	http.HandleFunc("/message/prestataire/get/{id1}/with/{id2}", providers.Get_Message)
+	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
+	http.HandleFunc("/message/prestataire/delete/{id}", providers.Delete_Message)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

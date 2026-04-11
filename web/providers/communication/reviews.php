@@ -67,14 +67,12 @@
         const API_BASE = window.API_BASE_URL;
 
         function getUserId() {
-            // Pour les prestataires, currentUserId contient l'ID prestataire
             return window.currentUserId || null;
         }
 
         async function fetchMyAvis() {
             const userId = getUserId();
 
-            // On attend que la sidebar ait chargé l'ID (max 3 secondes)
             if (!userId) {
                 if (!window.retryCount) window.retryCount = 0;
                 if (window.retryCount < 30) {
@@ -85,7 +83,6 @@
             }
 
             try {
-                // Appelle la route Go spécifique aux prestataires
                 const response = await fetch(`${API_BASE}/prestataire/${userId}/read-avis`);
                 const reviews = await response.json();
 
@@ -115,7 +112,6 @@
             }
         }
 
-        // On lance une seule fois au chargement
         window.addEventListener('load', fetchMyAvis);
     </script>
 </body>

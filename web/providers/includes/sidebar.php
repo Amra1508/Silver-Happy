@@ -41,7 +41,7 @@ $is_logged_in = isset($_COOKIE['provider_token']);
             Mon Planning
         </a>
 
-        <a href="/providers/messages.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-[#E1AB2B] rounded-xl transition-all">
+        <a href="/providers/communication/list_user.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-[#E1AB2B] rounded-xl transition-all">
             Messagerie
         </a>
 
@@ -86,6 +86,8 @@ $is_logged_in = isset($_COOKIE['provider_token']);
                 const data = await response.json();
 
                 window.currentUserId = data.id
+
+                window.dispatchEvent(new CustomEvent('auth_ready'));
 
                 providerNameDisplay.innerHTML = `<span class="font-bold text-[#E1AB2B]">${data.prenom} ${data.nom}</span><br><span class="text-xs text-gray-300">${data.categorie_nom || 'Pro'}</span>`;
 
