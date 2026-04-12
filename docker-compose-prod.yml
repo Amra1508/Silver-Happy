@@ -1,6 +1,21 @@
-version: "3.8"
-
 services:
+  npm-silver-happy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: npm-silver-happy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:81"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   db-silver-happy:
     image: mariadb:10.11
     container_name: db-silver-happy
@@ -10,7 +25,6 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASS}
-      - TZ=Europe/Paris
     volumes:
       - ./mariadb:/var/lib/mysql
     healthcheck:
@@ -20,39 +34,25 @@ services:
       retries: 5
 
   web-silver-happy:
-    build: ./web
+    image: rmvlx/web-silver-happy:latest
     container_name: web-silver-happy
     restart: unless-stopped
     depends_on:
       db-silver-happy:
         condition: service_healthy
-    ports:
-      - "80:80"
-    volumes:
-      - ./web:/var/www/html
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 10s
       timeout: 5s
       retries: 3
-    environment:
-      - DB_HOST=db-silver-happy
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
 
   api-silver-happy:
-    build: ./api
+    image: rmvlx/api-silver-happy:latest
     container_name: api-silver-happy
     restart: unless-stopped
     depends_on:
       db-silver-happy:
         condition: service_healthy
-    ports:
-      - "8082:8082"
-    volumes:
-      - ./api:/api
-    command: go run .
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/"]
       interval: 10s
@@ -68,13 +68,21 @@ services:
     depends_on:
       db-silver-happy:
         condition: service_healthy
-    ports:
-      - "8081:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
-    environment:
-      - PMA_HOST=db-silver-happy
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+
+  dockhand-silver-happy:
+    image: fnsys/dockhand:latest
+    container_name: dockhand-silver-happy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dockhand:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
