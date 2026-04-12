@@ -4,7 +4,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 <header>
     <script>
         window.API_BASE_URL = "<?php echo API_BASE_URL; ?>"
-        console.log(API_BASE_URL);
     </script>
 
 

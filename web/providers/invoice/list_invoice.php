@@ -96,7 +96,6 @@
                     
                     if (invRes.ok) {
                         const invoices = await invRes.json();
-                        console.log(invoices);
                         tbody.innerHTML = '';
 
                         if (!invoices || invoices.length === 0) {
