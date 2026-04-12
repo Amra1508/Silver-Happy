@@ -20,7 +20,7 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 	id1 := request.PathValue("id1")
 	id2 := request.PathValue("id2")
 
-	_, errUpdate := db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 WHERE (id_utilisateur = ? OR id_prestataire = ?) AND est_lu = 0", id2, id2)
+	_, errUpdate := db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 WHERE id_utilisateur = ? AND id_prestataire = ? AND expediteur = 0 AND est_lu = 0", id2, id1)
 	if errUpdate != nil {
 		fmt.Printf("Erreur lors de la mise à jour de est_lu")
 	}

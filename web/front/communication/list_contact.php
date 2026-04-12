@@ -28,11 +28,24 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
 <body class="bg-gray-50 flex flex-col min-h-screen">
     <?php include("../includes/header.php") ?>
-    
+
     <main class="pt-8 mb-10 bg-white flex-grow">
         <div class="max-w-4xl mx-auto">
             <?php if ($is_logged_in): ?>
-                <h1 class="big-text mb-8 text-center">Discuter avec notre équipe</h1>
+                <h1 class="text-3xl font-bold text-[#1C5B8F] mb-8 text-center">Mes Conversations</h1>
+
+                <div class="flex justify-center mb-10">
+                    <div class="bg-gray-100 p-1 rounded-full flex shadow-inner">
+                        <button id="tab-admin" onclick="switchTab('admin')"
+                            class="px-6 py-2 rounded-full font-semibold transition-all duration-300 bg-[#1C5B8F] text-white shadow-md">
+                            Équipe Silver Happy
+                        </button>
+                        <button id="tab-presta" onclick="switchTab('presta')"
+                            class="px-6 py-2 rounded-full font-semibold transition-all duration-300 text-gray-500 hover:text-[#1C5B8F]">
+                            Nos Prestataires
+                        </button>
+                    </div>
+                </div>
 
                 <div id="contacts-container" class="hidden">
                     <div id="list-user-body" class="grid gap-6">
@@ -51,51 +64,78 @@ $is_logged_in = isset($_COOKIE['session_token']);
             <?php endif; ?>
         </div>
     </main>
-    
+
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const API_BASE = `${window.API_BASE_URL}/admin`;
+        const API_BASE = `${window.API_BASE_URL}`;
         let currentPage = 1;
-        const limit = 10;
+        const limit = 5;
         let currentUserId = null;
 
         window.addEventListener('auth_ready', () => {
             const noSubContainer = document.getElementById('no-sub-container');
             const contactsContainer = document.getElementById('contacts-container');
-            
+
             currentUserId = window.currentUserId;
 
             if (contactsContainer) {
                 contactsContainer.classList.remove('hidden');
-                fetchAdmins(1);
+                fetchContacts(1);
             }
         });
 
-        async function fetchAdmins(page = 1) {
+        let currentTab = 'admin';
+
+        async function switchTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+
+            const btnAdmin = document.getElementById('tab-admin');
+            const btnPresta = document.getElementById('tab-presta');
+
+            if (tab === 'admin') {
+                btnAdmin.className = "px-6 py-2 rounded-full font-semibold transition-all bg-[#1C5B8F] text-white shadow-md";
+                btnPresta.className = "px-6 py-2 rounded-full font-semibold transition-all text-gray-500 hover:text-[#1C5B8F]";
+            } else {
+                btnPresta.className = "px-6 py-2 rounded-full font-semibold transition-all bg-[#1C5B8F] text-white shadow-md";
+                btnAdmin.className = "px-6 py-2 rounded-full font-semibold transition-all text-gray-500 hover:text-[#1C5B8F]";
+            }
+
+            fetchContacts(1);
+        }
+
+        async function fetchContacts(page = 1) {
             try {
                 currentPage = page;
-                const url = `${API_BASE}/read?page=${currentPage}&limit=${limit}&user_id=${currentUserId || ''}`;
+
+                const tbody = document.getElementById('list-user-body');
+                tbody.innerHTML = '<div class="text-center p-8 text-gray-400">Chargement...</div>';
+
+                const endpoint = currentTab === 'admin' ? '/admin/read' : '/prestataire/read';
+                const url = `${API_BASE}${endpoint}?page=${currentPage}&limit=${limit}&user_id=${currentUserId}`;
+
                 const response = await fetch(url);
                 const result = await response.json();
 
-                const admins = result.data || [];
-                const tbody = document.getElementById('list-user-body');
+                const data = result.data || [];
                 tbody.innerHTML = '';
 
-                if (admins.length === 0) {
+                if (data.length === 0) {
                     tbody.innerHTML = '<div class="p-8 text-center text-gray-400">Aucun admin disponible.</div>';
                     renderPagination(0, 0);
                     return;
                 }
 
-                admins.forEach(s => {
+                data.forEach(s => {
                     const id = s.id_utilisateur || s.ID || s.id;
                     const unreadCount = s.est_lu || 0;
-                    
-                    const badgeHtml = unreadCount > 0 
-                        ? `<span class="ml-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-sm">${unreadCount} message(s) non lu(s)</span>` 
-                        : '';
+
+                    const badgeHtml = unreadCount > 0 ?
+                        `<span class="ml-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse shadow-sm">${unreadCount} message(s) non lu(s)</span>` :
+                        '';
+
+                    const contactType = currentTab === 'admin' ? 'admin' : 'presta';
 
                     const cardHtml = `
                         <div class="flex flex-col md:flex-row items-center justify-between index-components">
@@ -111,7 +151,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                                 </div>
                             </div>
                             <div class="mt-4 md:mt-0">
-                                <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${id}" class="inline-block">
+                                <a href="/front/communication/messaging.php/${s.prenom}/${s.nom}/${id}/${contactType}" class="inline-block">
                                     <button class="rounded-full px-6 button-blue">
                                         Voir la discussion
                                     </button>
@@ -146,18 +186,18 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
             let html = `
                 <div class="flex justify-between items-center mt-6 px-4 text-sm">
-                    <span class="text-gray-500 font-semibold">Total : ${totalItems} admin(s)</span>
+                    <span class="text-gray-500 font-semibold">Total : ${totalItems} contact(s)</span>
                     <div class="flex gap-2">
-                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchAdmins(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
+                        <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchContacts(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
             `;
 
             for (let i = 1; i <= totalPages; i++) {
                 const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
-                html += `<button onclick="fetchAdmins(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+                html += `<button onclick="fetchContacts(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
             }
 
             html += `
-                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchAdmins(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
+                        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchContacts(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
                     </div>
                 </div>
             `;
@@ -166,8 +206,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         setTimeout(() => {
             const isLogged = "<?php echo $is_logged_in ? '1' : '0'; ?>";
-            if (isLogged === '1' && !window.currentUserId) {
-            }
+            if (isLogged === '1' && !window.currentUserId) {}
         }, 1500);
     </script>
 </body>

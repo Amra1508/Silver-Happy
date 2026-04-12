@@ -75,6 +75,12 @@
         const API_BASE = `${window.API_BASE_URL}/seniors`;
         const messageBox = document.getElementById('api-message');
 
+        window.addEventListener('auth_ready', () => {
+            currentUserId = window.currentUserId;
+
+            fetchSeniors(1);
+        });
+
         let currentPage = 1;
         const limit = 10;
 
@@ -88,7 +94,9 @@
         async function fetchSeniors(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/read-presta?page=${currentPage}&limit=${limit}`);
+
+
+                const response = await fetch(`${API_BASE}/read-presta?user_id=${currentUserId}&page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
 
                 const seniors = result.data || [];
@@ -171,8 +179,6 @@
             `;
             paginationContainer.innerHTML = html;
         }
-
-        window.onload = () => fetchSeniors(1);
     </script>
 </body>
 

@@ -151,6 +151,7 @@ func main() {
 	http.HandleFunc("/message/prestataire/get/{id1}/with/{id2}", providers.Get_Message)
 	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
 	http.HandleFunc("/message/prestataire/delete/{id}", providers.Delete_Message)
+	http.HandleFunc("/prestataire/read", users.List_Prestataires)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

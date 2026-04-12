@@ -154,6 +154,7 @@ func Read_User_Prestataire(response http.ResponseWriter, request *http.Request) 
 	queryParams := request.URL.Query()
 	limitStr := queryParams.Get("limit")
 	pageStr := queryParams.Get("page")
+	idPresta := queryParams.Get("user_id")
 
 	limit := 10
 	offset := 0
@@ -175,7 +176,7 @@ func Read_User_Prestataire(response http.ResponseWriter, request *http.Request) 
                u.num_telephone, u.date_naissance, u.statut, 
                u.date_creation, u.motif_bannissement, u.duree_bannissement,
                a.rue, a.ville, a.code_postal, a.pays,
-               COALESCE(SUM(CASE WHEN m.est_lu = 0 AND m.id_utilisateur = u.id_utilisateur THEN 1 ELSE 0 END), 0) AS est_lu
+               COALESCE(SUM(CASE WHEN m.est_lu = 0 AND m.id_prestataire = ? AND m.expediteur = 0 THEN 1 ELSE 0 END), 0) AS unread_count
         FROM UTILISATEUR u
         LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
         LEFT JOIN MESSAGE_PRESTATAIRE m ON u.id_utilisateur = m.id_utilisateur
@@ -184,11 +185,11 @@ func Read_User_Prestataire(response http.ResponseWriter, request *http.Request) 
                  u.num_telephone, u.date_naissance, u.statut, 
                  u.date_creation, u.motif_bannissement, u.duree_bannissement,
                  a.rue, a.ville, a.code_postal, a.pays
-        ORDER BY est_lu DESC, u.id_utilisateur ASC
+        ORDER BY unread_count DESC, u.id_utilisateur ASC
         LIMIT ? OFFSET ?
     `
 
-	rows, err := db.DB.Query(query, limit, offset)
+	rows, err := db.DB.Query(query, idPresta, limit, offset)
 	if err != nil {
 		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
 		return

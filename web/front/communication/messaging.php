@@ -67,7 +67,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     </div>
                 </div>
             </div>
-            
+
         <?php else: ?>
             <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10">
                 <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
@@ -81,15 +81,18 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const API_BASE = `${window.API_BASE_URL}/message`;
-
         let id1 = null;
         const path = window.location.pathname;
         const segments = path.split('/');
-        const id2 = segments.pop();
+        const contactType = segments.pop();
 
-        const name = segments[segments.length - 1];
-        const firstname = segments[segments.length - 2];
+        const id2 = segments[segments.length - 1];
+        const name = segments[segments.length - 2];
+        const firstname = segments[segments.length - 3];
+
+        const API_BASE = contactType === 'admin' ?
+            `${window.API_BASE_URL}/message` :
+            `${window.API_BASE_URL}/message/prestataire`;
 
         window.addEventListener('auth_ready', () => {
             const noSubContainer = document.getElementById('no-sub-container');
@@ -163,7 +166,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 body: JSON.stringify({
                     Contenu: contenu,
                     ID_Expediteur: parseInt(id1),
-                    ID_Destinataire: parseInt(id2)
+                    ID_Destinataire: parseInt(id2),
+                    Expediteur: false
                 })
             });
 

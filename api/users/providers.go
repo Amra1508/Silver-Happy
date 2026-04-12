@@ -133,6 +133,87 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(dataResponse)
 }
 
+func List_Prestataires(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	queryParams := request.URL.Query()
+	limitStr := queryParams.Get("limit")
+	pageStr := queryParams.Get("page")
+	userIdStr := queryParams.Get("user_id") 
+
+	limit := 10
+	offset := 0
+	page := 1
+	var userId int
+
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
+	if userIdStr != "" {
+		fmt.Sscanf(userIdStr, "%d", &userId)
+	}
+
+	var total int
+    errCount := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE WHERE status = 'valide'").Scan(&total)
+    if errCount != nil {
+        total = 0
+    }
+
+	query := `
+        SELECT p.id_prestataire, p.nom, p.prenom, p.email, 
+               (SELECT COUNT(*) FROM MESSAGE_PRESTATAIRE 
+                WHERE id_prestataire = p.id_prestataire 
+                AND id_utilisateur = ? AND est_lu = 0 AND expediteur = 1) AS est_lu
+        FROM PRESTATAIRE p
+        WHERE p.status = 'valide'
+        ORDER BY est_lu DESC, p.nom ASC
+        LIMIT ? OFFSET ?`
+
+	rows, err := db.DB.Query(query, userId, limit, offset)
+	if err != nil {
+		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var tabUtilisateur []models.Utilisateur
+	for rows.Next() {
+		var user models.Utilisateur
+		var estLu int 
+
+		err := rows.Scan(
+			&user.ID, &user.Nom, &user.Prenom, &user.Email,
+			&estLu,
+		)
+
+		if err == nil {
+			user.EstLu = estLu
+
+			tabUtilisateur = append(tabUtilisateur, user)
+		}
+	}
+
+	if tabUtilisateur == nil {
+		tabUtilisateur = []models.Utilisateur{}
+	}
+
+	dataResponse := map[string]interface{}{
+		"data":        tabUtilisateur,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
+}
+
 func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
     if utils.HandleCORS(response, request, "GET") {
         return
