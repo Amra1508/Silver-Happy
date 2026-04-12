@@ -11,8 +11,9 @@ import (
 )
 
 func HandleCORS(response http.ResponseWriter, request *http.Request, methode string) bool {
+	frontURL := os.Getenv("FRONT_URL")
 
-	response.Header().Set("Access-Control-Allow-Origin", "http://localhost")
+	response.Header().Set("Access-Control-Allow-Origin", frontURL)
 	response.Header().Set("Access-Control-Allow-Credentials", "true")
 	response.Header().Set("Access-Control-Allow-Methods", methode+", OPTIONS")
 	response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -32,7 +33,7 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
-	colTitleR, colTitleG, colTitleB := 40, 40, 40 
+	colTitleR, colTitleG, colTitleB := 40, 40, 40
 	colTextR, colTextG, colTextB := 60, 60, 60
 	colLineR, colLineG, colLineB := 200, 200, 200
 
@@ -61,7 +62,7 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	pdf.Ln(8)
 
 	pdf.SetTextColor(colTextR, colTextG, colTextB)
-	
+
 	pdf.SetFont("Arial", "B", 11)
 	pdf.Cell(0, 6, "D'une part, la plateforme :")
 	pdf.Ln(5)
@@ -109,7 +110,7 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	pdf.Ln(10)
 
 	ySig := pdf.GetY()
-	pdf.SetDrawColor(180, 180, 180) 
+	pdf.SetDrawColor(180, 180, 180)
 
 	pdf.Rect(15, ySig, 80, 30, "D")
 	pdf.SetXY(15, ySig+2)
