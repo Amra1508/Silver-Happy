@@ -26,6 +26,22 @@ func HandleCORS(response http.ResponseWriter, request *http.Request, methode str
 	return false
 }
 
+func GetAPIBaseURL() string {
+	url := os.Getenv("API_URL")
+	if url == "" {
+		return "http://localhost:8082"
+	}
+	return url
+}
+
+func GetFrontBaseURL() string {
+	url := os.Getenv("FRONT_URL")
+	if url == "" {
+		return "http://localhost"
+	}
+	return url
+}
+
 func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formule, prix string) (string, error) {
 	dossier := "./uploads/contracts"
 	os.MkdirAll(dossier, os.ModePerm)

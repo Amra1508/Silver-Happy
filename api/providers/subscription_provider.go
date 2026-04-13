@@ -121,8 +121,8 @@ func Paiement_Abonnement_Prestataire(response http.ResponseWriter, request *http
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/prestataire/success-subscription?session_id={CHECKOUT_SESSION_ID}&provider_id=%d&tarif=%d&periode=%s&type=%s", req.UserID, req.Tarif, req.Periode, encodedType)),
-		CancelURL:  stripe.String("http://localhost/providers/account/profile.php"),
+		SuccessURL: stripe.String(fmt.Sprintf("%s/prestataire/success-subscription?session_id={CHECKOUT_SESSION_ID}&provider_id=%d&tarif=%d&periode=%s&type=%s", utils.GetAPIBaseURL(), req.UserID, req.Tarif, req.Periode, encodedType)),
+		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/providers/account/profile.php"),
 	}
 
 	s, err := session.New(params)
@@ -157,7 +157,7 @@ func Success_Subscription_Prestataire(response http.ResponseWriter, request *htt
 
 	s, err := session.Get(sessionID, nil)
 	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
-		http.Redirect(response, request, "http://localhost/providers/account/profile.php?error=paiement_echoue", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/account/profile.php?error=paiement_echoue", http.StatusSeeOther)
 		return
 	}
 
@@ -230,14 +230,14 @@ func Success_Subscription_Prestataire(response http.ResponseWriter, request *htt
 
 	var nomP, prenomP string
 	errInfo := db.DB.QueryRow("SELECT nom, prenom FROM PRESTATAIRE WHERE id_prestataire = ?", providerID).Scan(&nomP, &prenomP)
-	
+
 	if errInfo == nil {
 		formule := "Abonnement Pro Silver Happy (" + periode + ")"
 		prixStr := fmt.Sprintf("%.2f", tarif)
-		
+
 		providerIDInt, _ := strconv.ParseInt(providerID, 10, 64)
 		cheminContrat, errPdf := utils.GenerateSubscriptionContract(providerIDInt, nomP, prenomP, "Prestataire", formule, prixStr)
-		
+
 		if errPdf == nil {
 			db.DB.Exec("UPDATE ABONNEMENT SET url_contrat = ? WHERE id_abonnement = ?", cheminContrat, idAbonnement)
 		} else {
@@ -245,7 +245,7 @@ func Success_Subscription_Prestataire(response http.ResponseWriter, request *htt
 		}
 	}
 
-	http.Redirect(response, request, "http://localhost/providers/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
+	http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
 }
 
 func Cancel_Subscription_Prestataire(response http.ResponseWriter, request *http.Request) {
@@ -303,7 +303,9 @@ func Cancel_Subscription_Prestataire(response http.ResponseWriter, request *http
 }
 
 func Paiement_Boost(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") { return }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
@@ -326,7 +328,7 @@ func Paiement_Boost(response http.ResponseWriter, request *http.Request) {
 
 	params := &stripe.CheckoutSessionParams{
 		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
-		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)), 
+		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
@@ -339,8 +341,8 @@ func Paiement_Boost(response http.ResponseWriter, request *http.Request) {
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/prestataire/success-boost?session_id={CHECKOUT_SESSION_ID}&provider_id=%d&type=%s&target_id=%d", req.ProviderID, req.TypeBoost, req.TargetID)),
-		CancelURL:  stripe.String("http://localhost/providers/index.php"),
+		SuccessURL: stripe.String(fmt.Sprintf("%s/prestataire/success-boost?session_id={CHECKOUT_SESSION_ID}&provider_id=%d&type=%s&target_id=%d", utils.GetAPIBaseURL(), req.ProviderID, req.TypeBoost, req.TargetID)),
+		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/providers/index.php"),
 	}
 
 	s, err := session.New(params)
@@ -367,10 +369,10 @@ func Success_Boost(response http.ResponseWriter, request *http.Request) {
 	s, err := session.Get(sessionID, nil)
 
 	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
-		http.Redirect(response, request, "http://localhost/providers/index.php?error=paiement_echoue", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/index.php?error=paiement_echoue", http.StatusSeeOther)
 		return
 	}
-	
+
 	var urlFacture string
 	if s.PaymentIntent != nil {
 		pi, errPI := paymentintent.Get(s.PaymentIntent.ID, nil)
@@ -403,15 +405,15 @@ func Success_Boost(response http.ResponseWriter, request *http.Request) {
 			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(response, request, "http://localhost/providers/services/events.php?success=boost_valide", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/services/events.php?success=boost_valide", http.StatusSeeOther)
 	} else {
 		_, errDB := db.DB.Exec(`UPDATE PRESTATAIRE SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_prestataire = ?`, providerID)
-		
+
 		if errDB != nil {
 			fmt.Println("Erreur MAJ prestataire boost:", errDB)
 			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(response, request, "http://localhost/providers/account/profile.php?success=boost_valide", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/account/profile.php?success=boost_valide", http.StatusSeeOther)
 	}
 }

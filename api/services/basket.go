@@ -282,7 +282,8 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 		ClientReferenceID:  stripe.String(strconv.Itoa(livraison.UserID)),
 		LineItems:          lineItems,
 		Discounts:          discounts,
-		SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&adresse=%s&ville=%s&cp=%s&code=%s",
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&adresse=%s&ville=%s&cp=%s&code=%s",
+			utils.GetAPIBaseURL(),
 			livraison.UserID,
 			total,
 			url.QueryEscape(livraison.Adresse),
@@ -290,8 +291,7 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 			url.QueryEscape(livraison.CP),
 			url.QueryEscape(livraison.Code),
 		)),
-		CancelURL: stripe.String("http://localhost/front/services/basket.php"),
-	}
+		CancelURL: stripe.String(utils.GetFrontBaseURL() + "/front/services/basket.php")}
 
 	s, err := session.New(params)
 	if err != nil {
@@ -327,7 +327,7 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
 	s, err := session.Get(sessionID, nil)
 	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
-		http.Redirect(response, request, "http://localhost/front/basket.php?error=paiement_echoue", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/basket.php?error=paiement_echoue", http.StatusSeeOther)
 		return
 	}
 
@@ -403,5 +403,5 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
 	db.DB.Exec("DELETE FROM PANIER WHERE id_utilisateur = ?", userID)
 
-	http.Redirect(response, request, "http://localhost/front/services/products.php?success=paiement_valide", http.StatusSeeOther)
+	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/products.php?success=paiement_valide", http.StatusSeeOther)
 }

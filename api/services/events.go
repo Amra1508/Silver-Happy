@@ -63,30 +63,30 @@ func validateDates(debut, fin string) error {
 }
 
 func Read_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM evenement").Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM evenement").Scan(&total)
 
-    sqlQuery := `
+	sqlQuery := `
         SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
         FROM evenement 
         ORDER BY 
@@ -95,50 +95,50 @@ func Read_Evenement(response http.ResponseWriter, request *http.Request) {
         LIMIT ? OFFSET ?
     `
 
-    rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
-    if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
+	if errorFetch != nil {
+		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabEvenement []models.Evenement
-    for rows.Next() {
-        var evt models.Evenement
-        var imagePath sql.NullString
-        var dateDebut sql.NullString
-        var dateFin sql.NullString
+	var tabEvenement []models.Evenement
+	for rows.Next() {
+		var evt models.Evenement
+		var imagePath sql.NullString
+		var dateDebut sql.NullString
+		var dateFin sql.NullString
 
-        if err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &evt.NombrePlace, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix); err != nil {
-            continue
-        }
+		if err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &evt.NombrePlace, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix); err != nil {
+			continue
+		}
 
-        if imagePath.Valid {
-            evt.Image = imagePath.String
-        }
-        if dateDebut.Valid {
-            evt.DateDebut = dateDebut.String
-        }
-        if dateFin.Valid {
-            evt.DateFin = dateFin.String
-        }
+		if imagePath.Valid {
+			evt.Image = imagePath.String
+		}
+		if dateDebut.Valid {
+			evt.DateDebut = dateDebut.String
+		}
+		if dateFin.Valid {
+			evt.DateFin = dateFin.String
+		}
 
-        tabEvenement = append(tabEvenement, evt)
-    }
+		tabEvenement = append(tabEvenement, evt)
+	}
 
-    if tabEvenement == nil {
-        tabEvenement = []models.Evenement{}
-    }
+	if tabEvenement == nil {
+		tabEvenement = []models.Evenement{}
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        tabEvenement,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        tabEvenement,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Evenement(response http.ResponseWriter, request *http.Request) {
@@ -248,159 +248,159 @@ func Read_One_Evenement(response http.ResponseWriter, request *http.Request) {
 }
 
 func Update_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "PUT") {
-        return
-    }
+	if utils.HandleCORS(response, request, "PUT") {
+		return
+	}
 
-    id := request.PathValue("id")
+	id := request.PathValue("id")
 
-    err := request.ParseMultipartForm(10 << 20)
-    if err != nil {
-        http.Error(response, "Erreur de formulaire", http.StatusBadRequest)
-        return
-    }
+	err := request.ParseMultipartForm(10 << 20)
+	if err != nil {
+		http.Error(response, "Erreur de formulaire", http.StatusBadRequest)
+		return
+	}
 
-    nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
-    desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
-    lieu := html.EscapeString(strings.TrimSpace(request.FormValue("lieu")))
-    placesStr := strings.TrimSpace(request.FormValue("nombre_place"))
-    debut := strings.TrimSpace(request.FormValue("date_debut"))
-    fin := strings.TrimSpace(request.FormValue("date_fin"))
-    catStr := strings.TrimSpace(request.FormValue("id_categorie"))
-    prixStr := strings.TrimSpace(request.FormValue("prix"))
+	nom := html.EscapeString(strings.TrimSpace(request.FormValue("nom")))
+	desc := html.EscapeString(strings.TrimSpace(request.FormValue("description")))
+	lieu := html.EscapeString(strings.TrimSpace(request.FormValue("lieu")))
+	placesStr := strings.TrimSpace(request.FormValue("nombre_place"))
+	debut := strings.TrimSpace(request.FormValue("date_debut"))
+	fin := strings.TrimSpace(request.FormValue("date_fin"))
+	catStr := strings.TrimSpace(request.FormValue("id_categorie"))
+	prixStr := strings.TrimSpace(request.FormValue("prix"))
 
-    if nom == "" || desc == "" || lieu == "" {
-        http.Error(response, "Champs requis manquants", http.StatusBadRequest)
-        return
-    }
+	if nom == "" || desc == "" || lieu == "" {
+		http.Error(response, "Champs requis manquants", http.StatusBadRequest)
+		return
+	}
 
-    places, _ := strconv.Atoi(placesStr)
+	places, _ := strconv.Atoi(placesStr)
 
-    var prix float64
-    if prixStr != "" {
-        prix, _ = strconv.ParseFloat(prixStr, 64)
-    }
+	var prix float64
+	if prixStr != "" {
+		prix, _ = strconv.ParseFloat(prixStr, 64)
+	}
 
-    if errDate := validateDates(debut, fin); errDate != nil {
-        http.Error(response, errDate.Error(), http.StatusBadRequest)
-        return
-    }
+	if errDate := validateDates(debut, fin); errDate != nil {
+		http.Error(response, errDate.Error(), http.StatusBadRequest)
+		return
+	}
 
-    var dateFinPtr *string
-    if fin != "" {
-        dateFinPtr = &fin
-    }
+	var dateFinPtr *string
+	if fin != "" {
+		dateFinPtr = &fin
+	}
 
-    var idCategorie *int
-    if catStr != "" && catStr != "null" {
-        idCat, err := strconv.Atoi(catStr)
-        if err == nil {
-            idCategorie = &idCat
-        }
-    }
+	var idCategorie *int
+	if catStr != "" && catStr != "null" {
+		idCat, err := strconv.Atoi(catStr)
+		if err == nil {
+			idCategorie = &idCat
+		}
+	}
 
-    file, handler, errFile := request.FormFile("image")
-    var imagePath string
+	file, handler, errFile := request.FormFile("image")
+	var imagePath string
 
-    if errFile == nil {
-        defer file.Close()
-        os.MkdirAll(uploadDir, os.ModePerm)
-        
-        cleanFileName := filepath.Base(handler.Filename)
-        fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), cleanFileName)
-        imagePath = filepath.ToSlash(filepath.Join(uploadDir, fileName))
-        
-        dst, errCreate := os.Create(imagePath)
-        if errCreate != nil {
-            fmt.Println("Erreur création fichier image :", errCreate)
-            http.Error(response, "Erreur lors de la sauvegarde de l'image", http.StatusInternalServerError)
-            return
-        }
-        defer dst.Close()
-        
-        _, errCopy := io.Copy(dst, file)
-        if errCopy != nil {
-            fmt.Println("Erreur copie fichier image :", errCopy)
-            http.Error(response, "Erreur lors de la copie de l'image", http.StatusInternalServerError)
-            return
-        }
-    } else if errFile != http.ErrMissingFile {
-        fmt.Println("Erreur FormFile :", errFile)
-        http.Error(response, "Fichier invalide", http.StatusBadRequest)
-        return
-    }
+	if errFile == nil {
+		defer file.Close()
+		os.MkdirAll(uploadDir, os.ModePerm)
 
-    var errDb error
+		cleanFileName := filepath.Base(handler.Filename)
+		fileName := fmt.Sprintf("%d_%s", time.Now().Unix(), cleanFileName)
+		imagePath = filepath.ToSlash(filepath.Join(uploadDir, fileName))
 
-    if imagePath != "" {
-        var oldImage sql.NullString
-        db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&oldImage)
-        if oldImage.Valid && oldImage.String != "" {
-            os.Remove(oldImage.String)
-        }
+		dst, errCreate := os.Create(imagePath)
+		if errCreate != nil {
+			fmt.Println("Erreur création fichier image :", errCreate)
+			http.Error(response, "Erreur lors de la sauvegarde de l'image", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
 
-        _, errDb = db.DB.Exec(
-            "UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, image = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
-            nom, desc, lieu, places, imagePath, debut, dateFinPtr, idCategorie, prix, id, 
-        )
-    } else {
-        _, errDb = db.DB.Exec(
-            "UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
-            nom, desc, lieu, places, debut, dateFinPtr, idCategorie, prix, id,
-        )
-    }
+		_, errCopy := io.Copy(dst, file)
+		if errCopy != nil {
+			fmt.Println("Erreur copie fichier image :", errCopy)
+			http.Error(response, "Erreur lors de la copie de l'image", http.StatusInternalServerError)
+			return
+		}
+	} else if errFile != http.ErrMissingFile {
+		fmt.Println("Erreur FormFile :", errFile)
+		http.Error(response, "Fichier invalide", http.StatusBadRequest)
+		return
+	}
 
-    if errDb != nil {
-        fmt.Println("Erreur UPDATE MySQL :", errDb)
-        http.Error(response, "Erreur serveur lors de la mise à jour", http.StatusInternalServerError)
-        return
-    }
+	var errDb error
 
-    response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Mise à jour réussie"})
+	if imagePath != "" {
+		var oldImage sql.NullString
+		db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&oldImage)
+		if oldImage.Valid && oldImage.String != "" {
+			os.Remove(oldImage.String)
+		}
+
+		_, errDb = db.DB.Exec(
+			"UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, image = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
+			nom, desc, lieu, places, imagePath, debut, dateFinPtr, idCategorie, prix, id,
+		)
+	} else {
+		_, errDb = db.DB.Exec(
+			"UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
+			nom, desc, lieu, places, debut, dateFinPtr, idCategorie, prix, id,
+		)
+	}
+
+	if errDb != nil {
+		fmt.Println("Erreur UPDATE MySQL :", errDb)
+		http.Error(response, "Erreur serveur lors de la mise à jour", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{"message": "Mise à jour réussie"})
 }
 
 func Delete_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "DELETE") {
-        return
-    }
-    
-    id := request.PathValue("id")
-    
-    var imagePath sql.NullString
-    err := db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&imagePath)
-    if err != nil && err != sql.ErrNoRows {
-        fmt.Println("Erreur SELECT image :", err)
-        http.Error(response, "Erreur lors de la lecture de l'évènement", http.StatusInternalServerError)
-        return
-    }
+	if utils.HandleCORS(response, request, "DELETE") {
+		return
+	}
 
-    _, err = db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ?", id)
-    if err != nil {
-        fmt.Println("Erreur DELETE PRESTATAIRE_EVENEMENT :", err)
-        http.Error(response, "Erreur lors de la suppression des liens prestataires", http.StatusInternalServerError)
-        return
-    }
+	id := request.PathValue("id")
 
-    _, err = db.DB.Exec("DELETE FROM inscription WHERE id_evenement = ?", id)
-    if err != nil {
-        fmt.Println("Erreur DELETE inscription :", err)
-        http.Error(response, "Erreur lors de la suppression des inscriptions", http.StatusInternalServerError)
-        return
-    }
+	var imagePath sql.NullString
+	err := db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&imagePath)
+	if err != nil && err != sql.ErrNoRows {
+		fmt.Println("Erreur SELECT image :", err)
+		http.Error(response, "Erreur lors de la lecture de l'évènement", http.StatusInternalServerError)
+		return
+	}
 
-    _, err = db.DB.Exec("DELETE FROM evenement WHERE id_evenement = ?", id)
-    if err != nil {
-        fmt.Println("Erreur DELETE evenement :", err)
-        http.Error(response, "Erreur lors de la suppression de l'évènement", http.StatusInternalServerError)
-        return
-    }
+	_, err = db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ?", id)
+	if err != nil {
+		fmt.Println("Erreur DELETE PRESTATAIRE_EVENEMENT :", err)
+		http.Error(response, "Erreur lors de la suppression des liens prestataires", http.StatusInternalServerError)
+		return
+	}
 
-    if imagePath.Valid && imagePath.String != "" {
-        os.Remove(imagePath.String)
-    }
+	_, err = db.DB.Exec("DELETE FROM inscription WHERE id_evenement = ?", id)
+	if err != nil {
+		fmt.Println("Erreur DELETE inscription :", err)
+		http.Error(response, "Erreur lors de la suppression des inscriptions", http.StatusInternalServerError)
+		return
+	}
 
-    response.WriteHeader(http.StatusNoContent)
+	_, err = db.DB.Exec("DELETE FROM evenement WHERE id_evenement = ?", id)
+	if err != nil {
+		fmt.Println("Erreur DELETE evenement :", err)
+		http.Error(response, "Erreur lors de la suppression de l'évènement", http.StatusInternalServerError)
+		return
+	}
+
+	if imagePath.Valid && imagePath.String != "" {
+		os.Remove(imagePath.String)
+	}
+
+	response.WriteHeader(http.StatusNoContent)
 }
 
 func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
@@ -413,7 +413,7 @@ func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
 		FROM evenement e
 		JOIN INSCRIPTION i ON e.id_evenement = i.id_evenement
 		WHERE i.id_utilisateur = ? ORDER BY e.date_debut ASC`
-	
+
 	rows, _ := db.DB.Query(query, idUser)
 	defer rows.Close()
 
@@ -422,13 +422,21 @@ func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
 		var evt models.Evenement
 		var imagePath, dateDebut, dateFin sql.NullString
 		if err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix); err == nil {
-			if imagePath.Valid { evt.Image = imagePath.String }
-			if dateDebut.Valid { evt.DateDebut = dateDebut.String }
-			if dateFin.Valid { evt.DateFin = dateFin.String }
+			if imagePath.Valid {
+				evt.Image = imagePath.String
+			}
+			if dateDebut.Valid {
+				evt.DateDebut = dateDebut.String
+			}
+			if dateFin.Valid {
+				evt.DateFin = dateFin.String
+			}
 			tabEvenement = append(tabEvenement, evt)
 		}
 	}
-	if tabEvenement == nil { tabEvenement = []models.Evenement{} }
+	if tabEvenement == nil {
+		tabEvenement = []models.Evenement{}
+	}
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(tabEvenement)
 }
@@ -440,7 +448,7 @@ func GetEvenementsByCategory(response http.ResponseWriter, request *http.Request
 
 	categorieIDStr := request.URL.Query().Get("categorie")
 	query := `SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix FROM evenement WHERE id_categorie = ?`
-	
+
 	rows, err := db.DB.Query(query, categorieIDStr)
 	if err != nil {
 		http.Error(response, "Erreur", http.StatusInternalServerError)
@@ -453,164 +461,174 @@ func GetEvenementsByCategory(response http.ResponseWriter, request *http.Request
 		var evt models.Evenement
 		var imagePath, dateDebut, dateFin sql.NullString
 		if err := rows.Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &evt.NombrePlace, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix); err == nil {
-			if imagePath.Valid { evt.Image = imagePath.String }
-			if dateDebut.Valid { evt.DateDebut = dateDebut.String }
-			if dateFin.Valid { evt.DateFin = dateFin.String }
+			if imagePath.Valid {
+				evt.Image = imagePath.String
+			}
+			if dateDebut.Valid {
+				evt.DateDebut = dateDebut.String
+			}
+			if dateFin.Valid {
+				evt.DateFin = dateFin.String
+			}
 			evts = append(evts, evt)
 		}
 	}
-	if evts == nil { evts = []models.Evenement{} }
+	if evts == nil {
+		evts = []models.Evenement{}
+	}
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(evts)
 }
 
 func Link_Prestataire_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    idEvt := request.PathValue("id")
-    var payload map[string]int
+	idEvt := request.PathValue("id")
+	var payload map[string]int
 
-    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
 
-    idPrest := payload["id_prestataire"]
+	idPrest := payload["id_prestataire"]
 
-    _, err := db.DB.Exec("INSERT IGNORE INTO PRESTATAIRE_EVENEMENT (id_prestataire, id_evenement) VALUES (?, ?)", idPrest, idEvt)
-    if err != nil {
-        http.Error(response, "Erreur lors de la liaison", http.StatusInternalServerError)
-        return
-    }
+	_, err := db.DB.Exec("INSERT IGNORE INTO PRESTATAIRE_EVENEMENT (id_prestataire, id_evenement) VALUES (?, ?)", idPrest, idEvt)
+	if err != nil {
+		http.Error(response, "Erreur lors de la liaison", http.StatusInternalServerError)
+		return
+	}
 
-    json.NewEncoder(response).Encode(map[string]string{"status": "success"})
+	json.NewEncoder(response).Encode(map[string]string{"status": "success"})
 }
 
 func Read_Prestataires_For_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
-    idEvt := request.PathValue("id")
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+	idEvt := request.PathValue("id")
 
-    rows, err := db.DB.Query(`
+	rows, err := db.DB.Query(`
         SELECT prestataire.id_prestataire, prestataire.nom, prestataire.prenom, prestataire.type_prestation 
         FROM PRESTATAIRE prestataire
         JOIN PRESTATAIRE_EVENEMENT pevent ON prestataire.id_prestataire = pevent.id_prestataire 
         WHERE pevent.id_evenement = ?`, idEvt)
 
-    if err != nil {
-        http.Error(response, "Erreur BDD", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	if err != nil {
+		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var list []map[string]interface{}
-    for rows.Next() {
-        var id_prest int
-        var nom, prenom, type_prest string
-        rows.Scan(&id_prest, &nom, &prenom, &type_prest)
-        list = append(list, map[string]interface{}{
-            "id": id_prest, "nom": nom, "prenom": prenom, "type": type_prest,
-        })
-    }
+	var list []map[string]interface{}
+	for rows.Next() {
+		var id_prest int
+		var nom, prenom, type_prest string
+		rows.Scan(&id_prest, &nom, &prenom, &type_prest)
+		list = append(list, map[string]interface{}{
+			"id": id_prest, "nom": nom, "prenom": prenom, "type": type_prest,
+		})
+	}
 
-    if list == nil {
-        list = make([]map[string]interface{}, 0)
-    }
-    json.NewEncoder(response).Encode(list)
+	if list == nil {
+		list = make([]map[string]interface{}, 0)
+	}
+	json.NewEncoder(response).Encode(list)
 }
 
 func Unlink_Prestataire_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "DELETE") {
-        return
-    }
-    idEvt := request.PathValue("id")
-    idPrest := request.PathValue("id_prestataire")
+	if utils.HandleCORS(response, request, "DELETE") {
+		return
+	}
+	idEvt := request.PathValue("id")
+	idPrest := request.PathValue("id_prestataire")
 
-    _, err := db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ? AND id_prestataire = ?", idEvt, idPrest)
-    if err != nil {
-        http.Error(response, "Erreur lors de la suppression du lien", http.StatusInternalServerError)
-        return
-    }
+	_, err := db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ? AND id_prestataire = ?", idEvt, idPrest)
+	if err != nil {
+		http.Error(response, "Erreur lors de la suppression du lien", http.StatusInternalServerError)
+		return
+	}
 
-    json.NewEncoder(response).Encode(map[string]string{"status": "success"})
+	json.NewEncoder(response).Encode(map[string]string{"status": "success"})
 }
 
 func Register_Evenement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    idEvt := request.PathValue("id")
-    var payload map[string]int
+	idEvt := request.PathValue("id")
+	var payload map[string]int
 
-    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
 
-    idUser, exists := payload["id_utilisateur"]
-    if !exists {
-        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
-        return
-    }
+	idUser, exists := payload["id_utilisateur"]
+	if !exists {
+		http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
+		return
+	}
 
 	var count int
-    db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
-    if count > 0 {
-        http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
-        return
-    }
+	db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
+	if count > 0 {
+		http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
+		return
+	}
 
-    var dateCible string
-    errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
-    if errDate != nil {
-        http.Error(response, "Événement introuvable", http.StatusNotFound)
-        return
-    }
+	var dateCible string
+	errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
+	if errDate != nil {
+		http.Error(response, "Événement introuvable", http.StatusNotFound)
+		return
+	}
 
-    var conflictCount int
-    queryConflict := `
+	var conflictCount int
+	queryConflict := `
         SELECT COUNT(*) 
         FROM INSCRIPTION i
         JOIN evenement e ON i.id_evenement = e.id_evenement
         WHERE i.id_utilisateur = ? 
         AND DATE_FORMAT(e.date_debut, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')`
 
-    db.DB.QueryRow(queryConflict, idUser, dateCible).Scan(&conflictCount)
+	db.DB.QueryRow(queryConflict, idUser, dateCible).Scan(&conflictCount)
 
-    if conflictCount > 0 {
-        http.Error(response, "Conflit d'horaire : vous avez déjà une activité à cette heure-là.", http.StatusConflict)
-        return
-    }
+	if conflictCount > 0 {
+		http.Error(response, "Conflit d'horaire : vous avez déjà une activité à cette heure-là.", http.StatusConflict)
+		return
+	}
 
-    var places int
-    err := db.DB.QueryRow("SELECT nombre_place FROM evenement WHERE id_evenement = ?", idEvt).Scan(&places)
-    if err != nil {
-        http.Error(response, "Événement introuvable", http.StatusNotFound)
-        return
-    }
-    if places <= 0 {
-        http.Error(response, "Désolé, cet événement est complet.", http.StatusForbidden)
-        return
-    }
+	var places int
+	err := db.DB.QueryRow("SELECT nombre_place FROM evenement WHERE id_evenement = ?", idEvt).Scan(&places)
+	if err != nil {
+		http.Error(response, "Événement introuvable", http.StatusNotFound)
+		return
+	}
+	if places <= 0 {
+		http.Error(response, "Désolé, cet événement est complet.", http.StatusForbidden)
+		return
+	}
 
-    _, err = db.DB.Exec("INSERT INTO INSCRIPTION (id_utilisateur, id_evenement) VALUES (?, ?)", idUser, idEvt)
-    if err != nil {
-        http.Error(response, "Erreur lors de l'inscription en BDD.", http.StatusInternalServerError)
-        return
-    }
+	_, err = db.DB.Exec("INSERT INTO INSCRIPTION (id_utilisateur, id_evenement) VALUES (?, ?)", idUser, idEvt)
+	if err != nil {
+		http.Error(response, "Erreur lors de l'inscription en BDD.", http.StatusInternalServerError)
+		return
+	}
 
-    db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
+	db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
 
-    response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Inscription réussie !"})
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{"message": "Inscription réussie !"})
 }
 
 func Unregister_Evenement(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") { return }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
 	idEvt := request.PathValue("id")
 	var payload map[string]int
@@ -646,7 +664,7 @@ func Unregister_Evenement(response http.ResponseWriter, request *http.Request) {
 		params := &stripe.RefundParams{
 			PaymentIntent: stripe.String(stripePI.String),
 		}
-		
+
 		_, errRefund := refund.New(params)
 		if errRefund != nil {
 			fmt.Println("Erreur remboursement Stripe :", errRefund)
@@ -675,7 +693,9 @@ func Unregister_Evenement(response http.ResponseWriter, request *http.Request) {
 }
 
 func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") { return }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	idEvt := request.PathValue("id")
@@ -693,38 +713,38 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 	}
 
 	var count int
-    db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
-    if count > 0 {
-        http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
-        return
-    }
+	db.DB.QueryRow("SELECT COUNT(*) FROM INSCRIPTION WHERE id_utilisateur = ? AND id_evenement = ?", idUser, idEvt).Scan(&count)
+	if count > 0 {
+		http.Error(response, "Vous êtes déjà inscrit à cet événement.", http.StatusConflict)
+		return
+	}
 
-    var dateCible string
-    errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
-    if errDate != nil {
-        http.Error(response, "Événement introuvable", http.StatusNotFound)
-        return
-    }
+	var dateCible string
+	errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
+	if errDate != nil {
+		http.Error(response, "Événement introuvable", http.StatusNotFound)
+		return
+	}
 
-    var conflictCount int
-    queryConflict := `
+	var conflictCount int
+	queryConflict := `
         SELECT COUNT(*) 
         FROM INSCRIPTION i
         JOIN evenement e ON i.id_evenement = e.id_evenement
         WHERE i.id_utilisateur = ? 
         AND DATE_FORMAT(e.date_debut, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')`
 
-    db.DB.QueryRow(queryConflict, idUser, dateCible).Scan(&conflictCount)
+	db.DB.QueryRow(queryConflict, idUser, dateCible).Scan(&conflictCount)
 
-    if conflictCount > 0 {
-        http.Error(response, "Conflit d'horaire : vous avez déjà une activité à cette heure-là.", http.StatusConflict)
-        return
-    }
+	if conflictCount > 0 {
+		http.Error(response, "Conflit d'horaire : vous avez déjà une activité à cette heure-là.", http.StatusConflict)
+		return
+	}
 
 	var nomEvt string
 	var places int
 	var prix float64
-	
+
 	err := db.DB.QueryRow("SELECT nom, nombre_place, prix FROM evenement WHERE id_evenement = ?", idEvt).Scan(&nomEvt, &places, &prix)
 	if err != nil || places <= 0 {
 		http.Error(response, "Événement introuvable ou complet.", http.StatusForbidden)
@@ -756,8 +776,8 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-event?session_id={CHECKOUT_SESSION_ID}&event_id=%s&user_id=%d", idEvt, idUser)),
-		CancelURL:  stripe.String("http://localhost/front/services/menu_activity.php"),
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-event?session_id={CHECKOUT_SESSION_ID}&event_id=%s&user_id=%d", utils.GetAPIBaseURL(), idEvt, idUser)),
+		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/front/services/menu_activity.php"),
 	}
 
 	s, err := session.New(params)
@@ -771,7 +791,9 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 }
 
 func Success_Event_Payment(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") { return }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	sessionID := request.URL.Query().Get("session_id")
@@ -780,7 +802,7 @@ func Success_Event_Payment(response http.ResponseWriter, request *http.Request) 
 
 	s, err := session.Get(sessionID, nil)
 	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
-		http.Redirect(response, request, "http://localhost/front/services/menu_activity.php?error=paiement_echoue", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/menu_activity.php?error=paiement_echoue", http.StatusSeeOther)
 		return
 	}
 
@@ -792,19 +814,23 @@ func Success_Event_Payment(response http.ResponseWriter, request *http.Request) 
 		pi, errPI := paymentintent.Get(s.PaymentIntent.ID, nil)
 		if errPI == nil && pi.LatestCharge != nil {
 			ch, errC := charge.Get(pi.LatestCharge.ID, nil)
-			if errC == nil { urlFacture = ch.ReceiptURL }
+			if errC == nil {
+				urlFacture = ch.ReceiptURL
+			}
 		}
 	} else if s.Invoice != nil {
 		inv, errI := invoice.Get(s.Invoice.ID, nil)
-		if errI == nil { urlFacture = inv.HostedInvoiceURL }
+		if errI == nil {
+			urlFacture = inv.HostedInvoiceURL
+		}
 	}
 
 	prixPaye := float64(s.AmountTotal) / 100.0
 	resPaiement, errP := db.DB.Exec(
-		"INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture, stripe_pi) VALUES (?, 'valide', 'carte', ?, ?)", 
+		"INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture, stripe_pi) VALUES (?, 'valide', 'carte', ?, ?)",
 		prixPaye, urlFacture, stripePI,
 	)
-	
+
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	if errP == nil {
@@ -817,5 +843,5 @@ func Success_Event_Payment(response http.ResponseWriter, request *http.Request) 
 		}
 	}
 
-	http.Redirect(response, request, "http://localhost/front/services/events.php?success=inscription_validee", http.StatusSeeOther)
+	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/events.php?success=inscription_validee", http.StatusSeeOther)
 }

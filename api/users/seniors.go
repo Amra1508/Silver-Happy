@@ -248,7 +248,7 @@ func Read_Admin(response http.ResponseWriter, request *http.Request) {
 	queryParams := request.URL.Query()
 	limitStr := queryParams.Get("limit")
 	pageStr := queryParams.Get("page")
-	userIdStr := queryParams.Get("user_id") 
+	userIdStr := queryParams.Get("user_id")
 
 	limit := 10
 	offset := 0
@@ -291,7 +291,7 @@ func Read_Admin(response http.ResponseWriter, request *http.Request) {
 	for rows.Next() {
 		var user models.Utilisateur
 		var numTel sql.NullString
-		var estLu int 
+		var estLu int
 
 		err := rows.Scan(
 			&user.ID, &user.Nom, &user.Prenom, &user.Email,
@@ -347,10 +347,10 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 	}
 
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
-    if !emailRegex.MatchString(user.Email) {
-        http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
-        return
-    }
+	if !emailRegex.MatchString(user.Email) {
+		http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
+		return
+	}
 
 	if user.DateNaissance != "" {
 		dateParsed, err := time.Parse("2006-01-02", user.DateNaissance)
@@ -407,7 +407,7 @@ func Update_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	id := request.PathValue("id")
-	
+
 	var user models.Utilisateur
 	if err := json.NewDecoder(request.Body).Decode(&user); err != nil {
 		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
@@ -429,10 +429,10 @@ func Update_User(response http.ResponseWriter, request *http.Request) {
 	}
 
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
-    if !emailRegex.MatchString(user.Email) {
-        http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
-        return
-    }
+	if !emailRegex.MatchString(user.Email) {
+		http.Error(response, "Le format de l'adresse e-mail est invalide.", http.StatusBadRequest)
+		return
+	}
 
 	var dateNaissance interface{} = user.DateNaissance
 	if user.DateNaissance == "" {
@@ -471,7 +471,10 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 	}
 
 	_, err = tx.Exec("DELETE FROM LIGNE_COMMANDE WHERE id_commande IN (SELECT id_commande FROM COMMANDE WHERE id_utilisateur = ?)", id)
-	if err != nil { log.Println("Erreur LIGNE_COMMANDE:", err); return }
+	if err != nil {
+		log.Println("Erreur LIGNE_COMMANDE:", err)
+		return
+	}
 
 	queries := []string{
 		"DELETE FROM COMMANDE WHERE id_utilisateur = ?",
@@ -497,7 +500,10 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 	}
 
 	_, err = tx.Exec("DELETE FROM MESSAGE_ADMIN WHERE id_utilisateur1 = ? OR id_utilisateur2 = ?", id, id)
-	if err != nil { log.Println("Erreur MESSAGE_ADMIN:", err); return }
+	if err != nil {
+		log.Println("Erreur MESSAGE_ADMIN:", err)
+		return
+	}
 
 	_, err = tx.Exec("DELETE FROM UTILISATEUR WHERE id_utilisateur = ?", id)
 	if err != nil {
@@ -549,22 +555,22 @@ func Ban_User(response http.ResponseWriter, request *http.Request) {
 }
 
 func Paiement_Abonnement(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
 	req := models.Req{}
-    
-    if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
 
-var idAbo sql.NullInt64
+	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	var idAbo sql.NullInt64
 	var debutAbo, typePaiement sql.NullString
-	var estActif bool 
+	var estActif bool
 
 	errDB := db.DB.QueryRow(`
 		SELECT u.id_abonnement, 
@@ -604,66 +610,65 @@ var idAbo sql.NullInt64
 	if req.Periode == "annuel" {
 		interval = "year"
 	}
-    
+
 	encodedType := url.QueryEscape(req.TypeAbonnement)
 
-    var prixRenouvellement int64
-    var fraisInitiaux int64
+	var prixRenouvellement int64
+	var fraisInitiaux int64
 
-    if req.Periode == "annuel" {
-        interval = "year"
-        prixRenouvellement = 35
-        fraisInitiaux = 5
-    } else {
-        interval = "month"
-        prixRenouvellement = 3
-        fraisInitiaux = 1 
-    }
+	if req.Periode == "annuel" {
+		interval = "year"
+		prixRenouvellement = 35
+		fraisInitiaux = 5
+	} else {
+		interval = "month"
+		prixRenouvellement = 3
+		fraisInitiaux = 1
+	}
 
-    params := &stripe.CheckoutSessionParams{
-        PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
-        Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
-        ClientReferenceID:  stripe.String(strconv.Itoa(req.UserID)),
-        
-        LineItems: []*stripe.CheckoutSessionLineItemParams{
-            {
-                PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-                    Currency: stripe.String("eur"),
-                    ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-                        Name: stripe.String("Abonnement Silver Happy (" + req.Periode + ")"),
-                    },
-                    UnitAmount: stripe.Int64(prixRenouvellement * 100),
-                    Recurring: &stripe.CheckoutSessionLineItemPriceDataRecurringParams{
-                        Interval: stripe.String(interval),
-                    },
-                },
-                Quantity: stripe.Int64(1),
-            },
-            {
-                PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-                    Currency: stripe.String("eur"),
-                    ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-                        Name: stripe.String("Frais de première souscription"),
-                    },
-                    UnitAmount: stripe.Int64(fraisInitiaux * 100),
-                },
-                Quantity: stripe.Int64(1),
-            },
-        },
-        
-        SuccessURL: stripe.String(fmt.Sprintf("http://localhost:8082/success-subscription?session_id={CHECKOUT_SESSION_ID}&user_id=%d&tarif=%d&periode=%s&type=%s", req.UserID, req.Tarif, req.Periode, encodedType)),
-        CancelURL:  stripe.String("http://localhost/front/services/subscription.php"),
-    }
+	params := &stripe.CheckoutSessionParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		ClientReferenceID:  stripe.String(strconv.Itoa(req.UserID)),
 
-    s, err := session.New(params)
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency: stripe.String("eur"),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: stripe.String("Abonnement Silver Happy (" + req.Periode + ")"),
+					},
+					UnitAmount: stripe.Int64(prixRenouvellement * 100),
+					Recurring: &stripe.CheckoutSessionLineItemPriceDataRecurringParams{
+						Interval: stripe.String(interval),
+					},
+				},
+				Quantity: stripe.Int64(1),
+			},
+			{
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency: stripe.String("eur"),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: stripe.String("Frais de première souscription"),
+					},
+					UnitAmount: stripe.Int64(fraisInitiaux * 100),
+				},
+				Quantity: stripe.Int64(1),
+			},
+		},
+
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-subscription?session_id={CHECKOUT_SESSION_ID}&user_id=%d&tarif=%d&periode=%s&type=%s", utils.GetAPIBaseURL(), req.UserID, req.Tarif, req.Periode, encodedType)),
+		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/front/services/subscription.php")}
+
+	s, err := session.New(params)
 	if err != nil {
-		fmt.Println("Erreur lors de la création de session Stripe :", err) 
+		fmt.Println("Erreur lors de la création de session Stripe :", err)
 		http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
 		return
 	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(map[string]string{"url": s.URL})
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]string{"url": s.URL})
 }
 
 func Success_Subscription(response http.ResponseWriter, request *http.Request) {
@@ -687,7 +692,7 @@ func Success_Subscription(response http.ResponseWriter, request *http.Request) {
 
 	s, err := session.Get(sessionID, nil)
 	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
-		http.Redirect(response, request, "http://localhost/front/abonnement.php?error=paiement_echoue", http.StatusSeeOther)
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/abonnement.php?error=paiement_echoue", http.StatusSeeOther)
 		return
 	}
 
@@ -753,14 +758,14 @@ func Success_Subscription(response http.ResponseWriter, request *http.Request) {
 
 	var nomU, prenomU string
 	errInfo := db.DB.QueryRow("SELECT nom, prenom FROM UTILISATEUR WHERE id = ?", userID).Scan(&nomU, &prenomU)
-	
+
 	if errInfo == nil {
-		formule := "Abonnement Senior Silver Happy (" + periode + ")" 
+		formule := "Abonnement Senior Silver Happy (" + periode + ")"
 		prixStr := fmt.Sprintf("%.2f", tarif)
-		
+
 		userIDInt, _ := strconv.ParseInt(userID, 10, 64)
 		cheminContrat, errPdf := utils.GenerateSubscriptionContract(userIDInt, nomU, prenomU, "Senior", formule, prixStr)
-		
+
 		if errPdf == nil {
 			db.DB.Exec("UPDATE ABONNEMENT SET url_contrat = ? WHERE id_abonnement = ?", cheminContrat, idAbonnement)
 		} else {
@@ -768,59 +773,60 @@ func Success_Subscription(response http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	http.Redirect(response, request, "http://localhost/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
+	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/account/profile.php?success=abonnement_valide", http.StatusSeeOther)
+
 }
 
 func Cancel_Subscription(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    var payload map[string]int
-    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
+	var payload map[string]int
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
 
-    idUser, exists := payload["id_utilisateur"]
-    if !exists {
-        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
-        return
-    }
+	idUser, exists := payload["id_utilisateur"]
+	if !exists {
+		http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
+		return
+	}
 
-    var stripeSub sql.NullString
-    err := db.DB.QueryRow(`
+	var stripeSub sql.NullString
+	err := db.DB.QueryRow(`
         SELECT a.stripe_sub 
         FROM UTILISATEUR u 
         JOIN ABONNEMENT a ON u.id_abonnement = a.id_abonnement 
         WHERE u.id_utilisateur = ?
     `, idUser).Scan(&stripeSub)
 
-    if err != nil {
-        http.Error(response, "Aucun abonnement actif trouvé.", http.StatusNotFound)
-        return
-    }
+	if err != nil {
+		http.Error(response, "Aucun abonnement actif trouvé.", http.StatusNotFound)
+		return
+	}
 
-    if stripeSub.Valid && stripeSub.String != "" {
-        stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-        
-        params := &stripe.SubscriptionParams{
-            CancelAtPeriodEnd: stripe.Bool(true), 
-        }
-        
-        _, errStripe := subscription.Update(stripeSub.String, params)
-        if errStripe != nil {
-            fmt.Println("Erreur lors de l'annulation Stripe:", errStripe)
-        }
-    }
+	if stripeSub.Valid && stripeSub.String != "" {
+		stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
-    _, errUpdate := db.DB.Exec("UPDATE ABONNEMENT SET renouvellement = 0 WHERE stripe_sub = ?", stripeSub.String)
-    
-    if errUpdate != nil {
-        http.Error(response, "Erreur lors de la mise à jour BDD.", http.StatusInternalServerError)
-        return
-    }
+		params := &stripe.SubscriptionParams{
+			CancelAtPeriodEnd: stripe.Bool(true),
+		}
 
-    response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Renouvellement automatique désactivé."})
+		_, errStripe := subscription.Update(stripeSub.String, params)
+		if errStripe != nil {
+			fmt.Println("Erreur lors de l'annulation Stripe:", errStripe)
+		}
+	}
+
+	_, errUpdate := db.DB.Exec("UPDATE ABONNEMENT SET renouvellement = 0 WHERE stripe_sub = ?", stripeSub.String)
+
+	if errUpdate != nil {
+		http.Error(response, "Erreur lors de la mise à jour BDD.", http.StatusInternalServerError)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{"message": "Renouvellement automatique désactivé."})
 }

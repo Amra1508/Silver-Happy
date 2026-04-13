@@ -39,7 +39,7 @@ func Get_Invoices_Prestataire(response http.ResponseWriter, request *http.Reques
 
 		if err := rows.Scan(&inv.ID, &inv.DatePaiement, &inv.Prix, &inv.Statut, &inv.URLFacture, &inv.Description, &urlContrat); err == nil {
 			if urlContrat != "" {
-				inv.URLContrat = "http://localhost:8082" + urlContrat
+				inv.URLContrat = utils.GetAPIBaseURL() + urlContrat
 			}
 			invoices = append(invoices, inv)
 		}
@@ -71,7 +71,7 @@ func Revenus_Prestataire(response http.ResponseWriter, request *http.Request) {
 		GROUP BY DATE(p.date_paiement) 
 		ORDER BY p.date_paiement ASC
 	`
-	
+
 	rows, err := db.DB.Query(query, providerID)
 	if err != nil {
 		http.Error(response, "Erreur BDD lors des revenus", http.StatusInternalServerError)
