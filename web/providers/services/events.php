@@ -39,16 +39,21 @@
 
             <main class="p-8">
 
-                <div id="main-content-valide" class="hidden space-y-8 max-w-7xl mx-auto">
+                <div id="main-content-valide" class="hidden space-y-6 max-w-7xl mx-auto">
 
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                         <div>
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Évènements & Services</h1>
-                            <p class="text-gray-500 mt-1">Gérez vos prestations, ateliers et interventions à venir.</p>
+                            <p class="text-gray-500 mt-1">Gérez vos prestations, ateliers et interventions.</p>
                         </div>
                         <button onclick="openCreateModal()" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-6 rounded-xl shadow-md transition-all flex items-center gap-2">
                             + Créer un évènement
                         </button>
+                    </div>
+
+                    <div class="flex gap-6 border-b border-gray-200 mt-6">
+                        <button id="tab-upcoming" onclick="switchTab('upcoming')" class="pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors">À venir</button>
+                        <button id="tab-history" onclick="switchTab('history')" class="pb-3 px-2 text-gray-500 font-semibold hover:text-[#1C5B8F] border-b-2 border-transparent transition-colors">Historique</button>
                     </div>
 
                     <div id="page-alert" class="hidden p-4 rounded-xl font-semibold text-sm text-center"></div>
@@ -141,9 +146,6 @@
             <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
                 <div class="bg-[#1C5B8F] px-6 py-4 flex justify-between items-center text-white shrink-0">
                     <h3 class="text-xl font-bold flex items-center gap-2">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
                         Seniors Inscrits
                     </h3>
                     <button onclick="toggleModal('participants-modal')" class="text-white hover:text-red-300 transition-colors text-2xl leading-none">&times;</button>
@@ -229,7 +231,151 @@
     <script>
         let currentProviderId = null;
         let allEvents = [];
-        const API_URL = window.API_BASE_URL;
+        let currentTab = 'upcoming';
+        const API_URL = window.API_BASE_URL || 'http://localhost:8082';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            const tabUpcoming = document.getElementById('tab-upcoming');
+            const tabHistory = document.getElementById('tab-history');
+
+            if (tab === 'upcoming') {
+                tabUpcoming.className = "pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors";
+                tabHistory.className = "pb-3 px-2 text-gray-500 font-semibold hover:text-[#1C5B8F] border-b-2 border-transparent transition-colors";
+            } else {
+                tabHistory.className = "pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors";
+                tabUpcoming.className = "pb-3 px-2 text-gray-500 font-semibold hover:text-[#1C5B8F] border-b-2 border-transparent transition-colors";
+            }
+
+            loadEvents(currentProviderId, currentTab);
+        }
+
+        async function loadEvents(providerId, tab = 'upcoming') {
+            const container = document.getElementById('events-container');
+            container.innerHTML = '<div class="col-span-full py-10 text-center text-gray-500 flex flex-col items-center">Chargement...</div>';
+
+            try {
+                const res = await fetch(`${API_URL}/prestataire/${providerId}/events?tab=${tab}`, {
+                    method: 'GET'
+                });
+                
+                if (res.ok) {
+                    allEvents = await res.json();
+                    renderEvents(); 
+                } else {
+                    showAlert("Erreur lors de la récupération.", "error");
+                }
+            } catch (err) {
+                console.error("Erreur :", err);
+                showAlert("Impossible de charger les évènements.", "error");
+            }
+        }
+        
+        function renderEvents() {
+            const container = document.getElementById('events-container');
+            container.innerHTML = '';
+            
+            if (allEvents.length === 0) {
+                const emptyMsg = currentTab === 'upcoming' 
+                    ? "Vous n'avez pas encore créé d'évènement à venir."
+                    : "Votre historique est vide, vous n'avez pas d'évènements terminés.";
+
+                container.innerHTML = `
+                    <div class="col-span-full bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm mt-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Aucun évènement</h3>
+                        <p class="text-gray-500 mb-6">${emptyMsg}</p>
+                        ${currentTab === 'upcoming' ? `<button onclick="openCreateModal()" class="text-[#1C5B8F] font-bold hover:underline">Créer mon premier évènement</button>` : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            const currentDate = new Date();
+
+            allEvents.forEach(evt => {
+                const evtId = evt.id_evenement || evt.id || evt.ID;
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col fade-in hover:shadow-md transition-shadow relative";
+
+                const badgePrice = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
+                const imgSrc = evt.image ? `${API_URL}${evt.image}` : null;
+                const boostDate = evt.date_fin_boost || evt.DateFinBoost;
+                
+                let isBoosted = false;
+                if (boostDate && boostDate.trim() !== '') {
+                    isBoosted = new Date(boostDate.replace(' ', 'T')) > currentDate;
+                }
+
+                let boostBadge = isBoosted ? `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` : '';
+
+                let boostActionBtn = '';
+                if (currentTab === 'upcoming') {
+                    if (isBoosted) {
+                        boostActionBtn = `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate.replace(' ', 'T')).toLocaleDateString('fr-FR')}</span>`;
+                    } else {
+                        boostActionBtn = `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
+                    }
+                } else {
+                     boostActionBtn = `<span class="text-xs text-gray-400 font-bold px-2 flex items-center gap-1">Terminé</span>`;
+                }
+
+                let imageBlock = imgSrc ?
+                    `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` :
+                    `<div class="relative h-40 w-full bg-gradient-to-r ${currentTab === 'history' ? 'from-gray-500 to-gray-400' : 'from-[#1C5B8F] to-blue-600'} cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
+
+                card.innerHTML = `
+                    ${imageBlock}
+                    <div class="p-6 flex-1 flex flex-col ${currentTab === 'history' ? 'opacity-80' : ''}">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="inline-block px-3 py-1 bg-[#1C5B8F] text-white text-xs font-bold rounded-full shadow-sm">${badgePrice}</span>
+                            <span class="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">${evt.nombre_place} places</span>
+                        </div>
+                        
+                        <h3 class="text-lg font-bold text-gray-800 mb-2 leading-tight cursor-pointer hover:text-[#1C5B8F] transition" onclick="openDetailsModal(${evtId})">${evt.nom}</h3>
+                        <p class="text-sm text-gray-500 mb-6 flex-1 line-clamp-2">${evt.description}</p>
+                        
+                        <div class="space-y-2 mt-auto text-sm text-gray-600">
+                            <div class="flex items-start"><span class="truncate">📍 ${evt.lieu}</span></div>
+                            <div class="flex items-center"><span class="truncate">📅 ${formatDisplayDate(evt.date_debut)}</span></div>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center gap-2">
+                            <div class="flex gap-2 flex-wrap justify-end items-center w-full">
+                                ${boostActionBtn}
+                                <button onclick="openParticipantsModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">👥 Inscrits</button>
+                                ${currentTab === 'upcoming' ? `<button onclick="openEditModal(${evtId})" class="text-blue-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>` : ''}
+                                <button onclick="openDeleteModal(${evtId})" class="text-red-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Supprimer</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const meRes = await fetch(`${API_URL}/auth/me-provider`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (meRes.ok) {
+                    const data = await meRes.json();
+                    if (data.status && (data.status.toLowerCase() === 'validé' || data.status.toLowerCase() === 'valide')) {
+                        document.getElementById('main-content-valide').classList.remove('hidden');
+                        currentProviderId = data.id_prestataire || data.id || data.ID;
+                        window.currentUserId = currentProviderId;
+                        
+                        loadEvents(currentProviderId, currentTab);
+                    }
+                } else {
+                    window.location.href = "/providers/account/signin.php";
+                }
+            } catch (err) {
+                console.error("Erreur auth :", err);
+            }
+        });
 
         async function acheterBoost(typeBoost, targetId = 0) {
             const providerId = window.currentUserId || currentProviderId;
@@ -242,11 +388,9 @@
             };
 
             try {
-                const response = await fetch(`${API_URL}/paiement-boost`, {
+                const response = await fetch(`${API_URL}/prestataire/paiement-boost`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 
@@ -262,54 +406,29 @@
             }
         }
 
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return "-";
+            const d = new Date(dateStr.replace(' ', 'T'));
+            if (isNaN(d)) return "-";
+            return d.toLocaleString('fr-FR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return "";
+            const d = new Date(dateStr.replace(' ', 'T'));
+            if (isNaN(d)) return "";
+            return d.toISOString().slice(0, 16);
+        }
+
         function showAlert(msg, type = "success") {
             const pageAlert = document.getElementById('page-alert');
             pageAlert.textContent = msg;
             pageAlert.className = `p-4 mb-6 rounded-xl font-bold block fade-in ${type === 'success' ? 'text-green-700 bg-green-100 border border-green-400' : 'text-red-700 bg-red-100 border border-red-400'}`;
             pageAlert.classList.remove('hidden');
             setTimeout(() => pageAlert.classList.add('hidden'), 5000);
-        }
-
-        function calculateDuration(start, end) {
-            if (!start || !end) return "-";
-            const startDate = new Date(start);
-            const endDate = new Date(end);
-
-            if (isNaN(startDate) || isNaN(endDate)) return "-";
-
-            let diffMs = endDate - startDate;
-            if (diffMs <= 0) return "0h";
-
-            const diffDays = Math.floor(diffMs / 86400000);
-            const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
-            const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
-
-            let duration = [];
-            if (diffDays > 0) duration.push(`${diffDays}j`);
-            if (diffHrs > 0) duration.push(`${diffHrs}h`);
-            if (diffMins > 0) duration.push(`${diffMins}m`);
-
-            return duration.join(' ');
-        }
-
-        function formatDateForInput(dateStr) {
-            if (!dateStr) return "";
-            const d = new Date(dateStr);
-            if (isNaN(d)) return "";
-            return d.toISOString().slice(0, 16);
-        }
-
-        function formatDisplayDate(dateStr) {
-            if (!dateStr) return "-";
-            const d = new Date(dateStr);
-            if (isNaN(d)) return "-";
-            return d.toLocaleString('fr-FR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
         }
 
         const now = new Date();
@@ -320,152 +439,6 @@
         document.getElementById('create-fin').min = minDT;
         document.getElementById('edit-debut').min = minDT;
         document.getElementById('edit-fin').min = minDT;
-
-        async function openParticipantsModal(eventId) {
-            toggleModal('participants-modal');
-            const listContainer = document.getElementById('participants-list');
-            listContainer.innerHTML = '<li class="text-center text-gray-500 py-4 font-semibold">Chargement des inscrits...</li>';
-
-            try {
-                const res = await fetch(`${API_URL}/prestataire/evenement/${eventId}/participants`, {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-
-                if (res.ok) {
-                    const participants = await res.json();
-                    if (participants.length === 0) {
-                        listContainer.innerHTML = '<li class="text-center text-gray-500 py-6">Aucun senior n\'est encore inscrit à cet évènement.</li>';
-                    } else {
-                        listContainer.innerHTML = '';
-                        participants.forEach(p => {
-                            const li = document.createElement('li');
-                            li.className = 'flex justify-between items-center p-4 bg-white shadow-sm rounded-xl border border-gray-100';
-                            li.innerHTML = `
-                                <div class="flex items-center gap-3">
-                                    <div class="bg-blue-100 text-[#1C5B8F] w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">
-                                        ${p.prenom.charAt(0)}${p.nom.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-gray-800">${p.prenom} ${p.nom}</p>
-                                        <a href="mailto:${p.email}" class="text-sm text-[#1C5B8F] hover:underline">${p.email}</a>
-                                    </div>
-                                </div>
-                            `;
-                            listContainer.appendChild(li);
-                        });
-                    }
-                } else {
-                    listContainer.innerHTML = '<li class="text-center text-red-500 py-4">Erreur lors de la récupération des inscrits.</li>';
-                }
-            } catch (err) {
-                listContainer.innerHTML = '<li class="text-center text-red-500 py-4">Serveur injoignable.</li>';
-            }
-        }
-
-        async function loadEvents(providerId) {
-            const container = document.getElementById('events-container');
-            try {
-                const res = await fetch(`${API_URL}/prestataire/${providerId}/profile`, {
-                    method: 'GET'
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    allEvents = data.evenements || [];
-
-                    container.innerHTML = '';
-
-                    if (allEvents.length === 0) {
-                        container.innerHTML = `
-                            <div class="col-span-full bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm mt-6">
-                                <h3 class="text-xl font-bold text-gray-800 mb-2">Aucun évènement pour le moment</h3>
-                                <p class="text-gray-500 mb-6">Vous n'avez pas encore créé de prestation ou d'évènement.</p>
-                                <button onclick="openCreateModal()" class="text-[#1C5B8F] font-bold hover:underline">Créer mon premier évènement</button>
-                            </div>
-                        `;
-                    } else {
-                        allEvents.forEach(evt => {
-                            const evtId = evt.id_evenement || evt.id || evt.ID;
-                            const card = document.createElement('div');
-                            card.className = "bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col fade-in hover:shadow-md transition-shadow relative";
-
-                            const badgePrice = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
-                            const imgSrc = evt.image ? `${API_URL}${evt.image}` : null;
-
-                            const boostDate = evt.date_fin_boost || evt.DateFinBoost;
-                            const isBoosted = boostDate && new Date(boostDate) > new Date();
-
-                            let boostBadge = isBoosted ?
-                                `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` :
-                                '';
-
-                            let boostActionBtn = isBoosted ?
-                                `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate).toLocaleDateString('fr-FR')}</span>` :
-                                `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
-
-                            let imageBlock = imgSrc ?
-                                `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` :
-                                `<div class="relative h-40 w-full bg-gradient-to-r from-[#1C5B8F] to-blue-600 cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
-
-                            card.innerHTML = `
-                                ${imageBlock}
-                                <div class="p-6 flex-1 flex flex-col">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <span class="inline-block px-3 py-1 bg-[#1C5B8F] text-white text-xs font-bold rounded-full shadow-sm">${badgePrice}</span>
-                                        <span class="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">${evt.nombre_place} places</span>
-                                    </div>
-                                    
-                                    <h3 class="text-lg font-bold text-gray-800 mb-2 leading-tight cursor-pointer hover:text-[#1C5B8F] transition" onclick="openDetailsModal(${evtId})">${evt.nom}</h3>
-                                    <p class="text-sm text-gray-500 mb-6 flex-1 line-clamp-2">${evt.description}</p>
-                                    
-                                    <div class="space-y-2 mt-auto text-sm text-gray-600">
-                                        <div class="flex items-start"><span class="truncate">📍 ${evt.lieu}</span></div>
-                                        <div class="flex items-center"><span class="truncate">📅 ${formatDisplayDate(evt.date_debut)}</span></div>
-                                    </div>
-
-                                    <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center gap-2">
-                                        <div class="flex gap-2 flex-wrap justify-end items-center">
-                                            ${boostActionBtn}
-                                            <button onclick="openParticipantsModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">👥 Inscrits</button>
-                                            <button onclick="openEditModal(${evtId})" class="text-blue-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>
-                                            <button onclick="openDeleteModal(${evtId})" class="text-red-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Supprimer</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            container.appendChild(card);
-                        });
-                    }
-                }
-            } catch (err) {
-                console.error("Erreur de chargement :", err);
-                showAlert("Impossible de charger les évènements.", "error");
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const meRes = await fetch(`${API_URL}/auth/me-provider`, {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                if (meRes.ok) {
-                    const data = await meRes.json();
-                    if (data.status && (data.status.toLowerCase() === 'validé' || data.status.toLowerCase() === 'valide')) {
-                        document.getElementById('main-content-valide').classList.remove('hidden');
-                        currentProviderId = data.id_prestataire || data.id || data.ID;
-
-                        window.currentUserId = currentProviderId;
-
-                        loadEvents(currentProviderId);
-                    }
-                } else {
-                    window.location.href = "/providers/account/signin.php";
-                }
-            } catch (err) {
-                console.error("Erreur auth :", err);
-            }
-        });
 
         function openCreateModal() {
             document.getElementById('form-create-event').reset();
@@ -522,8 +495,8 @@
             document.getElementById('details-nom').textContent = evt.nom;
             document.getElementById('details-desc').textContent = evt.description;
             document.getElementById('details-lieu').textContent = evt.lieu;
-            document.getElementById('details-debut').textContent = formatDateTime(evt.date_debut);
-            document.getElementById('details-fin').textContent = evt.date_fin ? formatDateTime(evt.date_fin) : 'Non définie';
+            document.getElementById('details-debut').textContent = formatDisplayDate(evt.date_debut);
+            document.getElementById('details-fin').textContent = evt.date_fin ? formatDisplayDate(evt.date_fin) : 'Non définie';
             document.getElementById('details-prix').textContent = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
             document.getElementById('details-places').textContent = `${evt.nombre_place} places disponibles`;
 
@@ -531,10 +504,58 @@
             if (evt.image) {
                 header.style.backgroundImage = `url('${API_URL}${evt.image}')`;
             } else {
-                header.style.backgroundImage = `linear-gradient(to right, #1C5B8F, #2563EB)`;
+                header.style.backgroundImage = currentTab === 'history' ? `linear-gradient(to right, #6B7280, #9CA3AF)` : `linear-gradient(to right, #1C5B8F, #2563EB)`;
             }
 
             toggleModal('details-modal');
+        }
+
+        async function openParticipantsModal(eventId) {
+            toggleModal('participants-modal');
+            const listContainer = document.getElementById('participants-list');
+            listContainer.innerHTML = '<li class="text-center text-gray-500 py-4 font-semibold">Chargement des inscrits...</li>';
+
+            try {
+                const res = await fetch(`${API_URL}/prestataire/evenement/${eventId}/participants`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (res.ok) {
+                    const participants = await res.json();
+                    if (participants.length === 0) {
+                        listContainer.innerHTML = '<li class="text-center text-gray-500 py-6">Aucun senior n\'est encore inscrit à cet évènement.</li>';
+                    } else {
+                        listContainer.innerHTML = '';
+                        participants.forEach(p => {
+                            const seniorId = p.id || p.ID || p.id_utilisateur;
+
+                            const li = document.createElement('li');
+                            li.className = 'flex justify-between items-center p-4 bg-white shadow-sm rounded-xl border border-gray-100';
+                            
+                            li.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-blue-100 text-[#1C5B8F] w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0">
+                                        ${p.prenom.charAt(0)}${p.nom.charAt(0)}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-gray-800 truncate">${p.prenom} ${p.nom}</p>
+                                        <a href="mailto:${p.email}" class="text-sm text-[#1C5B8F] hover:underline truncate block">${p.email}</a>
+                                    </div>
+                                </div>
+                                <a href="/providers/communication/messaging.php/${p.prenom}/${p.nom}/${seniorId}" class="flex items-center gap-2 bg-[#1C5B8F] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors shadow-sm shrink-0">
+                                    Message
+                                </a>
+                            `;
+                            listContainer.appendChild(li);
+                        });
+                    }
+                } else {
+                    listContainer.innerHTML = '<li class="text-center text-red-500 py-4">Erreur lors de la récupération des inscrits.</li>';
+                }
+            } catch (err) {
+                listContainer.innerHTML = '<li class="text-center text-red-500 py-4">Serveur injoignable.</li>';
+            }
         }
 
         function openEditModal(id) {

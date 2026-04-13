@@ -170,7 +170,6 @@
                 btnStripe.disabled = true;
 
                 const providerId = window.currentUserId || 1; 
-                console.log(providerId)
 
                 const data = {
                     user_id: parseInt(providerId),

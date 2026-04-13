@@ -35,13 +35,12 @@
             
 
             <main class="p-8">
-                
                 <div class="max-w-7xl mx-auto">
                     
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
                         <div>
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mon Planning</h1>
-                            <p class="text-gray-500 mt-1">Gérez vos disponibilités et consultez vos interventions à venir.</p>
+                            <p class="text-gray-500 mt-1">Gérez vos disponibilités et consultez votre historique d'interventions.</p>
                         </div>
                     </div>
 
@@ -60,9 +59,13 @@
                     </div>
 
                     <div id="planning-content" class="hidden fade-in">
-                        <div class="flex gap-4 mb-6">
-                            <span class="flex items-center text-sm font-bold text-gray-600 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-                                <div class="w-3 h-3 rounded-full bg-[#E1AB2B] mr-2"></div> Interventions prévues
+                        
+                        <div class="flex flex-wrap gap-4 mb-6">
+                            <span class="flex items-center text-sm font-bold text-[#1C5B8F] bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200">
+                                <div class="w-3 h-3 rounded-full bg-[#E1AB2B] mr-2"></div> À venir
+                            </span>
+                            <span class="flex items-center text-sm font-bold text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
+                                <div class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div> Terminé
                             </span>
                         </div>
 
@@ -70,7 +73,6 @@
                     </div>
 
                 </div>
-
             </main>
         </div>
 
@@ -81,6 +83,9 @@
                     <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="text-white hover:text-red-300 transition-colors text-2xl leading-none">&times;</button>
                 </div>
                 <div class="p-6 space-y-4">
+                    <div id="modalStatusContainer" class="hidden mb-2">
+                        <span id="modalStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"></span>
+                    </div>
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
                         <span class="text-xl mr-3">📅</span>
                         <div>
@@ -121,36 +126,20 @@
     </div>
 
     <script>
-        const API_URL = window.API_BASE_URL;
+        const API_URL = window.API_BASE_URL || "http://localhost:8082";
         const ROUTE_PLANNING = "/prestataire/planning"; 
+        
+        let calendarInstance = null;
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function loadPlanning() {
             const statusMessage = document.getElementById('status_message');
             const calendarEl = document.getElementById('calendar');
             const planningContent = document.getElementById('planning-content');
-            const noSubContainer = document.getElementById('no-sub-container');
+
+            statusMessage.classList.remove('hidden');
+            planningContent.classList.add('opacity-50');
 
             try {
-                const authResponse = await fetch(`${API_URL}/auth/me-provider`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-
-                if (!authResponse.ok) {
-                    window.location.href = "/front/providers/account/signin.php";
-                    return;
-                }
-
-                const user = await authResponse.json();
-                
-                if (!user.status || (user.status.toLowerCase() !== 'validé' && user.status.toLowerCase() !== 'valide')) {
-                    statusMessage.classList.add('hidden');
-                    noSubContainer.classList.remove('hidden');
-                    noSubContainer.classList.add('flex'); 
-                    return;
-                }
-
                 const planningResponse = await fetch(`${API_URL}${ROUTE_PLANNING}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
@@ -162,29 +151,46 @@
                     const planningData = result.data || [];
                     
                     statusMessage.classList.add('hidden');
-                    planningContent.classList.remove('hidden');
+                    planningContent.classList.remove('hidden', 'opacity-50');
 
-                    const eventsData = planningData.map(item => ({
-                        id: item.id_evenement,
-                        title: item.nom,
-                        start: item.date_debut, 
-                        end: item.date_fin || undefined,
-                        backgroundColor: '#E1AB2B',
-                        borderColor: '#E1AB2B',
-                        textColor: '#1C5B8F', 
-                        extendedProps: {
-                            lieu: item.lieu || 'Non spécifié',
-                            places: item.nombre_place || 0
-                        }
-                    }));
+                    const currentDate = new Date();
 
-                    const calendar = new FullCalendar.Calendar(calendarEl, {
+                    const eventsData = planningData.map(item => {
+                        const startStr = item.date_debut.replace(' ', 'T');
+                        const endStr = item.date_fin ? item.date_fin.replace(' ', 'T') : null;
+                        
+                        const startDate = new Date(startStr);
+                        const endDate = endStr ? new Date(endStr) : new Date(startDate.getTime() + (2 * 3600 * 1000));
+                        
+                        const isPast = endDate < currentDate;
+
+                        return {
+                            id: item.id_evenement,
+                            title: item.nom,
+                            start: startStr, 
+                            end: endStr || undefined,
+                            backgroundColor: isPast ? '#9CA3AF' : '#E1AB2B', 
+                            borderColor: isPast ? '#9CA3AF' : '#E1AB2B',
+                            textColor: isPast ? '#ffffff' : '#1C5B8F', 
+                            extendedProps: {
+                                lieu: item.lieu || 'Non spécifié',
+                                places: item.nombre_place || 0,
+                                isPast: isPast
+                            }
+                        };
+                    });
+
+                    if (calendarInstance !== null) {
+                        calendarInstance.destroy();
+                    }
+
+                    calendarInstance = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'dayGridMonth',
                         locale: 'fr',
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay' 
+                            right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth' 
                         },
                         events: eventsData,
                         height: 'auto',
@@ -207,19 +213,65 @@
                             document.getElementById('modalLocation').textContent = evt.extendedProps.lieu;
                             document.getElementById('modalPlaces').textContent = evt.extendedProps.places + ' personnes max';
                             
+                            const statusContainer = document.getElementById('modalStatusContainer');
+                            const statusBadge = document.getElementById('modalStatusBadge');
+                            
+                            statusContainer.classList.remove('hidden');
+                            if (evt.extendedProps.isPast) {
+                                statusBadge.textContent = "Terminé";
+                                statusBadge.className = "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-gray-200 text-gray-700";
+                            } else {
+                                statusBadge.textContent = "À venir";
+                                statusBadge.className = "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-yellow-100 text-yellow-800";
+                            }
+
                             document.getElementById('eventModal').classList.remove('hidden');
                         }
                     });
 
-                    calendar.render();
+                    calendarInstance.render();
 
                 } else {
-                    statusMessage.textContent = "Impossible de charger les évènements du planning.";
+                    statusMessage.textContent = "Impossible de charger le planning.";
                     statusMessage.classList.replace("text-gray-500", "text-red-500");
                     statusMessage.classList.remove("animate-pulse");
                 }
             } catch (error) {
                 statusMessage.textContent = "Erreur de connexion au serveur.";
+                statusMessage.classList.replace("text-gray-500", "text-red-500");
+                statusMessage.classList.remove("animate-pulse");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const statusMessage = document.getElementById('status_message');
+            const noSubContainer = document.getElementById('no-sub-container');
+
+            try {
+                const authResponse = await fetch(`${API_URL}/auth/me-provider`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+
+                if (!authResponse.ok) {
+                    window.location.href = "/providers/account/signin.php";
+                    return;
+                }
+
+                const user = await authResponse.json();
+                
+                if (!user.status || (user.status.toLowerCase() !== 'validé' && user.status.toLowerCase() !== 'valide')) {
+                    statusMessage.classList.add('hidden');
+                    noSubContainer.classList.remove('hidden');
+                    noSubContainer.classList.add('flex'); 
+                    return;
+                }
+
+                loadPlanning();
+
+            } catch (error) {
+                statusMessage.textContent = "Erreur de vérification du compte.";
                 statusMessage.classList.replace("text-gray-500", "text-red-500");
                 statusMessage.classList.remove("animate-pulse");
             }

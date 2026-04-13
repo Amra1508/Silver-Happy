@@ -133,6 +133,7 @@ func main() {
 	http.HandleFunc("/auth/update-provider", providers.UpdatePrestataire)
 
 	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
+	http.HandleFunc("/prestataire/{id}/events", providers.Get_Prestataire_Events)
 	http.HandleFunc("/prestataire/evenement/{id}/participants", providers.Get_Event_Participants)
 
 	http.HandleFunc("/prestataire/planning", providers.Read_Provider_Planning)

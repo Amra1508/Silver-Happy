@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"main/auth"
 	"main/db"
@@ -37,12 +36,12 @@ func Read_Provider_Planning(response http.ResponseWriter, request *http.Request)
 	providerID := claims.UserID
 
 	sqlQuery := `
-        SELECT e.id_evenement, e.nom, e.date_debut, e.date_fin, e.lieu, e.nombre_place 
-        FROM evenement e
-        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
-        WHERE pe.id_prestataire = ? AND e.date_debut >= CURRENT_DATE()
-        ORDER BY e.date_debut ASC
-    `
+		SELECT e.id_evenement, e.nom, e.date_debut, IFNULL(e.date_fin, ''), e.lieu, e.nombre_place 
+		FROM evenement e
+		INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+		WHERE pe.id_prestataire = ?
+		ORDER BY e.date_debut ASC
+	`
 
 	rows, err := db.DB.Query(sqlQuery, providerID)
 	if err != nil {
@@ -54,8 +53,7 @@ func Read_Provider_Planning(response http.ResponseWriter, request *http.Request)
 	var planning []map[string]interface{}
 	for rows.Next() {
 		var id, places int
-		var nom, lieu string
-		var debut, fin sql.NullString
+		var nom, lieu, debut, fin string
 
 		if err := rows.Scan(&id, &nom, &debut, &fin, &lieu, &places); err == nil {
 			evt := map[string]interface{}{
@@ -63,12 +61,10 @@ func Read_Provider_Planning(response http.ResponseWriter, request *http.Request)
 				"nom":          nom,
 				"lieu":         lieu,
 				"nombre_place": places,
+				"date_debut":   debut,
 			}
-			if debut.Valid {
-				evt["date_debut"] = debut.String
-			}
-			if fin.Valid {
-				evt["date_fin"] = fin.String
+			if fin != "" {
+				evt["date_fin"] = fin
 			}
 			planning = append(planning, evt)
 		}

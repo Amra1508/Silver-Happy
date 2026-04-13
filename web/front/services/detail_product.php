@@ -142,7 +142,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
         }
 
         function showStockError() {
-            console.log("Debug Stock - Panier:", quantitePanier, "Max:", maxStock);
 
             const msg = quantitePanier > 0 ?
                 `Vous avez déjà ${quantitePanier} articles au panier. Stock max : ${maxStock}.` :
