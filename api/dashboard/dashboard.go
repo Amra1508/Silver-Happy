@@ -73,7 +73,7 @@ func Revenus(response http.ResponseWriter, request *http.Request) {
             DATE(date_paiement) as date, 
             SUM(
                 CASE 
-                    WHEN id_paiement IN (SELECT id_paiement FROM INSCRIPTION WHERE id_paiement IS NOT NULL) THEN prix * 0.10
+                    WHEN id_paiement IN (SELECT id_paiement FROM INSCRIPTION WHERE id_paiement IS NOT NULL) THEN prix * 0.01
                     ELSE prix 
                 END
             ) as total 

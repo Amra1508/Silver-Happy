@@ -61,7 +61,7 @@ func Revenus_Prestataire(response http.ResponseWriter, request *http.Request) {
 	providerID := request.PathValue("id")
 
 	query := `
-		SELECT DATE(p.date_paiement) as date, SUM(p.prix * 0.90) as total 
+		SELECT DATE(p.date_paiement) as date, SUM(p.prix * 0.99) as total 
 		FROM PAIEMENT p
 		JOIN INSCRIPTION i ON p.id_paiement = i.id_paiement
 		JOIN PRESTATAIRE_EVENEMENT pe ON i.id_evenement = pe.id_evenement
