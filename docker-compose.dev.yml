@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # Base de données MariaDB locale pour le stockage des données
   db-silver-happy:
     image: mariadb:10.11
     container_name: db-silver-happy
@@ -19,6 +20,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # Application Frontend (Web) construite localement avec montage du code pour le développement
   web-silver-happy:
     build: ./web
     container_name: web-silver-happy
@@ -41,6 +43,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
 
+  # Backend API en Go construit localement et exécuté via 'go run' (mode développement)
   api-silver-happy:
     build: ./api
     container_name: api-silver-happy
@@ -54,13 +57,22 @@ services:
       - ./api:/api
     command: go run .
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8082/",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
     env_file:
       - .env
 
+  # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
     image: phpmyadmin:latest
     container_name: pma-silver-happy
