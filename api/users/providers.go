@@ -302,6 +302,35 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
     json.NewEncoder(response).Encode(dataResponse)
 }
 
+func Get_Note_Moyenne(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") { return }
+
+    prestaID := request.PathValue("id")
+
+    sqlQuery := `
+        SELECT 
+            COALESCE(AVG(note), 0) as moyenne, 
+            COUNT(id_avis) as nombre_avis 
+        FROM AVIS 
+        WHERE id_prestataire = ?`
+
+    var moyenne float64
+    var nbAvis int
+
+    err := db.DB.QueryRow(sqlQuery, prestaID).Scan(&moyenne, &nbAvis)
+    if err != nil {
+        fmt.Println("Erreur SQL:", err)
+        http.Error(response, "Erreur lors de la récupération des notes", http.StatusInternalServerError)
+        return
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]interface{}{
+        "moyenne":     moyenne,
+        "nombre_avis": nbAvis,
+    })
+}
+
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "POST") {
 		return

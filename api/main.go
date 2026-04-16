@@ -149,6 +149,8 @@ func main() {
 	http.HandleFunc("/prestataire/{id}/invoices", providers.Get_Invoices_Prestataire)
 	http.HandleFunc("/prestataire/{id}/revenues", providers.Revenus_Prestataire)
 	http.HandleFunc("/prestataire/{id}/read-avis", communication.Read_Prestataire_Avis)
+	http.HandleFunc("/prestataire/{id}/read-one", communication.Read_One_Prestataire_Avis)
+	http.HandleFunc("/prestataire/{id}/note-moyenne", users.Get_Note_Moyenne)
 	http.HandleFunc("/message/prestataire/get/{id1}/with/{id2}", providers.Get_Message)
 	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
 	http.HandleFunc("/message/prestataire/delete/{id}", providers.Delete_Message)

@@ -46,6 +46,7 @@
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes avis</h1>
                             <p class="text-gray-500 mt-1">Découvrez ce que les seniors ont pensé de vos prestations.</p>
                         </div>
+                        <div id="note"> </div>
                     </div>
 
                     <div id="page-alert" class="hidden p-4 rounded-xl font-semibold text-sm text-center"></div>
@@ -66,21 +67,35 @@
     <script>
         const API_BASE = window.API_BASE_URL;
 
-        function getUserId() {
-            return window.currentUserId || null;
+        window.addEventListener('auth_ready', () => {
+            userId = window.currentUserId;
+            fetchMyAvis();
+            noteMoyenne();
+            setInterval(fetchMyAvis, 2000);
+            setInterval(noteMoyenne, 2000);
+        });
+
+        async function noteMoyenne() {
+            try {
+                const response = await fetch(`${API_BASE}/prestataire/${userId}/note-moyenne`);
+                const stats = await response.json();
+
+                const note = document.getElementById('note');
+                note.innerHTML = '';
+
+                note.innerHTML += `
+                        <div class="text-3xl font-semibold text-[#1C5B8F]">
+                            Ma moyenne <br>
+                        </div> <p class="text-gray-500 mt-1">
+                                ${stats.moyenne.toFixed(1)}/5 (${stats.nombre_avis} avis)
+                            </p>`;
+
+            } catch (err) {
+                console.error("Erreur stats:", err);
+            }
         }
 
         async function fetchMyAvis() {
-            const userId = getUserId();
-
-            if (!userId) {
-                if (!window.retryCount) window.retryCount = 0;
-                if (window.retryCount < 30) {
-                    window.retryCount++;
-                    setTimeout(fetchMyAvis, 100);
-                }
-                return;
-            }
 
             try {
                 const response = await fetch(`${API_BASE}/prestataire/${userId}/read-avis`);
@@ -95,17 +110,38 @@
                 }
 
                 reviews.forEach(a => {
+                    const id = a.id_avis || a.id;
+
                     const stars = "★".repeat(a.note) + "☆".repeat(5 - a.note);
+
+                    const fullNom = `${a.prenom_u || ''} ${a.nom_u || ''}`.trim();
+
+                    const labelUser = (fullNom !== "") ?
+                        `<div class="flex items-center gap-2 mb-2">
+                            <span class="text-[11px] font-bold text-[#1C5B8F] bg-blue-50 px-2 py-0.5 rounded">${fullNom}</span>
+                        </div>` :
+                        "";
+
                     container.innerHTML += `
-                <div class="bg-white border border-gray-100 p-6 rounded-[2rem] shadow-lg">
-                    <div class="flex justify-between mb-4">
-                        <span class="bg-blue-50 text-[#1C5B8F] px-3 py-1 rounded-full text-[10px] font-bold uppercase">${a.categorie}</span>
-                        <span class="text-[10px] text-gray-400">${new Date(a.date).toLocaleDateString()}</span>
-                    </div>
-                    <h3 class="text-xl font-bold mb-1">${a.titre}</h3>
-                    <div class="text-[#E1AB2B] mb-3">${stars}</div>
-                    <p class="text-gray-500 text-sm mb-2 italic line-clamp-3">"${a.description}"</p>
-                </div>`;
+                        <div class="bg-white border border-gray-100 p-6 rounded-[2rem] shadow-lg">
+                            <div class="flex justify-between mb-4">
+                                ${labelUser}
+                                <span class="text-[10px] text-gray-400">${new Date(a.date).toLocaleDateString()}</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-1">${a.titre}</h3>
+                            <div class="text-[#E1AB2B] mb-3">${stars}</div>
+
+                            <p class="text-gray-500 mb-8 flex-grow leading-relaxed line-clamp-1 italic">
+                                ${a.description}
+                            </p>
+
+                            <div class="mt-auto pt-4 border-t border-gray-50">
+                                <a href="/providers/communication/detail_review.php?id=${id}" class="inline-flex items-center text-[#1C5B8F] font-bold hover:text-[#E1AB2B] transition-colors group">
+                                    Lire le témoignage <span class="ml-2 transition-transform group-hover:translate-x-1">→</span>
+                                </a>
+                            </div>
+                            
+                        </div>`;
                 });
             } catch (err) {
                 console.error("Erreur chargement avis:", err);

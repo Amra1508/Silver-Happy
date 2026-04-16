@@ -157,9 +157,9 @@ func Read_Prestataire_Avis(response http.ResponseWriter, request *http.Request) 
 
 	query := `
 		SELECT a.id_avis, a.description, a.titre, a.note, a.date, a.categorie,
-				IFNULL(p.nom, '') as nom_p, IFNULL(p.prenom, '') as prenom_p
+				IFNULL(u.nom, '') as nom_u, IFNULL(u.prenom, '') as prenom_u
 		FROM AVIS a
-		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
+		LEFT JOIN UTILISATEUR u ON a.id_utilisateur = u.id_utilisateur
 		WHERE a.id_prestataire = ?
 		ORDER BY a.date DESC`
 
@@ -173,15 +173,45 @@ func Read_Prestataire_Avis(response http.ResponseWriter, request *http.Request) 
 	var reviews []map[string]interface{}
 	for rows.Next() {
 		var id, note int
-		var desc, titre, date, cat, nomP, prenomP string
-		rows.Scan(&id, &desc, &titre, &note, &date, &cat, &nomP, &prenomP)
+		var desc, titre, date, cat, nomU, prenomU string
+		rows.Scan(&id, &desc, &titre, &note, &date, &cat, &nomU, &prenomU)
 		reviews = append(reviews, map[string]interface{}{
 			"id_avis": id, "titre": titre, "description": desc, "note": note,
-			"date": date, "categorie": cat, "prestataire": prenomP + " " + nomP,
+			"date": date, "categorie": cat, "prenom_u": prenomU, "nom_u": nomU,
 		})
 	}
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(reviews)
+}
+
+func Read_One_Prestataire_Avis(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") { return }
+
+	id := request.PathValue("id")
+
+	sqlQuery := `
+		SELECT 
+			a.id_avis, a.description, a.titre, a.note, a.date, a.categorie,
+			IFNULL(u.nom, '') as nom_u, IFNULL(u.prenom, '') as prenom_u
+		FROM AVIS a
+		LEFT JOIN UTILISATEUR u ON a.id_utilisateur = u.id_utilisateur
+		WHERE a.id_avis = ?`
+
+	var idAvis, note int
+	var desc, titre, date, cat, nomU, prenomU string
+
+	err := db.DB.QueryRow(sqlQuery, id).Scan(&idAvis, &desc, &titre, &note, &date, &cat, &nomU, &prenomU)
+	if err != nil {
+		http.Error(response, "Avis non trouvé", http.StatusNotFound)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"id_avis": idAvis, "description": desc, "titre": titre, "note": note,
+		"date": date, "categorie": cat,
+		"nom_u": nomU, "prenom_u": prenomU,
+	})
 }
 
 func Create_Avis(response http.ResponseWriter, request *http.Request) {

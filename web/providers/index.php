@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,12 +14,15 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Alata', 'sans-serif'] }
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
                 }
             }
         }
     </script>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="flex min-h-screen">
@@ -26,11 +30,11 @@
         <?php include("includes/sidebar.php"); ?>
 
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-            
+
             <main class="p-8">
-                
+
                 <div id="main-content-valide" class="hidden space-y-8 max-w-7xl mx-auto">
-                    
+
                     <div class="flex justify-between items-end">
                         <div>
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Vue d'ensemble</h1>
@@ -74,7 +78,10 @@
                             <div class="bg-green-100 p-4 rounded-full text-green-600"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Note moyenne</p>
-                                <p class="text-2xl font-bold text-gray-800">4.8 <span class="text-sm font-normal text-gray-400">/5</span></p>
+                                <p id="note" class="text-2xl font-bold text-gray-800">
+                                    <span id="note-valeur">--</span>
+                                    <span class="text-sm font-normal text-gray-400">/5</span>
+                                </p>
                             </div>
                         </div>
 
@@ -98,13 +105,13 @@
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        
+
                         <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold text-[#1C5B8F]">Vos prochaines interventions</h2>
                                 <a href="/providers/account/planning.php" class="text-sm text-[#E1AB2B] font-semibold hover:underline">Voir tout le planning</a>
                             </div>
-                            
+
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse">
                                     <thead>
@@ -116,7 +123,9 @@
                                         </tr>
                                     </thead>
                                     <tbody id="events-table-body">
-                                        <tr><td colspan="4" class="py-6 text-center text-gray-500 text-sm">Chargement du planning...</td></tr>
+                                        <tr>
+                                            <td colspan="4" class="py-6 text-center text-gray-500 text-sm">Chargement du planning...</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -126,7 +135,7 @@
                             <div>
                                 <h2 class="text-xl font-bold mb-2">Besoin d'aide ?</h2>
                                 <p class="text-blue-100 text-sm mb-6">L'équipe Silver Happy est disponible pour vous accompagner dans vos démarches ou en cas d'urgence avec un senior.</p>
-                                
+
                                 <div class="space-y-3">
                                     <button class="w-full bg-white/10 hover:bg-white/20 transition-colors py-3 px-4 rounded-xl flex items-center justify-between text-sm font-semibold">
                                         Contacter le support client
@@ -149,7 +158,7 @@
                         <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-6"></div>
                         <h1 class="text-2xl font-bold text-gray-800 mb-4">Votre compte est en cours d'examen</h1>
                         <p class="text-gray-600 mb-6">
-                            Merci d'avoir rejoint SilverHappy. Notre équipe vérifie actuellement vos documents. 
+                            Merci d'avoir rejoint SilverHappy. Notre équipe vérifie actuellement vos documents.
                             Cette étape est nécessaire pour garantir la sécurité de nos aînés.
                         </p>
                         <p class="text-sm text-gray-500">
@@ -173,8 +182,31 @@
     </div>
 
     <script>
+        const API_BASE = window.API_BASE_URL;
+
+        window.addEventListener('auth_ready', () => {
+            providerId = window.currentUserId;
+            noteMoyenne();
+            setInterval(noteMoyenne, 2000);
+        });
+
+        async function noteMoyenne() {
+
+            try {
+                const response = await fetch(`${API_BASE}/prestataire/${providerId}/note-moyenne`);
+                const stats = await response.json();
+
+                const noteElement = document.getElementById('note-valeur');
+                if (noteElement) {
+                    noteElement.textContent = stats.moyenne.toFixed(1);
+                }
+
+            } catch (err) {
+                console.error("Erreur stats:", err);
+            }
+        }
+
         async function acheterBoost(typeBoost, targetId = 0) {
-            const providerId = window.currentUserId; 
             if (!providerId) return alert("Vous devez être connecté pour effectuer cette action.");
 
             const data = {
@@ -184,16 +216,17 @@
             };
 
             try {
-                const apiBase = window.API_BASE_URL;
-                const response = await fetch(`${apiBase}/prestataire/paiement-boost`, {
+                const response = await fetch(`${API_BASE}/prestataire/paiement-boost`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
                     const result = await response.json();
-                    window.location.href = result.url; 
+                    window.location.href = result.url;
                 } else {
                     alert("Erreur lors de l'initialisation du paiement du boost.");
                 }
@@ -208,15 +241,18 @@
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/${providerId}/revenues`);
                 if (res.ok) {
                     const data = await res.json();
-                    
+
                     const labels = data.map(item => {
                         const d = new Date(item.date);
-                        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                        return d.toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: 'short'
+                        });
                     });
                     const totals = data.map(item => item.total);
 
                     const ctx = document.getElementById('revenueChart').getContext('2d');
-                    
+
                     new Chart(ctx, {
                         type: 'line',
                         data: {
@@ -241,7 +277,9 @@
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false },
+                                legend: {
+                                    display: false
+                                },
                                 tooltip: {
                                     callbacks: {
                                         label: function(context) {
@@ -251,13 +289,21 @@
                                 }
                             },
                             scales: {
-                                y: { 
+                                y: {
                                     beginAtZero: true,
-                                    grid: { color: '#f3f4f6' },
-                                    ticks: { callback: function(value) { return value + ' €'; } }
+                                    grid: {
+                                        color: '#f3f4f6'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + ' €';
+                                        }
+                                    }
                                 },
                                 x: {
-                                    grid: { display: false }
+                                    grid: {
+                                        display: false
+                                    }
                                 }
                             }
                         }
@@ -269,22 +315,22 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            
+
             try {
                 const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
                     method: 'GET',
-                    credentials: 'include' 
+                    credentials: 'include'
                 });
 
                 if (meRes.ok) {
                     const meData = await meRes.json();
                     const providerId = meData.id_prestataire || meData.id || meData.ID;
                     window.currentUserId = providerId;
-                    
+
                     if (meData.status && (meData.status.toLowerCase() === 'validé' || meData.status.toLowerCase() === 'valide')) {
-                        
+
                         document.getElementById('welcome-text').textContent = `Bonjour ${meData.prenom}, voici l'activité de votre profil.`;
-                        
+
                         loadRevenueChart(providerId);
 
                         const profileRes = await fetch(`${window.API_BASE_URL}/prestataire/${providerId}/profile`, {
@@ -293,23 +339,29 @@
 
                         if (profileRes.ok) {
                             const profileData = await profileRes.json();
-                            
+
                             document.getElementById('stat-tarif').innerHTML = `${profileData.prestataire.Tarifs || profileData.prestataire.tarifs || 0} € <span class="text-sm font-normal text-gray-400">/h</span>`;
 
                             const evenements = profileData.evenements || [];
                             document.getElementById('stat-events-count').textContent = evenements.length;
 
                             const tbody = document.getElementById('events-table-body');
-                            tbody.innerHTML = ''; 
+                            tbody.innerHTML = '';
 
                             if (evenements.length === 0) {
                                 tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-500 text-sm">Aucune prestation prévue prochainement.</td></tr>`;
                             } else {
                                 evenements.slice(0, 5).forEach(evt => {
                                     let dateText = "Non définie";
-                                    if(evt.date_debut) {
+                                    if (evt.date_debut) {
                                         const d = new Date(evt.date_debut);
-                                        dateText = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit' });
+                                        dateText = d.toLocaleDateString('fr-FR', {
+                                            weekday: 'short',
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
                                     }
 
                                     const tr = document.createElement('tr');
@@ -334,4 +386,5 @@
         });
     </script>
 </body>
+
 </html>
