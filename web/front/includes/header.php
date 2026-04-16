@@ -34,6 +34,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
 
+        <button onclick="readALoud()" aria-label="Lire la page à voix haute" class="header-button transition-all group ml-2 focus:outline-none focus:ring-4 focus:ring-[#1C5B8F]" title="Lecture vocale">
+            <img src="/front/icons/assistant-vocal.svg" alt="" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
+        </button>
+
         <div class="relative group z-[100]">
             <button class="flex items-center gap-2 header-button transition-all">
                 <img id="current-lang-flag" src="/front/icons/france.png" alt="Lang" class="h-6 w-6 object-contain">
@@ -155,5 +159,28 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 window.dispatchEvent(new Event('auth_ready'));
             } catch (err) { console.error(err); }
         });
+
+        function readALoud() {
+            if ('speechSynthesis' in window) {
+                
+                if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                    return;
+                }
+
+
+                let texteALire = document.body.innerText; 
+                
+                let message = new SpeechSynthesisUtterance(texteALire);
+                message.lang = 'fr-FR'; 
+                message.rate = 1;     
+                message.pitch = 1;
+
+                window.speechSynthesis.speak(message);
+                
+            } else {
+                alert("Désolé, votre navigateur ne supporte pas la lecture vocale.");
+            }
+        }
     </script>
 </header>
