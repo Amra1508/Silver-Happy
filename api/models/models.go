@@ -232,3 +232,13 @@ type Participant struct {
 	Prenom string `json:"prenom"`
 	Email  string `json:"email"`
 }
+
+type FactureMensuelle struct {
+	IDFacture       int     `json:"id_facture"`
+	MontantBrut     float64 `json:"montant_brut"`
+	FraisPlateforme float64 `json:"frais_plateforme"`
+	MontantNet      float64 `json:"montant_net"`
+	MoisAnnee       string  `json:"mois_annee"`
+	Date            string  `json:"date"`
+	Statut          string  `json:"statut"`
+}

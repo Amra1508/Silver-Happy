@@ -293,9 +293,14 @@ func InitDB() {
 	CREATE TABLE IF NOT EXISTS FACTURE(
 		id_facture INT AUTO_INCREMENT PRIMARY KEY,
 		montant DOUBLE,
+		frais_plateforme DOUBLE,
+		montant_net DOUBLE,
+		mois_annee VARCHAR(7) NOT NULL,
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
+		statut ENUM('en_attente', 'paye', 'annule') DEFAULT 'en_attente',
 		id_prestataire INT NOT NULL,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire)
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
+		UNIQUE KEY unique_facture_mois (id_prestataire, mois_annee)
 	);
 	CREATE TABLE IF NOT EXISTS CODE_REDUCTION (
 		id_reduction INT AUTO_INCREMENT PRIMARY KEY,

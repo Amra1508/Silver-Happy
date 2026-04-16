@@ -132,6 +132,8 @@ func main() {
     http.HandleFunc("/auth/me-provider", providers.MePrestataire)
 	http.HandleFunc("/auth/update-provider", providers.UpdatePrestataire)
 
+	providers.StartInvoiceCron(db.DB)
+
 	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
 	http.HandleFunc("/prestataire/{id}/events", providers.Get_Prestataire_Events)
 	http.HandleFunc("/prestataire/evenement/{id}/participants", providers.Get_Event_Participants)
@@ -147,6 +149,7 @@ func main() {
 	http.HandleFunc("/prestataire/success-boost", providers.Success_Boost)
 
 	http.HandleFunc("/prestataire/{id}/invoices", providers.Get_Invoices_Prestataire)
+	http.HandleFunc("/prestataire/{id}/factures-mensuelles", providers.Get_Monthly_Invoices)
 	http.HandleFunc("/prestataire/{id}/revenues", providers.Revenus_Prestataire)
 	http.HandleFunc("/prestataire/{id}/read-avis", communication.Read_Prestataire_Avis)
 	http.HandleFunc("/prestataire/{id}/read-one", communication.Read_One_Prestataire_Avis)
