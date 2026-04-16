@@ -94,3 +94,42 @@ func Revenus_Prestataire(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(revenues)
 }
+
+func Get_Monthly_Invoices(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	providerID := request.PathValue("id")
+
+	sqlQuery := `
+		SELECT id_facture, montant, frais_plateforme, montant_net, mois_annee, date, statut
+		FROM FACTURE
+		WHERE id_prestataire = ?
+		ORDER BY mois_annee DESC
+	`
+
+	rows, err := db.DB.Query(sqlQuery, providerID)
+	if err != nil {
+		http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var invoices []models.FactureMensuelle
+
+	for rows.Next() {
+		var inv models.FactureMensuelle
+
+		if err := rows.Scan(&inv.IDFacture, &inv.MontantBrut, &inv.FraisPlateforme, &inv.MontantNet, &inv.MoisAnnee, &inv.Date, &inv.Statut); err == nil {
+			invoices = append(invoices, inv)
+		}
+	}
+
+	if invoices == nil {
+		invoices = []models.FactureMensuelle{}
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(invoices)
+}
