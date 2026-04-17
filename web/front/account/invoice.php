@@ -1,4 +1,4 @@
-<?php 
+<?php
 if (!isset($_COOKIE['session_token'])) {
     header("Location: /front/account/signin.php");
     exit();
@@ -7,6 +7,7 @@ if (!isset($_COOKIE['session_token'])) {
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,12 +31,13 @@ if (!isset($_COOKIE['session_token'])) {
         }
     </script>
 </head>
+
 <body class="bg-gray-50 flex flex-col min-h-screen">
 
     <?php include("../includes/header.php") ?>
 
     <main class="flex-grow max-w-5xl mx-auto w-full px-6 py-12">
-        
+
         <div class="p-3 flex justify-between items-center mb-6">
             <a href="/front/account/profile.php">
                 <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
@@ -65,7 +67,9 @@ if (!isset($_COOKIE['session_token'])) {
                     </tr>
                 </thead>
                 <tbody id="invoices-tbody" class="divide-y divide-gray-100">
-                    <tr><td colspan="4" class="p-8 text-center text-gray-400 animate-pulse">Chargement de vos factures...</td></tr>
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-gray-400 animate-pulse">Chargement de vos factures...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -85,7 +89,7 @@ if (!isset($_COOKIE['session_token'])) {
 
             if (!hasSubscription) {
                 noSubContainer.classList.remove('hidden');
-                invoicesContainer.classList.add('hidden'); 
+                invoicesContainer.classList.add('hidden');
                 return;
             }
 
@@ -93,12 +97,12 @@ if (!isset($_COOKIE['session_token'])) {
             invoicesContainer.classList.remove('hidden');
 
             try {
-                const res = await fetch(`${window.API_BASE_URL}/factures/user/${window.currentUserId}`, { 
-                    credentials: 'include' 
+                const res = await fetch(`${window.API_BASE_URL}/factures/user/${window.currentUserId}`, {
+                    credentials: 'include'
                 });
-                
+
                 if (!res.ok) throw new Error("Erreur de récupération");
-                
+
                 const factures = await res.json();
 
                 tbody.innerHTML = '';
@@ -110,16 +114,20 @@ if (!isset($_COOKIE['session_token'])) {
 
                 factures.forEach(f => {
                     const dateObj = new Date(f.date);
-                    const displayDate = isNaN(dateObj) ? "-" : dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-                    
-                    const urlBtn = f.url 
-                        ? `<a href="${f.url}" target="_blank" class="bg-[#E1AB2B] text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-yellow-600 transition shadow-sm inline-block">Consulter</a>`
-                        : `<span class="text-gray-400 text-sm italic">Non disponible</span>`;
+                    const displayDate = isNaN(dateObj) ? "-" : dateObj.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+
+                    const internalPdfUrl = `${window.API_BASE_URL}/factures/generate/${f.id}`;
+
+                    const urlBtn = `<a href="${internalPdfUrl}" target="_blank" class="bg-[#E1AB2B] text-white px-5 py-2 rounded-full text-sm font-bold hover:bg-yellow-600 transition shadow-sm inline-block">Consulter</a>`;
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 transition duration-150">
                             <td class="p-4 text-gray-600 font-medium">${displayDate}</td>
-                            <td class="p-4 font-bold text-[#1C5B8F]">${f.description || 'Abonnement'}</td>
+                            <td class="p-4 font-bold text-[#1C5B8F]">${f.description}</td>
                             <td class="p-4 text-center font-bold text-gray-700">${f.montant} €</td>
                             <td class="p-4 text-center">${urlBtn}</td>
                         </tr>
@@ -133,4 +141,5 @@ if (!isset($_COOKIE['session_token'])) {
         });
     </script>
 </body>
+
 </html>

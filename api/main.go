@@ -58,6 +58,7 @@ func main() {
 	http.HandleFunc("/abonnement/cancel", users.Cancel_Subscription)
 
 	http.HandleFunc("/factures/user/{id}", users.GetUserInvoices)
+	http.HandleFunc("/factures/generate/{id}", users.GenerateInvoicePDF)
 
 	http.HandleFunc("/planning", users.Read_User_Planning)
 	http.HandleFunc("/search", users.SearchAll)
