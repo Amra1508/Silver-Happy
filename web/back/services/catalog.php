@@ -57,6 +57,8 @@
                             <th class="p-4 font-semibold">Nom</th>
                             <th class="p-4 font-semibold">Catégorie</th>
                             <th class="p-4 font-semibold">Description</th>
+                            <th class="p-4 font-semibold">Prix</th>
+                            <th class="p-4 font-semibold">Prestataire</th>
                             <th class="p-4 font-semibold text-center">Actions</th>
                         </tr>
                     </thead>
@@ -65,67 +67,87 @@
             </div>
 
             <div id="add-modal" class="hidden modal">
-                <div class="add-modal">
+                <div class="add-modal w-full max-w-lg">
                     <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Service</h3>
                     <form id="add-form" class="space-y-4">
                         <div>
                             <label class="text-sm text-gray-500">Nom</label>
-                            <input type="text" id="add-nom" class="add-input" required>
+                            <input type="text" id="add-nom" class="add-input w-full p-2 border rounded" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm text-gray-500">Prix (€)</label>
+                                <input type="number" id="add-prix" step="0.01" min="0" class="add-input w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">ID Prestataire</label>
+                                <input type="number" id="add-prestataire" min="1" class="add-input w-full p-2 border rounded" required>
+                            </div>
                         </div>
                         <div>
                             <label class="text-sm text-gray-500">Catégorie</label>
-                            <select id="add-categorie" class="add-input">
+                            <select id="add-categorie" class="add-input w-full p-2 border rounded">
                                 <option value="">-- Sans catégorie --</option>
                             </select>
                         </div>
                         <div>
                             <label class="text-sm text-gray-500">Description</label>
-                            <textarea id="add-description" class="add-input" required></textarea>
+                            <textarea id="add-description" class="add-input w-full p-2 border rounded" rows="3" required></textarea>
                         </div>
                         <div class="flex justify-end gap-4 mt-8 pt-4">
                             <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
-                            <button type="submit" class="add-button">Ajouter</button>
+                            <button type="submit" class="add-button bg-[#1C5B8F] text-white px-4 py-2 rounded">Ajouter</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <div id="edit-modal" class="hidden modal">
-                <div class="edit-modal">
+                <div class="edit-modal w-full max-w-lg">
                     <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Service</h3>
                     <form id="edit-form" class="space-y-4">
                         <input type="hidden" id="edit-id">
                         <div>
                             <label class="text-sm text-gray-500">Nom</label>
-                            <input type="text" id="edit-nom" class="edit-input" required>
+                            <input type="text" id="edit-nom" class="edit-input w-full p-2 border rounded" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm text-gray-500">Prix (€)</label>
+                                <input type="number" id="edit-prix" step="0.01" min="0" class="edit-input w-full p-2 border rounded" required>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">ID Prestataire</label>
+                                <input type="number" id="edit-prestataire" min="1" class="edit-input w-full p-2 border rounded" required>
+                            </div>
                         </div>
                         <div>
                             <label class="text-sm text-gray-500">Catégorie</label>
-                            <select id="edit-categorie" class="edit-input">
+                            <select id="edit-categorie" class="edit-input w-full p-2 border rounded">
                                 <option value="">-- Sans catégorie --</option>
                             </select>
                         </div>
                         <div>
                             <label class="text-sm text-gray-500">Description</label>
-                            <textarea id="edit-description" class="edit-input" required></textarea>
+                            <textarea id="edit-description" class="edit-input w-full p-2 border rounded" rows="3" required></textarea>
                         </div>
                         <div class="flex justify-end gap-4 mt-8 pt-4">
                             <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
-                            <button type="submit" class="edit-button">Sauvegarder</button>
+                            <button type="submit" class="edit-button bg-[#E1AB2B] text-white px-4 py-2 rounded">Sauvegarder</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <div id="delete-modal" class="hidden modal">
-                <div class="delete-modal text-center">
+                <div class="delete-modal text-center bg-white p-8 rounded-lg shadow-xl">
                     <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
                     <h3 class="text-2xl font-semibold mb-2">Supprimer le service ?</h3>
                     <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
                     <input type="hidden" id="delete-id">
                     <div class="flex justify-center gap-6">
                         <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
-                        <button type="button" id="confirm-delete" class="delete-button">Oui, supprimer</button>
+                        <button type="button" id="confirm-delete" class="delete-button bg-red-500 text-white px-4 py-2 rounded">Oui, supprimer</button>
                     </div>
                 </div>
             </div>
@@ -208,7 +230,7 @@
             tbody.innerHTML = '';
 
             if (services.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">Aucun service trouvé.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">Aucun service trouvé.</td></tr>';
                 renderPagination(0, 0);
                 return;
             }
@@ -219,6 +241,9 @@
                 const description = c.description || c.Description || '';
                 const idCat = c.id_categorie || c.IDCategorie || '';
                 const nomCat = c.categorie_nom || getCategoryName(idCat);
+                const prix = c.prix !== undefined ? parseFloat(c.prix).toFixed(2) + ' €' : '0.00 €';
+                const idPrestataire = c.id_prestataire || c.IDPrestataire || '';
+                const prestataireAffiche = idPrestataire ? `Prestataire #${idPrestataire}` : `<span class="text-red-400 italic">Non assigné</span>`;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition border-b">
@@ -227,9 +252,11 @@
                         <td class="p-4 text-sm text-gray-600">
                             <span class="bg-gray-100 px-2 py-1 rounded border">${nomCat}</span>
                         </td>
-                        <td class="p-4 text-sm text-gray-600">${description}</td>
-                        <td class="p-4 flex justify-center gap-4">
-                            <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${idCat}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-3 py-1 rounded-lg font-bold text-sm">Modifier</button>
+                        <td class="p-4 text-sm text-gray-600 max-w-xs truncate" title="${description}">${description}</td>
+                        <td class="p-4 font-bold text-[#E1AB2B]">${prix}</td>
+                        <td class="p-4 text-sm font-semibold text-[#1C5B8F]">${prestataireAffiche}</td>
+                        <td class="p-4 flex justify-center gap-2">
+                            <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${idCat}', ${c.prix || 0}, '${idPrestataire}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-3 py-1 rounded-lg font-bold text-sm">Modifier</button>
                             <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-3 py-1 rounded-lg font-bold text-sm">Supprimer</button>
                         </td>
                     </tr>
@@ -289,10 +316,13 @@
         e.preventDefault();
         let catValue = document.getElementById('add-categorie').value;
         let idCategorie = catValue ? parseInt(catValue) : null; 
+        
         const data = {
             nom: document.getElementById('add-nom').value,
             description: document.getElementById('add-description').value,
-            id_categorie: idCategorie
+            id_categorie: idCategorie,
+            prix: parseFloat(document.getElementById('add-prix').value),
+            id_prestataire: parseInt(document.getElementById('add-prestataire').value)
         };
 
         try {
@@ -312,11 +342,13 @@
         } catch (err) { showAlert("Erreur réseau", false); }
     });
 
-    function openEditModal(id, nom, description, idCat) {
+    function openEditModal(id, nom, description, idCat, prix, idPrestataire) {
         document.getElementById('edit-id').value = id;
         document.getElementById('edit-nom').value = nom;
         document.getElementById('edit-description').value = description;
         document.getElementById('edit-categorie').value = idCat || ""; 
+        document.getElementById('edit-prix').value = prix;
+        document.getElementById('edit-prestataire').value = idPrestataire || "";
         toggleModal('edit-modal');
     }
 
@@ -325,10 +357,13 @@
         const id = document.getElementById('edit-id').value;
         let catValue = document.getElementById('edit-categorie').value;
         let idCategorie = catValue ? parseInt(catValue) : null;
+        
         const data = {
             nom: document.getElementById('edit-nom').value,
             description: document.getElementById('edit-description').value,
-            id_categorie: idCategorie
+            id_categorie: idCategorie,
+            prix: parseFloat(document.getElementById('edit-prix').value),
+            id_prestataire: parseInt(document.getElementById('edit-prestataire').value)
         };
 
         try {

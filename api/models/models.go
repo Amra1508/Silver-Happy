@@ -53,6 +53,8 @@ type Service struct {
     Description string `json:"description"`
 	IDCategorie *int   `json:"id_categorie"`
 	CategorieNom string `json:"categorie_nom"`
+	IDPrestataire int64   `json:"id_prestataire"`
+    Prix          float64 `json:"prix"`
 }
 
 type UserReservation struct {

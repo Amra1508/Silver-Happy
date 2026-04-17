@@ -72,6 +72,8 @@ func main() {
     http.HandleFunc("/service/register/{id}", services.Register_Service)
     http.HandleFunc("/service/unregister/{id}", services.Unregister_Service)
 	http.HandleFunc("/services/filter", services.GetServicesByCategory)
+	http.HandleFunc("/service/checkout/{id}", services.CreateServiceCheckoutSession)
+	http.HandleFunc("/success-service", services.Success_Service_Payment)
 
 	http.HandleFunc("/categorie/read", services.Read_Categorie)
 	http.HandleFunc("/categorie/read/{id}", services.Read_One_Categorie)
@@ -159,6 +161,11 @@ func main() {
 	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
 	http.HandleFunc("/message/prestataire/delete/{id}", providers.Delete_Message)
 	http.HandleFunc("/prestataire/read", users.List_Prestataires)
+
+	http.HandleFunc("/prestataire/services/{id}/get", providers.Get_Services_Provider)
+	http.HandleFunc("/prestataire/services/{id}/create", providers.Create_Service_Provider)
+	http.HandleFunc("/prestataire/services/{id}/{id_service}/delete", providers.Delete_Service_Provider)
+	http.HandleFunc("/prestataire/services/{id}/{id_service}/update", providers.Update_Service_Provider)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
