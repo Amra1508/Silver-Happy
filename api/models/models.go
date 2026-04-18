@@ -226,6 +226,16 @@ type InvoiceResponse struct {
 	URLContrat  string  `json:"url_contrat"`
 }
 
+type InvoiceLine struct {
+    Type        string
+    Description string
+    Qty         int
+    UnitPrice   float64
+    Total       float64
+    Info1       string
+    Info2       string
+}
+
 type Participant struct {
 	ID     int    `json:"id"`
 	Nom    string `json:"nom"`

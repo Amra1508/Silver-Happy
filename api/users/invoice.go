@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"main/db"
+	"main/models"
 	"main/utils"
 
 	"github.com/jung-kurt/gofpdf"
@@ -86,151 +87,156 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    type InvoiceLine struct {
-        Description string
-        Qty         int
-        UnitPrice   float64
-        Total       float64
-    }
+    var lines []models.InvoiceLine
+    var datePaiementStr, clientNom, clientPrenom, clientEmail string 
 
-    var lines []InvoiceLine
-    var datePaiementStr string
-    var clientNom, clientPrenom, clientEmail string
-    var typeFacture string 
-    var typePaiementSub string 
-
-    query := `
-        SELECT 
-            'ABONNEMENT' as type_f, p.date_paiement, u.nom, u.prenom, u.email, 
-            a.description, 1 as qty, p.prix as unit_p, p.prix as total_p, a.type_paiement
+    rowsAbo, _ := db.DB.Query(`
+        SELECT p.date_paiement, u.nom, u.prenom, u.email, a.description, p.prix, a.type_paiement
         FROM PAIEMENT p
         JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
         JOIN UTILISATEUR u ON u.id_abonnement = a.id_abonnement
-        WHERE p.id_paiement = ?
-
-        UNION ALL
-
-        SELECT 
-            'INSCRIPTION' as type_f, p.date_paiement, u.nom, u.prenom, u.email, 
-            CONCAT('Inscription : ', e.nom), 1, p.prix, p.prix, ''
+        WHERE p.id_paiement = ?`, paymentID)
+    
+    for rowsAbo.Next() {
+        var l models.InvoiceLine
+        l.Type = "ABONNEMENT"
+        l.Qty = 1
+        rowsAbo.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.UnitPrice, &l.Info1)
+        l.Total = l.UnitPrice
+        lines = append(lines, l)
+    }
+    
+    rowsEvent, _ := db.DB.Query(`
+        SELECT p.date_paiement, u.nom, u.prenom, u.email, e.nom, p.prix, e.date_debut, e.date_fin
         FROM PAIEMENT p
         JOIN INSCRIPTION i ON p.id_paiement = i.id_paiement
         JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
         JOIN UTILISATEUR u ON i.id_utilisateur = u.id_utilisateur
-        WHERE p.id_paiement = ?
+        WHERE p.id_paiement = ?`, paymentID)
 
-        UNION ALL
+    for rowsEvent.Next() {
+        var l models.InvoiceLine
+        l.Type = "INSCRIPTION"
+        l.Qty = 1
+        rowsEvent.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.UnitPrice, &l.Info1, &l.Info2)
+        l.Description = "Inscription : " + l.Description
+        l.Total = l.UnitPrice
+        lines = append(lines, l)
+    }
 
-        SELECT 
-            'COMMANDE' as type_f, p.date_paiement, u.nom, u.prenom, u.email, 
-            pr.nom as description, lc.quantite, lc.prix_unitaire, (lc.quantite * lc.prix_unitaire), ''
+    rowsCmd, _ := db.DB.Query(`
+        SELECT p.date_paiement, u.nom, u.prenom, u.email, pr.nom, lc.quantite, lc.prix_unitaire
         FROM PAIEMENT p
         JOIN COMMANDE c ON p.id_paiement = c.id_paiement
         JOIN LIGNE_COMMANDE lc ON c.id_commande = lc.id_commande
         JOIN PRODUIT pr ON lc.id_produit = pr.id_produit
         JOIN UTILISATEUR u ON c.id_utilisateur = u.id_utilisateur
-        WHERE p.id_paiement = ?
-    `
+        WHERE p.id_paiement = ?`, paymentID)
 
-    rows, err := db.DB.Query(query, paymentID, paymentID, paymentID)
-    if err != nil {
-        http.Error(response, "Erreur SQL", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
-
-    totalFacture := 0.0
-    for rows.Next() {
-        var line InvoiceLine
-        err := rows.Scan(&typeFacture, &datePaiementStr, &clientNom, &clientPrenom, &clientEmail, 
-                         &line.Description, &line.Qty, &line.UnitPrice, &line.Total, &typePaiementSub)
-        if err != nil { continue }
-        lines = append(lines, line)
-        totalFacture += line.Total
+    for rowsCmd.Next() {
+        var l models.InvoiceLine
+        l.Type = "COMMANDE"
+        rowsCmd.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.Qty, &l.UnitPrice)
+        l.Total = float64(l.Qty) * l.UnitPrice
+        lines = append(lines, l)
     }
 
     if len(lines) == 0 {
-        http.Error(response, "Paiement introuvable", http.StatusNotFound)
+        http.Error(response, "Facture vide ou introuvable", http.StatusNotFound)
         return
     }
 
     pdf := gofpdf.New("P", "mm", "A4", "")
     tr := pdf.UnicodeTranslatorFromDescriptor("")
-    pdf.SetMargins(20, 20, 20)
+    pdf.SetMargins(15, 15, 15)
     pdf.AddPage()
 
+    pdf.SetY(10)
     pdf.SetFont("Arial", "B", 24)
-    pdf.Cell(0, 10, tr("Facture"))
-    pdf.SetXY(120, 20)
-    pdf.SetFont("Arial", "B", 12)
-    pdf.SetTextColor(150, 150, 150)
-    pdf.CellFormat(70, 6, tr("Silver Happy"), "0", 0, "R", false, 0, "")
-    
-    pdf.SetY(45)
-    pdf.SetFont("Arial", "", 10)
-    pdf.SetTextColor(80, 80, 80)
-    
-    pdf.Text(20, 50, tr("Silver Happy - France"))
-    pdf.SetFont("Arial", "B", 10)
-    pdf.CellFormat(0, 5, tr("Numéro : ") + "SILVER-" + paymentID, "", 1, "R", false, 0, "")
-    pdf.SetFont("Arial", "", 10)
-    pdf.CellFormat(0, 5, tr("Émise le : ") + datePaiementStr[:10], "", 1, "R", false, 0, "")
+    pdf.SetTextColor(0, 0, 0)
+    pdf.Cell(90, 10, "Facture")
+    pdf.SetX(120)
+    pdf.SetFont("Arial", "", 24)
+    pdf.CellFormat(80, 10, "Silver Happy", "0", 1, "R", false, 0, "")
 
-    pdf.Ln(15)
+    pdf.Ln(20)
+
+    yClient := pdf.GetY()
+    
     pdf.SetFont("Arial", "B", 11)
-    pdf.Cell(0, 5, tr("Facturer à"))
+    pdf.SetTextColor(0, 0, 0)
+    pdf.Cell(0, 5, tr("Facturer à :"))
     pdf.Ln(7)
     pdf.SetFont("Arial", "", 10)
     pdf.SetTextColor(100, 100, 100)
-    pdf.Cell(0, 5, tr(clientPrenom + " " + clientNom))
+    pdf.Cell(0, 5, tr(clientPrenom+" "+clientNom))
     pdf.Ln(5)
     pdf.Cell(0, 5, tr(clientEmail))
-    pdf.Ln(15)
+
+    pdf.SetXY(120, yClient) 
+    pdf.SetFont("Arial", "B", 10)
+    pdf.SetTextColor(0, 0, 0)
+    pdf.CellFormat(80, 5, tr("Numéro : ") + "SILVER-HAPPY-" + paymentID, "", 1, "R", false, 0, "")
+    pdf.Ln(2)
+    pdf.SetX(120)
+    dateAffichage, _ := time.Parse("2006-01-02", datePaiementStr[:10])
+    pdf.SetFont("Arial", "", 10)
+    pdf.SetTextColor(100, 100, 100)
+    pdf.CellFormat(80, 5, tr("Émise le : ") + dateAffichage.Format("02/01/2006"), "", 1, "R", false, 0, "")
+
+    pdf.Ln(20)
 
     pdf.SetFont("Arial", "B", 10)
     pdf.SetFillColor(245, 245, 245)
-    pdf.CellFormat(100, 10, "Description", "B", 0, "L", true, 0, "")
+    pdf.SetTextColor(0, 0, 0)
+    pdf.CellFormat(115, 10, "Description", "B", 0, "L", true, 0, "")
     pdf.CellFormat(20, 10, tr("Qté"), "B", 0, "C", true, 0, "")
     pdf.CellFormat(25, 10, "Prix unitaire", "B", 0, "R", true, 0, "")
     pdf.CellFormat(25, 10, "Montant", "B", 1, "R", true, 0, "")
 
     pdf.SetFont("Arial", "", 10)
-    pdf.SetTextColor(50, 50, 50)
-
+    totalFacture := 0.0
     for _, l := range lines {
-        pdf.CellFormat(100, 10, tr(l.Description), "B", 0, "L", false, 0, "")
-        pdf.CellFormat(20, 10, fmt.Sprintf("%d", l.Qty), "B", 0, "C", false, 0, "")
-        pdf.CellFormat(25, 10, fmt.Sprintf("%.2f", l.UnitPrice) + tr("€"), "B", 0, "R", false, 0, "")
-        pdf.CellFormat(25, 10, fmt.Sprintf("%.2f", l.Total) + tr("€"), "B", 1, "R", false, 0, "")
+        pdf.SetTextColor(0, 0, 0)
+        pdf.CellFormat(115, 10, tr(l.Description), "0", 0, "L", false, 0, "")
+        pdf.CellFormat(20, 10, fmt.Sprintf("%d", l.Qty), "0", 0, "C", false, 0, "")
+        pdf.CellFormat(25, 10, fmt.Sprintf("%.2f", l.UnitPrice) + tr("€"), "0", 0, "R", false, 0, "")
+        pdf.CellFormat(25, 10, fmt.Sprintf("%.2f", l.Total) + tr("€"), "0", 1, "R", false, 0, "")
+        totalFacture += l.Total
 
-        if typeFacture == "ABONNEMENT" {
-            pdf.SetFont("Arial", "I", 8)
-            pdf.SetTextColor(120, 120, 120)
-            
-            dateDebut, _ := time.Parse("02/01/2006", datePaiementStr[:10])
-            var dateFin time.Time
-            if typePaiementSub == "mensuel" {
-                dateFin = dateDebut.AddDate(0, 1, 0)
-            } else {
-                dateFin = dateDebut.AddDate(1, 0, 0)
-            }
-            periode := fmt.Sprintf("%s au %s", dateDebut.Format("02/01/2006"), dateFin.Format("02/01/2006"))
-            pdf.Cell(0, 5, tr("Période du ") + periode)
-            pdf.Ln(8)
-            pdf.SetFont("Arial", "", 10)
-            pdf.SetTextColor(50, 50, 50)
+        pdf.SetDrawColor(245, 245, 245)
+        pdf.Line(15, pdf.GetY(), 200, pdf.GetY()) 
+
+        pdf.SetFont("Arial", "I", 8)
+        pdf.SetTextColor(100, 100, 100)
+
+        switch l.Type {
+            case "ABONNEMENT":
+                tDeb, _ := time.Parse("2006-01-02", datePaiementStr[:10])
+                tFin := tDeb.AddDate(0, 1, 0)
+                if l.Info1 != "mensuel" { tFin = tDeb.AddDate(1, 0, 0) }
+                pdf.Cell(0, 5, tr("Période du ") + tDeb.Format("02/01/2006") + " au " + tFin.Format("02/01/2006"))
+                pdf.Ln(7)
+            case "INSCRIPTION":
+                tD, _ := time.Parse("2006-01-02", l.Info1[:10])
+                tF, _ := time.Parse("2006-01-02", l.Info2[:10])
+                pdf.Cell(0, 5, tr("Évènement du ") + tD.Format("02/01/2006") + " au " + tF.Format("02/01/2006"))
+                pdf.Ln(7)
         }
+        pdf.SetTextColor(0, 0, 0)
+        pdf.SetFont("Arial", "", 10)
     }
 
     pdf.Ln(10)
     pdf.SetFont("Arial", "B", 12)
-    pdf.SetTextColor(28, 91, 143)
-    pdf.Cell(120, 10, "")
+    pdf.SetTextColor(0, 0, 0)
+    pdf.SetX(150)
+    pdf.SetDrawColor(0, 0, 0)
     pdf.CellFormat(25, 10, tr("Total dû"), "T", 0, "R", false, 0, "")
-    pdf.CellFormat(25, 10, fmt.Sprintf("%.2f", totalFacture) + tr("€"), "T", 1, "R", false, 0, "")
+    pdf.CellFormat(25, 10, fmt.Sprintf("%.2f", totalFacture) + tr("€"), "T", 0, "R", false, 0, "")
 
-    fileName := fmt.Sprintf("Facture_SILVER_HAPPY_%s.pdf", paymentID)
+    fileName := fmt.Sprintf("Facture_Silver_Happy_%s.pdf", paymentID)
+    response.Header().Set("Content-Disposition", "attachment; filename="+fileName)
     response.Header().Set("Content-Type", "application/pdf")
-    response.Header().Set("Content-Disposition", "inline; filename="+fileName)
     pdf.Output(response)
 }
