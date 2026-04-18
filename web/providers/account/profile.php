@@ -125,6 +125,23 @@
                             </div>
                         </div>
 
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <h2 class="text-xl font-bold text-[#635BFF] mb-6 flex items-center gap-2">
+                                Paiements & Versements (Stripe)
+                            </h2>
+                            <div class="flex flex-col md:flex-row md:items-center justify-between p-6 bg-[#635BFF]/5 rounded-2xl border border-[#635BFF]/20 gap-4">
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-700 font-semibold mb-1">Compte bancaire / Versements</p>
+                                    <p id="stripe-status-text" class="text-xs text-gray-500">
+                                        Vérification de votre compte Stripe en cours...
+                                    </p>
+                                </div>
+                                <button type="button" id="btn-stripe-connect" onclick="connectStripe()" class="hidden bg-[#635BFF] hover:bg-[#5249ea] text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-all whitespace-nowrap">
+                                    Lier mon compte bancaire
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="flex justify-end">
                             <button type="submit" id="btn-save" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-8 rounded-xl shadow-md transition-all flex items-center gap-2">
                                 Enregistrer les modifications
@@ -138,6 +155,49 @@
     </div>
 
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('stripe') === 'success') {
+            alert("Votre compte Stripe a été lié avec succès ! Les versements sont maintenant activés.");
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('stripe') === 'error') {
+            alert("L'association du compte Stripe n'a pas pu aboutir. Veuillez réessayer.");
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        async function connectStripe() {
+            const providerId = window.currentUserId; 
+            if (!providerId) return alert("Vous devez être connecté.");
+
+            const btn = document.getElementById('btn-stripe-connect');
+            btn.innerHTML = "Redirection...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/stripe-connect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider_id: parseInt(providerId) })
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    window.location.href = result.url; 
+                } else {
+                    const errorText = await res.text();
+                    console.error("Erreur renvoyée par le serveur :", errorText);
+                    alert("Erreur Serveur : \n" + errorText);
+                    
+                    btn.innerHTML = "Lier mon compte bancaire";
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Serveur inaccessible.");
+                btn.innerHTML = "Lier mon compte bancaire";
+                btn.disabled = false;
+            }
+        }
+
         async function acheterBoost(typeBoost, targetId = 0) {
             const providerId = window.currentUserId; 
             if (!providerId) return alert("Vous devez être connecté.");
@@ -179,6 +239,9 @@
             const boostStatusDiv = document.getElementById('boost-status');
             const btnBuyBoost = document.getElementById('btn-buy-boost');
             const boostInfoText = document.getElementById('boost-info-text');
+
+            const btnStripeConnect = document.getElementById('btn-stripe-connect');
+            const stripeStatusText = document.getElementById('stripe-status-text');
 
             const getLastDayOfMonth = () => {
                 const now = new Date();
@@ -257,6 +320,20 @@
                     
                     if(providerData.id_categorie || providerData.IdCategorie) {
                         selectCategorie.value = providerData.id_categorie || providerData.IdCategorie;
+                    }
+
+                    const stripeId = providerData.stripe_account_id;
+                    btnStripeConnect.classList.remove('hidden');
+
+                    if (stripeId) {
+                        stripeStatusText.innerHTML = `Compte Stripe connecté (ID: <span class="font-mono text-[10px] text-gray-400">${stripeId}</span>)<br/>Vous êtes prêt à recevoir vos versements automatiques.`;
+                        btnStripeConnect.innerHTML = "Mettre à jour mes infos bancaires";
+                        btnStripeConnect.classList.replace('bg-[#635BFF]', 'bg-white');
+                        btnStripeConnect.classList.replace('text-white', 'text-[#635BFF]');
+                        btnStripeConnect.classList.add('border', 'border-[#635BFF]');
+                    } else {
+                        stripeStatusText.innerHTML = "Vous devez lier un compte bancaire pour recevoir l'argent de vos services et événements.";
+                        btnStripeConnect.innerHTML = "Lier mon compte bancaire";
                     }
 
                     const isSub = providerData.id_abonnement != 0;

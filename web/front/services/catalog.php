@@ -79,7 +79,6 @@
         const messageBox = document.getElementById('api-message');
         let currentServicesData = [];
         
-        // Stockage global des créneaux chargés pour éviter de refaire des requêtes
         window.serviceSlots = {};
 
         function showAlert(msg, isSuccess) {
@@ -147,9 +146,6 @@
             }
         }
 
-        // ==========================================
-        // GESTION MODERNE DES DISPOS (FRONTEND)
-        // ==========================================
         async function loadDisposForService(serviceId, prestataireId) {
             const timeGrid = document.getElementById(`time-grid-${serviceId}`);
             const daySelect = document.getElementById(`day-select-${serviceId}`);
@@ -170,12 +166,11 @@
                     return;
                 }
 
-                // Grouper les créneaux par date (jour)
                 const grouped = {};
                 slots.forEach(slot => {
                     const dateObj = new Date(slot.date_heure);
                     const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-                    const key = dateOnly.toISOString(); // Clé unique par jour
+                    const key = dateOnly.toISOString();
                     
                     if (!grouped[key]) {
                         grouped[key] = {
@@ -190,10 +185,8 @@
                     });
                 });
 
-                // Stockage global pour ce service
                 window.serviceSlots[serviceId] = grouped;
 
-                // Remplir le menu déroulant des jours
                 daySelect.innerHTML = '<option value="" disabled selected>1. Choisissez un jour</option>';
                 Object.keys(grouped).forEach(key => {
                     daySelect.innerHTML += `<option value="${key}" class="capitalize">${grouped[key].label}</option>`;
@@ -212,14 +205,13 @@
             const timeGrid = document.getElementById(`time-grid-${serviceId}`);
             const selectedKey = daySelect.value;
             
-            // Réinitialiser la sélection
             document.getElementById(`selected-dispo-id-${serviceId}`).value = "";
             document.getElementById(`selected-dispo-date-${serviceId}`).value = "";
 
             if (!selectedKey || !window.serviceSlots[serviceId][selectedKey]) return;
 
             const dayData = window.serviceSlots[serviceId][selectedKey];
-            timeGrid.innerHTML = ''; // Vider la grille
+            timeGrid.innerHTML = ''; 
 
             dayData.slots.forEach(s => {
                 const btn = document.createElement('button');
@@ -231,26 +223,20 @@
         }
 
         function selectTimeSlot(serviceId, dispoId, datetime, btnElement) {
-            // Mettre à jour les inputs cachés
             document.getElementById(`selected-dispo-id-${serviceId}`).value = dispoId;
             document.getElementById(`selected-dispo-date-${serviceId}`).value = datetime;
             
-            // Réinitialiser l'état visuel de tous les boutons de cette grille
             const grid = document.getElementById(`time-grid-${serviceId}`);
             grid.querySelectorAll(`.time-slot-btn-${serviceId}`).forEach(b => {
                 b.classList.remove('bg-[#1C5B8F]', 'text-white', 'scale-105');
                 b.classList.add('bg-white', 'text-[#1C5B8F]');
             });
             
-            // Activer le bouton cliqué
             btnElement.classList.remove('bg-white', 'text-[#1C5B8F]');
             btnElement.classList.add('bg-[#1C5B8F]', 'text-white', 'scale-105');
         }
 
 
-        // ==========================================
-        // RÉSERVATION
-        // ==========================================
         async function bookService(serviceId) {
             const userId = window.currentUserId;
 
@@ -269,7 +255,6 @@
                 return;
             }
 
-            // Récupération de la disponibilité choisie via les inputs cachés
             const idDisponibilite = parseInt(document.getElementById(`selected-dispo-id-${serviceId}`).value);
             const dateInput = document.getElementById(`selected-dispo-date-${serviceId}`).value;
 
@@ -298,7 +283,6 @@
                         showAlert(data.message || "Réservation confirmée !", true);
                         fetchMyServices();
                         
-                        // Recharge la grille pour effacer le créneau pris
                         const daySelect = document.getElementById(`day-select-${serviceId}`);
                         const prestataireId = daySelect.getAttribute('data-prestataire');
                         loadDisposForService(serviceId, prestataireId);
@@ -449,7 +433,6 @@
 
             container.innerHTML = htmlContent;
 
-            // Déclencher la récupération des créneaux
             services.forEach(s => {
                 const id = s.id_service || s.ID;
                 loadDisposForService(id, s.id_prestataire);

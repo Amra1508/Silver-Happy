@@ -250,12 +250,10 @@ func Get_Prestataire_Events(response http.ResponseWriter, request *http.Request)
 	providerID := request.PathValue("id")
 	tab := request.URL.Query().Get("tab")
 
-	// La condition magique : Si date_fin est vide, on ajoute 2h à date_debut.
 	condition := "IFNULL(NULLIF(e.date_fin, ''), DATE_ADD(e.date_debut, INTERVAL 2 HOUR))"
 
 	var sqlQuery string
 	if tab == "history" {
-		// Historique : La date de fin calculée est dans le PASSE
 		sqlQuery = fmt.Sprintf(`
 			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
 			FROM evenement e
@@ -264,7 +262,6 @@ func Get_Prestataire_Events(response http.ResponseWriter, request *http.Request)
 			ORDER BY e.date_debut DESC
 		`, condition)
 	} else {
-		// À venir : La date de fin calculée est dans le FUTUR (ou en cours)
 		sqlQuery = fmt.Sprintf(`
 			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
 			FROM evenement e
