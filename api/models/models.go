@@ -92,6 +92,7 @@ type Prestataire struct {
 	CategorieNom 	string `json:"categorie,omitempty"`
 	DateCreation   string  `json:"date_creation"`
 	DateFinBoost   string  `json:"date_fin_boost"`
+	IdStripeAccount   string  `json:"stripe_account_id"`
 
 }
 

@@ -235,6 +235,7 @@ func InitDB() {
 		id_utilisateur INT,
 		expediteur BOOLEAN DEFAULT 0,
 		est_lu BOOLEAN DEFAULT 0,
+		stripe_account_id VARCHAR(255) DEFAULT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
@@ -306,6 +307,7 @@ func InitDB() {
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		statut ENUM('en_attente', 'paye', 'annule') DEFAULT 'en_attente',
 		id_prestataire INT NOT NULL,
+		tripe_transfer_id VARCHAR(255) DEFAULT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		UNIQUE KEY unique_facture_mois (id_prestataire, mois_annee)
 	);

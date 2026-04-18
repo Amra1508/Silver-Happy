@@ -78,12 +78,13 @@ $is_logged_in = isset($_SESSION['provider_id']);
                                                 <th class="pb-4 font-medium px-4">Frais Plateforme</th>
                                                 <th class="pb-4 font-medium px-4">Montant Net</th>
                                                 <th class="pb-4 font-medium px-4">Date d'émission</th>
-                                                <th class="pb-4 font-medium text-right px-4">Statut</th>
+                                                <th class="pb-4 font-medium px-4">Statut</th>
+                                                <th class="pb-4 font-medium text-right px-4">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody id="benefits-table-body">
                                             <tr>
-                                                <td colspan="6" class="py-8 text-center text-gray-500 text-sm">
+                                                <td colspan="7" class="py-8 text-center text-gray-500 text-sm">
                                                     <span class="animate-pulse">Chargement de vos bénéfices...</span>
                                                 </td>
                                             </tr>
@@ -184,7 +185,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     benefitsTbody.innerHTML = '';
 
                     if (!benefits || benefits.length === 0) {
-                        benefitsTbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-gray-500 font-medium">Aucun relevé de bénéfice n'a encore été généré.</td></tr>`;
+                        benefitsTbody.innerHTML = `<tr><td colspan="7" class="py-10 text-center text-gray-500 font-medium">Aucun relevé de bénéfice n'a encore été généré.</td></tr>`;
                     } else {
                         benefits.forEach(inv => {
                             const date = new Date(inv.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -193,11 +194,18 @@ $is_logged_in = isset($_SESSION['provider_id']);
                             const statusLower = (inv.statut || '').toLowerCase();
                             if (statusLower === 'payé' || statusLower === 'paye') {
                                 statusBadge = `<span class="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">Payé</span>`;
-                            } else if (statusLower === 'en_attente') {
+                            } else if (statusLower === 'en_attente' || statusLower === 'attente_compte_stripe') {
                                 statusBadge = `<span class="bg-orange-100 text-orange-700 py-1 px-3 rounded-full text-xs font-bold">En attente</span>`;
                             } else {
                                 statusBadge = `<span class="bg-gray-100 text-gray-700 py-1 px-3 rounded-full text-xs font-bold capitalize">${inv.statut.replace('_', ' ')}</span>`;
                             }
+
+                            const downloadBtn = `
+                                <a href="${window.API_BASE_URL}/prestataire/facture/${inv.id_facture}/download" target="_blank" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm flex items-center justify-end gap-1 bg-yellow-50 px-3 py-1.5 rounded-lg transition-colors border border-yellow-200">
+                                    Télécharger
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </a>
+                            `;
 
                             const tr = document.createElement('tr');
                             tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
@@ -207,20 +215,21 @@ $is_logged_in = isset($_SESSION['provider_id']);
                                 <td class="py-4 px-4 text-sm text-red-500 font-medium">- ${formatCurrency(inv.frais_plateforme)}</td>
                                 <td class="py-4 px-4 text-sm font-bold text-green-600">${formatCurrency(inv.montant_net)}</td>
                                 <td class="py-4 px-4 text-sm text-gray-500">${date}</td>
-                                <td class="py-4 px-4 text-right">${statusBadge}</td>
+                                <td class="py-4 px-4">${statusBadge}</td>
+                                <td class="py-4 px-4 text-right">${downloadBtn}</td>
                             `;
                             benefitsTbody.appendChild(tr);
                         });
                     }
                 } else {
-                    benefitsTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement des bénéfices.</td></tr>`;
+                    benefitsTbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement des bénéfices.</td></tr>`;
                 }
 
             } catch (err) {
                 console.error(err);
                 showAlert("Impossible de se connecter au serveur.");
                 invoicesTbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Serveur injoignable.</td></tr>`;
-                benefitsTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-red-500 font-medium">Serveur injoignable.</td></tr>`;
+                benefitsTbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-red-500 font-medium">Serveur injoignable.</td></tr>`;
             }
         });
     </script>

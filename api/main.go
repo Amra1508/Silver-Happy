@@ -20,6 +20,7 @@ func main() {
 		fmt.Fprintf(w, "API Go : En ligne !")
 	})
 
+
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 	http.HandleFunc("/create-checkout", users.Paiement_Abonnement)
 
@@ -135,7 +136,11 @@ func main() {
     http.HandleFunc("/auth/me-provider", providers.MePrestataire)
 	http.HandleFunc("/auth/update-provider", providers.UpdatePrestataire)
 
-	providers.StartInvoiceCron(db.DB)
+	providers.StartInvoiceCron()
+	http.HandleFunc("/admin/test-virements", providers.TriggerInvoicesManual)
+
+
+	http.HandleFunc("/prestataire/stripe-connect", providers.CreateStripeAccountLink)
 
 	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
 	http.HandleFunc("/prestataire/{id}/events", providers.Get_Prestataire_Events)
@@ -153,10 +158,14 @@ func main() {
 
 	http.HandleFunc("/prestataire/{id}/invoices", providers.Get_Invoices_Prestataire)
 	http.HandleFunc("/prestataire/{id}/factures-mensuelles", providers.Get_Monthly_Invoices)
+	http.HandleFunc("/prestataire/facture/{id}/download", providers.Download_Facture_Mensuelle)
+
 	http.HandleFunc("/prestataire/{id}/revenues", providers.Revenus_Prestataire)
+
 	http.HandleFunc("/prestataire/{id}/read-avis", communication.Read_Prestataire_Avis)
 	http.HandleFunc("/prestataire/{id}/read-one", communication.Read_One_Prestataire_Avis)
 	http.HandleFunc("/prestataire/{id}/note-moyenne", users.Get_Note_Moyenne)
+	
 	http.HandleFunc("/message/prestataire/get/{id1}/with/{id2}", providers.Get_Message)
 	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
 	http.HandleFunc("/message/prestataire/delete/{id}", providers.Delete_Message)
