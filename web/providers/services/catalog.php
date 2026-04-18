@@ -71,32 +71,17 @@ $is_logged_in = isset($_SESSION['provider_id']);
                             <div class="flex justify-between items-center mb-8">
                                 <div>
                                     <h2 class="text-3xl font-semibold text-[#1C5B8F]">Mon Planning</h2>
-                                    <p class="text-gray-500 mt-1">Gérez vos créneaux de disponibilité pour les réservations.</p>
+                                    <p class="text-gray-500 mt-1">Vos créneaux ouverts à la réservation pour les 3 prochains mois.</p>
                                 </div>
                                 <button onclick="toggleModal('dispoModal')" class="rounded-full px-6 py-2.5 bg-[#E1AB2B] text-white font-bold hover:bg-[#c99723] transition-colors shadow-md flex items-center gap-2">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    Ajouter une disponibilité
+                                    Générer des créneaux
                                 </button>
                             </div>
 
-                            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr class="text-gray-400 text-sm border-b border-gray-100">
-                                                <th class="pb-4 font-medium px-4">Date et Heure</th>
-                                                <th class="pb-4 font-medium px-4">Statut</th>
-                                                <th class="pb-4 font-medium text-right px-4">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="dispos-table-body">
-                                            <tr>
-                                                <td colspan="3" class="py-8 text-center text-gray-500 text-sm">
-                                                    <span class="animate-pulse">Chargement de votre planning...</span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                            <div id="dispos-container" class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 max-h-[800px] overflow-y-auto space-y-6">
+                                <div class="py-10 text-center text-gray-500 text-sm">
+                                    <span class="animate-pulse">Chargement de votre planning...</span>
                                 </div>
                             </div>
                         </div>
@@ -118,15 +103,15 @@ $is_logged_in = isset($_SESSION['provider_id']);
             <form id="add-service-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom du service</label>
-                    <input type="text" id="nom_service" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] focus:border-transparent outline-none transition-all">
+                    <input type="text" id="nom_service" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description courte</label>
-                    <textarea id="desc_service" rows="3" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] focus:border-transparent outline-none transition-all"></textarea>
+                    <textarea id="desc_service" rows="3" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] outline-none"></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (€)</label>
-                    <input type="number" id="prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] focus:border-transparent outline-none transition-all">
+                    <input type="number" id="prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] outline-none">
                 </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('serviceModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
@@ -143,15 +128,15 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 <input type="hidden" id="edit_id_service">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom du service</label>
-                    <input type="text" id="edit_nom_service" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all">
+                    <input type="text" id="edit_nom_service" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description courte</label>
-                    <textarea id="edit_desc_service" rows="3" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all"></textarea>
+                    <textarea id="edit_desc_service" rows="3" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none"></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (€)</label>
-                    <input type="number" id="edit_prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all">
+                    <input type="number" id="edit_prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
                 </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('editServiceModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
@@ -163,15 +148,45 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
     <div id="dispoModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 transition-opacity">
         <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 m-4">
-            <h2 class="text-2xl font-bold text-[#E1AB2B] mb-6">Ajouter une disponibilité</h2>
+            <h2 class="text-2xl font-bold text-[#E1AB2B] mb-6">Ajouter des disponibilités</h2>
             <form id="add-dispo-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Date et Heure</label>
-                    <input type="datetime-local" id="date_heure_dispo" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jour de la semaine</label>
+                    <select id="jour_semaine" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
+                        <option value="1">Lundi</option>
+                        <option value="2">Mardi</option>
+                        <option value="3">Mercredi</option>
+                        <option value="4">Jeudi</option>
+                        <option value="5">Vendredi</option>
+                        <option value="6">Samedi</option>
+                        <option value="7">Dimanche</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Heure de début</label>
+                        <input type="time" id="heure_debut" value="09:00" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Heure de fin</label>
+                        <input type="time" id="heure_fin" value="17:00" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Durée d'un rendez-vous</label>
+                    <select id="duree_minutes" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
+                        <option value="30">30 minutes</option>
+                        <option value="60" selected>1 heure</option>
+                        <option value="90">1 heure 30</option>
+                        <option value="120">2 heures</option>
+                    </select>
+                </div>
+                <div class="bg-blue-50 text-[#1C5B8F] p-3 rounded-lg text-xs font-semibold mt-2 border border-blue-100">
+                    ℹ️ Cela génèrera automatiquement tous les créneaux pour ce jour sur les 3 prochains mois. 
                 </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('dispoModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
-                    <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#E1AB2B] hover:bg-[#c99723] transition-colors shadow-md">Ajouter</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#E1AB2B] hover:bg-[#c99723] transition-colors shadow-md">Générer</button>
                 </div>
             </form>
         </div>
@@ -181,8 +196,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
         let currentProviderId = null;
 
         function toggleModal(modalID) {
-            const modal = document.getElementById(modalID);
-            modal.classList.toggle('hidden');
+            document.getElementById(modalID).classList.toggle('hidden');
         }
 
         function showAlert(msg, isSuccess = false) {
@@ -198,16 +212,13 @@ $is_logged_in = isset($_SESSION['provider_id']);
             const tbody = document.getElementById('services-table-body');
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, { credentials: 'include' });
-                if (!res.ok) throw new Error('Erreur réseau');
-                
+                if (!res.ok) throw new Error('Erreur');
                 const services = await res.json();
                 tbody.innerHTML = '';
-
                 if (!services || services.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore de services.</td></tr>`;
                     return;
                 }
-
                 services.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
@@ -216,12 +227,8 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate" title="${s.description}">${s.description}</td>
                         <td class="py-4 px-4 text-sm font-bold text-[#E1AB2B]">${parseFloat(s.prix).toFixed(2)} €</td>
                         <td class="py-4 px-4 text-right flex justify-end gap-2">
-                            <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">
-                                Modifier
-                            </button>
-                            <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">
-                                Supprimer
-                            </button>
+                            <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">Modifier</button>
+                            <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">Supprimer</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -233,29 +240,22 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
         document.getElementById('add-service-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const nom = document.getElementById('nom_service').value;
-            const desc = document.getElementById('desc_service').value;
-            const prix = parseFloat(document.getElementById('prix_service').value);
-
+            const payload = {
+                nom: document.getElementById('nom_service').value,
+                description: document.getElementById('desc_service').value,
+                prix: parseFloat(document.getElementById('prix_service').value),
+                id_categorie: null
+            };
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/create`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ nom: nom, description: desc, prix: prix, id_categorie: null })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                    body: JSON.stringify(payload)
                 });
-
                 if (res.ok) {
-                    toggleModal('serviceModal');
-                    e.target.reset(); 
-                    showAlert("Service ajouté avec succès !", true);
-                    loadServices(); 
-                } else {
-                    showAlert("Erreur lors de l'ajout du service.");
-                }
-            } catch (err) {
-                showAlert("Erreur serveur.");
-            }
+                    toggleModal('serviceModal'); e.target.reset(); 
+                    showAlert("Service ajouté !", true); loadServices(); 
+                } else showAlert("Erreur lors de l'ajout.");
+            } catch (err) { showAlert("Erreur serveur."); }
         });
 
         function openEditModal(id, nom, desc, prix) {
@@ -269,130 +269,124 @@ $is_logged_in = isset($_SESSION['provider_id']);
         document.getElementById('edit-service-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const idService = document.getElementById('edit_id_service').value;
-            const nom = document.getElementById('edit_nom_service').value;
-            const desc = document.getElementById('edit_desc_service').value;
-            const prix = parseFloat(document.getElementById('edit_prix_service').value);
-
+            const payload = {
+                nom: document.getElementById('edit_nom_service').value,
+                description: document.getElementById('edit_desc_service').value,
+                prix: parseFloat(document.getElementById('edit_prix_service').value)
+            };
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/update`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ nom: nom, description: desc, prix: prix })
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                    body: JSON.stringify(payload)
                 });
-
                 if (res.ok) {
                     toggleModal('editServiceModal');
-                    showAlert("Service modifié avec succès !", true);
-                    loadServices();
-                } else {
-                    showAlert("Erreur lors de la modification.");
-                }
-            } catch (err) {
-                showAlert("Erreur serveur.");
-            }
+                    showAlert("Service modifié !", true); loadServices();
+                } else showAlert("Erreur modification.");
+            } catch (err) { showAlert("Erreur serveur."); }
         });
 
         async function deleteService(idService) {
             if (!confirm("Voulez-vous vraiment supprimer ce service ?")) return;
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/delete`, {
-                    method: 'DELETE',
-                    credentials: 'include'
-                });
-                if (res.ok) {
-                    showAlert("Service supprimé avec succès.", true);
-                    loadServices();
-                } else {
-                    showAlert("Erreur lors de la suppression.");
-                }
-            } catch (err) {
-                showAlert("Erreur serveur.");
-            }
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/delete`, { method: 'DELETE', credentials: 'include' });
+                if (res.ok) { showAlert("Service supprimé.", true); loadServices(); } 
+                else showAlert("Erreur suppression.");
+            } catch (err) { showAlert("Erreur serveur."); }
         }
 
         async function loadDispos() {
-            const tbody = document.getElementById('dispos-table-body');
+            const container = document.getElementById('dispos-container');
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/get`, { credentials: 'include' });
                 if (!res.ok) throw new Error('Erreur réseau');
                 
                 const dispos = await res.json();
-                tbody.innerHTML = '';
+                container.innerHTML = '';
 
                 if (!dispos || dispos.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore ajouté de disponibilités.</td></tr>`;
+                    container.innerHTML = `<div class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore généré de disponibilités.</div>`;
                     return;
                 }
 
+                const grouped = {};
                 dispos.forEach(d => {
                     const dateObj = new Date(d.date_heure);
-                    const dateStr = dateObj.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+                    const dateKey = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                     
-                    const statusBadge = d.est_reserve 
-                        ? `<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">Réservé</span>`
-                        : `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">Libre</span>`;
+                    if (!grouped[dateKey]) grouped[dateKey] = [];
+                    grouped[dateKey].push({
+                        id: d.id_disponibilite,
+                        time: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                        isReserved: d.est_reserve
+                    });
+                });
 
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="py-4 px-4 text-sm font-semibold text-gray-700 capitalize">${dateStr}</td>
-                        <td class="py-4 px-4">${statusBadge}</td>
-                        <td class="py-4 px-4 text-right flex justify-end gap-2">
-                            <button onclick="deleteDispo(${d.id_disponibilite})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">
-                                Supprimer
-                            </button>
-                        </td>
+                Object.keys(grouped).forEach(dateStr => {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = "bg-gray-50 rounded-2xl p-5 border border-gray-100";
+                    
+                    let pillsHtml = '';
+                    grouped[dateStr].forEach(slot => {
+                        const statusColor = slot.isReserved ? 'bg-red-500' : 'bg-green-500';
+                        const tooltip = slot.isReserved ? 'Réservé' : 'Libre';
+                        
+                        pillsHtml += `
+                            <div class="flex items-center bg-white border border-gray-200 rounded-full pl-4 pr-1 py-1.5 shadow-sm hover:shadow-md transition-all">
+                                <span class="font-bold text-gray-700 text-sm mr-3">${slot.time}</span>
+                                <span class="w-2.5 h-2.5 rounded-full ${statusColor} mr-3" title="${tooltip}"></span>
+                                <button onclick="deleteDispo(${slot.id})" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors outline-none" title="Supprimer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                        `;
+                    });
+
+                    dayDiv.innerHTML = `
+                        <h3 class="font-bold text-[#1C5B8F] mb-4 capitalize text-lg flex items-center gap-2">
+                            <svg class="w-5 h-5 text-[#E1AB2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            ${dateStr}
+                        </h3>
+                        <div class="flex flex-wrap gap-3">
+                            ${pillsHtml}
+                        </div>
                     `;
-                    tbody.appendChild(tr);
+                    container.appendChild(dayDiv);
                 });
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement de votre planning.</td></tr>`;
+                container.innerHTML = `<div class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement de votre planning.</div>`;
             }
         }
 
         document.getElementById('add-dispo-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const dateHeure = document.getElementById('date_heure_dispo').value;
-            const sqlDateTime = dateHeure.replace('T', ' ') + ':00'; 
+            const payload = {
+                jour_semaine: parseInt(document.getElementById('jour_semaine').value),
+                heure_debut: document.getElementById('heure_debut').value,
+                heure_fin: document.getElementById('heure_fin').value,
+                duree_minutes: parseInt(document.getElementById('duree_minutes').value)
+            };
 
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/create`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ date_heure: sqlDateTime })
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                    body: JSON.stringify(payload)
                 });
-
+                const data = await res.json();
                 if (res.ok) {
-                    toggleModal('dispoModal');
-                    e.target.reset(); 
-                    showAlert("Créneau ajouté à votre planning !", true);
-                    loadDispos(); 
-                } else {
-                    showAlert("Erreur lors de l'ajout de la disponibilité.");
-                }
-            } catch (err) {
-                showAlert("Erreur serveur.");
-            }
+                    toggleModal('dispoModal'); e.target.reset(); 
+                    showAlert(data.message || "Créneaux générés avec succès !", true); loadDispos(); 
+                } else showAlert(data.message || "Erreur de génération.");
+            } catch (err) { showAlert("Erreur serveur."); }
         });
 
         async function deleteDispo(idDispo) {
-            if (!confirm("Voulez-vous vraiment supprimer ce créneau de votre planning ?")) return;
+            if (!confirm("Supprimer ce créneau unique ?")) return;
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/${idDispo}/delete`, {
-                    method: 'DELETE',
-                    credentials: 'include'
-                });
-                if (res.ok) {
-                    showAlert("Créneau supprimé avec succès.", true);
-                    loadDispos();
-                } else {
-                    showAlert("Erreur lors de la suppression du créneau.");
-                }
-            } catch (err) {
-                showAlert("Erreur serveur.");
-            }
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/${idDispo}/delete`, { method: 'DELETE', credentials: 'include' });
+                if (res.ok) { showAlert("Créneau supprimé.", true); loadDispos(); } 
+                else showAlert("Erreur suppression.");
+            } catch (err) { showAlert("Erreur serveur."); }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -401,15 +395,9 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 if (meRes.ok) {
                     const data = await meRes.json();
                     currentProviderId = data.id_prestataire || data.id || data.ID;
-                    
-                    loadServices();
-                    loadDispos();
-                } else {
-                    window.location.href = "/providers/account/signin.php";
-                }
-            } catch (err) {
-                console.error("Non connecté");
-            }
+                    loadServices(); loadDispos();
+                } else window.location.href = "/providers/account/signin.php";
+            } catch (err) { console.error("Non connecté"); }
         });
     </script>
 </body>

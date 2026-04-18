@@ -3,11 +3,13 @@ package providers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"main/db"
 	"main/models"
 	"main/utils"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func Get_Services_Provider(response http.ResponseWriter, request *http.Request) {
@@ -155,26 +157,69 @@ func Delete_Service_Provider(response http.ResponseWriter, request *http.Request
 }
 
 func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") { return }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    providerID := request.PathValue("id")
-    var d models.Disponibilite
-    
-    if err := json.NewDecoder(request.Body).Decode(&d); err != nil {
-        http.Error(response, "Données invalides", http.StatusBadRequest)
-        return
-    }
+	providerID := request.PathValue("id")
+	
+	var req struct {
+		JourSemaine  int    `json:"jour_semaine"`
+		HeureDebut   string `json:"heure_debut"`
+		HeureFin     string `json:"heure_fin"`
+		DureeMinutes int    `json:"duree_minutes"`
+	}
+	
+	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+		http.Error(response, "Données invalides", http.StatusBadRequest)
+		return
+	}
 
-    query := `INSERT INTO DISPONIBILITE (id_prestataire, date_heure, est_reserve) VALUES (?, ?, 0)`
-    _, err := db.DB.Exec(query, providerID, d.DateHeure)
-    
-    if err != nil {
-        http.Error(response, "Erreur lors de l'ajout", http.StatusInternalServerError)
-        return
-    }
+	var targetWeekday time.Weekday
+	if req.JourSemaine == 7 {
+		targetWeekday = time.Sunday
+	} else {
+		targetWeekday = time.Weekday(req.JourSemaine)
+	}
 
-    response.WriteHeader(http.StatusCreated)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Disponibilité ajoutée"})
+	now := time.Now()
+	daysUntil := int(targetWeekday - now.Weekday())
+	if daysUntil < 0 {
+		daysUntil += 7
+	}
+	
+	firstDate := now.AddDate(0, 0, daysUntil)
+	weeksToGenerate := 12
+	slotsAdded := 0
+
+	for w := 0; w < weeksToGenerate; w++ {
+		currentDate := firstDate.AddDate(0, 0, w*7)
+		dateStr := currentDate.Format("2006-01-02")
+		
+		startTime, errStart := time.Parse("2006-01-02 15:04", dateStr+" "+req.HeureDebut)
+		endTime, errEnd := time.Parse("2006-01-02 15:04", dateStr+" "+req.HeureFin)
+		
+		if errStart != nil || errEnd != nil || !startTime.Before(endTime) {
+			continue 
+		}
+
+		for t := startTime; t.Before(endTime); t = t.Add(time.Duration(req.DureeMinutes) * time.Minute) {
+			formattedTime := t.Format("2006-01-02 15:04:00")
+			
+			var exists int
+			db.DB.QueryRow("SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ? AND date_heure = ?", providerID, formattedTime).Scan(&exists)
+			
+			if exists == 0 {
+				db.DB.Exec("INSERT INTO DISPONIBILITE (id_prestataire, date_heure, est_reserve) VALUES (?, ?, 0)", providerID, formattedTime)
+				slotsAdded++
+			}
+		}
+	}
+
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"message": fmt.Sprintf("%d créneaux générés avec succès pour les 3 prochains mois !", slotsAdded),
+	})
 }
 
 func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {

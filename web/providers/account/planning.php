@@ -174,20 +174,37 @@
                         const endStr = item.date_fin ? item.date_fin.replace(' ', 'T') : null;
                         
                         const startDate = new Date(startStr);
-                        const endDate = endStr ? new Date(endStr) : new Date(startDate.getTime() + (2 * 3600 * 1000));
+                        const endDate = endStr ? new Date(endStr) : new Date(startDate.getTime() + (1 * 3600 * 1000));
                         
                         const isPast = endDate < currentDate;
 
+                        let bgColor, borderColor, textColor, displayTitle;
+
+                        if (isPast) {
+                            bgColor = '#F3F4F6'; borderColor = '#D1D5DB'; textColor = '#9CA3AF';
+                            displayTitle = item.nom;
+                        } else if (item.type === 'creneau_libre') {
+                            bgColor = '#ECFDF5'; borderColor = '#34D399'; textColor = '#065F46';
+                            displayTitle = 'Libre';
+                        } else if (item.type === 'service_reserve') {
+                            bgColor = '#1C5B8F'; borderColor = '#154670'; textColor = '#ffffff';
+                            displayTitle = 'Réservé';
+                        } else {
+                            bgColor = '#E1AB2B'; borderColor = '#C99723'; textColor = '#ffffff';
+                            displayTitle = item.nom;
+                        }
+
                         return {
                             id: item.id,
-                            title: item.nom,
+                            title: displayTitle,
                             start: startStr, 
-                            end: endStr || undefined,
-                            backgroundColor: isPast ? '#9CA3AF' : '#E1AB2B', 
-                            borderColor: isPast ? '#9CA3AF' : '#E1AB2B',
-                            textColor: isPast ? '#ffffff' : '#1C5B8F', 
+                            end: endStr || endDate.toISOString(),
+                            backgroundColor: bgColor, 
+                            borderColor: borderColor,
+                            textColor: textColor, 
                             extendedProps: {
-                                type: item.type, 
+                                originalName: item.nom, 
+                                type: item.type,
                                 lieu: item.lieu || 'Non spécifié',
                                 places: item.nombre_place || 0,
                                 isPast: isPast,
@@ -203,22 +220,26 @@
                     }
 
                     calendarInstance = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
+                        initialView: 'timeGridWeek',
                         locale: 'fr',
+                        slotMinTime: '08:00:00',
+                        slotMaxTime: '20:00:00',
+                        allDaySlot: false,       
+                        expandRows: true,
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth' 
+                            right: 'timeGridWeek,timeGridDay,dayGridMonth,listMonth' 
                         },
                         events: eventsData,
                         height: 'auto',
-                        firstDay: 1, 
+                        firstDay: 1,
                         
                         eventClick: function(info) {
                             const evt = info.event;
                             const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
                             
-                            document.getElementById('modalTitle').textContent = evt.title;
+                            document.getElementById('modalTitle').textContent = evt.extendedProps.originalName;
                             
                             document.getElementById('modalStart').textContent = evt.start 
                                 ? evt.start.toLocaleDateString('fr-FR', options).replace(':', 'h') 

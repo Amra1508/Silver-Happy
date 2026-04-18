@@ -1,6 +1,4 @@
-<?php
-session_start();
-?>
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -32,7 +30,7 @@ session_start();
     <main class="flex-1 relative">
         <div class="p-3 flex justify-between items-center mx-8">
             <a href="/front/services/menu_activity.php">
-                <button class="flex items-center rounded-full px-6 button-blue text-white border border-[#1C5B8F] hover:bg-[#1C5B8F] py-2">
+                <button class="flex items-center rounded-full px-6 button-blue text-white border border-[#1C5B8F] hover:bg-[#1C5B8F] py-2 transition-colors">
                     <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
                 </button>
             </a>
@@ -80,6 +78,9 @@ session_start();
         const limit = 6;
         const messageBox = document.getElementById('api-message');
         let currentServicesData = [];
+        
+        // Stockage global des créneaux chargés pour éviter de refaire des requêtes
+        window.serviceSlots = {};
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -146,12 +147,15 @@ session_start();
             }
         }
 
+        // ==========================================
+        // GESTION MODERNE DES DISPOS (FRONTEND)
+        // ==========================================
         async function loadDisposForService(serviceId, prestataireId) {
-            const select = document.getElementById(`dispo-${serviceId}`);
-            if (!select) return;
+            const timeGrid = document.getElementById(`time-grid-${serviceId}`);
+            const daySelect = document.getElementById(`day-select-${serviceId}`);
 
             if (!prestataireId) {
-                select.innerHTML = '<option disabled>Indisponible (Prestataire inconnu)</option>';
+                timeGrid.innerHTML = '<p class="text-sm text-red-500 col-span-3 text-center py-4">Prestataire inconnu</p>';
                 return;
             }
 
@@ -160,26 +164,93 @@ session_start();
                 if (!res.ok) throw new Error('Erreur réseau');
                 
                 const slots = await res.json();
-                select.innerHTML = '<option value="" disabled selected>Choisissez un créneau</option>';
 
                 if (!slots || slots.length === 0) {
-                    select.innerHTML = '<option disabled>Aucun créneau disponible</option>';
+                    timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center italic py-4">Aucun créneau disponible</p>';
                     return;
                 }
 
+                // Grouper les créneaux par date (jour)
+                const grouped = {};
                 slots.forEach(slot => {
                     const dateObj = new Date(slot.date_heure);
-                    const dateStr = dateObj.toLocaleString('fr-FR', {
-                        weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                    });
+                    const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+                    const key = dateOnly.toISOString(); // Clé unique par jour
                     
-                    select.innerHTML += `<option value="${slot.id_disponibilite}" data-datetime="${slot.date_heure}">${dateStr}</option>`;
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            label: dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }),
+                            slots: []
+                        };
+                    }
+                    grouped[key].slots.push({
+                        id: slot.id_disponibilite,
+                        datetime: slot.date_heure,
+                        timeLabel: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                    });
                 });
+
+                // Stockage global pour ce service
+                window.serviceSlots[serviceId] = grouped;
+
+                // Remplir le menu déroulant des jours
+                daySelect.innerHTML = '<option value="" disabled selected>1. Choisissez un jour</option>';
+                Object.keys(grouped).forEach(key => {
+                    daySelect.innerHTML += `<option value="${key}" class="capitalize">${grouped[key].label}</option>`;
+                });
+                
+                daySelect.classList.remove('hidden');
+                timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center italic py-4">Veuillez sélectionner un jour ci-dessus.</p>';
+
             } catch (err) {
-                select.innerHTML = '<option disabled>Erreur de chargement</option>';
+                timeGrid.innerHTML = '<p class="text-sm text-red-500 col-span-3 text-center py-4">Erreur de chargement</p>';
             }
         }
 
+        function renderTimeSlots(serviceId) {
+            const daySelect = document.getElementById(`day-select-${serviceId}`);
+            const timeGrid = document.getElementById(`time-grid-${serviceId}`);
+            const selectedKey = daySelect.value;
+            
+            // Réinitialiser la sélection
+            document.getElementById(`selected-dispo-id-${serviceId}`).value = "";
+            document.getElementById(`selected-dispo-date-${serviceId}`).value = "";
+
+            if (!selectedKey || !window.serviceSlots[serviceId][selectedKey]) return;
+
+            const dayData = window.serviceSlots[serviceId][selectedKey];
+            timeGrid.innerHTML = ''; // Vider la grille
+
+            dayData.slots.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = `time-slot-btn-${serviceId} w-full py-2 rounded-lg border-2 border-[#1C5B8F] text-[#1C5B8F] bg-white font-bold text-sm hover:bg-[#1C5B8F] hover:text-white transition-all focus:outline-none`;
+                btn.textContent = s.timeLabel;
+                btn.onclick = () => selectTimeSlot(serviceId, s.id, s.datetime, btn);
+                timeGrid.appendChild(btn);
+            });
+        }
+
+        function selectTimeSlot(serviceId, dispoId, datetime, btnElement) {
+            // Mettre à jour les inputs cachés
+            document.getElementById(`selected-dispo-id-${serviceId}`).value = dispoId;
+            document.getElementById(`selected-dispo-date-${serviceId}`).value = datetime;
+            
+            // Réinitialiser l'état visuel de tous les boutons de cette grille
+            const grid = document.getElementById(`time-grid-${serviceId}`);
+            grid.querySelectorAll(`.time-slot-btn-${serviceId}`).forEach(b => {
+                b.classList.remove('bg-[#1C5B8F]', 'text-white', 'scale-105');
+                b.classList.add('bg-white', 'text-[#1C5B8F]');
+            });
+            
+            // Activer le bouton cliqué
+            btnElement.classList.remove('bg-white', 'text-[#1C5B8F]');
+            btnElement.classList.add('bg-[#1C5B8F]', 'text-white', 'scale-105');
+        }
+
+
+        // ==========================================
+        // RÉSERVATION
+        // ==========================================
         async function bookService(serviceId) {
             const userId = window.currentUserId;
 
@@ -198,16 +269,14 @@ session_start();
                 return;
             }
 
-            const select = document.getElementById(`dispo-${serviceId}`);
-            const selectedOption = select.options[select.selectedIndex];
+            // Récupération de la disponibilité choisie via les inputs cachés
+            const idDisponibilite = parseInt(document.getElementById(`selected-dispo-id-${serviceId}`).value);
+            const dateInput = document.getElementById(`selected-dispo-date-${serviceId}`).value;
 
-            if (!selectedOption || !selectedOption.value) {
-                showAlert("Veuillez choisir un créneau disponible !", false);
+            if (!idDisponibilite || isNaN(idDisponibilite) || !dateInput) {
+                showAlert("Veuillez choisir un jour et cliquer sur une heure !", false);
                 return;
             }
-
-            const idDisponibilite = parseInt(selectedOption.value);
-            const dateInput = selectedOption.getAttribute('data-datetime');
 
             try {
                 const response = await fetch(`${API_BASE}/service/checkout/${serviceId}`, {
@@ -227,11 +296,11 @@ session_start();
                         window.location.href = data.url; 
                     } else if (data.isFree) {
                         showAlert(data.message || "Réservation confirmée !", true);
-                        select.selectedIndex = 0; 
                         fetchMyServices();
                         
-                        const prestataireId = select.getAttribute('data-prestataire');
-                        console.log("kk");
+                        // Recharge la grille pour effacer le créneau pris
+                        const daySelect = document.getElementById(`day-select-${serviceId}`);
+                        const prestataireId = daySelect.getAttribute('data-prestataire');
                         loadDisposForService(serviceId, prestataireId);
                     }
                 } else {
@@ -246,7 +315,7 @@ session_start();
             const userId = window.currentUserId;
             if (!userId) return;
             
-            if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ? (Si vous avez payé, vous serez automatiquement remboursé)")) {
+            if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ? (Si vous avez payé, vous serez remboursé)")) {
                 return;
             }
 
@@ -330,12 +399,11 @@ session_start();
             }
 
             services.forEach(s => {
-                console.log(s);
                 const id = s.id_service || s.ID;
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
                 const typePrestation = s.categorie_nom || 'Autre';
-                const idPrestataire = s.id_prestataire;
+                const idPrestataire = s.id_prestataire; 
                 
                 const prixNum = parseFloat(s.prix || 0);
                 const prixHtml = prixNum > 0 
@@ -355,13 +423,21 @@ session_start();
                         <p class="text-gray-600 mb-6 flex-grow leading-relaxed">${description}</p>
                         
                         <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">
-                                Choisissez votre créneau : 
+                            <label class="block text-sm font-bold text-gray-700 mb-3">
+                                Choisissez votre créneau :
                             </label>
                             
-                            <select id="dispo-${id}" data-prestataire="${idPrestataire}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
-                                <option value="" disabled selected>Chargement des créneaux...</option>
-                            </select>
+                            <div id="dispo-wrapper-${id}" class="mb-5">
+                                <select id="day-select-${id}" data-prestataire="${idPrestataire}" onchange="renderTimeSlots(${id})" class="w-full p-2.5 border border-gray-300 rounded-lg mb-3 outline-none focus:border-[#1C5B8F] font-semibold text-gray-700 capitalize hidden cursor-pointer">
+                                </select>
+                                
+                                <div id="time-grid-${id}" class="grid grid-cols-3 gap-2 max-h-[140px] overflow-y-auto pr-1">
+                                    <p class="text-sm text-gray-500 col-span-3 text-center py-4 animate-pulse">Recherche des créneaux...</p>
+                                </div>
+                                
+                                <input type="hidden" id="selected-dispo-id-${id}">
+                                <input type="hidden" id="selected-dispo-date-${id}">
+                            </div>
 
                             <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
                                 ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
@@ -373,6 +449,7 @@ session_start();
 
             container.innerHTML = htmlContent;
 
+            // Déclencher la récupération des créneaux
             services.forEach(s => {
                 const id = s.id_service || s.ID;
                 loadDisposForService(id, s.id_prestataire);
