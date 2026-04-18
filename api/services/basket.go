@@ -376,10 +376,9 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	resCmd, errCmd := db.DB.Exec(`
-		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, montant_frais_port)
-		VALUES(?, ?, ?, ?, ?, ?, ?)`,
-		userID, idPaiement, total, adresse, ville, cp, fraisPort)
-
+		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, id_reduction, montant_frais_port)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, idPaiement, total, adresse, ville, cp, idReduction, fraisPort)
 	if errCmd != nil {
 		fmt.Println("Erreur insertion commande :", errCmd)
 		http.Error(response, "Erreur base de données (Commande)", http.StatusInternalServerError)
