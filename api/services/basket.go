@@ -285,7 +285,7 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 		ClientReferenceID:  stripe.String(strconv.Itoa(livraison.UserID)),
 		LineItems:          lineItems,
 		Discounts:          discounts,
-		SuccessURL: stripe.String(fmt.Sprintf("%s/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&adresse=%s&ville=%s&cp=%s&code=%s",
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&frais_port=%f&adresse=%s&ville=%s&cp=%s&code=%s",
 			utils.GetAPIBaseURL(),
 			livraison.UserID,
 			total,
