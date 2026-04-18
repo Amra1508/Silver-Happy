@@ -32,8 +32,6 @@
         <?php include("../includes/sidebar.php"); ?>
 
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
-            
-
             <main class="p-8">
                 <div class="max-w-7xl mx-auto">
                     
@@ -59,7 +57,6 @@
                     </div>
 
                     <div id="planning-content" class="hidden fade-in">
-                        
                         <div class="flex flex-wrap gap-4 mb-6">
                             <span class="flex items-center text-sm font-bold text-[#1C5B8F] bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200">
                                 <div class="w-3 h-3 rounded-full bg-[#E1AB2B] mr-2"></div> À venir
@@ -82,7 +79,7 @@
                     <h3 id="modalTitle" class="text-xl font-bold truncate pr-4"></h3>
                     <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="text-white hover:text-red-300 transition-colors text-2xl leading-none">&times;</button>
                 </div>
-                <div class="p-6 space-y-4">
+                <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                     <div id="modalStatusContainer" class="hidden mb-2">
                         <span id="modalStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"></span>
                     </div>
@@ -103,8 +100,8 @@
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
                         <span class="text-xl mr-3">📍</span>
                         <div class="min-w-0">
-                            <p class="text-xs text-gray-500 font-semibold uppercase">Lieu</p>
-                            <p id="modalLocation" class="font-bold text-gray-800 truncate"></p>
+                            <p class="text-xs text-gray-500 font-semibold uppercase">Lieu / Adresse</p>
+                            <p id="modalLocation" class="font-bold text-gray-800 break-words"></p>
                         </div>
                     </div>
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -114,6 +111,23 @@
                             <p id="modalPlaces" class="font-bold text-gray-800"></p>
                         </div>
                     </div>
+
+                    <div id="modalClientSection" class="hidden flex-col gap-3 pt-6 border-t border-gray-200 mt-4">
+                        <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Informations du Client</h4>
+                        <div class="flex items-center text-gray-700">
+                            <span class="text-xl mr-3">👤</span>
+                            <p id="modalClientNom" class="font-bold text-gray-800"></p>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <span class="text-xl mr-3">📞</span>
+                            <p id="modalClientTel" class="font-bold text-[#1C5B8F]"></p>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <span class="text-xl mr-3">✉️</span>
+                            <p id="modalClientEmail" class="font-bold text-[#1C5B8F]"></p>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200 shrink-0">
                     <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="bg-[#1C5B8F] text-white font-bold px-6 py-2.5 rounded-xl hover:bg-blue-800 transition shadow-md w-full">
@@ -165,7 +179,7 @@
                         const isPast = endDate < currentDate;
 
                         return {
-                            id: item.id_evenement,
+                            id: item.id,
                             title: item.nom,
                             start: startStr, 
                             end: endStr || undefined,
@@ -173,9 +187,13 @@
                             borderColor: isPast ? '#9CA3AF' : '#E1AB2B',
                             textColor: isPast ? '#ffffff' : '#1C5B8F', 
                             extendedProps: {
+                                type: item.type, 
                                 lieu: item.lieu || 'Non spécifié',
                                 places: item.nombre_place || 0,
-                                isPast: isPast
+                                isPast: isPast,
+                                client_nom: item.client_nom,
+                                client_tel: item.client_tel,
+                                client_email: item.client_email
                             }
                         };
                     });
@@ -215,7 +233,6 @@
                             
                             const statusContainer = document.getElementById('modalStatusContainer');
                             const statusBadge = document.getElementById('modalStatusBadge');
-                            
                             statusContainer.classList.remove('hidden');
                             if (evt.extendedProps.isPast) {
                                 statusBadge.textContent = "Terminé";
@@ -223,6 +240,18 @@
                             } else {
                                 statusBadge.textContent = "À venir";
                                 statusBadge.className = "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-yellow-100 text-yellow-800";
+                            }
+
+                            const clientSection = document.getElementById('modalClientSection');
+                            if (evt.extendedProps.type === 'service_reserve') {
+                                document.getElementById('modalClientNom').textContent = evt.extendedProps.client_nom;
+                                document.getElementById('modalClientTel').textContent = evt.extendedProps.client_tel;
+                                document.getElementById('modalClientEmail').textContent = evt.extendedProps.client_email;
+                                clientSection.classList.remove('hidden');
+                                clientSection.classList.add('flex');
+                            } else {
+                                clientSection.classList.add('hidden');
+                                clientSection.classList.remove('flex');
                             }
 
                             document.getElementById('eventModal').classList.remove('hidden');

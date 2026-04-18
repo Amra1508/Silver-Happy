@@ -312,7 +312,7 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 
 	query := `
 		SELECT p.stripe_pi, p.id_paiement, rs.id_service, rs.date_heure
-		FROM reservation_service rs
+		FROM RESERVATION_SERVICE rs
 		LEFT JOIN PAIEMENT p ON rs.id_paiement = p.id_paiement
 		WHERE rs.id_reservation = ? AND rs.id_utilisateur = ?
 	`
@@ -339,7 +339,7 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 		db.DB.Exec("UPDATE PAIEMENT SET statut = 'remboursé' WHERE id_paiement = ?", idPaiement.Int64)
 	}
 
-	res, errDel := db.DB.Exec("DELETE FROM reservation_service WHERE id_reservation = ? AND id_utilisateur = ?", idReservation, idUser)
+	res, errDel := db.DB.Exec("DELETE FROM RESERVATION_SERVICE WHERE id_reservation = ? AND id_utilisateur = ?", idReservation, idUser)
 	if errDel != nil {
 		http.Error(response, "Erreur lors de la suppression de la réservation.", http.StatusInternalServerError)
 		return
@@ -353,8 +353,23 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 
 	var idPrestataire int
 	err = db.DB.QueryRow("SELECT id_prestataire FROM SERVICE WHERE id_service = ?", idService).Scan(&idPrestataire)
-	if err == nil {
-		db.DB.Exec("UPDATE DISPONIBILITE SET est_reserve = 0 WHERE id_prestataire = ? AND date_heure = ?", idPrestataire, dateHeure)
+	
+	if err != nil {
+		fmt.Println("❌ ERREUR : Impossible de trouver le prestataire pour le service :", err)
+	} else {
+		cleanDate := CleanDateForMySQL(dateHeure)
+
+		resUpdate, errUpdate := db.DB.Exec(
+			"UPDATE DISPONIBILITE SET est_reserve = 0 WHERE id_prestataire = ? AND date_heure = ?", 
+			idPrestataire, cleanDate,
+		)
+
+		if errUpdate != nil {
+			fmt.Println("❌ ERREUR UPDATE DISPONIBILITE :", errUpdate)
+		} else {
+			affectedRows, _ := resUpdate.RowsAffected()
+			fmt.Printf("✅ DEBUG - Créneaux libérés : %d (Prestataire: %d, Date: %s)\n", affectedRows, idPrestataire, cleanDate)
+		}
 	}
 
 	response.WriteHeader(http.StatusOK)
