@@ -221,8 +221,11 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 		lineItems = append(lineItems, item)
 	}
 
+	fraisPort := 0.00
+
 	if total > 0 && total <= 100.00 {
-		total += 4.99
+		fraisPort = 4.99
+		total += fraisPort
 
 		shippingItem := &stripe.CheckoutSessionLineItemParams{
 			PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
@@ -286,6 +289,7 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 			utils.GetAPIBaseURL(),
 			livraison.UserID,
 			total,
+			fraisPort,
 			url.QueryEscape(livraison.Adresse),
 			url.QueryEscape(livraison.Ville),
 			url.QueryEscape(livraison.CP),
@@ -314,12 +318,14 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	sessionID := request.URL.Query().Get("session_id")
 	userID := html.EscapeString(request.URL.Query().Get("user_id"))
 	totalStr := request.URL.Query().Get("total")
+	fraisPortStr := request.URL.Query().Get("frais_port")
 	adresse := html.EscapeString(request.URL.Query().Get("adresse"))
 	ville := html.EscapeString(request.URL.Query().Get("ville"))
 	cp := html.EscapeString(request.URL.Query().Get("cp"))
 	codePromoUtilise := strings.ToUpper(strings.TrimSpace(request.URL.Query().Get("code")))
 
 	total, err := strconv.ParseFloat(totalStr, 64)
+	fraisPort, _ := strconv.ParseFloat(fraisPortStr, 64)
 	if err != nil {
 		http.Error(response, "Erreur de format du total", http.StatusBadRequest)
 		return
@@ -355,7 +361,7 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
 		if err == nil {
 			idReduction.Int64 = int64(idCode)
-            idReduction.Valid = true
+			idReduction.Valid = true
 		}
 	}
 
@@ -373,9 +379,9 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	resCmd, errCmd := db.DB.Exec(`
-        INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, id_reduction)
-        VALUES(?, ?, ?, ?, ?, ?, ?)`,
-		userID, idPaiement, total, adresse, ville, cp, idReduction)
+		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, id_reduction, montant_frais_port)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, idPaiement, total, adresse, ville, cp, idReduction, fraisPort)
 
 	if errCmd != nil {
 		fmt.Println("Erreur insertion commande :", errCmd)
@@ -398,8 +404,8 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	}
 
 	if idReduction.Valid {
-        db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
-    }
+		db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
+	}
 
 	db.DB.Exec(`
         UPDATE PRODUIT pr

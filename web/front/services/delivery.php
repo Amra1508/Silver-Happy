@@ -177,12 +177,36 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     } else {
                         totalApresReduc = totalBrut - reductionAppliquee.valeur;
                     }
-                    html += `<div class="text-green-600 text-sm mt-2 font-bold italic">Réduction appliquée (${reductionAppliquee.code})</div>`;
+                    
+                    let montantSoustrait = totalBrut - totalApresReduc;
+                    html += `
+                    <div class="flex justify-between items-center text-green-600 text-sm mt-2 font-bold italic">
+                        <span>Réduction appliquée (${reductionAppliquee.code})</span>
+                        <span>- ${montantSoustrait.toFixed(2)} €</span>
+                    </div>`;
                 }
 
-                resumeContainer.innerHTML = html;
-                document.getElementById('total-final').textContent = `${Math.max(0, totalApresReduc).toFixed(2)} €`;
+                let fraisPort = 0;
+                
+                if (totalApresReduc > 0 && totalApresReduc <= 100) {
+                    fraisPort = 4.99;
+                    html += `
+                    <div class="flex justify-between items-center py-2 border-t border-gray-200 mt-2">
+                        <span class="font-bold text-gray-600">Frais de livraison</span>
+                        <span class="font-semibold text-gray-600">4.99 €</span>
+                    </div>`;
+                } else if (totalApresReduc > 100) {
+                    html += `
+                    <div class="flex justify-between items-center py-2 border-t border-gray-200 mt-2">
+                        <span class="font-bold text-green-600">Frais de livraison</span>
+                        <span class="font-semibold text-green-600">OFFERTS</span>
+                    </div>`;
+                }
 
+                let totalFinal = totalApresReduc + fraisPort;
+
+                resumeContainer.innerHTML = html;
+                    document.getElementById('total-final').textContent = `${Math.max(0, totalFinal).toFixed(2)} €`;
             } catch (err) {
                 console.error("Erreur chargement récap:", err);
             }
