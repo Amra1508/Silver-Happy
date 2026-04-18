@@ -183,8 +183,10 @@ func InitDB() {
 		adresse VARCHAR(255),
 		code_postal CHAR(5),
 		ville VARCHAR(100),
+		id_reduction INT,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
+		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement),
+		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
 	);
 	CREATE TABLE IF NOT EXISTS LIGNE_COMMANDE(
 		id_ligne INT AUTO_INCREMENT PRIMARY KEY,
