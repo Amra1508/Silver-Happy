@@ -37,6 +37,10 @@ $is_logged_in = isset($_COOKIE['provider_token']);
             Mes Evenements
         </a>
 
+        <a href="/providers/services/catalog.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-[#E1AB2B] rounded-xl transition-all">
+            Mes Services
+        </a>
+
         <a href="/providers/account/planning.php" class="flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-white/10 hover:text-[#E1AB2B] rounded-xl transition-all">
             Mon Planning
         </a>

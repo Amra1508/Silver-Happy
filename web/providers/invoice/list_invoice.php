@@ -1,3 +1,8 @@
+<?php
+session_start();
+$is_logged_in = isset($_SESSION['provider_id']);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -26,35 +31,65 @@
             <main class="p-8">
                 
                 <?php if ($is_logged_in): ?>
-                    <div id="main-content" class="space-y-8 max-w-5xl mx-auto">
+                    <div id="main-content" class="space-y-12 max-w-6xl mx-auto">
                         
                         <div>
-                            <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Factures</h1>
-                            <p class="text-gray-500 mt-1">Retrouvez l'historique de vos paiements et téléchargez vos reçus.</p>
+                            <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Factures & Bénéfices</h1>
+                            <p class="text-gray-500 mt-1">Consultez l'historique de vos paiements et le récapitulatif de vos revenus.</p>
                         </div>
 
                         <div id="alert-box" class="hidden p-4 rounded-xl font-semibold text-sm"></div>
 
-                        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="text-gray-400 text-sm border-b border-gray-100">
-                                            <th class="pb-4 font-medium px-4">Date</th>
-                                            <th class="pb-4 font-medium px-4">Description</th>
-                                            <th class="pb-4 font-medium px-4">Montant</th>
-                                            <th class="pb-4 font-medium px-4">Statut</th>
-                                            <th class="pb-4 font-medium text-right px-4">Reçu</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="invoices-table-body">
-                                        <tr>
-                                            <td colspan="5" class="py-8 text-center text-gray-500 text-sm">
-                                                <span class="animate-pulse">Chargement de vos factures...</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        <div class="space-y-4">
+                            <h2 class="text-xl font-semibold text-gray-700">Mes Factures (Abonnements)</h2>
+                            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="text-gray-400 text-sm border-b border-gray-100">
+                                                <th class="pb-4 font-medium px-4">Date</th>
+                                                <th class="pb-4 font-medium px-4">Description</th>
+                                                <th class="pb-4 font-medium px-4">Montant</th>
+                                                <th class="pb-4 font-medium px-4">Statut</th>
+                                                <th class="pb-4 font-medium text-right px-4">Reçu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="invoices-table-body">
+                                            <tr>
+                                                <td colspan="5" class="py-8 text-center text-gray-500 text-sm">
+                                                    <span class="animate-pulse">Chargement de vos factures...</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h2 class="text-xl font-semibold text-gray-700">Mes Relevés de Bénéfices (Prestations)</h2>
+                            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="text-gray-400 text-sm border-b border-gray-100">
+                                                <th class="pb-4 font-medium px-4">Période (Mois)</th>
+                                                <th class="pb-4 font-medium px-4">CA Brut Généré</th>
+                                                <th class="pb-4 font-medium px-4">Frais Plateforme</th>
+                                                <th class="pb-4 font-medium px-4">Montant Net</th>
+                                                <th class="pb-4 font-medium px-4">Date d'émission</th>
+                                                <th class="pb-4 font-medium text-right px-4">Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="benefits-table-body">
+                                            <tr>
+                                                <td colspan="6" class="py-8 text-center text-gray-500 text-sm">
+                                                    <span class="animate-pulse">Chargement de vos bénéfices...</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
@@ -76,7 +111,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const tbody = document.getElementById('invoices-table-body');
+            const invoicesTbody = document.getElementById('invoices-table-body');
+            const benefitsTbody = document.getElementById('benefits-table-body');
             const alertBox = document.getElementById('alert-box');
 
             function showAlert(msg, isSuccess = false) {
@@ -85,24 +121,33 @@
                 alertBox.classList.remove('hidden');
             }
 
+            function formatCurrency(amount) {
+                return parseFloat(amount).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+            }
+
             try {
                 const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, { method: 'GET', credentials: 'include' });
                 
-                if (meRes.ok) {
-                    const data = await meRes.json();
-                    const providerId = data.id_prestataire || data.id || data.ID;
+                if (!meRes.ok) {
+                    window.location.href = "/providers/account/signin.php";
+                    return;
+                }
+                
+                const data = await meRes.json();
+                const providerId = data.id_prestataire || data.id || data.ID;
 
-                    const invRes = await fetch(`${window.API_BASE_URL}/prestataire/${providerId}/invoices`, { method: 'GET', credentials: 'include' });
-                    
-                    if (invRes.ok) {
-                        const invoices = await invRes.json();
-                        tbody.innerHTML = '';
+                const [invRes, benRes] = await Promise.all([
+                    fetch(`${window.API_BASE_URL}/prestataire/${providerId}/invoices`, { method: 'GET', credentials: 'include' }),
+                    fetch(`${window.API_BASE_URL}/prestataire/${providerId}/factures-mensuelles`, { method: 'GET', credentials: 'include' })
+                ]);
 
-                        if (!invoices || invoices.length === 0) {
-                            tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-500 font-medium">Aucune facture disponible pour le moment.</td></tr>`;
-                            return;
-                        }
+                if (invRes.ok) {
+                    const invoices = await invRes.json();
+                    invoicesTbody.innerHTML = '';
 
+                    if (!invoices || invoices.length === 0) {
+                        invoicesTbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-500 font-medium">Aucune facture disponible pour le moment.</td></tr>`;
+                    } else {
                         invoices.forEach(inv => {
                             const date = new Date(inv.date_paiement).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
                             const isPaid = inv.statut.toLowerCase() === 'valide' || inv.statut.toLowerCase() === 'payé';
@@ -116,29 +161,66 @@
                                     Télécharger
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                    </a>`
-                                : `<span class="text-gray-400 text-sm">Non disponible</span>`;
+                                : `<span class="text-gray-400 text-sm flex justify-end">Non disponible</span>`;
 
                             const tr = document.createElement('tr');
                             tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
                             tr.innerHTML = `
                                 <td class="py-4 px-4 text-sm text-gray-600">${date}</td>
                                 <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${inv.description || 'Paiement Silver Happy'}</td>
-                                <td class="py-4 px-4 text-sm font-bold text-gray-800">${inv.prix} €</td>
+                                <td class="py-4 px-4 text-sm font-bold text-gray-800">${formatCurrency(inv.prix)}</td>
                                 <td class="py-4 px-4">${statusBadge}</td>
                                 <td class="py-4 px-4 text-right">${linkBtn}</td>
                             `;
-                            tbody.appendChild(tr);
+                            invoicesTbody.appendChild(tr);
                         });
-                    } else {
-                        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement de vos factures.</td></tr>`;
                     }
                 } else {
-                    window.location.href = "/providers/account/signin.php";
+                    invoicesTbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement des factures.</td></tr>`;
                 }
+
+                if (benRes.ok) {
+                    const benefits = await benRes.json();
+                    benefitsTbody.innerHTML = '';
+
+                    if (!benefits || benefits.length === 0) {
+                        benefitsTbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-gray-500 font-medium">Aucun relevé de bénéfice n'a encore été généré.</td></tr>`;
+                    } else {
+                        benefits.forEach(inv => {
+                            const date = new Date(inv.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                            
+                            let statusBadge = '';
+                            const statusLower = (inv.statut || '').toLowerCase();
+                            if (statusLower === 'payé' || statusLower === 'paye') {
+                                statusBadge = `<span class="bg-green-100 text-green-700 py-1 px-3 rounded-full text-xs font-bold">Payé</span>`;
+                            } else if (statusLower === 'en_attente') {
+                                statusBadge = `<span class="bg-orange-100 text-orange-700 py-1 px-3 rounded-full text-xs font-bold">En attente</span>`;
+                            } else {
+                                statusBadge = `<span class="bg-gray-100 text-gray-700 py-1 px-3 rounded-full text-xs font-bold capitalize">${inv.statut.replace('_', ' ')}</span>`;
+                            }
+
+                            const tr = document.createElement('tr');
+                            tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
+                            tr.innerHTML = `
+                                <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${inv.mois_annee}</td>
+                                <td class="py-4 px-4 text-sm text-gray-600">${formatCurrency(inv.montant_brut)}</td>
+                                <td class="py-4 px-4 text-sm text-red-500 font-medium">- ${formatCurrency(inv.frais_plateforme)}</td>
+                                <td class="py-4 px-4 text-sm font-bold text-green-600">${formatCurrency(inv.montant_net)}</td>
+                                <td class="py-4 px-4 text-sm text-gray-500">${date}</td>
+                                <td class="py-4 px-4 text-right">${statusBadge}</td>
+                            `;
+                            benefitsTbody.appendChild(tr);
+                        });
+                    }
+                } else {
+                    benefitsTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement des bénéfices.</td></tr>`;
+                }
+
             } catch (err) {
                 console.error(err);
                 showAlert("Impossible de se connecter au serveur.");
-                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Serveur injoignable.</td></tr>`;
+                invoicesTbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Serveur injoignable.</td></tr>`;
+                benefitsTbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-red-500 font-medium">Serveur injoignable.</td></tr>`;
             }
         });
     </script>

@@ -34,8 +34,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
 
-        <button onclick="readALoud()" aria-label="Lire la page à voix haute" class="header-button transition-all group ml-2 focus:outline-none focus:ring-4 focus:ring-[#1C5B8F]" title="Lecture vocale">
-            <img src="/front/icons/assistant-vocal.svg" alt="" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
+        <button onclick="readALoud()" class="header-button transition-all group ml-2" title="Lecture vocale">
+            <img src="/front/icons/lecture-vocal.svg" alt="Lecture vocal" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
+        </button>
+
+        <button onclick="speakCommand()" id="btn_micro" class="header-button transition-all group ml-2" title="Commande Vocale">
+            <img src="/front/icons/assistant-vocal.svg" alt="Commande vocal" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
 
         <div class="relative group z-[100]">
@@ -182,5 +186,66 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 alert("Désolé, votre navigateur ne supporte pas la lecture vocale.");
             }
         }
+
+        function speakCommand() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return alert("Désolé, micro non supporté sur ce navigateur.");
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+
+            const btnMicro = document.getElementById('btn_micro');
+            btnMicro.classList.add('bg-red-200', 'rounded-full');
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                btnMicro.classList.remove('bg-red-200', 'rounded-full');
+                const commande = event.results[0][0].transcript.toLowerCase();
+
+                let messageReponse = "";
+                let urlRedirection = "";
+
+                if (commande.includes('accueil')) {
+                    messageReponse = "Retour à l'accueil.";
+                    urlRedirection = "/front/index.php";
+                } 
+                else if (commande.includes('activité')) {
+                    messageReponse = "Ouverture des activités.";
+                    urlRedirection = "/front/services/menu_activity.php";
+                } 
+                else if (commande.includes('boutique')) {
+                    messageReponse = "Ouverture de la boutique.";
+                    urlRedirection = "/front/services/products.php";
+                } 
+                else if (commande.includes('messagerie')) {
+                    messageReponse = "Ouverture de vos messages.";
+                    urlRedirection = "/front/communication/list_contact.php";
+                } 
+                else if (commande.includes('connecter')) {
+                    messageReponse = "Page de connexion.";
+                    urlRedirection = "/front/account/signin.php";
+                } 
+                else {
+                    return alert("Désolé, je n'ai pas compris : " + commande + "\n Veuilez réssayer !");
+                }
+
+                if ('speechSynthesis' in window) {
+                    let voix = new SpeechSynthesisUtterance(messageReponse);
+                    voix.lang = 'fr-FR';
+                    window.speechSynthesis.speak(voix);
+                }
+
+                window.location.href = urlRedirection;
+            };
+
+            recognition.onerror = function(event) {
+                btnMicro.classList.remove('bg-red-200', 'rounded-full');
+                if (event.error === 'network') {
+                    alert("Erreur réseau : Le navigateur bloque le micro.");
+                }
+            };
+        }
+
     </script>
 </header>

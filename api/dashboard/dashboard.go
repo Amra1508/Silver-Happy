@@ -64,43 +64,48 @@ func Abonnement_Count(response http.ResponseWriter, request *http.Request) {
 }
 
 func Revenus(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := `
-        SELECT 
-            DATE(date_paiement) as date, 
-            SUM(
-                CASE 
-                    WHEN id_paiement IN (SELECT id_paiement FROM INSCRIPTION WHERE id_paiement IS NOT NULL) THEN prix * 0.01
-                    ELSE prix 
-                END
-            ) as total 
-        FROM PAIEMENT 
-        WHERE statut = 'valide' 
-          AND date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY) 
-        GROUP BY DATE(date_paiement) 
-        ORDER BY date_paiement ASC
-    `
-    
-    rows, err := db.DB.Query(query)
-    if err != nil {
-        http.Error(response, "Erreur lors de la récupération des revenus", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	query := `
+		SELECT 
+			DATE(date_paiement) as date, 
+			SUM(
+				CASE 
+					WHEN id_paiement IN (SELECT id_paiement FROM INSCRIPTION WHERE id_paiement IS NOT NULL) THEN prix * 0.01
+					WHEN id_paiement IN (SELECT id_paiement FROM reservation_service WHERE id_paiement IS NOT NULL) THEN prix * 0.01
+					ELSE prix 
+				END
+			) as total 
+		FROM PAIEMENT 
+		WHERE statut = 'valide' 
+		  AND date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY) 
+		GROUP BY DATE(date_paiement) 
+		ORDER BY date_paiement ASC
+	`
+	
+	rows, err := db.DB.Query(query)
+	if err != nil {
+		http.Error(response, "Erreur lors de la récupération des revenus", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var revenues []models.Revenue
+	var revenues []models.Revenue
 
-    for rows.Next() {
-        var r models.Revenue
-        if err := rows.Scan(&r.Date, &r.Total); err != nil {
-            continue
-        }
-        revenues = append(revenues, r)
-    }
+	for rows.Next() {
+		var r models.Revenue
+		if err := rows.Scan(&r.Date, &r.Total); err != nil {
+			continue
+		}
+		revenues = append(revenues, r)
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(revenues)
+	if revenues == nil {
+		revenues = []models.Revenue{}
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(revenues)
 }

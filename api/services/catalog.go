@@ -1,15 +1,25 @@
 package services
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html"
 	"net/http"
+	"net/url"
+	"os"
+	"strconv"
 	"strings"
 
 	"main/db"
 	"main/models"
 	"main/utils"
+
+	"github.com/stripe/stripe-go/v78"
+	"github.com/stripe/stripe-go/v78/charge"
+	"github.com/stripe/stripe-go/v78/checkout/session"
+	"github.com/stripe/stripe-go/v78/paymentintent"
+	"github.com/stripe/stripe-go/v78/refund"
 )
 
 func Read_Service(response http.ResponseWriter, request *http.Request) {
@@ -37,7 +47,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
     db.DB.QueryRow("SELECT COUNT(*) FROM SERVICE").Scan(&total)
 
     sqlQuery := `
-        SELECT s.id_service, s.nom, s.description, s.id_categorie, IFNULL(c.nom, 'Autre') as categorie_nom
+        SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, IFNULL(c.nom, 'Autre') as categorie_nom
         FROM SERVICE s
         LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
         LIMIT ? OFFSET ?
@@ -53,7 +63,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
     var tabService []models.Service
     for rows.Next() {
         var service models.Service
-        if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.IDCategorie, &service.CategorieNom); err != nil {
+        if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.CategorieNom); err != nil {
             fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
             continue
         }
@@ -124,20 +134,33 @@ func Update_Service(response http.ResponseWriter, request *http.Request) {
 	service.Nom = html.EscapeString(strings.TrimSpace(service.Nom))
 	service.Description = html.EscapeString(strings.TrimSpace(service.Description))
 
-	res, err := db.DB.Exec("UPDATE SERVICE SET nom = ?, description = ?, id_categorie = ? WHERE id_service = ?", service.Nom, service.Description, service.IDCategorie, id)
+	if service.Nom == "" {
+		http.Error(response, "Le nom du service est requis", http.StatusBadRequest)
+		return
+	}
+
+	query := `
+		UPDATE SERVICE 
+		SET nom = ?, description = ?, id_categorie = ?, prix = ?, id_prestataire = ? 
+		WHERE id_service = ?
+	`
+
+	res, err := db.DB.Exec(query, service.Nom, service.Description, service.IDCategorie, service.Prix, service.IDPrestataire, id)
 
 	if err != nil {
-		http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)
+		http.Error(response, "Erreur lors de la mise à jour en base de données", http.StatusInternalServerError)
 		return
 	}
 
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
-		http.Error(response, "Aucun service trouvé", http.StatusNotFound)
-		return
 	}
 
+	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{
+		"message": "Service mis à jour avec succès",
+	})
 }
 
 func Delete_Service(response http.ResponseWriter, request *http.Request) {
@@ -244,38 +267,74 @@ func Register_Service(response http.ResponseWriter, request *http.Request) {
 }
 
 func Unregister_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    idReservation := request.PathValue("id")
-    
-    var payload map[string]int
-    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
+	idReservation := request.PathValue("id")
+	
+	var payload map[string]int
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
 
-    idUser, exists := payload["id_utilisateur"]
-    if !exists {
-        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
-        return
-    }
+	idUser, exists := payload["id_utilisateur"]
+	if !exists {
+		http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
+		return
+	}
 
-    res, err := db.DB.Exec("DELETE FROM reservation_service WHERE id_reservation = ? AND id_utilisateur = ?", idReservation, idUser)
-    if err != nil {
-        http.Error(response, "Erreur lors de l'annulation.", http.StatusInternalServerError)
-        return
-    }
+	var stripePI sql.NullString
+	var idPaiement sql.NullInt64
+	query := `
+		SELECT p.stripe_pi, p.id_paiement 
+		FROM reservation_service rs
+		LEFT JOIN PAIEMENT p ON rs.id_paiement = p.id_paiement
+		WHERE rs.id_reservation = ? AND rs.id_utilisateur = ?
+	`
+	
+	err := db.DB.QueryRow(query, idReservation, idUser).Scan(&stripePI, &idPaiement)
+	if err != nil {
+		http.Error(response, "Réservation introuvable ou non autorisée.", http.StatusForbidden)
+		return
+	}
 
-    affected, _ := res.RowsAffected()
-    if affected == 0 {
-        http.Error(response, "Réservation introuvable ou non autorisée.", http.StatusForbidden)
-        return
-    }
+	if stripePI.Valid && stripePI.String != "" {
+		stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+		
+		params := &stripe.RefundParams{
+			PaymentIntent: stripe.String(stripePI.String),
+		}
+		
+		_, errRefund := refund.New(params)
+		if errRefund != nil {
+			http.Error(response, "L'annulation a échoué car le remboursement Stripe n'a pas pu aboutir.", http.StatusInternalServerError)
+			return
+		}
 
-    response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Rendez-vous annulé !"})
+		db.DB.Exec("UPDATE PAIEMENT SET statut = 'remboursé' WHERE id_paiement = ?", idPaiement.Int64)
+	}
+
+	res, errDel := db.DB.Exec("DELETE FROM reservation_service WHERE id_reservation = ? AND id_utilisateur = ?", idReservation, idUser)
+	if errDel != nil {
+		http.Error(response, "Erreur lors de la suppression de la réservation.", http.StatusInternalServerError)
+		return
+	}
+
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		http.Error(response, "Réservation introuvable.", http.StatusForbidden)
+		return
+	}
+
+	response.WriteHeader(http.StatusOK)
+	
+	msg := "Rendez-vous annulé avec succès !"
+	if stripePI.Valid && stripePI.String != "" {
+		msg = "Rendez-vous annulé ! Vous serez remboursé sous 5 à 10 jours sur votre carte bancaire."
+	}
+	json.NewEncoder(response).Encode(map[string]string{"message": msg})
 }
 
 func GetServicesByCategory(response http.ResponseWriter, request *http.Request) {
@@ -308,4 +367,123 @@ func GetServicesByCategory(response http.ResponseWriter, request *http.Request) 
 	response.Header().Set("Content-Type", "application/json")
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(services)
+}
+
+func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
+
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+	idService := request.PathValue("id")
+	
+	var payload struct {
+		IdUtilisateur int    `json:"id_utilisateur"`
+		DateHeure     string `json:"date_heure"`
+	}
+
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
+
+	if payload.IdUtilisateur == 0 || payload.DateHeure == "" {
+		http.Error(response, "Données manquantes (ID ou Date)", http.StatusBadRequest)
+		return
+	}
+
+	var nomSvc string
+	var prix float64
+
+	err := db.DB.QueryRow("SELECT nom, prix FROM SERVICE WHERE id_service = ?", idService).Scan(&nomSvc, &prix)
+	if err != nil {
+		http.Error(response, "Service introuvable.", http.StatusNotFound)
+		return
+	}
+
+	if prix <= 0 {
+		_, errInsert := db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", idService, payload.IdUtilisateur, payload.DateHeure)
+		if errInsert != nil {
+			http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Réservation gratuite confirmée !"})
+		return
+	}
+
+	encodedDate := url.QueryEscape(payload.DateHeure)
+
+	params := &stripe.CheckoutSessionParams{
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
+		ClientReferenceID:  stripe.String(strconv.Itoa(payload.IdUtilisateur)),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			{
+				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+					Currency: stripe.String("eur"),
+					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
+						Name: stripe.String("Réservation Service : " + nomSvc),
+					},
+					UnitAmount: stripe.Int64(int64(prix * 100)),
+				},
+				Quantity: stripe.Int64(1),
+			},
+		},
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%s&user_id=%d&date_heure=%s", utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, encodedDate)),
+		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/front/services/catalog.php"),
+	}
+
+	s, err := session.New(params)
+	if err != nil {
+		http.Error(response, "Erreur Stripe", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{"isFree": false, "url": s.URL})
+}
+
+func Success_Service_Payment(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+	sessionID := request.URL.Query().Get("session_id")
+	serviceID := request.URL.Query().Get("service_id")
+	userID := request.URL.Query().Get("user_id")
+	dateHeure, _ := url.QueryUnescape(request.URL.Query().Get("date_heure"))
+
+	s, err := session.Get(sessionID, nil)
+	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/catalog.php?error=paiement_echoue", http.StatusSeeOther)
+		return
+	}
+
+	var urlFacture string
+	var stripePI string
+
+	if s.PaymentIntent != nil {
+		stripePI = s.PaymentIntent.ID
+		pi, errPI := paymentintent.Get(s.PaymentIntent.ID, nil)
+		if errPI == nil && pi.LatestCharge != nil {
+			ch, errC := charge.Get(pi.LatestCharge.ID, nil)
+			if errC == nil {
+				urlFacture = ch.ReceiptURL
+			}
+		}
+	}
+
+	prixPaye := float64(s.AmountTotal) / 100.0
+	resPaiement, errP := db.DB.Exec(
+		"INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture, stripe_pi) VALUES (?, 'valide', 'carte', ?, ?)",
+		prixPaye, urlFacture, stripePI,
+	)
+
+	if errP == nil {
+		idPaiement, _ := resPaiement.LastInsertId()
+		db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure, id_paiement) VALUES (?, ?, ?, ?)", serviceID, userID, dateHeure, idPaiement)
+	}
+
+	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/catalog.php?success=reservation_validee", http.StatusSeeOther)
 }

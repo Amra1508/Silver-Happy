@@ -97,7 +97,7 @@
                     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-xl font-bold text-[#1C5B8F]">Vos revenus (30 derniers jours)</h2>
-                            <span class="text-sm text-gray-500 italic">Net (90%) de vos prestations</span>
+                            <span class="text-sm text-gray-500 italic">Net (99%) de vos prestations</span>
                         </div>
                         <div class="relative w-full h-72">
                             <canvas id="revenueChart"></canvas>

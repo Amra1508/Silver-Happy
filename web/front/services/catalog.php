@@ -29,7 +29,7 @@
     <main class="flex-1 relative">
         <div class="p-3 flex justify-between items-center mx-8">
             <a href="/front/services/menu_activity.php">
-                <button class="flex items-center rounded-full px-6 button-blue">
+                <button class="flex items-center rounded-full px-6 button-blue text-[#1C5B8F] border border-[#1C5B8F] hover:bg-[#1C5B8F] hover:text-white py-2 transition-all">
                     <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
                 </button>
             </a>
@@ -46,9 +46,9 @@
         </div>
 
         <div class="w-full px-6 md:px-16 mt-12 mb-8 bg-gray-50 text-center">
-            <h2 class="text-4xl font-bold mb-4 text-[#1C5B8F]">Notre catalogue</h2>
+            <h2 class="text-4xl font-bold mb-4 text-[#1C5B8F]">Notre catalogue de services</h2>
             <h2 class="text-lg max-w-4xl mx-auto text-gray-600 mb-8">
-                Parcourez ci-dessous l'ensemble des services proposés et réservez le créneau qui vous convient.
+                Parcourez ci-dessous l'ensemble des prestations proposées et réservez le créneau qui vous convient.
             </h2>
 
             <div class="flex justify-center items-center gap-4">
@@ -72,7 +72,7 @@
     <?php include("../includes/footer.php") ?>
 
     <script>
-        const API_BASE = window.API_BASE_URL;
+        const API_BASE = window.API_BASE_URL || "http://localhost:8082";
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
@@ -89,6 +89,15 @@
                     messageBox.classList.remove('opacity-0');
                 }, 300);
             }, 4000);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success') && urlParams.get('success') === 'reservation_validee') {
+            showAlert("Paiement validé ! Votre réservation est confirmée.", true);
+            window.history.replaceState({}, document.title, window.location.pathname); 
+        } else if (urlParams.has('error') && urlParams.get('error') === 'paiement_echoue') {
+            showAlert("Le paiement a échoué. Veuillez réessayer.", false);
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
 
         async function fetchMyServices() {
@@ -109,11 +118,7 @@
                     myServices.forEach(s => {
                         const dateObj = new Date(s.date_heure);
                         const dateString = dateObj.toLocaleString('fr-FR', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                            hour: '2-digit',
-                            minute: '2-digit'
+                            weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
                         }).replace(/^\w/, c => c.toUpperCase());
 
                         const card = `
@@ -177,55 +182,58 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/service/register/${serviceId}`, {
+                const response = await fetch(`${API_BASE}/service/checkout/${serviceId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         id_utilisateur: parseInt(userId),
                         date_heure: dateInput
                     }),
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    showAlert("Rendez-vous confirmé !", true);
-                    document.getElementById(`datetime-${serviceId}`).value = "";
-                    fetchMyServices();
+                    if (data.url) {
+                        window.location.href = data.url; 
+                    } else if (data.isFree) {
+                        showAlert(data.message, true);
+                        document.getElementById(`datetime-${serviceId}`).value = "";
+                        fetchMyServices();
+                    }
                 } else {
-                    const errText = await response.text();
-                    showAlert("Erreur : " + errText, false);
+                    showAlert("Erreur : " + (data.error || "Paiement impossible"), false);
                 }
             } catch (err) {
-                showAlert("Impossible de joindre le serveur.", false);
+                showAlert("Impossible de joindre le serveur de paiement.", false);
             }
         }
 
         async function cancelService(reservationId) {
             const userId = window.currentUserId;
             if (!userId) return;
-            if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ?")) return;
+            
+            if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ? (Si vous avez payé, vous serez automatiquement remboursé)")) {
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_BASE}/service/unregister/${reservationId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_utilisateur: parseInt(userId)
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
                 });
 
                 if (response.ok) {
-                    showAlert("Rendez-vous annulé.", true);
+                    const data = await response.json();
+                    showAlert(data.message || "Rendez-vous annulé avec succès.", true);
                     fetchMyServices();
                 } else {
                     const errText = await response.text();
                     showAlert("Erreur : " + errText, false);
                 }
             } catch (err) {
-                showAlert("Impossible de joindre le serveur.", false);
+                showAlert("Impossible de joindre le serveur pour l'annulation.", false);
             }
         }
 
@@ -249,14 +257,13 @@
                 renderServiceCards(currentServicesData);
                 renderPagination(result.totalPages);
             } catch (err) {
-                showAlert("Erreur de connexion", false);
+                showAlert("Erreur de connexion avec le catalogue.", false);
             }
         }
 
         function updateCategoryDropdown(services) {
             const select = document.getElementById('category-filter');
             const currentValue = select.value;
-
             const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
 
             let optionsHtml = '<option value="all">Toutes les prestations</option>';
@@ -265,7 +272,6 @@
             });
 
             select.innerHTML = optionsHtml;
-
             if (currentValue !== 'all' && categories.includes(currentValue)) {
                 select.value = currentValue;
             }
@@ -273,7 +279,6 @@
 
         function applyCategoryFilter() {
             const selectedCategory = document.getElementById('category-filter').value;
-
             if (selectedCategory === 'all') {
                 renderServiceCards(currentServicesData);
             } else {
@@ -300,16 +305,22 @@
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
                 const typePrestation = s.categorie_nom || 'Autre';
+                
+                const prixNum = parseFloat(s.prix || 0);
+                const prixHtml = prixNum > 0 
+                    ? `<p class="text-xl font-extrabold text-[#E1AB2B] mb-4">${prixNum.toFixed(2)} €</p>` 
+                    : `<p class="text-xl font-extrabold text-green-600 mb-4">Gratuit</p>`;
 
                 container.innerHTML += `
                     <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col p-8 rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all relative mt-4">
                         <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
                         
-                        <div class="mt-2 mb-1">
+                        <div class="mt-2 mb-1 flex justify-between items-center">
                             <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${typePrestation}</span>
                         </div>
 
-                        <h3 class="text-2xl text-[#1C5B8F] font-bold mb-2">${nom}</h3>
+                        <h3 class="text-2xl text-[#1C5B8F] font-bold mt-3 mb-1">${nom}</h3>
+                        ${prixHtml}
                         <p class="text-gray-600 mb-6 flex-grow leading-relaxed">${description}</p>
                         
                         <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -319,7 +330,7 @@
                             </label>
                             <input type="datetime-local" id="datetime-${id}" min="${minDateTime}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
                             <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
-                                Confirmer le RDV
+                                ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
                             </button>
                         </div>
                     </div>

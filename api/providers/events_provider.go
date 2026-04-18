@@ -107,9 +107,7 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
         FROM evenement e
         INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
         WHERE pe.id_prestataire = ?
-          -- L'évènement existant commence AVANT que le nouveau ne se termine
           AND e.date_debut < IFNULL(NULLIF(?, ''), DATE_ADD(?, INTERVAL 1 HOUR))
-          -- ET l'évènement existant se termine APRÈS que le nouveau ne commence
           AND IFNULL(e.date_fin, DATE_ADD(e.date_debut, INTERVAL 1 HOUR)) > ?
     `
     err = db.DB.QueryRow(overlapQuery, providerID, dateFin, dateDebut, dateDebut).Scan(&overlapCount)

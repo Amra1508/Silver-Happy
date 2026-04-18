@@ -36,14 +36,22 @@ func Read_Provider_Planning(response http.ResponseWriter, request *http.Request)
 	providerID := claims.UserID
 
 	sqlQuery := `
-		SELECT e.id_evenement, e.nom, e.date_debut, IFNULL(e.date_fin, ''), e.lieu, e.nombre_place 
+		SELECT 'evenement' AS type_planning, e.id_evenement AS id, e.nom, e.date_debut AS debut, IFNULL(e.date_fin, '') AS fin, IFNULL(e.lieu, '') AS lieu, e.nombre_place AS places
 		FROM evenement e
 		INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
 		WHERE pe.id_prestataire = ?
-		ORDER BY e.date_debut ASC
+		
+		UNION ALL
+		
+		SELECT 'service' AS type_planning, rs.id_reservation AS id, s.nom, rs.date_heure AS debut, '' AS fin, 'Réservation Client' AS lieu, 1 AS places
+		FROM RESERVATION_SERVICE rs
+		INNER JOIN SERVICE s ON rs.id_service = s.id_service
+		WHERE s.id_prestataire = ?
+		
+		ORDER BY debut ASC
 	`
 
-	rows, err := db.DB.Query(sqlQuery, providerID)
+	rows, err := db.DB.Query(sqlQuery, providerID, providerID)
 	if err != nil {
 		http.Error(response, "Erreur lors de la récupération du planning", http.StatusInternalServerError)
 		return
@@ -53,11 +61,12 @@ func Read_Provider_Planning(response http.ResponseWriter, request *http.Request)
 	var planning []map[string]interface{}
 	for rows.Next() {
 		var id, places int
-		var nom, lieu, debut, fin string
+		var typePlanning, nom, lieu, debut, fin string
 
-		if err := rows.Scan(&id, &nom, &debut, &fin, &lieu, &places); err == nil {
+		if err := rows.Scan(&typePlanning, &id, &nom, &debut, &fin, &lieu, &places); err == nil {
 			evt := map[string]interface{}{
-				"id_evenement": id,
+				"id":           id,
+				"type":         typePlanning,
 				"nom":          nom,
 				"lieu":         lieu,
 				"nombre_place": places,
