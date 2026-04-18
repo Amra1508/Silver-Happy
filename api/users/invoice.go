@@ -133,12 +133,41 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
         JOIN UTILISATEUR u ON c.id_utilisateur = u.id_utilisateur
         WHERE p.id_paiement = ?`, paymentID)
 
+    subTotalCmd := 0.0
     for rowsCmd.Next() {
         var l models.InvoiceLine
         l.Type = "COMMANDE"
         rowsCmd.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.Qty, &l.UnitPrice)
         l.Total = float64(l.Qty) * l.UnitPrice
+        subTotalCmd += l.Total
         lines = append(lines, l)
+    }
+
+    var promoCode string
+    var promoValeur float64
+    var promoType string
+
+    errPromo := db.DB.QueryRow(`
+        SELECT cr.code, cr.valeur, cr.type
+        FROM COMMANDE c
+        JOIN CODE_REDUCTION cr ON c.id_reduction = cr.id_reduction
+        WHERE c.id_paiement = ?`, paymentID).Scan(&promoCode, &promoValeur, &promoType)
+
+    if errPromo == nil && promoCode != "" {
+        var discount float64
+        if promoType == "pourcentage" {
+            discount = subTotalCmd * (promoValeur / 100)
+        } else {
+            discount = promoValeur
+        }
+
+        lines = append(lines, models.InvoiceLine{
+            Description: "Code promo : " + promoCode,
+            Qty:         1,
+            UnitPrice:   -discount,
+            Total:       -discount,
+            Type:        "PROMO",
+        })
     }
 
     if len(lines) == 0 {
@@ -154,12 +183,9 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
     pdf.SetY(10)
     pdf.SetFont("Arial", "B", 24)
     pdf.SetTextColor(0, 0, 0)
-    pdf.Cell(90, 10, "Facture")
-    pdf.SetX(120)
-    pdf.SetFont("Arial", "", 24)
-    pdf.CellFormat(80, 10, "Silver Happy", "0", 1, "R", false, 0, "")
+    pdf.Cell(90, 10, "Facture   -   Silver Happy")
 
-    pdf.Ln(20)
+    pdf.Ln(30)
 
     yClient := pdf.GetY()
     
@@ -197,6 +223,7 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
     pdf.SetFont("Arial", "", 10)
     totalFacture := 0.0
     for _, l := range lines {
+
         pdf.SetTextColor(0, 0, 0)
         pdf.CellFormat(115, 10, tr(l.Description), "0", 0, "L", false, 0, "")
         pdf.CellFormat(20, 10, fmt.Sprintf("%d", l.Qty), "0", 0, "C", false, 0, "")

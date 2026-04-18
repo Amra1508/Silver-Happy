@@ -348,6 +348,17 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 		}
 	}
 
+	var idReduction sql.NullInt64
+	if codePromoUtilise != "" {
+		var idCode int
+		err := db.DB.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE code = ?", codePromoUtilise).Scan(&idCode)
+
+		if err == nil {
+			idReduction.Int64 = int64(idCode)
+            idReduction.Valid = true
+		}
+	}
+
 	resPaiement, errP := db.DB.Exec(`
 		INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture) 
 		VALUES (?, 'valide', 'carte', ?)`,
@@ -362,9 +373,9 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	resCmd, errCmd := db.DB.Exec(`
-        INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal)
-        VALUES(?, ?, ?, ?, ?, ?)`,
-		userID, idPaiement, total, adresse, ville, cp)
+        INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, id_reduction)
+        VALUES(?, ?, ?, ?, ?, ?, ?)`,
+		userID, idPaiement, total, adresse, ville, cp, idReduction)
 
 	if errCmd != nil {
 		fmt.Println("Erreur insertion commande :", errCmd)
@@ -386,14 +397,9 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 		fmt.Println("Erreur lignes:", errLines)
 	}
 
-	if codePromoUtilise != "" {
-		var idCode int
-		err := db.DB.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE code = ?", codePromoUtilise).Scan(&idCode)
-
-		if err == nil {
-			db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idCode)
-		}
-	}
+	if idReduction.Valid {
+        db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
+    }
 
 	db.DB.Exec(`
         UPDATE PRODUIT pr
