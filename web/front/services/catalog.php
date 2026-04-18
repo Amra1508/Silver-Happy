@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -29,7 +32,7 @@
     <main class="flex-1 relative">
         <div class="p-3 flex justify-between items-center mx-8">
             <a href="/front/services/menu_activity.php">
-                <button class="flex items-center rounded-full px-6 button-blue text-[#1C5B8F] border border-[#1C5B8F] hover:bg-[#1C5B8F] hover:text-white py-2 transition-all">
+                <button class="flex items-center rounded-full px-6 button-blue text-white border border-[#1C5B8F] hover:bg-[#1C5B8F] py-2">
                     <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir à la liste
                 </button>
             </a>
@@ -143,6 +146,40 @@
             }
         }
 
+        async function loadDisposForService(serviceId, prestataireId) {
+            const select = document.getElementById(`dispo-${serviceId}`);
+            if (!select) return;
+
+            if (!prestataireId) {
+                select.innerHTML = '<option disabled>Indisponible (Prestataire inconnu)</option>';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/prestataire/planning/${prestataireId}/available`);
+                if (!res.ok) throw new Error('Erreur réseau');
+                
+                const slots = await res.json();
+                select.innerHTML = '<option value="" disabled selected>Choisissez un créneau</option>';
+
+                if (!slots || slots.length === 0) {
+                    select.innerHTML = '<option disabled>Aucun créneau disponible</option>';
+                    return;
+                }
+
+                slots.forEach(slot => {
+                    const dateObj = new Date(slot.date_heure);
+                    const dateStr = dateObj.toLocaleString('fr-FR', {
+                        weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                    });
+                    
+                    select.innerHTML += `<option value="${slot.id_disponibilite}" data-datetime="${slot.date_heure}">${dateStr}</option>`;
+                });
+            } catch (err) {
+                select.innerHTML = '<option disabled>Erreur de chargement</option>';
+            }
+        }
+
         async function bookService(serviceId) {
             const userId = window.currentUserId;
 
@@ -161,25 +198,16 @@
                 return;
             }
 
-            const dateInput = document.getElementById(`datetime-${serviceId}`).value;
-            if (!dateInput) {
-                showAlert("Veuillez choisir une date et une heure !", false);
+            const select = document.getElementById(`dispo-${serviceId}`);
+            const selectedOption = select.options[select.selectedIndex];
+
+            if (!selectedOption || !selectedOption.value) {
+                showAlert("Veuillez choisir un créneau disponible !", false);
                 return;
             }
 
-            const selectedDate = new Date(dateInput);
-            if (selectedDate <= new Date()) {
-                showAlert("Impossible de réserver dans le passé !", false);
-                return;
-            }
-
-            const hour = selectedDate.getHours();
-            const minutes = selectedDate.getMinutes();
-
-            if (hour < 10 || hour > 18 || (hour === 18 && minutes > 0)) {
-                showAlert("Les réservations sont possibles uniquement entre 10h00 et 18h00.", false);
-                return;
-            }
+            const idDisponibilite = parseInt(selectedOption.value);
+            const dateInput = selectedOption.getAttribute('data-datetime');
 
             try {
                 const response = await fetch(`${API_BASE}/service/checkout/${serviceId}`, {
@@ -187,7 +215,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         id_utilisateur: parseInt(userId),
-                        date_heure: dateInput
+                        date_heure: dateInput,
+                        id_disponibilite: idDisponibilite
                     }),
                 });
 
@@ -197,9 +226,13 @@
                     if (data.url) {
                         window.location.href = data.url; 
                     } else if (data.isFree) {
-                        showAlert(data.message, true);
-                        document.getElementById(`datetime-${serviceId}`).value = "";
+                        showAlert(data.message || "Réservation confirmée !", true);
+                        select.selectedIndex = 0; 
                         fetchMyServices();
+                        
+                        const prestataireId = select.getAttribute('data-prestataire');
+                        console.log("kk");
+                        loadDisposForService(serviceId, prestataireId);
                     }
                 } else {
                     showAlert("Erreur : " + (data.error || "Paiement impossible"), false);
@@ -289,29 +322,27 @@
 
         function renderServiceCards(services) {
             const container = document.getElementById('services-container');
-            container.innerHTML = '';
+            let htmlContent = '';
 
             if (services.length === 0) {
                 container.innerHTML = '<p class="text-lg text-gray-500 py-10 italic">Aucun service de cette catégorie sur cette page.</p>';
                 return;
             }
 
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            const minDateTime = now.toISOString().slice(0, 16);
-
             services.forEach(s => {
+                console.log(s);
                 const id = s.id_service || s.ID;
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
                 const typePrestation = s.categorie_nom || 'Autre';
+                const idPrestataire = s.id_prestataire;
                 
                 const prixNum = parseFloat(s.prix || 0);
                 const prixHtml = prixNum > 0 
                     ? `<p class="text-xl font-extrabold text-[#E1AB2B] mb-4">${prixNum.toFixed(2)} €</p>` 
                     : `<p class="text-xl font-extrabold text-green-600 mb-4">Gratuit</p>`;
 
-                container.innerHTML += `
+                htmlContent += `
                     <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col p-8 rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all relative mt-4">
                         <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
                         
@@ -326,15 +357,25 @@
                         <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <label class="block text-sm font-bold text-gray-700 mb-2">
                                 Choisissez votre créneau : 
-                                <span class="text-xs text-gray-500 font-normal block mt-1">(Entre 10h00 et 18h00)</span>
                             </label>
-                            <input type="datetime-local" id="datetime-${id}" min="${minDateTime}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
+                            
+                            <select id="dispo-${id}" data-prestataire="${idPrestataire}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 outline-none focus:border-[#E1AB2B] focus:ring-1 focus:ring-[#E1AB2B]">
+                                <option value="" disabled selected>Chargement des créneaux...</option>
+                            </select>
+
                             <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
                                 ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
                             </button>
                         </div>
                     </div>
                 `;
+            });
+
+            container.innerHTML = htmlContent;
+
+            services.forEach(s => {
+                const id = s.id_service || s.ID;
+                loadDisposForService(id, s.id_prestataire);
             });
         }
 

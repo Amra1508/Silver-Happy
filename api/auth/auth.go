@@ -116,21 +116,8 @@ func Register(response http.ResponseWriter, request *http.Request) {
 	}
 	idAdresse, _ := resAddr.LastInsertId()
 
-	queryPlan := `INSERT INTO PLANNING (nom, description, date_creation) VALUES (?, ?, NOW())`
-	resPlan, err := tx.Exec(queryPlan,
-		"Planning de "+user.Prenom,
-		"Planning personnel",
-	)
-
-	if err != nil {
-		tx.Rollback()
-		http.Error(response, "Erreur lors de la création du planning", http.StatusInternalServerError)
-		return
-	}
-	idPlanning, _ := resPlan.LastInsertId()
-
-	queryUser := `INSERT INTO UTILISATEUR (prenom, nom, email, mdp, date_naissance, num_telephone, statut, date_creation, id_planning, id_adresse) 
-                VALUES (?, ?, ?, ?, ?, ?, 'user', NOW(), ?, ?)`
+	queryUser := `INSERT INTO UTILISATEUR (prenom, nom, email, mdp, date_naissance, num_telephone, statut, date_creation, id_adresse) 
+                VALUES (?, ?, ?, ?, ?, ?, 'user', NOW(), ?)`
 
 	res, err := tx.Exec(queryUser,
 		user.Prenom,
@@ -139,7 +126,6 @@ func Register(response http.ResponseWriter, request *http.Request) {
 		string(hashedPassword),
 		user.DateNaissance,
 		user.NumTelephone,
-		idPlanning,
 		idAdresse,
 	)
 

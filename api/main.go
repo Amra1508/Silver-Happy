@@ -167,6 +167,13 @@ func main() {
 	http.HandleFunc("/prestataire/services/{id}/{id_service}/delete", providers.Delete_Service_Provider)
 	http.HandleFunc("/prestataire/services/{id}/{id_service}/update", providers.Update_Service_Provider)
 
+	http.HandleFunc("/prestataire/disponibilites/{id}/create", providers.Create_Disponibilite_Slot)
+	http.HandleFunc("/prestataire/disponibilites/{id}/get", providers.Get_Provider_Dispos)
+	http.HandleFunc("/prestataire/disponibilites/{id}/{id_disponibilite}/delete", providers.Delete_Disponibilite_Slot)
+
+	http.HandleFunc("/prestataire/planning/{id}/available", providers.Get_Available_Slots)
+	http.HandleFunc("/senior/reservations/create", providers.Create_Reservation)
+
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)
 	}

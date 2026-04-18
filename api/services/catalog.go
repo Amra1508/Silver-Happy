@@ -22,67 +22,86 @@ import (
 	"github.com/stripe/stripe-go/v78/refund"
 )
 
+func CleanDateForMySQL(dateStr string) string {
+	if idx := strings.Index(dateStr, "+"); idx != -1 {
+		dateStr = dateStr[:idx]
+	}
+	if idx := strings.LastIndex(dateStr, " "); idx != -1 && len(dateStr)-idx <= 6 {
+		if strings.Contains(dateStr[:idx], "T") {
+			dateStr = dateStr[:idx]
+		}
+	}
+	
+	dateStr = strings.Replace(dateStr, "T", " ", 1)
+	
+	if len(dateStr) == 16 { 
+		dateStr += ":00"
+	}
+	
+	return dateStr
+}
+
 func Read_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    db.DB.QueryRow("SELECT COUNT(*) FROM SERVICE").Scan(&total)
+	var total int
+	db.DB.QueryRow("SELECT COUNT(*) FROM SERVICE").Scan(&total)
 
-    sqlQuery := `
-        SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, IFNULL(c.nom, 'Autre') as categorie_nom
-        FROM SERVICE s
-        LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
-        LIMIT ? OFFSET ?
-    `
+	sqlQuery := `
+		SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, s.id_prestataire, IFNULL(c.nom, 'Autre') as categorie_nom
+		FROM SERVICE s
+		LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
+		LIMIT ? OFFSET ?
+	`
 
-    rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
-    if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
+	if errorFetch != nil {
+		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabService []models.Service
-    for rows.Next() {
-        var service models.Service
-        if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.CategorieNom); err != nil {
-            fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
-            continue
-        }
-        tabService = append(tabService, service)
-    }
+	var tabService []models.Service
+	for rows.Next() {
+		var service models.Service
+		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.IDPrestataire, &service.CategorieNom); err != nil {
+			fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
+			continue
+		}
+		tabService = append(tabService, service)
+	}
 
-    if tabService == nil {
-        tabService = []models.Service{}
-    }
+	if tabService == nil {
+		tabService = []models.Service{}
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        tabService,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        tabService,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Service(response http.ResponseWriter, request *http.Request) {
@@ -174,96 +193,97 @@ func Delete_Service(response http.ResponseWriter, request *http.Request) {
 }
 
 func Read_One_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    id := request.PathValue("id")
-    var service models.Service
+	id := request.PathValue("id")
+	var service models.Service
 
-    err := db.DB.QueryRow("SELECT id_service, nom, description FROM service WHERE id_service = ?", id).Scan(&service.ID, &service.Nom, &service.Description)
+	err := db.DB.QueryRow("SELECT id_service, nom, description FROM service WHERE id_service = ?", id).Scan(&service.ID, &service.Nom, &service.Description)
 
-    if err != nil {
-        http.Error(response, "Service non trouvé", http.StatusNotFound)
-        return
-    }
+	if err != nil {
+		http.Error(response, "Service non trouvé", http.StatusNotFound)
+		return
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(service)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(service)
 }
 
 func Read_User_Services(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    idUser := request.PathValue("id")
+	idUser := request.PathValue("id")
 
-    query := `
-        SELECT r.id_reservation, s.id_service, s.nom, s.description, r.date_heure 
-        FROM reservation_service r 
-        JOIN service s ON r.id_service = s.id_service 
-        WHERE r.id_utilisateur = ? 
-        ORDER BY r.date_heure ASC
-    `
-    
-    rows, err := db.DB.Query(query, idUser)
-    if err != nil {
-        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	query := `
+		SELECT r.id_reservation, s.id_service, s.nom, s.description, r.date_heure 
+		FROM reservation_service r 
+		JOIN service s ON r.id_service = s.id_service 
+		WHERE r.id_utilisateur = ? 
+		ORDER BY r.date_heure ASC
+	`
+	
+	rows, err := db.DB.Query(query, idUser)
+	if err != nil {
+		http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var tabRes []models.UserReservation
-    for rows.Next() {
-        var res models.UserReservation
-        if err := rows.Scan(&res.IdReservation, &res.IdService, &res.Nom, &res.Description, &res.DateHeure); err == nil {
-            tabRes = append(tabRes, res)
-        }
-    }
+	var tabRes []models.UserReservation
+	for rows.Next() {
+		var res models.UserReservation
+		if err := rows.Scan(&res.IdReservation, &res.IdService, &res.Nom, &res.Description, &res.DateHeure); err == nil {
+			tabRes = append(tabRes, res)
+		}
+	}
 
-    if tabRes == nil {
-        tabRes = []models.UserReservation{}
-    }
+	if tabRes == nil {
+		tabRes = []models.UserReservation{}
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(tabRes)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(tabRes)
 }
 
 func Register_Service(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "POST") {
-        return
-    }
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
 
-    idService := request.PathValue("id")
-    
-    var payload struct {
-        IdUtilisateur int    `json:"id_utilisateur"`
-        DateHeure     string `json:"date_heure"`
-    }
+	idService := request.PathValue("id")
+	
+	var payload struct {
+		IdUtilisateur   int    `json:"id_utilisateur"`
+		DateHeure       string `json:"date_heure"`
+		IdDisponibilite int    `json:"id_disponibilite"`
+	}
 
-    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		http.Error(response, "Format JSON invalide", http.StatusBadRequest)
+		return
+	}
 
-    if payload.IdUtilisateur == 0 {
-        http.Error(response, "ID Utilisateur manquant", http.StatusBadRequest)
-        return
-    }
-    if payload.DateHeure == "" {
-        http.Error(response, "Veuillez choisir une date et une heure.", http.StatusBadRequest)
-        return
-    }
+	if payload.IdUtilisateur == 0 || payload.DateHeure == "" {
+		http.Error(response, "Données manquantes", http.StatusBadRequest)
+		return
+	}
 
-    _, err := db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", idService, payload.IdUtilisateur, payload.DateHeure)
-    if err != nil {
-        http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError)
-        return
-    }
+	_, err := db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", idService, payload.IdUtilisateur, payload.DateHeure)
+	if err != nil {
+		http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError)
+		return
+	}
 
-    response.WriteHeader(http.StatusOK)
-    json.NewEncoder(response).Encode(map[string]string{"message": "Rendez-vous confirmé !"})
+	if payload.IdDisponibilite > 0 {
+		db.DB.Exec("UPDATE DISPONIBILITE SET est_reserve = 1 WHERE id_disponibilite = ?", payload.IdDisponibilite)
+	}
+
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(map[string]string{"message": "Rendez-vous confirmé !"})
 }
 
 func Unregister_Service(response http.ResponseWriter, request *http.Request) {
@@ -287,14 +307,17 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 
 	var stripePI sql.NullString
 	var idPaiement sql.NullInt64
+	var idService int
+	var dateHeure string
+
 	query := `
-		SELECT p.stripe_pi, p.id_paiement 
+		SELECT p.stripe_pi, p.id_paiement, rs.id_service, rs.date_heure
 		FROM reservation_service rs
 		LEFT JOIN PAIEMENT p ON rs.id_paiement = p.id_paiement
 		WHERE rs.id_reservation = ? AND rs.id_utilisateur = ?
 	`
 	
-	err := db.DB.QueryRow(query, idReservation, idUser).Scan(&stripePI, &idPaiement)
+	err := db.DB.QueryRow(query, idReservation, idUser).Scan(&stripePI, &idPaiement, &idService, &dateHeure)
 	if err != nil {
 		http.Error(response, "Réservation introuvable ou non autorisée.", http.StatusForbidden)
 		return
@@ -326,6 +349,12 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 	if affected == 0 {
 		http.Error(response, "Réservation introuvable.", http.StatusForbidden)
 		return
+	}
+
+	var idPrestataire int
+	err = db.DB.QueryRow("SELECT id_prestataire FROM SERVICE WHERE id_service = ?", idService).Scan(&idPrestataire)
+	if err == nil {
+		db.DB.Exec("UPDATE DISPONIBILITE SET est_reserve = 0 WHERE id_prestataire = ? AND date_heure = ?", idPrestataire, dateHeure)
 	}
 
 	response.WriteHeader(http.StatusOK)
@@ -375,11 +404,12 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 	}
 
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-	idService := request.PathValue("id")
+	idServiceStr := request.PathValue("id")
 	
 	var payload struct {
-		IdUtilisateur int    `json:"id_utilisateur"`
-		DateHeure     string `json:"date_heure"`
+		IdUtilisateur   int    `json:"id_utilisateur"`
+		DateHeure       string `json:"date_heure"`
+		IdDisponibilite int    `json:"id_disponibilite"`
 	}
 
 	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
@@ -387,26 +417,37 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	if payload.IdUtilisateur == 0 || payload.DateHeure == "" {
-		http.Error(response, "Données manquantes (ID ou Date)", http.StatusBadRequest)
+	if payload.IdUtilisateur == 0 || payload.DateHeure == "" || payload.IdDisponibilite == 0 {
+		http.Error(response, "Données manquantes (ID, Date ou Créneau)", http.StatusBadRequest)
 		return
 	}
 
 	var nomSvc string
 	var prix float64
 
-	err := db.DB.QueryRow("SELECT nom, prix FROM SERVICE WHERE id_service = ?", idService).Scan(&nomSvc, &prix)
+	err := db.DB.QueryRow("SELECT nom, prix FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&nomSvc, &prix)
 	if err != nil {
 		http.Error(response, "Service introuvable.", http.StatusNotFound)
 		return
 	}
 
+    idService, _ := strconv.Atoi(idServiceStr)
+
 	if prix <= 0 {
-		_, errInsert := db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", idService, payload.IdUtilisateur, payload.DateHeure)
+		cleanDate := CleanDateForMySQL(payload.DateHeure)
+
+		_, errInsert := db.DB.Exec(
+			"INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", 
+			idService, payload.IdUtilisateur, cleanDate,
+		)
 		if errInsert != nil {
+			fmt.Println("ERREUR INSERTION GRATUITE:", errInsert)
 			http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError)
 			return
 		}
+		
+		db.DB.Exec("UPDATE DISPONIBILITE SET est_reserve = 1 WHERE id_disponibilite = ?", payload.IdDisponibilite)
+
 		json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Réservation gratuite confirmée !"})
 		return
 	}
@@ -429,7 +470,7 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%s&user_id=%d&date_heure=%s", utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, encodedDate)),
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%d&user_id=%d&date_heure=%s&id_dispo=%d", utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, encodedDate, payload.IdDisponibilite)),
 		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/front/services/catalog.php"),
 	}
 
@@ -450,8 +491,9 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	sessionID := request.URL.Query().Get("session_id")
-	serviceID := request.URL.Query().Get("service_id")
-	userID := request.URL.Query().Get("user_id")
+	serviceIDStr := request.URL.Query().Get("service_id")
+	userIDStr := request.URL.Query().Get("user_id")
+	idDispoStr := request.URL.Query().Get("id_dispo") 
 	dateHeure, _ := url.QueryUnescape(request.URL.Query().Get("date_heure"))
 
 	s, err := session.Get(sessionID, nil)
@@ -480,9 +522,33 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 		prixPaye, urlFacture, stripePI,
 	)
 
-	if errP == nil {
+	if errP != nil {
+		fmt.Println("ERREUR INSERTION PAIEMENT:", errP)
+	} else {
 		idPaiement, _ := resPaiement.LastInsertId()
-		db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure, id_paiement) VALUES (?, ?, ?, ?)", serviceID, userID, dateHeure, idPaiement)
+		
+		serviceID, _ := strconv.Atoi(serviceIDStr)
+		userID, _ := strconv.Atoi(userIDStr)
+
+		cleanDate := CleanDateForMySQL(dateHeure)
+
+		_, errRes := db.DB.Exec(
+			"INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure, id_paiement) VALUES (?, ?, ?, ?)", 
+			serviceID, userID, cleanDate, idPaiement,
+		)
+
+		if errRes != nil {
+			fmt.Println("ERREUR INSERTION RESERVATION_SERVICE:", errRes)
+		} else {
+			if idDispoStr != "" {
+				idDispo, _ := strconv.Atoi(idDispoStr)
+				_, errDispo := db.DB.Exec("UPDATE DISPONIBILITE SET est_reserve = 1 WHERE id_disponibilite = ?", idDispo)
+				
+				if errDispo != nil {
+					fmt.Println("ERREUR UPDATE DISPONIBILITE:", errDispo)
+				}
+			}
+		}
 	}
 
 	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/catalog.php?success=reservation_validee", http.StatusSeeOther)

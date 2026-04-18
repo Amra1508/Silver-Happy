@@ -7,7 +7,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gérer mes Services</title>
+    <title>Gérer mes Services et Disponibilités</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
@@ -28,40 +28,76 @@ $is_logged_in = isset($_SESSION['provider_id']);
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
             <main class="p-8">
                 <?php if ($is_logged_in): ?>
-                    <div id="main-content" class="space-y-8 max-w-6xl mx-auto">
+                    <div id="main-content" class="space-y-12 max-w-6xl mx-auto">
                         
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Services</h1>
-                                <p class="text-gray-500 mt-1">Gérez les prestations que vous proposez à vos clients.</p>
-                            </div>
-                            <button onclick="toggleModal('serviceModal')" class="rounded-full px-6 py-2.5 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                Ajouter un service
-                            </button>
-                        </div>
-
                         <div id="alert-box" class="hidden p-4 rounded-xl font-semibold text-sm transition-all"></div>
 
-                        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="text-gray-400 text-sm border-b border-gray-100">
-                                            <th class="pb-4 font-medium px-4">Nom du Service</th>
-                                            <th class="pb-4 font-medium px-4">Description</th>
-                                            <th class="pb-4 font-medium px-4">Prix</th>
-                                            <th class="pb-4 font-medium text-right px-4">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="services-table-body">
-                                        <tr>
-                                            <td colspan="4" class="py-8 text-center text-gray-500 text-sm">
-                                                <span class="animate-pulse">Chargement de vos services...</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        <div>
+                            <div class="flex justify-between items-center mb-8">
+                                <div>
+                                    <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Services</h1>
+                                    <p class="text-gray-500 mt-1">Gérez les prestations que vous proposez à vos clients.</p>
+                                </div>
+                                <button onclick="toggleModal('serviceModal')" class="rounded-full px-6 py-2.5 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Ajouter un service
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="text-gray-400 text-sm border-b border-gray-100">
+                                                <th class="pb-4 font-medium px-4">Nom du Service</th>
+                                                <th class="pb-4 font-medium px-4">Description</th>
+                                                <th class="pb-4 font-medium px-4">Prix</th>
+                                                <th class="pb-4 font-medium text-right px-4">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="services-table-body">
+                                            <tr>
+                                                <td colspan="4" class="py-8 text-center text-gray-500 text-sm">
+                                                    <span class="animate-pulse">Chargement de vos services...</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-8">
+                                <div>
+                                    <h2 class="text-3xl font-semibold text-[#1C5B8F]">Mon Planning</h2>
+                                    <p class="text-gray-500 mt-1">Gérez vos créneaux de disponibilité pour les réservations.</p>
+                                </div>
+                                <button onclick="toggleModal('dispoModal')" class="rounded-full px-6 py-2.5 bg-[#E1AB2B] text-white font-bold hover:bg-[#c99723] transition-colors shadow-md flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Ajouter une disponibilité
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 overflow-hidden">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="text-gray-400 text-sm border-b border-gray-100">
+                                                <th class="pb-4 font-medium px-4">Date et Heure</th>
+                                                <th class="pb-4 font-medium px-4">Statut</th>
+                                                <th class="pb-4 font-medium text-right px-4">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dispos-table-body">
+                                            <tr>
+                                                <td colspan="3" class="py-8 text-center text-gray-500 text-sm">
+                                                    <span class="animate-pulse">Chargement de votre planning...</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
@@ -79,23 +115,19 @@ $is_logged_in = isset($_SESSION['provider_id']);
     <div id="serviceModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 transition-opacity">
         <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 m-4">
             <h2 class="text-2xl font-bold text-[#1C5B8F] mb-6">Ajouter un nouveau service</h2>
-            
             <form id="add-service-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom du service</label>
                     <input type="text" id="nom_service" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] focus:border-transparent outline-none transition-all">
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description courte</label>
                     <textarea id="desc_service" rows="3" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] focus:border-transparent outline-none transition-all"></textarea>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (€)</label>
                     <input type="number" id="prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] focus:border-transparent outline-none transition-all">
                 </div>
-
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('serviceModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
                     <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#1C5B8F] hover:bg-[#154670] transition-colors shadow-md">Créer le service</button>
@@ -107,27 +139,39 @@ $is_logged_in = isset($_SESSION['provider_id']);
     <div id="editServiceModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 transition-opacity">
         <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 m-4">
             <h2 class="text-2xl font-bold text-[#E1AB2B] mb-6">Modifier le service</h2>
-            
             <form id="edit-service-form" class="space-y-4">
                 <input type="hidden" id="edit_id_service">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nom du service</label>
                     <input type="text" id="edit_nom_service" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all">
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Description courte</label>
                     <textarea id="edit_desc_service" rows="3" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all"></textarea>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (€)</label>
                     <input type="number" id="edit_prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all">
                 </div>
-
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('editServiceModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
                     <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#E1AB2B] hover:bg-[#c99723] transition-colors shadow-md">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dispoModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 transition-opacity">
+        <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 m-4">
+            <h2 class="text-2xl font-bold text-[#E1AB2B] mb-6">Ajouter une disponibilité</h2>
+            <form id="add-dispo-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date et Heure</label>
+                    <input type="datetime-local" id="date_heure_dispo" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] focus:border-transparent outline-none transition-all">
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="toggleModal('dispoModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#E1AB2B] hover:bg-[#c99723] transition-colors shadow-md">Ajouter</button>
                 </div>
             </form>
         </div>
@@ -146,6 +190,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
             alertBox.textContent = msg;
             alertBox.className = `p-4 mb-6 rounded-xl font-bold block ${isSuccess ? 'text-green-700 bg-green-100 border border-green-400' : 'text-red-700 bg-red-100 border border-red-400'}`;
             alertBox.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => alertBox.classList.add('hidden'), 5000); 
         }
 
@@ -266,13 +311,99 @@ $is_logged_in = isset($_SESSION['provider_id']);
             }
         }
 
+        async function loadDispos() {
+            const tbody = document.getElementById('dispos-table-body');
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/get`, { credentials: 'include' });
+                if (!res.ok) throw new Error('Erreur réseau');
+                
+                const dispos = await res.json();
+                tbody.innerHTML = '';
+
+                if (!dispos || dispos.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore ajouté de disponibilités.</td></tr>`;
+                    return;
+                }
+
+                dispos.forEach(d => {
+                    const dateObj = new Date(d.date_heure);
+                    const dateStr = dateObj.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+                    
+                    const statusBadge = d.est_reserve 
+                        ? `<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">Réservé</span>`
+                        : `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">Libre</span>`;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="py-4 px-4 text-sm font-semibold text-gray-700 capitalize">${dateStr}</td>
+                        <td class="py-4 px-4">${statusBadge}</td>
+                        <td class="py-4 px-4 text-right flex justify-end gap-2">
+                            <button onclick="deleteDispo(${d.id_disponibilite})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">
+                                Supprimer
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement de votre planning.</td></tr>`;
+            }
+        }
+
+        document.getElementById('add-dispo-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const dateHeure = document.getElementById('date_heure_dispo').value;
+            const sqlDateTime = dateHeure.replace('T', ' ') + ':00'; 
+
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ date_heure: sqlDateTime })
+                });
+
+                if (res.ok) {
+                    toggleModal('dispoModal');
+                    e.target.reset(); 
+                    showAlert("Créneau ajouté à votre planning !", true);
+                    loadDispos(); 
+                } else {
+                    showAlert("Erreur lors de l'ajout de la disponibilité.");
+                }
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
+        });
+
+        async function deleteDispo(idDispo) {
+            if (!confirm("Voulez-vous vraiment supprimer ce créneau de votre planning ?")) return;
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/${idDispo}/delete`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    showAlert("Créneau supprimé avec succès.", true);
+                    loadDispos();
+                } else {
+                    showAlert("Erreur lors de la suppression du créneau.");
+                }
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, { method: 'GET', credentials: 'include' });
                 if (meRes.ok) {
                     const data = await meRes.json();
                     currentProviderId = data.id_prestataire || data.id || data.ID;
+                    
                     loadServices();
+                    loadDispos();
                 } else {
                     window.location.href = "/providers/account/signin.php";
                 }

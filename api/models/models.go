@@ -254,3 +254,10 @@ type FactureMensuelle struct {
 	Date            string  `json:"date"`
 	Statut          string  `json:"statut"`
 }
+
+type Disponibilite struct {
+    ID            int    `json:"id_disponibilite"`
+    IDPrestataire int    `json:"id_prestataire"`
+    DateHeure     string `json:"date_heure"`
+    EstReserve    bool   `json:"est_reserve"`
+}

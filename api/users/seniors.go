@@ -381,16 +381,13 @@ func Create_User(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	resPlan, _ := db.DB.Exec("INSERT INTO PLANNING (nom, description, date_creation) VALUES (?, 'Planning généré automatiquement', NOW())", "Planning de "+user.Prenom)
-	idPlanning, _ := resPlan.LastInsertId()
-
 	resAdr, _ := db.DB.Exec("INSERT INTO ADRESSE (numero, rue, ville, code_postal, pays) VALUES (NULL, ?, ?, ?, ?)", user.Adresse, user.Ville, user.CodePostal, user.Pays)
 	idAdresse, _ := resAdr.LastInsertId()
 
 	res, err := db.DB.Exec(`
-        INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_planning, id_adresse) 
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
-		user.Nom, user.Prenom, user.Email, user.NumTelephone, dateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, string(hashMdp), idPlanning, idAdresse)
+        INSERT INTO UTILISATEUR (nom, prenom, email, num_telephone, date_naissance, statut, date_creation, motif_bannissement, duree_bannissement, mdp, id_adresse) 
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)`,
+		user.Nom, user.Prenom, user.Email, user.NumTelephone, dateNaissance, user.Statut, user.MotifBannissement, user.DureeBannissement, string(hashMdp),  idAdresse)
 
 	if err != nil {
 		http.Error(response, "Erreur création utilisateur", http.StatusInternalServerError)
@@ -463,8 +460,8 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 	}
 	defer tx.Rollback()
 
-	var idPlanning, idAdresse int
-	err = tx.QueryRow("SELECT id_planning, id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&idPlanning, &idAdresse)
+	var idAdresse int
+	err = tx.QueryRow("SELECT id_adresse FROM UTILISATEUR WHERE id_utilisateur = ?", id).Scan(&idAdresse)
 	if err != nil {
 		http.Error(response, "Utilisateur introuvable", http.StatusNotFound)
 		return
@@ -509,10 +506,6 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		http.Error(response, "Erreur lors de la suppression de l'utilisateur", http.StatusInternalServerError)
 		return
-	}
-
-	if idPlanning != 0 {
-		_, err = tx.Exec("DELETE FROM PLANNING WHERE id_planning = ?", idPlanning)
 	}
 	if idAdresse != 0 {
 		_, err = tx.Exec("DELETE FROM ADRESSE WHERE id_adresse = ?", idAdresse)

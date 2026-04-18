@@ -91,33 +91,41 @@ func Update_Service_Provider(response http.ResponseWriter, request *http.Request
 }
 
 func Create_Service_Provider(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") {
-		return
-	}
+    if utils.HandleCORS(response, request, "POST") {
+        return
+    }
 
-	providerIDStr := request.PathValue("id")
-	providerID, err := strconv.ParseInt(providerIDStr, 10, 64)
-	if err != nil {
-		http.Error(response, "ID Prestataire invalide", http.StatusBadRequest)
-		return
-	}
+    providerIDStr := request.PathValue("id")
+    providerID, err := strconv.ParseInt(providerIDStr, 10, 64)
+    if err != nil {
+        http.Error(response, "ID Prestataire invalide", http.StatusBadRequest)
+        return
+    }
 
-	var s models.Service
-	if err := json.NewDecoder(request.Body).Decode(&s); err != nil {
-		http.Error(response, "Données invalides", http.StatusBadRequest)
-		return
-	}
+    var s models.Service
+    if err := json.NewDecoder(request.Body).Decode(&s); err != nil {
+        http.Error(response, "Données invalides", http.StatusBadRequest)
+        return
+    }
 
-	query := `INSERT INTO SERVICE (nom, description, id_categorie, id_prestataire, prix) VALUES (?, ?, ?, ?, ?)`
-	_, err = db.DB.Exec(query, s.Nom, s.Description, s.IDCategorie, providerID, s.Prix)
-	
-	if err != nil {
-		http.Error(response, "Erreur lors de la création du service", http.StatusInternalServerError)
-		return
-	}
+    var providerCatID sql.NullInt64
+    err = db.DB.QueryRow("SELECT id_categorie FROM PRESTATAIRE WHERE id_prestataire = ?", providerID).Scan(&providerCatID)
+    
+    if err == nil && providerCatID.Valid {
+        id := int(providerCatID.Int64)
+        s.IDCategorie = &id
+    }
 
-	response.WriteHeader(http.StatusCreated)
-	json.NewEncoder(response).Encode(map[string]string{"message": "Service créé avec succès"})
+    query := `INSERT INTO SERVICE (nom, description, id_categorie, id_prestataire, prix) VALUES (?, ?, ?, ?, ?)`
+    _, err = db.DB.Exec(query, s.Nom, s.Description, s.IDCategorie, providerID, s.Prix)
+    
+    if err != nil {
+        http.Error(response, "Erreur lors de la création du service", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusCreated)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Service créé avec succès"})
 }
 
 func Delete_Service_Provider(response http.ResponseWriter, request *http.Request) {
@@ -144,4 +152,154 @@ func Delete_Service_Provider(response http.ResponseWriter, request *http.Request
 
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Service supprimé"})
+}
+
+func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") { return }
+
+    providerID := request.PathValue("id")
+    var d models.Disponibilite
+    
+    if err := json.NewDecoder(request.Body).Decode(&d); err != nil {
+        http.Error(response, "Données invalides", http.StatusBadRequest)
+        return
+    }
+
+    query := `INSERT INTO DISPONIBILITE (id_prestataire, date_heure, est_reserve) VALUES (?, ?, 0)`
+    _, err := db.DB.Exec(query, providerID, d.DateHeure)
+    
+    if err != nil {
+        http.Error(response, "Erreur lors de l'ajout", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusCreated)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Disponibilité ajoutée"})
+}
+
+func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") { return }
+
+    providerID := request.PathValue("id")
+    
+    query := `
+        SELECT id_disponibilite, date_heure 
+        FROM DISPONIBILITE 
+        WHERE id_prestataire = ? AND est_reserve = 0 
+        ORDER BY date_heure ASC
+    `
+    
+    rows, err := db.DB.Query(query, providerID)
+    if err != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var slots []models.Disponibilite
+    for rows.Next() {
+        var d models.Disponibilite
+        if err := rows.Scan(&d.ID, &d.DateHeure); err == nil {
+            slots = append(slots, d)
+        }
+    }
+
+    if slots == nil { slots = []models.Disponibilite{} }
+    
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(slots)
+}
+
+func Create_Reservation(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "POST") { return }
+
+    var req struct {
+        IDService       int    `json:"id_service"`
+        IDUtilisateur   int    `json:"id_utilisateur"`
+        DateHeure       string `json:"date_heure"`
+        IDDisponibilite int    `json:"id_disponibilite"` 
+    }
+    
+    if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+        http.Error(response, "Données invalides", http.StatusBadRequest)
+        return
+    }
+
+    queryRes := `INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)`
+    _, err := db.DB.Exec(queryRes, req.IDService, req.IDUtilisateur, req.DateHeure)
+    
+    if err != nil {
+        http.Error(response, "Erreur de réservation", http.StatusInternalServerError)
+        return
+    }
+
+    queryPlan := `UPDATE DISPONIBILITE SET est_reserve = 1 WHERE id_disponibilite = ?`
+    db.DB.Exec(queryPlan, req.IDDisponibilite)
+
+    response.WriteHeader(http.StatusCreated)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Réservation confirmée !"})
+}
+
+func Get_Provider_Dispos(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+
+    providerID := request.PathValue("id")
+    
+    query := `
+        SELECT id_disponibilite, date_heure, est_reserve 
+        FROM DISPONIBILITE 
+        WHERE id_prestataire = ? 
+        ORDER BY date_heure ASC
+    `
+    
+    rows, err := db.DB.Query(query, providerID)
+    if err != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var dispos []models.Disponibilite
+    for rows.Next() {
+        var d models.Disponibilite
+        if err := rows.Scan(&d.ID, &d.DateHeure, &d.EstReserve); err == nil {
+            dispos = append(dispos, d)
+        }
+    }
+
+    if dispos == nil {
+        dispos = []models.Disponibilite{}
+    }
+    
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dispos)
+}
+
+
+func Delete_Disponibilite_Slot(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
+
+    providerID := request.PathValue("id")
+    dispoID := request.PathValue("id_disponibilite")
+
+    query := `DELETE FROM DISPONIBILITE WHERE id_disponibilite = ? AND id_prestataire = ?`
+    res, err := db.DB.Exec(query, dispoID, providerID)
+
+    if err != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, _ := res.RowsAffected()
+    if rowsAffected == 0 {
+        http.Error(response, "Créneau introuvable ou vous n'êtes pas autorisé à le supprimer", http.StatusNotFound)
+        return
+    }
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Créneau supprimé avec succès"})
 }

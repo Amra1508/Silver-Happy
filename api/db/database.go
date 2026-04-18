@@ -100,11 +100,12 @@ func InitDB() {
 		date_fin_boost DATETIME NULL DEFAULT NULL,
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL
 	);
-	CREATE TABLE IF NOT EXISTS PLANNING(
-		id_planning INT AUTO_INCREMENT PRIMARY KEY,
-		nom VARCHAR(100),
-		description VARCHAR(200),
-		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
+	CREATE TABLE IF NOT EXISTS DISPONIBILITE (
+		id_disponibilite INT AUTO_INCREMENT PRIMARY KEY,
+		id_prestataire INT NOT NULL,
+		date_heure DATETIME NOT NULL,
+		est_reserve TINYINT(1) DEFAULT 0,
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS ABONNEMENT(
 		id_abonnement INT AUTO_INCREMENT PRIMARY KEY,
@@ -157,11 +158,9 @@ func InitDB() {
 		premiere_connexion BOOLEAN DEFAULT true,
 		motif_bannissement VARCHAR(100),
 		duree_bannissement INT,
-		id_planning INT NOT NULL,
 		id_adresse INT NOT NULL,
 		id_abonnement INT,
 		debut_abonnement DATETIME,
-		FOREIGN KEY (id_planning) REFERENCES PLANNING(id_planning),
 		FOREIGN KEY (id_adresse) REFERENCES ADRESSE(id_adresse),
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement)
 	);
