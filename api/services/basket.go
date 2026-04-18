@@ -171,7 +171,7 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 
 	rows, errDB := db.DB.Query(`
 		SELECT p.id_produit, p.quantite, pr.id_produit, pr.nom, pr.prix, pr.stock 
-        FROM PANIER AS p JOIN PRODUIT pr ON p.id_produit = pr.id_produit
+		FROM PANIER AS p JOIN PRODUIT pr ON p.id_produit = pr.id_produit
 		WHERE p.id_utilisateur = ?`, livraison.UserID)
 
 	if errDB != nil {
@@ -188,7 +188,6 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 	var total float64
 
 	for rows.Next() {
-
 		var idProduitP, quantite, idProduit, stock int
 		var nom string
 		var prix float64
@@ -221,22 +220,6 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 		lineItems = append(lineItems, item)
 	}
 
-	if total > 0 && total <= 100.00 {
-		total += 4.99
-
-		shippingItem := &stripe.CheckoutSessionLineItemParams{
-			PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-				Currency: stripe.String("eur"),
-				ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-					Name: stripe.String("Frais de port"),
-				},
-				UnitAmount: stripe.Int64(499),
-			},
-			Quantity: stripe.Int64(1),
-		}
-		lineItems = append(lineItems, shippingItem)
-	}
-
 	var discounts []*stripe.CheckoutSessionDiscountParams
 
 	if livraison.Code != "" {
@@ -252,9 +235,11 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 
 			if typeReduc == "pourcentage" {
 				couponParams.PercentOff = stripe.Float64(valeur)
+				total = total * (1 - (valeur / 100))
 			} else {
 				couponParams.AmountOff = stripe.Int64(int64(valeur * 100))
 				couponParams.Currency = stripe.String("eur")
+				total = total - valeur
 			}
 
 			stCoupon, errCoupon := coupon.New(couponParams)
@@ -263,15 +248,29 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 				discounts = append(discounts, &stripe.CheckoutSessionDiscountParams{
 					Coupon: stripe.String(stCoupon.ID),
 				})
-
-				if typeReduc == "pourcentage" {
-					total = total * (1 - (valeur / 100))
-				} else {
-					total = total - valeur
-				}
 			}
 		}
 	}
+
+	fraisPort := 0.00
+	var shippingOptions []*stripe.CheckoutSessionShippingOptionParams
+
+	if total > 0 && total <= 100.00 {
+		fraisPort = 4.99
+		total += fraisPort
+
+		shippingOptions = append(shippingOptions, &stripe.CheckoutSessionShippingOptionParams{
+			ShippingRateData: &stripe.CheckoutSessionShippingOptionShippingRateDataParams{
+				Type: stripe.String("fixed_amount"),
+				FixedAmount: &stripe.CheckoutSessionShippingOptionShippingRateDataFixedAmountParams{
+					Amount:   stripe.Int64(499),
+					Currency: stripe.String("eur"),
+				},
+				DisplayName: stripe.String("Frais de livraison"),
+			},
+		})
+	}
+
 	if total < 0 {
 		total = 0
 	}
@@ -282,10 +281,12 @@ func Paiement_Panier(response http.ResponseWriter, request *http.Request) {
 		ClientReferenceID:  stripe.String(strconv.Itoa(livraison.UserID)),
 		LineItems:          lineItems,
 		Discounts:          discounts,
-		SuccessURL: stripe.String(fmt.Sprintf("%s/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&adresse=%s&ville=%s&cp=%s&code=%s",
+		ShippingOptions:    shippingOptions,
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-basket?session_id={CHECKOUT_SESSION_ID}&user_id=%d&total=%f&frais_port=%f&adresse=%s&ville=%s&cp=%s&code=%s",
 			utils.GetAPIBaseURL(),
 			livraison.UserID,
 			total,
+			fraisPort,
 			url.QueryEscape(livraison.Adresse),
 			url.QueryEscape(livraison.Ville),
 			url.QueryEscape(livraison.CP),
@@ -314,12 +315,14 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	sessionID := request.URL.Query().Get("session_id")
 	userID := html.EscapeString(request.URL.Query().Get("user_id"))
 	totalStr := request.URL.Query().Get("total")
+	fraisPortStr := request.URL.Query().Get("frais_port")
 	adresse := html.EscapeString(request.URL.Query().Get("adresse"))
 	ville := html.EscapeString(request.URL.Query().Get("ville"))
 	cp := html.EscapeString(request.URL.Query().Get("cp"))
 	codePromoUtilise := strings.ToUpper(strings.TrimSpace(request.URL.Query().Get("code")))
 
 	total, err := strconv.ParseFloat(totalStr, 64)
+	fraisPort, _ := strconv.ParseFloat(fraisPortStr, 64)
 	if err != nil {
 		http.Error(response, "Erreur de format du total", http.StatusBadRequest)
 		return
@@ -355,7 +358,7 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
 		if err == nil {
 			idReduction.Int64 = int64(idCode)
-            idReduction.Valid = true
+			idReduction.Valid = true
 		}
 	}
 
@@ -373,9 +376,9 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	resCmd, errCmd := db.DB.Exec(`
-        INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, id_reduction)
-        VALUES(?, ?, ?, ?, ?, ?, ?)`,
-		userID, idPaiement, total, adresse, ville, cp, idReduction)
+		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, montant_frais_port)
+		VALUES(?, ?, ?, ?, ?, ?, ?)`,
+		userID, idPaiement, total, adresse, ville, cp, fraisPort)
 
 	if errCmd != nil {
 		fmt.Println("Erreur insertion commande :", errCmd)
@@ -386,11 +389,11 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idCommande, _ := resCmd.LastInsertId()
 
 	_, errLines := db.DB.Exec(`
-        INSERT INTO LIGNE_COMMANDE (id_commande, id_produit, quantite, prix_unitaire)
-        SELECT ?, p.id_produit, p.quantite, pr.prix
-        FROM PANIER p
-        JOIN PRODUIT pr ON p.id_produit = pr.id_produit
-        WHERE p.id_utilisateur = ?`,
+		INSERT INTO LIGNE_COMMANDE (id_commande, id_produit, quantite, prix_unitaire)
+		SELECT ?, p.id_produit, p.quantite, pr.prix
+		FROM PANIER p
+		JOIN PRODUIT pr ON p.id_produit = pr.id_produit
+		WHERE p.id_utilisateur = ?`,
 		idCommande, userID)
 
 	if errLines != nil {
@@ -398,14 +401,14 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	}
 
 	if idReduction.Valid {
-        db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
-    }
+		db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
+	}
 
 	db.DB.Exec(`
-        UPDATE PRODUIT pr
-        JOIN PANIER p ON pr.id_produit = p.id_produit
-        SET pr.stock = pr.stock - p.quantite
-        WHERE p.id_utilisateur = ?`, userID)
+		UPDATE PRODUIT pr
+		JOIN PANIER p ON pr.id_produit = p.id_produit
+		SET pr.stock = pr.stock - p.quantite
+		WHERE p.id_utilisateur = ?`, userID)
 
 	db.DB.Exec("DELETE FROM PANIER WHERE id_utilisateur = ?", userID)
 
