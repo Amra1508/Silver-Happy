@@ -66,9 +66,13 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 	db.DB.QueryRow("SELECT COUNT(*) FROM SERVICE").Scan(&total)
 
 	sqlQuery := `
-		SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, s.id_prestataire, IFNULL(c.nom, 'Autre') as categorie_nom
+		SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, s.id_prestataire, 
+		       IFNULL(c.nom, 'Autre') as categorie_nom,
+		       IF(p.date_fin_boost > NOW(), 1, 0) as is_boosted
 		FROM SERVICE s
 		LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
+		JOIN PRESTATAIRE p ON s.id_prestataire = p.id_prestataire
+		ORDER BY is_boosted DESC, s.id_service DESC
 		LIMIT ? OFFSET ?
 	`
 
@@ -82,7 +86,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 	var tabService []models.Service
 	for rows.Next() {
 		var service models.Service
-		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.IDPrestataire, &service.CategorieNom); err != nil {
+		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.IDPrestataire, &service.CategorieNom, &service.IsBoosted); err != nil {
 			fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
 			continue
 		}

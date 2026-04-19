@@ -383,53 +383,60 @@
             }
 
             services.forEach(s => {
+                console.log(s);
                 const id = s.id_service || s.ID;
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
                 const typePrestation = s.categorie_nom || 'Autre';
                 const idPrestataire = s.id_prestataire; 
+
                 
                 const prixNum = parseFloat(s.prix || 0);
                 const prixHtml = prixNum > 0 
                     ? `<p class="text-xl font-extrabold text-[#E1AB2B] mb-4">${prixNum.toFixed(2)} €</p>` 
                     : `<p class="text-xl font-extrabold text-green-600 mb-4">Gratuit</p>`;
 
-                htmlContent += `
-                    <div class="md:max-w-[400px] w-full bg-white border border-gray-200 flex flex-col p-8 rounded-[2rem] shadow-lg hover:-translate-y-1 transition-all relative mt-4">
-                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
-                        
-                        <div class="mt-2 mb-1 flex justify-between items-center">
-                            <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${typePrestation}</span>
-                        </div>
+            const isBoosted = s.is_boosted === 1 || s.is_boosted === true || s.IsBoosted === true;
+            const borderClass = isBoosted ? "border-[#E1AB2B] border-2 shadow-[#E1AB2B]/20 shadow-xl" : "border-gray-200 shadow-lg";
+            const badgeBoost = isBoosted ? `<span class="absolute -top-3 -right-3 bg-[#E1AB2B] text-white p-2 rounded-full shadow-md text-xl" title="Prestataire Recommandé">⭐</span>` : "";
 
-                        <h3 class="text-2xl text-[#1C5B8F] font-bold mt-3 mb-1">${nom}</h3>
-                        ${prixHtml}
-                        <p class="text-gray-600 mb-6 flex-grow leading-relaxed">${description}</p>
-                        
-                        <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
-                            <label class="block text-sm font-bold text-gray-700 mb-3">
-                                Choisissez votre créneau :
-                            </label>
-                            
-                            <div id="dispo-wrapper-${id}" class="mb-5">
-                                <select id="day-select-${id}" data-prestataire="${idPrestataire}" onchange="renderTimeSlots(${id})" class="w-full p-2.5 border border-gray-300 rounded-lg mb-3 outline-none focus:border-[#1C5B8F] font-semibold text-gray-700 capitalize hidden cursor-pointer">
-                                </select>
-                                
-                                <div id="time-grid-${id}" class="grid grid-cols-3 gap-2 max-h-[140px] overflow-y-auto pr-1">
-                                    <p class="text-sm text-gray-500 col-span-3 text-center py-4 animate-pulse">Recherche des créneaux...</p>
-                                </div>
-                                
-                                <input type="hidden" id="selected-dispo-id-${id}">
-                                <input type="hidden" id="selected-dispo-date-${id}">
-                            </div>
-
-                            <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
-                                ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
-                            </button>
-                        </div>
+            htmlContent += `
+                <div class="md:max-w-[400px] w-full bg-white ${borderClass} flex flex-col p-8 rounded-[2rem] hover:-translate-y-1 transition-all relative mt-4">
+                    ${badgeBoost}
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
+                    
+                    <div class="mt-2 mb-1 flex justify-between items-center">
+                        <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${typePrestation}</span>
                     </div>
-                `;
-            });
+
+                    <h3 class="text-2xl text-[#1C5B8F] font-bold mt-3 mb-1">${nom}</h3>
+                    ${prixHtml}
+                    <p class="text-gray-600 mb-6 flex-grow leading-relaxed line-clamp-3">${description}</p>
+                    
+                    <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <label class="block text-sm font-bold text-gray-700 mb-3">
+                            Choisissez votre créneau :
+                        </label>
+                        
+                        <div id="dispo-wrapper-${id}" class="mb-5">
+                            <select id="day-select-${id}" data-prestataire="${idPrestataire}" onchange="renderTimeSlots(${id})" class="w-full p-2.5 border border-gray-300 rounded-lg mb-3 outline-none focus:border-[#1C5B8F] font-semibold text-gray-700 capitalize hidden cursor-pointer">
+                            </select>
+                            
+                            <div id="time-grid-${id}" class="grid grid-cols-3 gap-2 max-h-[140px] overflow-y-auto pr-1">
+                                <p class="text-sm text-gray-500 col-span-3 text-center py-4 animate-pulse">Recherche des créneaux...</p>
+                            </div>
+                            
+                            <input type="hidden" id="selected-dispo-id-${id}">
+                            <input type="hidden" id="selected-dispo-date-${id}">
+                        </div>
+
+                        <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
+                            ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
 
             container.innerHTML = htmlContent;
 

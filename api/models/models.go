@@ -55,6 +55,7 @@ type Service struct {
 	CategorieNom string `json:"categorie_nom"`
 	IDPrestataire int64   `json:"id_prestataire"`
     Prix          float64 `json:"prix"`
+	IsBoosted bool 		`json:"is_boosted"`
 }
 
 type UserReservation struct {
