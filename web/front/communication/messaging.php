@@ -195,6 +195,16 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 });
                 selectDispo.innerHTML += `<option value="${d.id_disponibilite}" data-date="${d.date_heure}">${dateStr}</option>`;
             });
+            const urlParams = new URLSearchParams(window.location.search);
+            const dateAPreremplir = urlParams.get('prefill_date');
+            if (dateAPreremplir) {
+                for (let i = 0; i < selectDispo.options.length; i++) {
+                    if (selectDispo.options[i].getAttribute('data-date') === dateAPreremplir) {
+                        selectDispo.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
         }
 
         async function envoyerOffre() {
@@ -269,37 +279,24 @@ $is_logged_in = isset($_COOKIE['session_token']);
                             </svg>
                         </button>` : '';
 
-                if (isOffre) {
-                    let boutonPaiement = "";
-                    let statutTexte = "Offre de négociation";
-                    let borderCol = "border-[#E1AB2B]";
-                    let textCol = "text-[#E1AB2B]";
-
-                    if (msg.etat_offre === 'accepte') {
-                        statutTexte = "Offre Acceptée !";
-                        borderCol = "border-green-500";
-                        textCol = "text-green-600";
-
-                        boutonPaiement = `
-                            <button onclick="payerOffre(${msg.id_service}, '${msg.date_heure}', ${msg.id_dispo})" 
-                                    class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                                Payer ${msg.prix_propose}€
-                            </button>
-                        `;
-                    } else if (msg.etat_offre === 'refuse') {
-                        statutTexte = "Offre Refusée";
-                        borderCol = "border-red-500";
-                        textCol = "text-red-500";
+                if (isOffre && msg.etat_offre === 'accepte') {
+                    if (!isMe) {
+                        contenuAffiche = `
+                            <div class="flex flex-col border-l-4 border-green-500 pl-3 py-1">
+                                <span class="text-[10px] font-bold uppercase text-green-600">Offre Acceptée - Paiement</span>
+                                <span class="text-sm font-semibold">${msg.contenu}</span>
+                                <button onclick="payerOffre(${msg.id_service}, '${msg.date_heure}', ${msg.id_dispo})" 
+                                        class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                                    Payer ${msg.prix_propose}€
+                                </button>
+                            </div>`;
+                    } else {
+                        contenuAffiche = `
+                            <div class="flex flex-col border-l-4 border-green-500 pl-3 py-1 opacity-70">
+                                <span class="text-[10px] font-bold uppercase text-green-600">Votre offre (Acceptée)</span>
+                                <span class="text-sm">${msg.contenu}</span>
+                            </div>`;
                     }
-
-                    contenuAffiche = `
-                        <div class="flex flex-col border-l-4 ${borderCol} pl-3 py-1">
-                            <span class="text-[10px] font-bold uppercase ${textCol}">${statutTexte}</span>
-                            <span class="text-sm font-semibold">${msg.contenu}</span>
-                            ${boutonPaiement}
-                        </div>
-                    `;
                 }
 
                 page += `

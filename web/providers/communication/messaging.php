@@ -102,7 +102,7 @@
             if (response.ok) {
                 message();
             } else {
-                alert("Erreur lors de la modification de l'offre");
+                alert("Erreur lors de la modification");
             }
         }
 
@@ -133,30 +133,28 @@
 
                 if (isOffre) {
                     let boutonsOffre = "";
+                    let borderCol = "border-[#E1AB2B]";
+                    let textCol = "text-[#E1AB2B]";
+                    let statutLabel = "Offre de négociation reçue";
 
-                    console.log("Message ID:", msg.id, "Etat:", msg.etat_offre, "isMe:", isMe);
-
-                    if (!isMe && msg.etat_offre === 'en_attente') {
+                    if (msg.etat_offre === 'en_attente' && !isMe) {
                         boutonsOffre = `
-                        <div class="flex gap-2 mt-3">
-                            <button onclick="modifierEtatOffre(${msg.id}, 'accepte')" class="bg-green-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-green-600 transition">Accepter</button>
-                            <button onclick="modifierEtatOffre(${msg.id}, 'refuse')" class="bg-red-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-red-600 transition">Refuser</button>
-                        </div>
-                    `;
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="modifierEtatOffre(${msg.id}, 'accepte')" class="bg-green-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-green-600 transition shadow-sm">Accepter</button>
+                                <button onclick="modifierEtatOffre(${msg.id}, 'refuse')" class="bg-red-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-red-600 transition shadow-sm">Refuser</button>
+                            </div>`;
+                    } else if (msg.etat_offre === 'accepte') {
+                        borderCol = "border-green-500";
+                        textCol = "text-green-600";
+                        statutLabel = isMe ? "Vous avez accepté cette offre" : "Offre acceptée";
                     }
 
                     contenuAffiche = `
-                    <div class="flex flex-col border-l-4 ${msg.etat_offre === 'accepte' ? 'border-green-500' : 'border-[#E1AB2B]'} pl-3 py-1">
-                        <span class="text-[10px] font-bold uppercase ${msg.etat_offre === 'accepte' ? 'text-green-600' : 'text-[#E1AB2B]'}">
-                            ${msg.etat_offre === 'accepte' ? 'Offre Acceptée' : 'Offre de négociation reçue'}
-                        </span>
-                        <span class="text-sm font-semibold">${msg.contenu}</span>
-                        <div class="mt-1">
-                             <span class="text-[10px] opacity-75">Statut : ${msg.etat_offre}</span>
-                        </div>
-                        ${boutonsOffre}
-                    </div>
-                `;
+                        <div class="flex flex-col border-l-4 ${borderCol} pl-3 py-1 text-left">
+                            <span class="text-[10px] font-bold uppercase ${textCol}">${statutLabel}</span>
+                            <span class="text-sm font-semibold">${msg.contenu}</span>
+                            ${boutonsOffre}
+                        </div>`;
                 }
 
                 const deleteButton = isMe ? `

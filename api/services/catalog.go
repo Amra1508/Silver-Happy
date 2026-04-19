@@ -66,14 +66,16 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 	db.DB.QueryRow("SELECT COUNT(*) FROM SERVICE").Scan(&total)
 
 	sqlQuery := `
-		SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, s.id_prestataire, 
-		       IFNULL(c.nom, 'Autre') as categorie_nom,
-		       IF(p.date_fin_boost > NOW(), 1, 0) as is_boosted
-		FROM SERVICE s
-		LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
-		JOIN PRESTATAIRE p ON s.id_prestataire = p.id_prestataire
-		ORDER BY is_boosted DESC, s.id_service DESC
-		LIMIT ? OFFSET ?
+    SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, s.id_prestataire, 
+           IFNULL(c.nom, 'Autre') as categorie_nom,
+           IF(p.date_fin_boost > NOW(), 1, 0) as is_boosted,
+           p.nom, 
+           p.prenom
+    FROM SERVICE s
+    LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
+    JOIN PRESTATAIRE p ON s.id_prestataire = p.id_prestataire
+    ORDER BY is_boosted DESC, s.id_service DESC
+    LIMIT ? OFFSET ?
 	`
 
 	rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
@@ -86,7 +88,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 	var tabService []models.Service
 	for rows.Next() {
 		var service models.Service
-		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.IDPrestataire, &service.CategorieNom, &service.IsBoosted); err != nil {
+		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.IDPrestataire, &service.CategorieNom, &service.IsBoosted, &service.PrestataireNom, &service.PrestatairePrenom); err != nil {
 			fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
 			continue
 		}
@@ -451,7 +453,7 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 		return
 	}
 
-	var prixNegocie float64
+	var prixNegocie sql.NullFloat64
     errOffre := db.DB.QueryRow(`
         SELECT prix_propose 
         FROM MESSAGE_PRESTATAIRE 
@@ -463,7 +465,9 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
         payload.IdUtilisateur, idServiceStr, payload.IdDisponibilite).Scan(&prixNegocie)
 
     if errOffre == nil {
-        prixFinal = prixNegocie 
+        prixFinal = prixNegocie.Float64
+		db.DB.QueryRow("SELECT date_heure FROM DISPONIBILITE WHERE id_disponibilite = ?", 
+        payload.IdDisponibilite).Scan(&payload.DateHeure)
     } else {
         prixFinal = prixStandard 
     }
@@ -531,7 +535,7 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 	serviceIDStr := request.URL.Query().Get("service_id")
 	userIDStr := request.URL.Query().Get("user_id")
 	idDispoStr := request.URL.Query().Get("id_dispo") 
-	dateHeure, _ := url.QueryUnescape(request.URL.Query().Get("date_heure"))
+	dateHeure := request.URL.Query().Get("date_heure")
 
 	s, err := session.Get(sessionID, nil)
 	if err != nil || s.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
@@ -570,12 +574,16 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 	userID, _ := strconv.Atoi(userIDStr)
 	cleanDate := CleanDateForMySQL(dateHeure)
 
-	_, errRes := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure, id_paiement, prix_final) VALUES (?, ?, ?, ?, ?)", 
-    serviceID, userID, cleanDate, idPaiement, prixPaye,)
+	_, errRes := db.DB.Exec(`
+    INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure, id_paiement, prix_final) 
+    VALUES (?, ?, ?, ?, ?)`, 
+    serviceID, userID, cleanDate, idPaiement, prixPaye)
 
 		if errRes != nil {
-			fmt.Printf("ERREUR CRITIQUE RESERVATION: %v | Svc:%d, User:%d, Date:%s, PayID:%d, Prix:%f\n", 
-                    errRes, serviceID, userID, cleanDate, idPaiement, prixPaye)
+			response.Header().Set("Content-Type", "text/plain")
+			fmt.Fprintf(response, "ERREUR SQL : %v\n", errRes)
+			fmt.Fprintf(response, "Données reçues : Svc=%s, User=%s, Date=%s, Dispo=%s", serviceIDStr, userIDStr, dateHeure, idDispoStr)
+			return
 		} else {
 			if idDispoStr != "" {
 				idDispo, _ := strconv.Atoi(idDispoStr)

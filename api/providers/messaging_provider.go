@@ -148,22 +148,35 @@ func Accept_Offer(response http.ResponseWriter, request *http.Request) {
 
     idMessage := request.PathValue("id")
 
-    query := `
-        UPDATE MESSAGE_PRESTATAIRE 
-        SET etat_offre = 'accepte' 
-        WHERE id_message = ? AND etat_offre = 'en_attente'
-    `
-    res, err := db.DB.Exec(query, idMessage)
+    var idSenior, idPresta, idService, idDispo int
+    var prixNegocie float64
 
-    if err != nil {
-        http.Error(response, "Erreur lors de la validation de l'offre", http.StatusInternalServerError)
+    errQuery := db.DB.QueryRow(`
+    SELECT id_utilisateur, id_prestataire, id_service, id_disponibilite, prix_propose 
+    FROM MESSAGE_PRESTATAIRE WHERE id_message = ?`, idMessage).Scan(&idSenior, &idPresta, &idService, &idDispo, &prixNegocie)
+
+    if errQuery != nil {
+        http.Error(response, "Offre introuvable", http.StatusNotFound)
         return
     }
 
-    rowsAffected, _ := res.RowsAffected()
-    if rowsAffected == 0 {
-        http.Error(response, "Offre introuvable ou déjà traitée", http.StatusNotFound)
+    query := `UPDATE MESSAGE_PRESTATAIRE SET etat_offre = 'accepte' WHERE id_message = ?`
+    _, err := db.DB.Exec(query, idMessage)
+    if err != nil {
+        http.Error(response, "Erreur lors de la validation", http.StatusInternalServerError)
         return
+    }
+
+    contenuConfirmation := "J'ai accepté votre offre ! Vous pouvez maintenant procéder au paiement via le bouton ci-dessous."
+    
+    _, errInsert := db.DB.Exec(`
+    INSERT INTO MESSAGE_PRESTATAIRE 
+    (contenu, id_utilisateur, id_prestataire, expediteur, id_service, id_disponibilite, prix_propose, etat_offre) 
+    VALUES (?, ?, ?, 1, ?, ?, ?, 'accepte')`, 
+    contenuConfirmation, idSenior, idPresta, idService, idDispo, prixNegocie)
+
+    if errInsert != nil {
+        fmt.Println("Erreur création message confirmation:", errInsert)
     }
 
     response.WriteHeader(http.StatusOK)
