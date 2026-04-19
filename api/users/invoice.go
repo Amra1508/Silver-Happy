@@ -170,6 +170,22 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
         })
     }
 
+    var fraisPort float64
+    errFrais := db.DB.QueryRow(`
+        SELECT montant_frais_port 
+        FROM COMMANDE 
+        WHERE id_paiement = ?`, paymentID).Scan(&fraisPort)
+
+    if errFrais == nil && fraisPort > 0 {
+        lines = append(lines, models.InvoiceLine{
+            Description: "Frais de port",
+            Qty:         1,
+            UnitPrice:   fraisPort,
+            Total:       fraisPort,
+            Type:        "LIVRAISON",
+        })
+    }
+
     if len(lines) == 0 {
         http.Error(response, "Facture vide ou introuvable", http.StatusNotFound)
         return
