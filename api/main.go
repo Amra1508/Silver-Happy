@@ -184,6 +184,10 @@ func main() {
 	http.HandleFunc("/prestataire/planning/{id}/available", providers.Get_Available_Slots)
 	http.HandleFunc("/senior/reservations/create", providers.Create_Reservation)
 
+	http.HandleFunc("/prestataire/documents/{id}/get", providers.Get_Documents)
+	http.HandleFunc("/prestataire/documents/{id}/create", providers.Upload_Document)
+	http.HandleFunc("/documents/{id}/delete", providers.Delete_Document)
+
 	http.HandleFunc("/comptable/factures", admin.Get_All_Invoices_For_Accountant)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {

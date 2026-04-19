@@ -138,6 +138,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                                 <input id="doc_kbis" type="file" accept=".pdf,.png,.jpg,.jpeg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#1C5B8F]/10 file:text-[#1C5B8F] hover:file:bg-[#1C5B8F]/20 cursor-pointer" required />
                             </div>
                         </div>
+                        <div>
+                            <label class="text-sm text-gray-600 font-semibold">Casier Judiciaire <span class="text-red-500">*</span></label>
+                            <div class="mt-2">
+                                <input id="casier_judiciaire" type="file" accept=".pdf,.png,.jpg,.jpeg" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#1C5B8F]/10 file:text-[#1C5B8F] hover:file:bg-[#1C5B8F]/20 cursor-pointer" required />
+                            </div>
+                        </div>
                     </div>
 
                     <div id="extra_docs_container" class="mt-6 space-y-4"></div>
@@ -265,9 +271,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 
         const fileIdentite = document.getElementById('doc_identite').files[0];
         const fileKbis = document.getElementById('doc_kbis').files[0];
+        const casireJudiciaire = document.getElementById('casier_judiciaire').files[0];
+        
 
-        if (!fileIdentite || !fileKbis) {
-            return showError("Vous devez obligatoirement fournir votre pièce d'identité et votre extrait KBIS.");
+        if (!fileIdentite || !fileKbis || !casireJudiciaire) {
+            return showError("Vous devez obligatoirement fournir tous les documents attendus.");
         }
 
         const extraNames = document.querySelectorAll('.extra-doc-name');

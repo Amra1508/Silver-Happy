@@ -142,6 +142,12 @@
                             </div>
                         </div>
 
+                        <div class="sm:col-span-6 flex flex-col sm:flex-row justify-center gap-4 mt-4">
+                            <a href="/providers/account/document.php" class="text-center px-10 py-3 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors shadow-sm">
+                                Consulter mes factures
+                            </a>
+                        </div>
+
                         <div class="flex justify-end">
                             <button type="submit" id="btn-save" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-8 rounded-xl shadow-md transition-all flex items-center gap-2">
                                 Enregistrer les modifications
