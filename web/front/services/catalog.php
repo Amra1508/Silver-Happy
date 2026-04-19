@@ -436,7 +436,7 @@
                     </div>
                 </div>
             `;
-        });
+        } );
 
             container.innerHTML = htmlContent;
 

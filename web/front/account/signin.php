@@ -104,6 +104,8 @@
                     const result = await response.json();
                     if (result.statut === "admin") {
                         window.location.replace("../../back/dashboard.php");
+                    } else if (result.statut === "comptable"){
+                        window.location.replace("../../back/comptability/comptability.php");
                     } else if (result.statut === "user") {
                         const urlParams = new URLSearchParams(window.location.search);
                         const redirectUrl = urlParams.get('redirect');

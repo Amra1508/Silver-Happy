@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"main/admin"
 	"main/auth"
 	"main/communication"
 	"main/dashboard"
@@ -182,6 +183,8 @@ func main() {
 
 	http.HandleFunc("/prestataire/planning/{id}/available", providers.Get_Available_Slots)
 	http.HandleFunc("/senior/reservations/create", providers.Create_Reservation)
+
+	http.HandleFunc("/comptable/factures", admin.Get_All_Invoices_For_Accountant)
 
 	if err := http.ListenAndServe(":8082", nil); err != nil {
 		fmt.Println("Erreur serveur :", err)

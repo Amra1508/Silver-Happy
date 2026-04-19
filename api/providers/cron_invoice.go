@@ -39,7 +39,7 @@ func TriggerInvoicesManual(response http.ResponseWriter, request *http.Request) 
 	GenerateMonthlyInvoices(true) 
 
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(map[string]string{"message": "Processus de facturation et de virements terminé ! Regarde ton terminal Go pour les logs."})
+	json.NewEncoder(response).Encode(map[string]string{"message": "Processus de facturation et de virements terminé."})
 }
 
 func GenerateMonthlyInvoices(forceCurrentMonth bool) {

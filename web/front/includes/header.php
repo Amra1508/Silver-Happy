@@ -156,6 +156,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 
                 const user = await res.json();
                 if (user.statut === 'admin') return window.location.href = "../../back/dashboard.php";
+                if (user.statut === 'comptable') return window.lication.href = "../../back/comptability/comptability.php"
                 if (user.statut === 'banni') return window.location.href = "/front/ban.php";
 
                 window.userData = user;
