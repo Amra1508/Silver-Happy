@@ -113,9 +113,9 @@
                 page += `
                 <div class='flex flex-col ${alignClass} mb-4'>
                     <div class='relative max-w-xs md:max-w-md px-4 py-2 shadow-sm ${bubbleBg} ${roundedClass} flex items-center gap-3'>
-                        <span class="text-sm">${msg.contenu}</span>
+                        <span class="text-sm break-all">${msg.contenu}</span>
                         <button type='button' 
-                                class='p-1 transition-colors duration-200 rounded-full hover:bg-black/20' 
+                                class='p-1 transition-colors duration-200 rounded-full hover:bg-black/20 shrink-0' 
                                 onclick='delete_message(${msg.id})'>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>

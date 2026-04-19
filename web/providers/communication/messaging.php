@@ -123,7 +123,7 @@
                 page += `
                     <div class='w-full flex flex-col ${alignClass} mb-4'>
                         <div class='relative max-w-[80%] md:max-w-md px-4 py-2 shadow-sm ${bubbleBg} ${roundedClass} flex items-center gap-3'>
-                            <span class="text-sm">${msg.contenu}</span>
+                            <span class="text-sm break-all">${msg.contenu}</span>
                             ${deleteButton}
                         </div>
                     </div>`;
