@@ -113,15 +113,19 @@ type Revenue struct {
 }
 
 type Message struct {
-	ID              int64  `json:"id"`
-	Contenu         string `json:"contenu"`
-	Date            string `json:"date"`
-	ID_Expediteur   int64  `json:"id_expediteur"`
-	ID_Destinataire int64  `json:"id_destinataire"`
-	Prénom          string `json:"prenom"`
-	Nom             string `json:"nom"`
-	Est_Lu			bool 	`json:"est_lu"`
-	Expediteur		bool 	`json:"expediteur"`
+	ID              int64     `json:"id"`
+	Contenu         string    `json:"contenu"`
+	Date            string    `json:"date"`
+	ID_Expediteur   int64     `json:"id_expediteur"`
+	ID_Destinataire int64     `json:"id_destinataire"`
+	Prénom          string    `json:"prenom"`
+	Nom             string    `json:"nom"`
+	Est_Lu			bool      `json:"est_lu"`
+	Expediteur		bool      `json:"expediteur"`
+	ID_Service      *int      `json:"id_service"`
+    Prix_Propose    *float64  `json:"prix_propose"`
+    ID_Dispo   		*int      `json:"id_dispo"`
+    Etat_Offre      *string   `json:"etat_offre"`
 }
 
 type Evenement struct {

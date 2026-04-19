@@ -78,7 +78,7 @@
         const limit = 6;
         const messageBox = document.getElementById('api-message');
         let currentServicesData = [];
-        
+
         window.serviceSlots = {};
 
         function showAlert(msg, isSuccess) {
@@ -97,7 +97,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('success') && urlParams.get('success') === 'reservation_validee') {
             showAlert("Paiement validé ! Votre réservation est confirmée.", true);
-            window.history.replaceState({}, document.title, window.location.pathname); 
+            window.history.replaceState({}, document.title, window.location.pathname);
         } else if (urlParams.has('error') && urlParams.get('error') === 'paiement_echoue') {
             showAlert("Le paiement a échoué. Veuillez réessayer.", false);
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -121,7 +121,11 @@
                     myServices.forEach(s => {
                         const dateObj = new Date(s.date_heure);
                         const dateString = dateObj.toLocaleString('fr-FR', {
-                            weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            hour: '2-digit',
+                            minute: '2-digit'
                         }).replace(/^\w/, c => c.toUpperCase());
 
                         const card = `
@@ -158,7 +162,7 @@
             try {
                 const res = await fetch(`${API_BASE}/prestataire/planning/${prestataireId}/available`);
                 if (!res.ok) throw new Error('Erreur réseau');
-                
+
                 const slots = await res.json();
 
                 if (!slots || slots.length === 0) {
@@ -178,17 +182,24 @@
                     
                     const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
                     const key = dateOnly.toISOString();
-                    
+
                     if (!grouped[key]) {
                         grouped[key] = {
-                            label: dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' }),
+                            label: dateObj.toLocaleDateString('fr-FR', {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'short'
+                            }),
                             slots: []
                         };
                     }
                     grouped[key].slots.push({
                         id: slot.id_disponibilite,
                         datetime: slot.date_heure,
-                        timeLabel: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                        timeLabel: dateObj.toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
                     });
                 });
 
@@ -203,7 +214,7 @@
                 Object.keys(grouped).forEach(key => {
                     daySelect.innerHTML += `<option value="${key}" class="capitalize">${grouped[key].label}</option>`;
                 });
-                
+
                 daySelect.classList.remove('hidden');
                 timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center italic py-4">Veuillez sélectionner un jour ci-dessus.</p>';
 
@@ -216,14 +227,14 @@
             const daySelect = document.getElementById(`day-select-${serviceId}`);
             const timeGrid = document.getElementById(`time-grid-${serviceId}`);
             const selectedKey = daySelect.value;
-            
+
             document.getElementById(`selected-dispo-id-${serviceId}`).value = "";
             document.getElementById(`selected-dispo-date-${serviceId}`).value = "";
 
             if (!selectedKey || !window.serviceSlots[serviceId][selectedKey]) return;
 
             const dayData = window.serviceSlots[serviceId][selectedKey];
-            timeGrid.innerHTML = ''; 
+            timeGrid.innerHTML = '';
 
             dayData.slots.forEach(s => {
                 const btn = document.createElement('button');
@@ -237,13 +248,13 @@
         function selectTimeSlot(serviceId, dispoId, datetime, btnElement) {
             document.getElementById(`selected-dispo-id-${serviceId}`).value = dispoId;
             document.getElementById(`selected-dispo-date-${serviceId}`).value = datetime;
-            
+
             const grid = document.getElementById(`time-grid-${serviceId}`);
             grid.querySelectorAll(`.time-slot-btn-${serviceId}`).forEach(b => {
                 b.classList.remove('bg-[#1C5B8F]', 'text-white', 'scale-105');
                 b.classList.add('bg-white', 'text-[#1C5B8F]');
             });
-            
+
             btnElement.classList.remove('bg-white', 'text-[#1C5B8F]');
             btnElement.classList.add('bg-[#1C5B8F]', 'text-white', 'scale-105');
         }
@@ -278,7 +289,9 @@
             try {
                 const response = await fetch(`${API_BASE}/service/checkout/${serviceId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         id_utilisateur: parseInt(userId),
                         date_heure: dateInput,
@@ -290,11 +303,11 @@
 
                 if (response.ok) {
                     if (data.url) {
-                        window.location.href = data.url; 
+                        window.location.href = data.url;
                     } else if (data.isFree) {
                         showAlert(data.message || "Réservation confirmée !", true);
                         fetchMyServices();
-                        
+
                         const daySelect = document.getElementById(`day-select-${serviceId}`);
                         const prestataireId = daySelect.getAttribute('data-prestataire');
                         loadDisposForService(serviceId, prestataireId);
@@ -310,7 +323,7 @@
         async function cancelService(reservationId) {
             const userId = window.currentUserId;
             if (!userId) return;
-            
+
             if (!confirm("Êtes-vous sûr de vouloir annuler ce rendez-vous ? (Si vous avez payé, vous serez remboursé)")) {
                 return;
             }
@@ -318,8 +331,12 @@
             try {
                 const response = await fetch(`${API_BASE}/service/unregister/${reservationId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: parseInt(userId) }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(userId)
+                    }),
                 });
 
                 if (response.ok) {
@@ -400,19 +417,19 @@
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
                 const typePrestation = s.categorie_nom || 'Autre';
-                const idPrestataire = s.id_prestataire; 
+                const idPrestataire = s.id_prestataire;
 
-                
+
                 const prixNum = parseFloat(s.prix || 0);
-                const prixHtml = prixNum > 0 
-                    ? `<p class="text-xl font-extrabold text-[#E1AB2B] mb-4">${prixNum.toFixed(2)} €</p>` 
-                    : `<p class="text-xl font-extrabold text-green-600 mb-4">Gratuit</p>`;
+                const prixHtml = prixNum > 0 ?
+                    `<p class="text-xl font-extrabold text-[#E1AB2B] mb-4">${prixNum.toFixed(2)} €</p>` :
+                    `<p class="text-xl font-extrabold text-green-600 mb-4">Gratuit</p>`;
 
-            const isBoosted = s.is_boosted === 1 || s.is_boosted === true || s.IsBoosted === true;
-            const borderClass = isBoosted ? "border-[#E1AB2B] border-2 shadow-[#E1AB2B]/20 shadow-xl" : "border-gray-200 shadow-lg";
-            const badgeBoost = isBoosted ? `<span class="absolute -top-3 -right-3 bg-[#E1AB2B] text-white p-2 rounded-full shadow-md text-xl" title="Prestataire Recommandé">⭐</span>` : "";
+                const isBoosted = s.is_boosted === 1 || s.is_boosted === true || s.IsBoosted === true;
+                const borderClass = isBoosted ? "border-[#E1AB2B] border-2 shadow-[#E1AB2B]/20 shadow-xl" : "border-gray-200 shadow-lg";
+                const badgeBoost = isBoosted ? `<span class="absolute -top-3 -right-3 bg-[#E1AB2B] text-white p-2 rounded-full shadow-md text-xl" title="Prestataire Recommandé">⭐</span>` : "";
 
-            htmlContent += `
+                htmlContent += `
                 <div class="md:max-w-[400px] w-full bg-white ${borderClass} flex flex-col p-8 rounded-[2rem] hover:-translate-y-1 transition-all relative mt-4">
                     ${badgeBoost}
                     <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
@@ -445,10 +462,14 @@
                         <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
                             ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
                         </button>
+                        <button onclick="negocierOffre(${s.id_service}, ${s.id_prestataire}, '${s.nom.replace(/'/g, "\\'")}', '${s.prestataire_nom}', '${s.prestataire_prenom}')" 
+                            class="mb-4 w-full py-2 border-2 border-[#E1AB2B] text-[#E1AB2B] rounded-full font-bold hover:bg-[#E1AB2B] hover:text-white transition-all">
+                                Faire une offre
+                        </button>
                     </div>
                 </div>
             `;
-        } );
+            });
 
             container.innerHTML = htmlContent;
 
@@ -456,6 +477,11 @@
                 const id = s.id_service || s.ID;
                 loadDisposForService(id, s.id_prestataire);
             });
+        }
+
+        function negocierOffre(idService, idPresta, nomSvc, nomPresta, prenomPresta) {
+            const url = `/front/communication/messaging.php/${prenomPresta}/${nomPresta}/${idPresta}/presta?prefill_service=${idService}`;
+            window.location.href = url;
         }
 
         function renderPagination(totalPages) {

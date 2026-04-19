@@ -442,17 +442,35 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 	}
 
 	var nomSvc string
-	var prix float64
+	var prixStandard float64
+    var prixFinal float64
 
-	err := db.DB.QueryRow("SELECT nom, prix FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&nomSvc, &prix)
+	err := db.DB.QueryRow("SELECT nom, prix FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&nomSvc, &prixStandard)
 	if err != nil {
 		http.Error(response, "Service introuvable.", http.StatusNotFound)
 		return
 	}
 
+	var prixNegocie float64
+    errOffre := db.DB.QueryRow(`
+        SELECT prix_propose 
+        FROM MESSAGE_PRESTATAIRE 
+        WHERE id_utilisateur = ? 
+          AND id_service = ? 
+          AND id_disponibilite = ? 
+          AND etat_offre = 'accepte'
+        ORDER BY date DESC LIMIT 1`, 
+        payload.IdUtilisateur, idServiceStr, payload.IdDisponibilite).Scan(&prixNegocie)
+
+    if errOffre == nil {
+        prixFinal = prixNegocie 
+    } else {
+        prixFinal = prixStandard 
+    }
+
     idService, _ := strconv.Atoi(idServiceStr)
 
-	if prix <= 0 {
+	if prixFinal <= 0 {
 		cleanDate := CleanDateForMySQL(payload.DateHeure)
 
 		_, errInsert := db.DB.Exec(
@@ -484,12 +502,12 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
 						Name: stripe.String("Réservation Service : " + nomSvc),
 					},
-					UnitAmount: stripe.Int64(int64(prix * 100)),
+					UnitAmount: stripe.Int64(int64(prixFinal * 100)),
 				},
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%d&user_id=%d&date_heure=%s&id_dispo=%d", utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, encodedDate, payload.IdDisponibilite)),
+		SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%d&user_id=%d&date_heure=%s&id_dispo=%d&prix=%f", utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, encodedDate, payload.IdDisponibilite, prixFinal)),
 		CancelURL:  stripe.String(utils.GetFrontBaseURL() + "/front/services/catalog.php"),
 	}
 
@@ -542,22 +560,22 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 	)
 
 	if errP != nil {
-		fmt.Println("ERREUR INSERTION PAIEMENT:", errP)
-	} else {
-		idPaiement, _ := resPaiement.LastInsertId()
-		
-		serviceID, _ := strconv.Atoi(serviceIDStr)
-		userID, _ := strconv.Atoi(userIDStr)
+        fmt.Println("ERREUR INSERT PAIEMENT:", errP)
+        http.Error(response, "Erreur lors de l'enregistrement du paiement", http.StatusInternalServerError)
+        return
+    }
 
-		cleanDate := CleanDateForMySQL(dateHeure)
+	idPaiement, _ := resPaiement.LastInsertId()
+	serviceID, _ := strconv.Atoi(serviceIDStr)
+	userID, _ := strconv.Atoi(userIDStr)
+	cleanDate := CleanDateForMySQL(dateHeure)
 
-		_, errRes := db.DB.Exec(
-			"INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure, id_paiement) VALUES (?, ?, ?, ?)", 
-			serviceID, userID, cleanDate, idPaiement,
-		)
+	_, errRes := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure, id_paiement, prix_final) VALUES (?, ?, ?, ?, ?)", 
+    serviceID, userID, cleanDate, idPaiement, prixPaye,)
 
 		if errRes != nil {
-			fmt.Println("ERREUR INSERTION RESERVATION_SERVICE:", errRes)
+			fmt.Printf("ERREUR CRITIQUE RESERVATION: %v | Svc:%d, User:%d, Date:%s, PayID:%d, Prix:%f\n", 
+                    errRes, serviceID, userID, cleanDate, idPaiement, prixPaye)
 		} else {
 			if idDispoStr != "" {
 				idDispo, _ := strconv.Atoi(idDispoStr)
@@ -566,9 +584,11 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 				if errDispo != nil {
 					fmt.Println("ERREUR UPDATE DISPONIBILITE:", errDispo)
 				}
+
+				db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET etat_offre = 'expire' WHERE id_utilisateur = ? AND id_disponibilite = ? AND etat_offre = 'accepte' AND id_service = ?", userID, idDispo, serviceID)
 			}
 		}
-	}
+	
 
 	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/catalog.php?success=reservation_validee", http.StatusSeeOther)
 }

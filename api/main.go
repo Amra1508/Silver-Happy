@@ -171,6 +171,8 @@ func main() {
 	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
 	http.HandleFunc("/message/prestataire/delete/{id}", providers.Delete_Message)
 	http.HandleFunc("/prestataire/read", users.List_Prestataires)
+	http.HandleFunc("/message/prestataire/accept/{id}", providers.Accept_Offer)
+	http.HandleFunc("/message/prestataire/reject/{id}", providers.Reject_Offer)
 
 	http.HandleFunc("/prestataire/services/{id}/get", providers.Get_Services_Provider)
 	http.HandleFunc("/prestataire/services/{id}/create", providers.Create_Service_Provider)
