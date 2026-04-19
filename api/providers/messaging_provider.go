@@ -25,7 +25,8 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 		fmt.Printf("Erreur lors de la mise à jour de est_lu")
 	}
 
-	query := `SELECT id_message, contenu, date, id_utilisateur, id_prestataire, expediteur, est_lu 
+	query := `SELECT id_message, contenu, date, id_utilisateur, id_prestataire, expediteur, est_lu, 
+                     id_service, id_disponibilite, prix_propose, etat_offre
               FROM MESSAGE_PRESTATAIRE 
               WHERE (id_utilisateur = ? AND id_prestataire = ?) 
                  OR (id_utilisateur = ? AND id_prestataire = ?)`
@@ -43,7 +44,10 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 		var idU, idP int64
 		var exp bool
 
-		err := rows.Scan(&message.ID, &message.Contenu, &message.Date, &idU, &idP, &exp, &message.Est_Lu)
+		err := rows.Scan(
+            &message.ID, &message.Contenu, &message.Date, &idU, &idP, &exp, &message.Est_Lu,
+            &message.ID_Service, &message.ID_Dispo, &message.Prix_Propose, &message.Etat_Offre,
+        )
 		if err != nil { continue }
 
 		if exp {
@@ -92,11 +96,20 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
         idPresta = message.ID_Destinataire
     }
 
-	fmt.Printf("INSERT SQL -> id_utilisateur: %d, id_prestataire: %d\n", idUser, idPresta)
+	query := `INSERT INTO MESSAGE_PRESTATAIRE 
+              (contenu, id_utilisateur, id_prestataire, expediteur, id_service, id_disponibilite, prix_propose, etat_offre) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
-	query := `INSERT INTO MESSAGE_PRESTATAIRE (contenu, id_utilisateur, id_prestataire, expediteur) VALUES (?, ?, ?, ?)`
-
-	res, errorCreate := db.DB.Exec(query, message.Contenu, idUser, idPresta, message.Expediteur)
+	res, errorCreate := db.DB.Exec(query, 
+        message.Contenu, 
+        idUser, 
+        idPresta, 
+        message.Expediteur, 
+        message.ID_Service,
+        message.ID_Dispo,
+        message.Prix_Propose,
+        message.Etat_Offre,
+    )
 
 	if errorCreate != nil {
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
@@ -126,4 +139,62 @@ func Delete_Message(response http.ResponseWriter, request *http.Request) {
 	}
 
 	response.WriteHeader(http.StatusNoContent)
+}
+
+func Accept_Offer(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "PATCH") {
+        return
+    }
+
+    idMessage := request.PathValue("id")
+
+    query := `
+        UPDATE MESSAGE_PRESTATAIRE 
+        SET etat_offre = 'accepte' 
+        WHERE id_message = ? AND etat_offre = 'en_attente'
+    `
+    res, err := db.DB.Exec(query, idMessage)
+
+    if err != nil {
+        http.Error(response, "Erreur lors de la validation de l'offre", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, _ := res.RowsAffected()
+    if rowsAffected == 0 {
+        http.Error(response, "Offre introuvable ou déjà traitée", http.StatusNotFound)
+        return
+    }
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Offre acceptée ! Le client peut maintenant payer."})
+}
+
+func Reject_Offer(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "PATCH") {
+        return
+    }
+
+    idMessage := request.PathValue("id")
+
+    query := `
+        UPDATE MESSAGE_PRESTATAIRE 
+        SET etat_offre = 'refuse' 
+        WHERE id_message = ? AND etat_offre = 'en_attente'
+    `
+    res, err := db.DB.Exec(query, idMessage)
+
+    if err != nil {
+        http.Error(response, "Erreur lors du refus de l'offre", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, _ := res.RowsAffected()
+    if rowsAffected == 0 {
+        http.Error(response, "Offre introuvable ou déjà traitée", http.StatusNotFound)
+        return
+    }
+
+    response.WriteHeader(http.StatusOK)
+    json.NewEncoder(response).Encode(map[string]string{"message": "Offre refusée."})
 }

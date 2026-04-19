@@ -89,6 +89,23 @@
             setInterval(message, 2000);
         });
 
+        async function modifierEtatOffre(messageId, nouvelEtat) {
+            const action = nouvelEtat === 'accepte' ? 'accept' : 'reject';
+
+            const response = await fetch(`${window.API_BASE_URL}/message/prestataire/${action}/${messageId}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (response.ok) {
+                message();
+            } else {
+                alert("Erreur lors de la modification de l'offre");
+            }
+        }
+
         async function message() {
             const response = await fetch(`${API_BASE}/prestataire/get/${id1}/with/${id2}`);
 
@@ -106,10 +123,41 @@
             let page = "";
             list.forEach(msg => {
                 const isMe = msg.id_expediteur == id1;
+                const isOffre = msg.prix_propose && msg.prix_propose > 0;
 
                 const alignClass = isMe ? 'items-end' : 'items-start';
                 const bubbleBg = isMe ? 'bg-[#1C5B8F] text-white' : 'bg-gray-200 text-[#1C5B8F]';
                 const roundedClass = isMe ? 'rounded-l-lg rounded-tr-lg' : 'rounded-r-lg rounded-tl-lg';
+
+                let contenuAffiche = `<span class="text-sm break-all">${msg.contenu}</span>`
+
+                if (isOffre) {
+                    let boutonsOffre = "";
+
+                    console.log("Message ID:", msg.id, "Etat:", msg.etat_offre, "isMe:", isMe);
+
+                    if (!isMe && msg.etat_offre === 'en_attente') {
+                        boutonsOffre = `
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="modifierEtatOffre(${msg.id}, 'accepte')" class="bg-green-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-green-600 transition">Accepter</button>
+                            <button onclick="modifierEtatOffre(${msg.id}, 'refuse')" class="bg-red-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-red-600 transition">Refuser</button>
+                        </div>
+                    `;
+                    }
+
+                    contenuAffiche = `
+                    <div class="flex flex-col border-l-4 ${msg.etat_offre === 'accepte' ? 'border-green-500' : 'border-[#E1AB2B]'} pl-3 py-1">
+                        <span class="text-[10px] font-bold uppercase ${msg.etat_offre === 'accepte' ? 'text-green-600' : 'text-[#E1AB2B]'}">
+                            ${msg.etat_offre === 'accepte' ? 'Offre Acceptée' : 'Offre de négociation reçue'}
+                        </span>
+                        <span class="text-sm font-semibold">${msg.contenu}</span>
+                        <div class="mt-1">
+                             <span class="text-[10px] opacity-75">Statut : ${msg.etat_offre}</span>
+                        </div>
+                        ${boutonsOffre}
+                    </div>
+                `;
+                }
 
                 const deleteButton = isMe ? `
                         <button type='button' 
@@ -123,7 +171,7 @@
                 page += `
                     <div class='w-full flex flex-col ${alignClass} mb-4'>
                         <div class='relative max-w-[80%] md:max-w-md px-4 py-2 shadow-sm ${bubbleBg} ${roundedClass} flex items-center gap-3'>
-                            <span class="text-sm break-all">${msg.contenu}</span>
+                            ${contenuAffiche}
                             ${deleteButton}
                         </div>
                     </div>`;
