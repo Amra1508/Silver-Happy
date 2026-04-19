@@ -183,6 +183,7 @@ func InitDB() {
 		code_postal CHAR(5),
 		ville VARCHAR(100),
 		id_reduction INT,
+		montant_frais_port DOUBLE DEFAULT 0.0,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement),
 		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
