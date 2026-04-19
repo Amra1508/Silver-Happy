@@ -176,6 +176,7 @@ func main() {
 	http.HandleFunc("/prestataire/services/{id}/create", providers.Create_Service_Provider)
 	http.HandleFunc("/prestataire/services/{id}/{id_service}/delete", providers.Delete_Service_Provider)
 	http.HandleFunc("/prestataire/services/{id}/{id_service}/update", providers.Update_Service_Provider)
+	http.HandleFunc("/prestataire/disponibilites/{id}/date/{date}/delete", providers.Delete_Disponibilites_By_Date)
 
 	http.HandleFunc("/prestataire/disponibilites/{id}/create", providers.Create_Disponibilite_Slot)
 	http.HandleFunc("/prestataire/disponibilites/{id}/get", providers.Get_Provider_Dispos)

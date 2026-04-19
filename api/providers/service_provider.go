@@ -162,13 +162,8 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 	}
 
 	providerID := request.PathValue("id")
-	
-	var req struct {
-		JourSemaine  int    `json:"jour_semaine"`
-		HeureDebut   string `json:"heure_debut"`
-		HeureFin     string `json:"heure_fin"`
-		DureeMinutes int    `json:"duree_minutes"`
-	}
+
+	var req models.CreationDisponibilite
 	
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
 		http.Error(response, "Données invalides", http.StatusBadRequest)
@@ -180,6 +175,13 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 		targetWeekday = time.Sunday
 	} else {
 		targetWeekday = time.Weekday(req.JourSemaine)
+	}
+
+	hasExclusion := req.ExclusionDebut != "" && req.ExclusionFin != ""
+	var exDebut, exFin time.Time
+	if hasExclusion {
+		exDebut, _ = time.Parse("2006-01-02", req.ExclusionDebut)
+		exFin, _ = time.Parse("2006-01-02", req.ExclusionFin)
 	}
 
 	now := time.Now()
@@ -196,6 +198,13 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 		currentDate := firstDate.AddDate(0, 0, w*7)
 		dateStr := currentDate.Format("2006-01-02")
 		
+		if hasExclusion {
+			dateOnly, _ := time.Parse("2006-01-02", dateStr)
+			if (dateOnly.After(exDebut) || dateOnly.Equal(exDebut)) && (dateOnly.Before(exFin) || dateOnly.Equal(exFin)) {
+				continue 
+			}
+		}
+		
 		startTime, errStart := time.Parse("2006-01-02 15:04", dateStr+" "+req.HeureDebut)
 		endTime, errEnd := time.Parse("2006-01-02 15:04", dateStr+" "+req.HeureFin)
 		
@@ -203,8 +212,29 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 			continue 
 		}
 
+		hasPause := req.PauseDebut != "" && req.PauseFin != ""
+		var pauseStart, pauseEnd time.Time
+		if hasPause {
+			pauseStart, _ = time.Parse("2006-01-02 15:04", dateStr+" "+req.PauseDebut)
+			pauseEnd, _ = time.Parse("2006-01-02 15:04", dateStr+" "+req.PauseFin)
+		}
+
 		for t := startTime; t.Before(endTime); t = t.Add(time.Duration(req.DureeMinutes) * time.Minute) {
-			formattedTime := t.Format("2006-01-02 15:04:00")
+			
+			slotStart := t
+			slotEnd := t.Add(time.Duration(req.DureeMinutes) * time.Minute)
+
+			if slotStart.Before(time.Now()) {
+				continue
+			}
+
+			if hasPause {
+				if slotStart.Before(pauseEnd) && slotEnd.After(pauseStart) {
+					continue 
+				}
+			}
+
+			formattedTime := slotStart.Format("2006-01-02 15:04:00")
 			
 			var exists int
 			db.DB.QueryRow("SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ? AND date_heure = ?", providerID, formattedTime).Scan(&exists)
@@ -347,4 +377,33 @@ func Delete_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 
     response.WriteHeader(http.StatusOK)
     json.NewEncoder(response).Encode(map[string]string{"message": "Créneau supprimé avec succès"})
+}
+
+func Delete_Disponibilites_By_Date(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
+
+    providerID := request.PathValue("id")
+    dateStr := request.PathValue("date") 
+
+    query := `
+        DELETE FROM DISPONIBILITE 
+        WHERE id_prestataire = ? 
+        AND DATE(date_heure) = ? 
+        AND est_reserve = 0
+    `
+
+    result, err := db.DB.Exec(query, providerID, dateStr)
+    if err != nil {
+        http.Error(response, "Erreur lors de la suppression en base de données", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, _ := result.RowsAffected()
+    
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]interface{}{
+        "message": fmt.Sprintf("%d créneaux libres ont été supprimés pour cette journée.", rowsAffected),
+    })
 }

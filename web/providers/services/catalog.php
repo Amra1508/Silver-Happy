@@ -181,6 +181,20 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         <option value="120">2 heures</option>
                     </select>
                 </div>
+
+                <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 mt-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Pause / Interruption (Optionnel)</label>
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-xs text-gray-500 mb-1">Heure de début</label>
+                            <input type="time" id="pause_debut" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none text-sm">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-xs text-gray-500 mb-1">Heure de fin</label>
+                            <input type="time" id="pause_fin" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none text-sm">
+                        </div>
+                    </div>
+                </div>
                 <div class="bg-blue-50 text-[#1C5B8F] p-3 rounded-lg text-xs font-semibold mt-2 border border-blue-100">
                     ℹ️ Cela génèrera automatiquement tous les créneaux pour ce jour sur les 3 prochains mois. 
                 </div>
@@ -310,32 +324,49 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 }
 
                 const grouped = {};
+                const now = new Date(); 
+
                 dispos.forEach(d => {
                     const dateObj = new Date(d.date_heure);
-                    const dateKey = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+                    if (dateObj <= now) {
+                        return; 
+                    }
+
+                    const dateDisplay = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const dateIso = dateObj.toISOString().split('T')[0];
                     
-                    if (!grouped[dateKey]) grouped[dateKey] = [];
-                    grouped[dateKey].push({
+                    if (!grouped[dateDisplay]) {
+                        grouped[dateDisplay] = {
+                            iso: dateIso,
+                            slots: []
+                        };
+                    }
+                    grouped[dateDisplay].slots.push({
                         id: d.id_disponibilite,
                         time: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
                         isReserved: d.est_reserve
                     });
                 });
 
+                if (Object.keys(grouped).length === 0) {
+                    container.innerHTML = `<div class="py-10 text-center text-gray-500 font-medium">Vous n'avez aucun créneau futur disponible. Générez-en de nouveaux !</div>`;
+                    return;
+                }
+
                 Object.keys(grouped).forEach(dateStr => {
+                    const dayData = grouped[dateStr];
                     const dayDiv = document.createElement('div');
-                    dayDiv.className = "bg-gray-50 rounded-2xl p-5 border border-gray-100";
+                    dayDiv.className = "bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6";
                     
                     let pillsHtml = '';
-                    grouped[dateStr].forEach(slot => {
+                    dayData.slots.forEach(slot => {
                         const statusColor = slot.isReserved ? 'bg-red-500' : 'bg-green-500';
-                        const tooltip = slot.isReserved ? 'Réservé' : 'Libre';
-                        
                         pillsHtml += `
-                            <div class="flex items-center bg-white border border-gray-200 rounded-full pl-4 pr-1 py-1.5 shadow-sm hover:shadow-md transition-all">
+                            <div class="flex items-center bg-white border border-gray-200 rounded-full pl-4 pr-1 py-1.5 shadow-sm">
                                 <span class="font-bold text-gray-700 text-sm mr-3">${slot.time}</span>
-                                <span class="w-2.5 h-2.5 rounded-full ${statusColor} mr-3" title="${tooltip}"></span>
-                                <button onclick="deleteDispo(${slot.id})" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors outline-none" title="Supprimer">
+                                <span class="w-2.5 h-2.5 rounded-full ${statusColor} mr-3"></span>
+                                <button onclick="deleteDispo(${slot.id})" class="text-gray-400 hover:text-red-500 p-1.5 rounded-full transition-colors" title="Supprimer ce créneau">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
                             </div>
@@ -343,10 +374,16 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     });
 
                     dayDiv.innerHTML = `
-                        <h3 class="font-bold text-[#1C5B8F] mb-4 capitalize text-lg flex items-center gap-2">
-                            <svg class="w-5 h-5 text-[#E1AB2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            ${dateStr}
-                        </h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-[#1C5B8F] capitalize text-lg flex items-center gap-2">
+                                <svg class="w-5 h-5 text-[#E1AB2B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                ${dateStr}
+                            </h3>
+                            <button onclick="deleteDay('${dayData.iso}')" class="text-xs font-bold text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 transition-all flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Supprimer la journée
+                            </button>
+                        </div>
                         <div class="flex flex-wrap gap-3">
                             ${pillsHtml}
                         </div>
@@ -354,7 +391,28 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     container.appendChild(dayDiv);
                 });
             } catch (err) {
-                container.innerHTML = `<div class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement de votre planning.</div>`;
+                container.innerHTML = `<div class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement.</div>`;
+            }
+        }
+
+        async function deleteDay(dateIso) {
+            if (!confirm(`Voulez-vous vraiment supprimer TOUS les créneaux du ${dateIso} ? Les créneaux déjà réservés pourraient poser problème.`)) return;
+            
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/date/${dateIso}/delete`, { 
+                    method: 'DELETE', 
+                    credentials: 'include' 
+                });
+                
+                if (res.ok) {
+                    showAlert(`Planning du ${dateIso} supprimé avec succès.`, true);
+                    loadDispos();
+                } else {
+                    const errData = await res.json();
+                    showAlert(errData.message || "Erreur lors de la suppression de la journée.");
+                }
+            } catch (err) {
+                showAlert("Erreur de connexion au serveur.");
             }
         }
 
@@ -364,7 +422,10 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 jour_semaine: parseInt(document.getElementById('jour_semaine').value),
                 heure_debut: document.getElementById('heure_debut').value,
                 heure_fin: document.getElementById('heure_fin').value,
-                duree_minutes: parseInt(document.getElementById('duree_minutes').value)
+                duree_minutes: parseInt(document.getElementById('duree_minutes').value),
+                
+                pause_debut: document.getElementById('pause_debut').value,
+                pause_fin: document.getElementById('pause_fin').value
             };
 
             try {

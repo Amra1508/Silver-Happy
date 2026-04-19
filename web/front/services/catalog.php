@@ -167,8 +167,15 @@
                 }
 
                 const grouped = {};
+                const now = new Date();
+
                 slots.forEach(slot => {
                     const dateObj = new Date(slot.date_heure);
+                    
+                    if (dateObj <= now) {
+                        return; 
+                    }
+                    
                     const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
                     const key = dateOnly.toISOString();
                     
@@ -184,6 +191,11 @@
                         timeLabel: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
                     });
                 });
+
+                if (Object.keys(grouped).length === 0) {
+                    timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center italic py-4">Aucun créneau futur disponible</p>';
+                    return;
+                }
 
                 window.serviceSlots[serviceId] = grouped;
 

@@ -257,6 +257,17 @@ type FactureMensuelle struct {
 	Statut          string  `json:"statut"`
 }
 
+type CreationDisponibilite struct {
+		JourSemaine    int    `json:"jour_semaine"`
+		HeureDebut     string `json:"heure_debut"`
+		HeureFin       string `json:"heure_fin"`
+		DureeMinutes   int    `json:"duree_minutes"`
+		PauseDebut     string `json:"pause_debut"`
+		PauseFin       string `json:"pause_fin"`
+		ExclusionDebut string `json:"exclusion_debut"`
+		ExclusionFin   string `json:"exclusion_fin"`
+	}
+
 type Disponibilite struct {
     ID            int    `json:"id_disponibilite"`
     IDPrestataire int    `json:"id_prestataire"`
