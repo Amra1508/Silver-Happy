@@ -16,6 +16,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - silver-happy-net
 
     # Base de données MariaDB pour le stockage des informations de l'application
   db-silver-happy:
@@ -34,6 +36,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - silver-happy-net
 
     # Application Frontend (Web) servant d'interface pour les utilisateurs
   web-silver-happy:
@@ -52,6 +56,8 @@ services:
       retries: 3
     environment:
       - API_URL=${API_URL}
+    networks:
+      - silver-happy-net
 
     # Backend API en Go faisant la liaison entre le Web et la base de données
   api-silver-happy:
@@ -78,6 +84,8 @@ services:
       retries: 3
     env_file:
       - .env
+    networks:
+      - silver-happy-net
 
     # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
@@ -97,6 +105,8 @@ services:
     environment:
       - PMA_HOST=db-silver-happy
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+    networks:
+      - silver-happy-net
 
     # Outil tiers (Dockhand) pour la gestion visuelle et la supervision des conteneurs
   dockhand-silver-happy:
@@ -121,3 +131,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - silver-happy-net
+
+networks:
+  silver-happy-net:
+    driver: bridge

@@ -19,6 +19,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - silver-happy-net
 
   # Application Frontend (Web) construite localement avec montage du code pour le développement
   web-silver-happy:
@@ -42,6 +44,8 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+    networks:
+      - silver-happy-net
 
   # Backend API en Go construit localement et exécuté via 'go run' (mode développement)
   api-silver-happy:
@@ -71,6 +75,8 @@ services:
       retries: 3
     env_file:
       - .env
+    networks:
+      - silver-happy-net
 
   # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
@@ -90,3 +96,9 @@ services:
     environment:
       - PMA_HOST=db-silver-happy
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+    networks:
+      - silver-happy-net
+
+networks:
+  silver-happy-net:
+    driver: bridge
