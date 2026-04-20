@@ -74,13 +74,15 @@
     <script>
         const API_BASE = `${window.API_BASE_URL}/message`;
 
-        let id1 = null;
         const path = window.location.pathname;
         const segments = path.split('/');
-        const id2 = segments.pop();
 
-        const name = segments[segments.length - 1];
-        const firstname = segments[segments.length - 2];
+        const contactType = segments.pop();
+        const id2 = segments.pop();
+        const name = segments.pop();
+        const firstname = segments.pop();
+
+        let id1 = null;
 
         window.addEventListener('auth_ready', () => {
             id1 = window.currentUserId;
@@ -88,6 +90,12 @@
             message();
             setInterval(message, 2000);
         });
+
+        function getApiUrl() {
+            return contactType === 'admin' ?
+                `${window.API_BASE_URL}/message` :
+                `${window.API_BASE_URL}/message/prestataire`;
+        }
 
         async function modifierEtatOffre(messageId, nouvelEtat) {
             const action = nouvelEtat === 'accepte' ? 'accept' : 'reject';
@@ -107,7 +115,9 @@
         }
 
         async function message() {
-            const response = await fetch(`${API_BASE}/prestataire/get/${id1}/with/${id2}`);
+            const url = `${getApiUrl()}/get/${id1}/with/${id2}`;
+
+            const response = await fetch(url);
 
             if (!response.ok) return;
             let list = await response.json();
@@ -123,7 +133,7 @@
             let page = "";
             list.forEach(msg => {
                 const isMe = msg.id_expediteur == id1;
-                const isOffre = msg.prix_propose && msg.prix_propose > 0;
+                const isOffre = (contactType === 'senior') && msg.prix_propose && msg.prix_propose > 0;
 
                 const alignClass = isMe ? 'items-end' : 'items-start';
                 const bubbleBg = isMe ? 'bg-[#1C5B8F] text-white' : 'bg-gray-200 text-[#1C5B8F]';
@@ -192,17 +202,19 @@
 
             const isProvider = window.location.pathname.includes('/providers/');
 
-            const response = await fetch(`${API_BASE}/prestataire/add`, {
+            const bodyData = {
+                Contenu: contenu,
+                ID_Expediteur: parseInt(id1),
+                ID_Destinataire: parseInt(id2),
+                Expediteur: true
+            };
+
+            const response = await fetch(`${getApiUrl()}/add`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    Contenu: contenu,
-                    ID_Expediteur: parseInt(id1),
-                    ID_Destinataire: parseInt(id2),
-                    Expediteur: isProvider
-                })
+                body: JSON.stringify(bodyData)
             });
 
             if (response.ok) {
@@ -212,13 +224,10 @@
         }
 
         async function delete_message(message_id) {
-            const response = await fetch(`${API_BASE}/prestataire/delete/${message_id}`, {
+            const response = await fetch(`${getApiUrl()}/delete/${message_id}`, {
                 method: "DELETE"
             });
-
-            if (response.ok) {
-                await message();
-            }
+            if (response.ok) await message();
         }
     </script>
 </body>
