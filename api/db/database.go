@@ -137,6 +137,7 @@ func InitDB() {
 		debut_abonnement DATETIME NULL, 
 		id_categorie INT,
 		date_fin_boost DATETIME NULL DEFAULT NULL,
+		stripe_account_id VARCHAR(255) DEFAULT NULL,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
 	);
@@ -263,6 +264,7 @@ func InitDB() {
 		id_utilisateur INT NOT NULL,
 		date_heure DATETIME NOT NULL,
 		id_paiement INT DEFAULT NULL,
+		prix_final DOUBLE DEFAULT 0.0,
 		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service) ON DELETE CASCADE,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur) ON DELETE CASCADE,
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement) ON DELETE SET NULL
