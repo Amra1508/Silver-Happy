@@ -104,7 +104,7 @@ func InitDB() {
 		id_disponibilite INT AUTO_INCREMENT PRIMARY KEY,
 		id_prestataire INT NOT NULL,
 		date_heure DATETIME NOT NULL,
-		est_reserve TINYINT(1) DEFAULT 0,
+		est_reserve BOOLEAN DEFAULT 0,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS ABONNEMENT(
@@ -117,6 +117,7 @@ func InitDB() {
 		tarif DOUBLE,
 		stripe_sub VARCHAR(255) DEFAULT NULL,
 		id_paiement INT NOT NULL,
+		url_contrat VARCHAR(500),
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
 	);
 	CREATE TABLE IF NOT EXISTS PRESTATAIRE(
@@ -237,8 +238,14 @@ func InitDB() {
 		expediteur BOOLEAN DEFAULT 0,
 		est_lu BOOLEAN DEFAULT 0,
 		stripe_account_id VARCHAR(255) DEFAULT NULL,
+		id_service INT,
+		id_disponibilite INT,
+		prix_propose DOUBLE,
+		etat_offre ENUM('en_attente', 'accepte', 'refuse', 'expire'),
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
+		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service),
+		FOREIGN KEY (id_disponibilite) REFERENCES DISPONIBILITE(id_disponibilite)
 	);
 	CREATE TABLE IF NOT EXISTS SERVICE (
 		id_service INT AUTO_INCREMENT PRIMARY KEY,
