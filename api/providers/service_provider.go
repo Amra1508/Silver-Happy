@@ -234,13 +234,44 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 				}
 			}
 
-			formattedTime := slotStart.Format("2006-01-02 15:04:00")
+			formattedStart := slotStart.Format("2006-01-02 15:04:00")
+			formattedEnd := slotEnd.Format("2006-01-02 15:04:00")
 			
-			var exists int
-			db.DB.QueryRow("SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ? AND date_heure = ?", providerID, formattedTime).Scan(&exists)
+			var conflicts int
+			conflictQuery := `
+				SELECT COALESCE(SUM(conflits), 0) FROM (
+					SELECT COUNT(*) as conflits 
+					FROM DISPONIBILITE 
+					WHERE id_prestataire = ? AND date_heure = ?
+					
+					UNION ALL
+					
+					SELECT COUNT(*) as conflits 
+					FROM evenement e
+					INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+					WHERE pe.id_prestataire = ?
+					  AND e.date_debut < ?
+					  AND IFNULL(NULLIF(e.date_fin, ''), DATE_ADD(e.date_debut, INTERVAL 1 HOUR)) > ?
+					  
+					UNION ALL
+					
+					SELECT COUNT(*) as conflits 
+					FROM RESERVATION_SERVICE rs
+					INNER JOIN SERVICE s ON rs.id_service = s.id_service
+					WHERE s.id_prestataire = ?
+					  AND rs.date_heure < ?
+					  AND DATE_ADD(rs.date_heure, INTERVAL 1 HOUR) > ?
+				) as total_conflits
+			`
 			
-			if exists == 0 {
-				db.DB.Exec("INSERT INTO DISPONIBILITE (id_prestataire, date_heure, est_reserve) VALUES (?, ?, 0)", providerID, formattedTime)
+			errCheck := db.DB.QueryRow(conflictQuery, 
+				providerID, formattedStart,
+				providerID, formattedEnd, formattedStart, 
+				providerID, formattedEnd, formattedStart,
+			).Scan(&conflicts)
+			
+			if errCheck == nil && conflicts == 0 {
+				db.DB.Exec("INSERT INTO DISPONIBILITE (id_prestataire, date_heure, est_reserve) VALUES (?, ?, 0)", providerID, formattedStart)
 				slotsAdded++
 			}
 		}

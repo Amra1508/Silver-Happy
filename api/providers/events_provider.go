@@ -103,14 +103,29 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
 
     var overlapCount int
     overlapQuery := `
-        SELECT COUNT(*) 
-        FROM evenement e
-        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
-        WHERE pe.id_prestataire = ?
-          AND e.date_debut < IFNULL(NULLIF(?, ''), DATE_ADD(?, INTERVAL 1 HOUR))
-          AND IFNULL(e.date_fin, DATE_ADD(e.date_debut, INTERVAL 1 HOUR)) > ?
+        SELECT COALESCE(SUM(conflits), 0) FROM (
+	            SELECT COUNT(*) as conflits 
+            FROM evenement e
+            INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+            WHERE pe.id_prestataire = ?
+              AND e.date_debut < IFNULL(NULLIF(?, ''), DATE_ADD(?, INTERVAL 1 HOUR))
+              AND IFNULL(NULLIF(e.date_fin, ''), DATE_ADD(e.date_debut, INTERVAL 1 HOUR)) > ?
+
+            UNION ALL
+
+            SELECT COUNT(*) as conflits
+            FROM RESERVATION_SERVICE rs
+            INNER JOIN SERVICE s ON rs.id_service = s.id_service
+            WHERE s.id_prestataire = ?
+              AND rs.date_heure < IFNULL(NULLIF(?, ''), DATE_ADD(?, INTERVAL 1 HOUR))
+              AND DATE_ADD(rs.date_heure, INTERVAL 1 HOUR) > ?
+        ) as total_conflits
     `
-    err = db.DB.QueryRow(overlapQuery, providerID, dateFin, dateDebut, dateDebut).Scan(&overlapCount)
+    
+    err = db.DB.QueryRow(overlapQuery, 
+        providerID, dateFin, dateDebut, dateDebut,
+        providerID, dateFin, dateDebut, dateDebut,
+    ).Scan(&overlapCount)
     
     if err != nil {
         fmt.Println("Erreur lors de la vérification des conflits horaires:", err)
@@ -119,7 +134,7 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
     }
 
     if overlapCount > 0 {
-        http.Error(response, "Vous êtes déjà pris sur ce créneau horaire.", http.StatusConflict)
+        http.Error(response, "Conflit d'horaire : Vous avez déjà un événement ou un service prévu sur ce créneau.", http.StatusConflict)
         return
     }
     
