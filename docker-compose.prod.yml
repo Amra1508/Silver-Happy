@@ -1,6 +1,7 @@
 services:
+  # Proxy inverse (Nginx Proxy Manager) pour gérer le trafic entrant et les certificats SSL
   npm-silver-happy:
-    image: 'jc21/nginx-proxy-manager:latest'
+    image: "jc21/nginx-proxy-manager:latest"
     container_name: npm-silver-happy
     restart: unless-stopped
     ports:
@@ -15,7 +16,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - silver-happy-net
 
+  # Base de données MariaDB pour le stockage des informations de l'application
   db-silver-happy:
     image: mariadb:10.11
     container_name: db-silver-happy
@@ -25,6 +29,7 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASS}
+      - TZ=Europe/Paris
     volumes:
       - ./mariadb:/var/lib/mysql
     healthcheck:
@@ -32,7 +37,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - silver-happy-net
 
+  # Application Frontend (Web) servant d'interface pour les utilisateurs
   web-silver-happy:
     image: rmvlx/web-silver-happy:latest
     container_name: web-silver-happy
@@ -41,15 +49,18 @@ services:
       db-silver-happy:
         condition: service_healthy
     ports:
-      - "8080:80" 
+      - "8080:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 10s
       timeout: 5s
       retries: 3
     environment:
-    - API_URL=${API_URL}
+      - API_URL=${API_URL}
+    networks:
+      - silver-happy-net
 
+  # Backend API en Go faisant la liaison entre le Web et la base de données
   api-silver-happy:
     image: rmvlx/api-silver-happy:latest
     container_name: api-silver-happy
@@ -58,15 +69,28 @@ services:
       db-silver-happy:
         condition: service_healthy
     ports:
-      - "8082:8082" 
+      - "8082:8082"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8082/",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
+    environment:
+      - TZ=Europe/Paris
     env_file:
       - .env
-
+    networks:
+      - silver-happy-net
+    
+  # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
     image: phpmyadmin:latest
     container_name: pma-silver-happy
@@ -75,16 +99,19 @@ services:
       db-silver-happy:
         condition: service_healthy
     ports:
-      - "8081:80" 
+      - "8081:80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
     environment:
-      - PMA_HOST=db-silver-happy  
+      - PMA_HOST=db-silver-happy
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+    networks:
+      - silver-happy-net
 
+  # Outil tiers (Dockhand) pour la gestion visuelle et la supervision des conteneurs
   dockhand-silver-happy:
     image: fnsys/dockhand:latest
     container_name: dockhand-silver-happy
@@ -95,7 +122,21 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dockhand:/app/data
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - silver-happy-net
+      
+networks:
+  silver-happy-net:
+    driver: bridge
