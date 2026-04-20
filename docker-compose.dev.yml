@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # Base de données MariaDB locale pour le stockage des données
   db-silver-happy:
     image: mariadb:10.11
     container_name: db-silver-happy
@@ -18,9 +19,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - silver-happy-net
 
+  # Application Frontend (Web) construite localement avec montage du code pour le développement
   web-silver-happy:
-    build: ./web
+    build:
+      context: ./web
+      target: builder   # stage builder = config Apache prête, le code arrive via le volume
     container_name: web-silver-happy
     restart: unless-stopped
     depends_on:
@@ -40,9 +46,14 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
+    networks:
+      - silver-happy-net
 
+  # Backend API en Go construit localement et exécuté via 'go run' (mode développement)
   api-silver-happy:
-    build: ./api
+    build:
+      context: ./api
+      target: builder
     container_name: api-silver-happy
     restart: unless-stopped
     depends_on:
@@ -54,13 +65,26 @@ services:
       - ./api:/api
     command: go run .
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8082/",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
+    environment:
+      - TZ=Europe/Paris
     env_file:
       - .env
+    networks:
+      - silver-happy-net
 
+  # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
     image: phpmyadmin:latest
     container_name: pma-silver-happy
@@ -78,3 +102,9 @@ services:
     environment:
       - PMA_HOST=db-silver-happy
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASS}
+    networks:
+      - silver-happy-net
+
+networks:
+  silver-happy-net:
+    driver: bridge
