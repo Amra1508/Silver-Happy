@@ -24,7 +24,9 @@ services:
 
   # Application Frontend (Web) construite localement avec montage du code pour le développement
   web-silver-happy:
-    build: ./web
+    build:
+      context: ./web
+      target: builder   # stage builder = config Apache prête, le code arrive via le volume
     container_name: web-silver-happy
     restart: unless-stopped
     depends_on:
@@ -49,7 +51,9 @@ services:
 
   # Backend API en Go construit localement et exécuté via 'go run' (mode développement)
   api-silver-happy:
-    build: ./api
+    build:
+      context: ./api
+      target: builder
     container_name: api-silver-happy
     restart: unless-stopped
     depends_on:
@@ -73,6 +77,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    environment:
+      - TZ=Europe/Paris
     env_file:
       - .env
     networks:

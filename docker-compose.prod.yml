@@ -19,7 +19,7 @@ services:
     networks:
       - silver-happy-net
 
-    # Base de données MariaDB pour le stockage des informations de l'application
+  # Base de données MariaDB pour le stockage des informations de l'application
   db-silver-happy:
     image: mariadb:10.11
     container_name: db-silver-happy
@@ -29,6 +29,7 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASS}
+      - TZ=Europe/Paris
     volumes:
       - ./mariadb:/var/lib/mysql
     healthcheck:
@@ -39,7 +40,7 @@ services:
     networks:
       - silver-happy-net
 
-    # Application Frontend (Web) servant d'interface pour les utilisateurs
+  # Application Frontend (Web) servant d'interface pour les utilisateurs
   web-silver-happy:
     image: rmvlx/web-silver-happy:latest
     container_name: web-silver-happy
@@ -59,7 +60,7 @@ services:
     networks:
       - silver-happy-net
 
-    # Backend API en Go faisant la liaison entre le Web et la base de données
+  # Backend API en Go faisant la liaison entre le Web et la base de données
   api-silver-happy:
     image: rmvlx/api-silver-happy:latest
     container_name: api-silver-happy
@@ -82,12 +83,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    environment:
+      - TZ=Europe/Paris
     env_file:
       - .env
     networks:
       - silver-happy-net
-
-    # Interface graphique d'administration pour la base de données (phpMyAdmin)
+    
+  # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
     image: phpmyadmin:latest
     container_name: pma-silver-happy
@@ -108,7 +111,7 @@ services:
     networks:
       - silver-happy-net
 
-    # Outil tiers (Dockhand) pour la gestion visuelle et la supervision des conteneurs
+  # Outil tiers (Dockhand) pour la gestion visuelle et la supervision des conteneurs
   dockhand-silver-happy:
     image: fnsys/dockhand:latest
     container_name: dockhand-silver-happy
@@ -133,7 +136,7 @@ services:
       retries: 3
     networks:
       - silver-happy-net
-
+      
 networks:
   silver-happy-net:
     driver: bridge
