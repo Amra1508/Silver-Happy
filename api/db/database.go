@@ -100,13 +100,6 @@ func InitDB() {
 		date_fin_boost DATETIME NULL DEFAULT NULL,
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL
 	);
-	CREATE TABLE IF NOT EXISTS DISPONIBILITE (
-		id_disponibilite INT AUTO_INCREMENT PRIMARY KEY,
-		id_prestataire INT NOT NULL,
-		date_heure DATETIME NOT NULL,
-		est_reserve BOOLEAN DEFAULT 0,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
-	);
 	CREATE TABLE IF NOT EXISTS ABONNEMENT(
 		id_abonnement INT AUTO_INCREMENT PRIMARY KEY,
 		description VARCHAR(200),
@@ -140,6 +133,13 @@ func InitDB() {
 		stripe_account_id VARCHAR(255) DEFAULT NULL,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
+	);
+	CREATE TABLE IF NOT EXISTS DISPONIBILITE (
+		id_disponibilite INT AUTO_INCREMENT PRIMARY KEY,
+		id_prestataire INT NOT NULL,
+		date_heure DATETIME NOT NULL,
+		est_reserve BOOLEAN DEFAULT 0,
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS PRESTATAIRE_EVENEMENT (
   		id_prestataire INT NOT NULL,
@@ -175,44 +175,14 @@ func InitDB() {
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_produit) REFERENCES PRODUIT(id_produit)
 	);
-	CREATE TABLE IF NOT EXISTS COMMANDE(
-		id_commande INT AUTO_INCREMENT PRIMARY KEY,
-		id_utilisateur INT NOT NULL,
-		id_paiement INT NOT NULL,
-		date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
-		total DOUBLE,
-		adresse VARCHAR(255),
-		code_postal CHAR(5),
-		ville VARCHAR(100),
-		id_reduction INT,
-		montant_frais_port DOUBLE DEFAULT 0.0,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement),
-		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
-	);
-	CREATE TABLE IF NOT EXISTS LIGNE_COMMANDE(
-		id_ligne INT AUTO_INCREMENT PRIMARY KEY,
-		id_commande INT NOT NULL,
-		id_produit INT NOT NULL,
-		quantite INT,
-		prix_unitaire DOUBLE,
-		FOREIGN KEY (id_commande) REFERENCES COMMANDE(id_commande),
-		FOREIGN KEY (id_produit) REFERENCES PRODUIT(id_produit)
-	);
-	CREATE TABLE IF NOT EXISTS RECEPTION(
-		id_utilisateur INT,
-		id_notification INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_notification) REFERENCES NOTIFICATION(id_notification)
-	);
 	CREATE TABLE IF NOT EXISTS LIKE_CONSEIL (
-    id_utilisateur INT,
-    id_conseil INT,
-    date_like DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_utilisateur, id_conseil),
-    FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-    FOREIGN KEY (id_conseil) REFERENCES CONSEIL(id_conseil)
-);
+		id_utilisateur INT,
+		id_conseil INT,
+		date_like DATETIME DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (id_utilisateur, id_conseil),
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
+		FOREIGN KEY (id_conseil) REFERENCES CONSEIL(id_conseil)
+	);
 	CREATE TABLE IF NOT EXISTS INSCRIPTION(
 		id_utilisateur INT,
 		id_evenement INT,
@@ -229,6 +199,16 @@ func InitDB() {
 		est_lu BOOLEAN DEFAULT 0,
 		FOREIGN KEY (id_utilisateur1) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_utilisateur2) REFERENCES UTILISATEUR(id_utilisateur)
+	);
+	CREATE TABLE IF NOT EXISTS SERVICE (
+		id_service INT AUTO_INCREMENT PRIMARY KEY,
+		nom VARCHAR(255) NOT NULL,
+		description TEXT,
+		id_categorie INT,
+		id_prestataire INT NOT NULL,
+		prix DOUBLE NOT NULL DEFAULT 0.0,
+		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL,
+		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS MESSAGE_PRESTATAIRE(
 		id_message INT AUTO_INCREMENT PRIMARY KEY,
@@ -248,16 +228,6 @@ func InitDB() {
 		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service),
 		FOREIGN KEY (id_disponibilite) REFERENCES DISPONIBILITE(id_disponibilite)
 	);
-	CREATE TABLE IF NOT EXISTS SERVICE (
-		id_service INT AUTO_INCREMENT PRIMARY KEY,
-		nom VARCHAR(255) NOT NULL,
-		description TEXT,
-		id_categorie INT,
-		id_prestataire INT NOT NULL,
-		prix DOUBLE NOT NULL DEFAULT 0.0,
-		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
-	);
 	CREATE TABLE IF NOT EXISTS RESERVATION_SERVICE (
 		id_reservation INT AUTO_INCREMENT PRIMARY KEY,
 		id_service INT NOT NULL,
@@ -268,19 +238,6 @@ func InitDB() {
 		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service) ON DELETE CASCADE,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur) ON DELETE CASCADE,
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement) ON DELETE SET NULL
-	);
-	CREATE TABLE IF NOT EXISTS PRESTATION(
-		id_prestation INT AUTO_INCREMENT PRIMARY KEY,
-		nom VARCHAR(100),
-		description VARCHAR(200),
-		prix DOUBLE,
-		lieu VARCHAR(100),
-		nombre_place INT NOT NULL,
-		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
-		id_paiement INT NOT NULL,
-		id_prestataire INT NOT NULL,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
-		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
 	);
 	CREATE TABLE IF NOT EXISTS DOCUMENT_UTILISATEUR(
 		id_document INT AUTO_INCREMENT PRIMARY KEY,
@@ -317,7 +274,7 @@ func InitDB() {
 		date DATETIME DEFAULT CURRENT_TIMESTAMP,
 		statut ENUM('en_attente', 'paye', 'annule') DEFAULT 'en_attente',
 		id_prestataire INT NOT NULL,
-		tripe_transfer_id VARCHAR(255) DEFAULT NULL,
+		stripe_transfer_id VARCHAR(255) DEFAULT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		UNIQUE KEY unique_facture_mois (id_prestataire, mois_annee)
 	);
@@ -328,6 +285,30 @@ func InitDB() {
 		type ENUM('pourcentage', 'fixe') DEFAULT 'pourcentage',
 		actif BOOLEAN DEFAULT TRUE,
 		date_expiration DATETIME
+	);
+	CREATE TABLE IF NOT EXISTS COMMANDE(
+		id_commande INT AUTO_INCREMENT PRIMARY KEY,
+		id_utilisateur INT NOT NULL,
+		id_paiement INT NOT NULL,
+		date_commande DATETIME DEFAULT CURRENT_TIMESTAMP,
+		total DOUBLE,
+		adresse VARCHAR(255),
+		code_postal CHAR(5),
+		ville VARCHAR(100),
+		id_reduction INT,
+		montant_frais_port DOUBLE DEFAULT 0.0,
+		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
+		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement),
+		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
+	);
+	CREATE TABLE IF NOT EXISTS LIGNE_COMMANDE(
+		id_ligne INT AUTO_INCREMENT PRIMARY KEY,
+		id_commande INT NOT NULL,
+		id_produit INT NOT NULL,
+		quantite INT,
+		prix_unitaire DOUBLE,
+		FOREIGN KEY (id_commande) REFERENCES COMMANDE(id_commande),
+		FOREIGN KEY (id_produit) REFERENCES PRODUIT(id_produit)
 	);
 	CREATE TABLE IF NOT EXISTS UTILISATION_PROMO (
 		id_promo INT AUTO_INCREMENT PRIMARY KEY,
@@ -345,12 +326,6 @@ func InitDB() {
 		id_prestataire INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
-	);
-	CREATE TABLE IF NOT EXISTS RESERVE(
-		id_utilisateur INT,
-		id_prestation INT,
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
-		FOREIGN KEY (id_prestation) REFERENCES PRESTATION(id_prestation)
 	);
 	CREATE TABLE IF NOT EXISTS NEWSLETTER(
   		id_newsletter INT AUTO_INCREMENT PRIMARY KEY,
