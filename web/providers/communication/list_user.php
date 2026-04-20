@@ -107,7 +107,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 const tbody = document.getElementById('list-user-body');
                 tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">Chargement...</td></tr>';
 
-                // On choisit l'endpoint selon l'onglet
                 const endpoint = currentTab === 'admin' ? '/admin/read' : '/seniors/read-presta';
                 const url = `${API_BASE}${endpoint}?user_id=${currentUserId}&page=${currentPage}&limit=${limit}`;
 
@@ -130,7 +129,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         `<span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">${unreadCount}</span>` :
                         `<span class="text-gray-400 text-sm">0</span>`;
 
-                    // Le type de contact pour l'URL de messagerie
                     const typePath = currentTab === 'admin' ? 'admin' : 'senior';
 
                     tbody.innerHTML += `

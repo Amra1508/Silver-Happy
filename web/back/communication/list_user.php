@@ -78,7 +78,7 @@
 
         let currentPage = 1;
         const limit = 10;
-        let currentTab = 'seniors'; // Par défaut on affiche les seniors
+        let currentTab = 'seniors';
 
         function switchTab(tab) {
             currentTab = tab;
@@ -104,11 +104,8 @@
                 const tbody = document.getElementById('list-user-body');
                 tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Chargement...</td></tr>';
 
-                // L'admin utilise l'ID de session pour voir ses propres messages non-lus avec ces utilisateurs
                 const currentUserId = window.currentUserId;
 
-                // On adapte l'endpoint selon l'onglet
-                // Hypothèse : tu as un endpoint /prestataire/read pour lister les prestas côté admin
                 const endpoint = currentTab === 'seniors' ? '/seniors/read' : '/prestataires/read';
                 const url = `${API_URL}${endpoint}?page=${currentPage}&limit=${limit}&user_id=${currentUserId}`;
 
@@ -184,7 +181,6 @@
             paginationContainer.innerHTML = html;
         }
 
-        // On attend que l'auth soit prête pour avoir le currentUserId
         window.addEventListener('auth_ready', () => {
             fetchUsers(1);
         });
