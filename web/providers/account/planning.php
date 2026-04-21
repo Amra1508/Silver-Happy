@@ -47,7 +47,7 @@
                     </div>
 
                     <div id="no-sub-container" class="hidden flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm fade-in">
-                        <div class="text-yellow-500 text-6xl mb-4">⏳</div>
+                        <div class="text-yellow-500 text-6xl mb-4"></div>
                         <p class="text-center font-bold text-gray-700 text-xl mb-2">
                             Votre compte est en attente de validation.
                         </p>
@@ -84,28 +84,28 @@
                         <span id="modalStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"></span>
                     </div>
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span class="text-xl mr-3">📅</span>
+                        <span class="text-xl mr-3"></span>
                         <div>
                             <p class="text-xs text-gray-500 font-semibold uppercase">Début</p>
                             <p id="modalStart" class="font-bold text-[#1C5B8F]"></p>
                         </div>
                     </div>
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span class="text-xl mr-3">🏁</span>
+                        <span class="text-xl mr-3"></span>
                         <div>
                             <p class="text-xs text-gray-500 font-semibold uppercase">Fin</p>
                             <p id="modalEnd" class="font-bold text-[#1C5B8F]"></p>
                         </div>
                     </div>
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span class="text-xl mr-3">📍</span>
+                        <span class="text-xl mr-3"></span>
                         <div class="min-w-0">
                             <p class="text-xs text-gray-500 font-semibold uppercase">Lieu / Adresse</p>
                             <p id="modalLocation" class="font-bold text-gray-800 break-words"></p>
                         </div>
                     </div>
                     <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <span class="text-xl mr-3">🎟️</span>
+                        <span class="text-xl mr-3"></span>
                         <div>
                             <p class="text-xs text-gray-500 font-semibold uppercase">Places limitées</p>
                             <p id="modalPlaces" class="font-bold text-gray-800"></p>
@@ -115,15 +115,15 @@
                     <div id="modalClientSection" class="hidden flex-col gap-3 pt-6 border-t border-gray-200 mt-4">
                         <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Informations du Client</h4>
                         <div class="flex items-center text-gray-700">
-                            <span class="text-xl mr-3">👤</span>
+                            <span class="text-xl mr-3"></span>
                             <p id="modalClientNom" class="font-bold text-gray-800"></p>
                         </div>
                         <div class="flex items-center text-gray-700">
-                            <span class="text-xl mr-3">📞</span>
+                            <span class="text-xl mr-3"></span>
                             <p id="modalClientTel" class="font-bold text-[#1C5B8F]"></p>
                         </div>
                         <div class="flex items-center text-gray-700">
-                            <span class="text-xl mr-3">✉️</span>
+                            <span class="text-xl mr-3"></span>
                             <p id="modalClientEmail" class="font-bold text-[#1C5B8F]"></p>
                         </div>
                     </div>

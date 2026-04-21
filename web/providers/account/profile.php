@@ -144,7 +144,7 @@
 
                         <div class="sm:col-span-6 flex flex-col sm:flex-row justify-center gap-4 mt-4">
                             <a href="/providers/account/document.php" class="text-center px-10 py-3 rounded-full border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-colors shadow-sm">
-                                Consulter mes factures
+                                Consulter mes documents
                             </a>
                         </div>
 
