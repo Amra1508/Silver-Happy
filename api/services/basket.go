@@ -320,7 +320,7 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	ville := html.EscapeString(request.URL.Query().Get("ville"))
 	cp := html.EscapeString(request.URL.Query().Get("cp"))
 	codePromoUtilise := strings.ToUpper(strings.TrimSpace(request.URL.Query().Get("code")))
-
+	
 	total, err := strconv.ParseFloat(totalStr, 64)
 	fraisPort, _ := strconv.ParseFloat(fraisPortStr, 64)
 	if err != nil {
@@ -354,11 +354,13 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	var idReduction sql.NullInt64
 	if codePromoUtilise != "" {
 		var idCode int
-		err := db.DB.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE code = ?", codePromoUtilise).Scan(&idCode)
+		err := db.DB.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE UPPER(code) = UPPER(?)", codePromoUtilise).Scan(&idCode)
 
 		if err == nil {
 			idReduction.Int64 = int64(idCode)
 			idReduction.Valid = true
+		}else{
+			fmt.Println("Code promo non trouvé:", codePromoUtilise)
 		}
 	}
 
@@ -376,9 +378,9 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	idPaiement, _ := resPaiement.LastInsertId()
 
 	resCmd, errCmd := db.DB.Exec(`
-		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, ville, code_postal, id_reduction, montant_frais_port)
+		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, code_postal, ville, id_reduction, montant_frais_port)
 		VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
-		userID, idPaiement, total, adresse, ville, cp, idReduction, fraisPort)
+		userID, idPaiement, total, adresse, cp, ville, idReduction.Int64, fraisPort)
 	if errCmd != nil {
 		fmt.Println("Erreur insertion commande :", errCmd)
 		http.Error(response, "Erreur base de données (Commande)", http.StatusInternalServerError)
