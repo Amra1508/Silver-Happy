@@ -70,7 +70,7 @@
                             <div class="bg-yellow-100 p-4 rounded-full text-[#E1AB2B]"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Nouveaux messages</p>
-                                <p class="text-2xl font-bold text-gray-800">3</p>
+                                <p class="text-2xl font-bold text-gray-800">0</p>
                             </div>
                         </div>
 
