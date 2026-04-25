@@ -111,6 +111,7 @@ func main() {
 	http.HandleFunc("/dashboard/prestataires", dashboard.Prestataires_Count)
 	http.HandleFunc("/dashboard/abonnement", dashboard.Abonnement_Count)
 	http.HandleFunc("/dashboard/revenus", dashboard.Revenus)
+	http.HandleFunc("/dashboard/revenus/details", dashboard.GetRevenusDetails)
 
 	http.HandleFunc("/message/get/{id1}/with/{id2}", communication.Get_Message)
 	http.HandleFunc("/message/add", communication.Add_Message)

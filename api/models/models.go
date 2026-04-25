@@ -246,6 +246,12 @@ type InvoiceLine struct {
     Info2       string
 }
 
+type RevenuDetail struct {
+    Date        string  `json:"date"`
+    Commandes   float64 `json:"commandes"`
+    Abonnements float64 `json:"abonnements"`
+}
+
 type Participant struct {
 	ID     int    `json:"id"`
 	Nom    string `json:"nom"`

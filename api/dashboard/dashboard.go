@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"main/db"
@@ -108,4 +109,45 @@ func Revenus(response http.ResponseWriter, request *http.Request) {
 
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(revenues)
+}
+
+func GetRevenusDetails(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
+    
+    query := `
+            SELECT 
+                DATE(p.date_paiement) as jour,
+                SUM(CASE WHEN c.id_commande IS NOT NULL THEN p.prix ELSE 0 END) as total_commandes,
+                SUM(CASE WHEN a.id_abonnement IS NOT NULL THEN p.prix ELSE 0 END) as total_abonnements
+            FROM paiement p
+            LEFT JOIN commande c ON p.id_paiement = c.id_paiement
+            LEFT JOIN abonnement a ON p.id_paiement = a.id_paiement
+            WHERE p.date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            GROUP BY jour
+            ORDER BY jour ASC
+            `
+
+    rows, err := db.DB.Query(query)
+    if err != nil {
+        fmt.Println("Erreur SQL détaillée:", err)
+        http.Error(response, "Erreur lors de la récupération des catégories", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var details []models.RevenuDetail
+    for rows.Next() {
+        var d models.RevenuDetail
+        if err := rows.Scan(&d.Date, &d.Commandes, &d.Abonnements); err != nil {
+            fmt.Println("Erreur Scan:", err)
+            http.Error(response, "Erreur lors du scan", http.StatusInternalServerError)
+            return
+        }
+        details = append(details, d)
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(details)
 }

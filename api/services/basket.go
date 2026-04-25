@@ -351,10 +351,18 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 		}
 	}
 
+	tx, err := db.DB.Begin()
+    if err != nil {
+        http.Error(response, "Erreur serveur", 500)
+        return
+    }
+
+    defer tx.Rollback()
+
 	var idReduction sql.NullInt64
 	if codePromoUtilise != "" {
 		var idCode int
-		err := db.DB.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE UPPER(code) = UPPER(?)", codePromoUtilise).Scan(&idCode)
+		err := tx.QueryRow("SELECT id_reduction FROM CODE_REDUCTION WHERE UPPER(code) = UPPER(?)", codePromoUtilise).Scan(&idCode)
 
 		if err == nil {
 			idReduction.Int64 = int64(idCode)
@@ -364,7 +372,7 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	resPaiement, errP := db.DB.Exec(`
+	resPaiement, errP := tx.Exec(`
 		INSERT INTO PAIEMENT (prix, statut, mode_paiement, url_facture) 
 		VALUES (?, 'valide', 'carte', ?)`,
 		total, urlFacture)
@@ -377,10 +385,10 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
 	idPaiement, _ := resPaiement.LastInsertId()
 
-	resCmd, errCmd := db.DB.Exec(`
+	resCmd, errCmd := tx.Exec(`
 		INSERT INTO COMMANDE (id_utilisateur, id_paiement, total, adresse, code_postal, ville, id_reduction, montant_frais_port)
 		VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
-		userID, idPaiement, total, adresse, cp, ville, idReduction.Int64, fraisPort)
+		userID, idPaiement, total, adresse, cp, ville, idReduction, fraisPort)
 	if errCmd != nil {
 		fmt.Println("Erreur insertion commande :", errCmd)
 		http.Error(response, "Erreur base de données (Commande)", http.StatusInternalServerError)
@@ -389,7 +397,7 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 
 	idCommande, _ := resCmd.LastInsertId()
 
-	_, errLines := db.DB.Exec(`
+	_, errLines := tx.Exec(`
 		INSERT INTO LIGNE_COMMANDE (id_commande, id_produit, quantite, prix_unitaire)
 		SELECT ?, p.id_produit, p.quantite, pr.prix
 		FROM PANIER p
@@ -402,16 +410,21 @@ func Success_Basket(response http.ResponseWriter, request *http.Request) {
 	}
 
 	if idReduction.Valid {
-		db.DB.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
+		tx.Exec("INSERT INTO UTILISATION_PROMO (id_utilisateur, id_reduction) VALUES (?, ?)", userID, idReduction.Int64)
 	}
 
-	db.DB.Exec(`
+	tx.Exec(`
 		UPDATE PRODUIT pr
 		JOIN PANIER p ON pr.id_produit = p.id_produit
 		SET pr.stock = pr.stock - p.quantite
 		WHERE p.id_utilisateur = ?`, userID)
 
-	db.DB.Exec("DELETE FROM PANIER WHERE id_utilisateur = ?", userID)
+	tx.Exec("DELETE FROM PANIER WHERE id_utilisateur = ?", userID)
+
+	if err := tx.Commit(); err != nil {
+        fmt.Println("Erreur commit:", err)
+        return
+    }
 
 	http.Redirect(response, request, utils.GetFrontBaseURL()+"/front/services/products.php?success=paiement_valide", http.StatusSeeOther)
 }

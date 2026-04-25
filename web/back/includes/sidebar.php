@@ -57,7 +57,8 @@
     </div>
 
     <div class="">
-        <a id="btn_logout" class="flex items-center px-6 py-2 hover:bg-[#1C5B8F]">
+        <a id="btn_logout" class="flex items-center py-2 hover:bg-[#1C5B8F]">
+            <img src="/back/icons/deconnexion.svg" alt="dashboard" class="w-7 h-7 mx-4">
             <span class="text-lg">Déconnexion</span>
         </a>
     </div>
