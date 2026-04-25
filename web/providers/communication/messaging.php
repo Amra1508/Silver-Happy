@@ -153,10 +153,14 @@
                                 <button onclick="modifierEtatOffre(${msg.id}, 'accepte')" class="bg-green-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-green-600 transition shadow-sm">Accepter</button>
                                 <button onclick="modifierEtatOffre(${msg.id}, 'refuse')" class="bg-red-500 text-white px-3 py-1 rounded-md text-xs font-bold hover:bg-red-600 transition shadow-sm">Refuser</button>
                             </div>`;
-                    } else if (msg.etat_offre === 'accepte') {
+                    } else if (msg.etat_offre === 'accepte' || msg.etat_offre === 'paye') {
                         borderCol = "border-green-500";
                         textCol = "text-green-600";
                         statutLabel = isMe ? "Vous avez accepté cette offre" : "Offre acceptée";
+                    } else if (msg.etat_offre === 'refuse') {
+                        borderCol = "border-red-500";
+                        textCol = "text-red-600";
+                        statutLabel = isMe ? "Vous avez refusé cette offre" : "Offre refusée";
                     }
 
                     contenuAffiche = `

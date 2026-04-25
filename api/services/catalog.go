@@ -593,7 +593,7 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 					fmt.Println("ERREUR UPDATE DISPONIBILITE:", errDispo)
 				}
 
-				db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET etat_offre = 'expire' WHERE id_utilisateur = ? AND id_disponibilite = ? AND etat_offre = 'accepte' AND id_service = ?", userID, idDispo, serviceID)
+				db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET etat_offre = 'paye' WHERE id_utilisateur = ? AND id_disponibilite = ? AND etat_offre = 'accepte' AND id_service = ?", userID, idDispo, serviceID)
 			}
 		}
 	

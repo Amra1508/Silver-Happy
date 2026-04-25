@@ -86,9 +86,15 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Choisir un créneau disponible</label>
-                            <select id="offre-dispo" class="w-full px-4 py-2 rounded-lg border border-[#1C5B8F] focus:ring-2 focus:ring-[#E1AB2B] outline-none">
-                                <option value="">Sélectionnez d'abord un service...</option>
+                            <select id="offre-jour" class="w-full p-2 border rounded-xl mb-3 hidden" onchange="renderOffreTimeSlots()">
+                                <option value="" disabled selected>1. Choisissez un jour</option>
                             </select>
+
+                            <div id="offre-time-grid" class="grid grid-cols-3 gap-2 mb-4">
+                            </div>
+
+                            <input type="hidden" id="selected-offre-dispo-id">
+                            <input type="hidden" id="selected-offre-dispo-date">
                         </div>
 
                         <div>
@@ -167,6 +173,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
             setInterval(message, 2000);
         });
 
+        let groupedDispos = {};
+
         async function ouvrirModaleOffre() {
             toggleModal('modal-offre');
 
@@ -182,37 +190,89 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const resDispo = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${id2}/get`);
             const dispos = await resDispo.json();
 
-            const selectDispo = document.getElementById('offre-dispo');
-            selectDispo.innerHTML = '<option value="">Choisir un créneau</option>';
+            const jourSelect = document.getElementById('offre-jour');
+            const timeGrid = document.getElementById('offre-time-grid');
+            const now = new Date();
+            groupedDispos = {};
+
             dispos.filter(d => !d.est_reserve).forEach(d => {
                 const dateObj = new Date(d.date_heure);
-                const dateStr = dateObj.toLocaleDateString('fr-FR', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                selectDispo.innerHTML += `<option value="${d.id_disponibilite}" data-date="${d.date_heure}">${dateStr}</option>`;
-            });
-            const urlParams = new URLSearchParams(window.location.search);
-            const dateAPreremplir = urlParams.get('prefill_date');
-            if (dateAPreremplir) {
-                for (let i = 0; i < selectDispo.options.length; i++) {
-                    if (selectDispo.options[i].getAttribute('data-date') === dateAPreremplir) {
-                        selectDispo.selectedIndex = i;
-                        break;
-                    }
+
+                if (dateObj <= now) return;
+
+                const dateKey = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()).toISOString();
+
+                if (!groupedDispos[dateKey]) {
+                    groupedDispos[dateKey] = {
+                        label: dateObj.toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long'
+                        }),
+                        slots: []
+                    };
                 }
+
+                groupedDispos[dateKey].slots.push({
+                    id: d.id_disponibilite,
+                    date_heure: d.date_heure,
+                    timeLabel: dateObj.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                });
+            });
+
+            jourSelect.innerHTML = '<option value="" disabled selected>1. Choisissez un jour</option>';
+            const sortedKeys = Object.keys(groupedDispos).sort();
+
+            if (sortedKeys.length === 0) {
+                timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center italic">Aucun créneau disponible</p>';
+                jourSelect.classList.add('hidden');
+            } else {
+                sortedKeys.forEach(key => {
+                    jourSelect.innerHTML += `<option value="${key}">${groupedDispos[key].label}</option>`;
+                });
+                jourSelect.classList.remove('hidden');
+                timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center py-2">Sélectionnez un jour ci-dessus</p>';
             }
+        }
+
+        function renderOffreTimeSlots() {
+            const selectedKey = document.getElementById('offre-jour').value;
+            const timeGrid = document.getElementById('offre-time-grid');
+            timeGrid.innerHTML = '';
+
+            if (!selectedKey || !groupedDispos[selectedKey]) return;
+
+            groupedDispos[selectedKey].slots.forEach(slot => {
+                const btn = document.createElement('button');
+                btn.className = "offre-slot-btn py-2 rounded-lg border-2 border-[#1C5B8F] text-[#1C5B8F] bg-white font-bold text-sm hover:bg-[#1C5B8F] hover:text-white transition-all";
+                btn.textContent = slot.timeLabel;
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    selectOffreSlot(slot.id, slot.date_heure, btn);
+                };
+                timeGrid.appendChild(btn);
+            });
+        }
+
+        function selectOffreSlot(id, date, btn) {
+            document.getElementById('selected-offre-dispo-id').value = id;
+            document.getElementById('selected-offre-dispo-date').value = date;
+
+            document.querySelectorAll('.offre-slot-btn').forEach(b => {
+                b.classList.remove('bg-[#1C5B8F]', 'text-white');
+                b.classList.add('bg-white', 'text-[#1C5B8F]');
+            });
+            btn.classList.add('bg-[#1C5B8F]', 'text-white');
         }
 
         async function envoyerOffre() {
             const serviceId = document.getElementById('offre-service').value;
-            const dispoId = document.getElementById('offre-dispo').value;
+            const dispoId = document.getElementById('selected-offre-dispo-id').value;
+            const dateHeure = document.getElementById('selected-offre-dispo-date').value;
             const prix = document.getElementById('offre-prix').value;
-            const selectDispo = document.getElementById('offre-dispo');
-            const dateHeure = selectDispo.options[selectDispo.selectedIndex].getAttribute('data-date');
             const serviceNom = document.getElementById('offre-service').options[document.getElementById('offre-service').selectedIndex].text;
 
             if (!serviceId || !dispoId || !prix) {
@@ -221,7 +281,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
             }
 
             const payload = {
-                Contenu: `PROPOSITION D'OFFRE : ${serviceNom} pour le ${dateHeure} au prix de ${prix}€`,
+                Contenu: `PROPOSITION D'OFFRE : ${serviceNom} pour le ${new Date(dateHeure).toLocaleString('fr-FR')} au prix de ${prix}€`,
                 ID_Expediteur: parseInt(id1),
                 ID_Destinataire: parseInt(id2),
                 Expediteur: false,

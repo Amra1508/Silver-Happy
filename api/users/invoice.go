@@ -43,10 +43,18 @@ func GetUserInvoices(response http.ResponseWriter, request *http.Request) {
         JOIN COMMANDE c ON p.id_paiement = c.id_paiement
         WHERE c.id_utilisateur = ? AND p.statut = 'valide'
 
+        UNION ALL
+
+        SELECT p.id_paiement, p.prix, p.date_paiement, p.url_facture, CONCAT('Service : ', s.nom) AS description
+        FROM PAIEMENT p
+        JOIN RESERVATION_SERVICE r ON p.id_paiement = r.id_paiement
+        JOIN SERVICE s ON r.id_service = s.id_service
+        WHERE r.id_utilisateur = ? AND p.statut = 'valide'
+
         ORDER BY date_paiement DESC
     `
 
-    rows, err := db.DB.Query(query, userID, userID, userID)
+    rows, err := db.DB.Query(query, userID, userID, userID, userID)
     if err != nil {
         http.Error(response, "Erreur serveur", http.StatusInternalServerError)
         return
@@ -186,6 +194,24 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
         })
     }
 
+    rowsServ, _ := db.DB.Query(`
+        SELECT p.date_paiement, u.nom, u.prenom, u.email, s.nom, 1, p.prix, r.date_heure
+        FROM PAIEMENT p
+        JOIN RESERVATION_SERVICE r ON p.id_paiement = r.id_paiement
+        JOIN SERVICE s ON r.id_service = s.id_service
+        JOIN UTILISATEUR u ON r.id_utilisateur = u.id_utilisateur
+        WHERE p.id_paiement = ?`, paymentID)
+
+    for rowsServ.Next() {
+        var l models.InvoiceLine
+        l.Type = "SERVICE"
+        l.Qty = 1
+        rowsServ.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.Qty, &l.UnitPrice, &l.Info1)
+        l.Description = "Service : " + l.Description
+        l.Total = l.UnitPrice
+        lines = append(lines, l)
+    }
+
     if len(lines) == 0 {
         http.Error(response, "Facture vide ou introuvable", http.StatusNotFound)
         return
@@ -264,6 +290,10 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
                 tD, _ := time.Parse("2006-01-02", l.Info1[:10])
                 tF, _ := time.Parse("2006-01-02", l.Info2[:10])
                 pdf.Cell(0, 5, tr("Évènement du ") + tD.Format("02/01/2006") + " au " + tF.Format("02/01/2006"))
+                pdf.Ln(7)
+            case "SERVICE":
+                tServ, _ := time.Parse("2006-01-02T15:00", l.Info1[:16])
+                pdf.Cell(0, 5, tr("Prestation prévue le ") + tServ.Format("02/01/2006") + tr(" à ") + tServ.Format("15h04"))
                 pdf.Ln(7)
         }
         pdf.SetTextColor(0, 0, 0)
