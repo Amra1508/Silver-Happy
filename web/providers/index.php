@@ -48,7 +48,7 @@
                     <div class="bg-gradient-to-r from-[#1C5B8F] to-blue-800 rounded-[2rem] p-8 shadow-lg flex flex-col md:flex-row items-center justify-between border border-blue-400">
                         <div class="text-white mb-4 md:mb-0">
                             <h3 class="text-2xl font-bold flex items-center gap-2">
-                                <span class="text-[#E1AB2B]">⭐</span> Manque de visibilité ?
+                                Manque de visibilité ?
                             </h3>
                             <p class="text-blue-100 mt-2">Faites apparaître votre profil en tête de liste dans l'Espace Senior pendant 7 jours.</p>
                         </div>
@@ -70,7 +70,7 @@
                             <div class="bg-yellow-100 p-4 rounded-full text-[#E1AB2B]"></div>
                             <div>
                                 <p class="text-sm text-gray-500 font-semibold">Nouveaux messages</p>
-                                <p class="text-2xl font-bold text-gray-800">0</p>
+                                <p id="messages" class="text-2xl font-bold text-gray-800"></p>
                             </div>
                         </div>
 
@@ -137,9 +137,9 @@
                                 <p class="text-blue-100 text-sm mb-6">L'équipe Silver Happy est disponible pour vous accompagner dans vos démarches ou en cas d'urgence avec un senior.</p>
 
                                 <div class="space-y-3">
-                                    <button class="w-full bg-white/10 hover:bg-white/20 transition-colors py-3 px-4 rounded-xl flex items-center justify-between text-sm font-semibold">
-                                        Contacter le support client
-                                    </button>
+                                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to=contact@silver-happy.fr" target="_blank" class="w-full bg-white/10 hover:bg-white/20 transition-colors py-3 px-4 rounded-xl flex items-center justify-between text-sm font-semibold">
+                                        Nous contacter
+                                    </a>
                                     <button class="w-full bg-white/10 hover:bg-white/20 transition-colors py-3 px-4 rounded-xl flex items-center justify-between text-sm font-semibold">
                                         Consulter la FAQ Pro
                                     </button>
@@ -188,10 +188,11 @@
             providerId = window.currentUserId;
             noteMoyenne();
             setInterval(noteMoyenne, 2000);
+            countMessages();
+            setInterval(countMessages, 2000);
         });
 
         async function noteMoyenne() {
-
             try {
                 const response = await fetch(`${API_BASE}/prestataire/${providerId}/note-moyenne`);
                 const stats = await response.json();
@@ -203,6 +204,21 @@
 
             } catch (err) {
                 console.error("Erreur stats:", err);
+            }
+        }
+
+        async function countMessages() {
+            try {
+                const response = await fetch(`${API_BASE}/prestataire/${providerId}/count`);
+                const data = await response.json();
+
+                const count = document.getElementById('messages');
+                if (count) {
+                    count.textContent = data.count || 0;
+                }
+
+            } catch (err) {
+                console.error("Erreur messages:", err);
             }
         }
 
@@ -283,7 +299,7 @@
                                 tooltip: {
                                     callbacks: {
                                         label: function(context) {
-                                            return context.parsed.y + ' €';
+                                            return context.parsed.y.toFixed(2) + ' €';
                                         }
                                     }
                                 }
@@ -339,8 +355,6 @@
 
                         if (profileRes.ok) {
                             const profileData = await profileRes.json();
-
-                            document.getElementById('stat-tarif').innerHTML = `${profileData.prestataire.Tarifs || profileData.prestataire.tarifs || 0} € <span class="text-sm font-normal text-gray-400">/h</span>`;
 
                             const evenements = profileData.evenements || [];
                             document.getElementById('stat-events-count').textContent = evenements.length;

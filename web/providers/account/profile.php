@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,11 +12,16 @@
     <script>
         tailwind.config = {
             theme: {
-                extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } }
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
             }
         }
     </script>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="flex min-h-screen">
@@ -24,7 +30,7 @@
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
             <main class="p-8">
                 <div class="max-w-4xl mx-auto space-y-8">
-                    
+
                     <div>
                         <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mon Profil</h1>
                         <p class="text-gray-500 mt-1">Consultez et modifiez toutes vos informations.</p>
@@ -33,12 +39,12 @@
                     <div id="alert-box" class="hidden p-4 rounded-xl font-semibold text-sm"></div>
 
                     <form id="form-profil" class="space-y-6">
-                        
+
                         <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                             <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
                                 Informations Personnelles
                             </h2>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="text-sm text-gray-600 font-semibold block mb-2">Prénom</label>
@@ -67,7 +73,7 @@
                             <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
                                 Gestion de l'abonnement & Visibilité
                             </h2>
-                            
+
                             <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 gap-4">
                                 <div>
                                     <p class="text-sm text-gray-600 font-semibold">Abonnement Pro</p>
@@ -103,7 +109,7 @@
                             <h2 class="text-xl font-bold text-[#1C5B8F] mb-6 flex items-center gap-2">
                                 Activité Professionnelle
                             </h2>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="text-sm text-gray-600 font-semibold block mb-2">Numéro SIRET</label>
@@ -114,13 +120,6 @@
                                     <select id="id_categorie" class="w-full border border-gray-300 rounded-xl p-3 bg-white focus:outline-none focus:border-[#1C5B8F] focus:ring-1 focus:ring-[#1C5B8F]" required>
                                         <option value="" disabled selected>Chargement...</option>
                                     </select>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="text-sm text-gray-600 font-semibold block mb-2">Tarif de base (€/h)</label>
-                                    <div class="relative w-full">
-                                        <input type="number" id="tarifs" step="0.01" min="0" class="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:border-[#1C5B8F] focus:ring-1 focus:ring-[#1C5B8F]" required>
-                                        <span class="absolute right-4 top-3 text-gray-400 font-bold">€</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -171,7 +170,7 @@
         }
 
         async function connectStripe() {
-            const providerId = window.currentUserId; 
+            const providerId = window.currentUserId;
             if (!providerId) return alert("Vous devez être connecté.");
 
             const btn = document.getElementById('btn-stripe-connect');
@@ -181,18 +180,22 @@
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/stripe-connect`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ provider_id: parseInt(providerId) })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        provider_id: parseInt(providerId)
+                    })
                 });
 
                 if (res.ok) {
                     const result = await res.json();
-                    window.location.href = result.url; 
+                    window.location.href = result.url;
                 } else {
                     const errorText = await res.text();
                     console.error("Erreur renvoyée par le serveur :", errorText);
                     alert("Erreur Serveur : \n" + errorText);
-                    
+
                     btn.innerHTML = "Lier mon compte bancaire";
                     btn.disabled = false;
                 }
@@ -205,7 +208,7 @@
         }
 
         async function acheterBoost(typeBoost, targetId = 0) {
-            const providerId = window.currentUserId; 
+            const providerId = window.currentUserId;
             if (!providerId) return alert("Vous devez être connecté.");
 
             const data = {
@@ -218,7 +221,9 @@
                 const apiBase = window.API_BASE_URL;
                 const response = await fetch(`${apiBase}/paiement-boost`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
 
@@ -252,7 +257,11 @@
             const getLastDayOfMonth = () => {
                 const now = new Date();
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                return lastDay.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                return lastDay.toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
             };
 
             const updateSubscriptionUI = (isSubscribed) => {
@@ -276,8 +285,14 @@
             const updateBoostUI = (dateFinBoost) => {
                 if (dateFinBoost && new Date(dateFinBoost) > new Date()) {
                     const d = new Date(dateFinBoost);
-                    const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute:'2-digit' });
-                    
+                    const dateStr = d.toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
                     boostStatusDiv.innerHTML = `
                         <span class="w-3 h-3 rounded-full bg-[#E1AB2B] shadow-[0_0_8px_rgba(225,171,43,0.6)]"></span>
                         <span class="font-bold text-yellow-700">Boost Actif</span>
@@ -302,7 +317,7 @@
                     selectCategorie.innerHTML = '<option value="" disabled>Sélectionnez une catégorie</option>';
                     categories.forEach(cat => {
                         const option = document.createElement('option');
-                        option.value = cat.id_categorie || cat.id || cat.ID; 
+                        option.value = cat.id_categorie || cat.id || cat.ID;
                         option.textContent = cat.nom || cat.Nom;
                         selectCategorie.appendChild(option);
                     });
@@ -322,9 +337,8 @@
                     document.getElementById('email').value = providerData.email || '';
                     document.getElementById('telephone').value = providerData.num_telephone || '';
                     document.getElementById('siret').value = providerData.siret || '';
-                    document.getElementById('tarifs').value = providerData.tarifs || 0;
-                    
-                    if(providerData.id_categorie || providerData.IdCategorie) {
+
+                    if (providerData.id_categorie || providerData.IdCategorie) {
                         selectCategorie.value = providerData.id_categorie || providerData.IdCategorie;
                     }
 
@@ -361,9 +375,13 @@
                     try {
                         const res = await fetch(`${window.API_BASE_URL}/cancel-subscription-prestataire`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
                             credentials: 'include',
-                            body: JSON.stringify({ id_prestataire: providerData.id_prestataire || providerData.id || providerData.ID })
+                            body: JSON.stringify({
+                                id_prestataire: providerData.id_prestataire || providerData.id || providerData.ID
+                            })
                         });
 
                         if (res.ok) {
@@ -395,7 +413,6 @@
                     email: document.getElementById('email').value.trim(),
                     num_telephone: document.getElementById('telephone').value.trim(),
                     siret: document.getElementById('siret').value.trim(),
-                    tarifs: parseFloat(document.getElementById('tarifs').value),
                     id_categorie: parseInt(selectCategorie.value)
                 };
 
@@ -404,7 +421,9 @@
                 try {
                     const updateRes = await fetch(`${window.API_BASE_URL}/auth/update-provider`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         credentials: 'include',
                         body: JSON.stringify(updatedData)
                     });
@@ -425,7 +444,10 @@
                     alertBox.textContent = "Erreur de connexion au serveur.";
                     alertBox.classList.remove('hidden');
                 } finally {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
                     btnSave.disabled = false;
                     btnSave.innerHTML = "Enregistrer les modifications";
                 }
@@ -433,4 +455,5 @@
         });
     </script>
 </body>
+
 </html>

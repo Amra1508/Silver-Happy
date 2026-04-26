@@ -257,69 +257,69 @@ func Get_Event_Participants(response http.ResponseWriter, request *http.Request)
 	json.NewEncoder(response).Encode(participants)
 }
 
-func Get_Prestataire_Events(response http.ResponseWriter, request *http.Request) {
+func fetchAndSendEvents(response http.ResponseWriter, query string, id string) {
+    rows, err := db.DB.Query(query, id)
+    if err != nil {
+        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var events []map[string]interface{}
+    for rows.Next() {
+        var id_evt, places int
+        var nom, desc, lieu, debut, fin, image, dateFinBoost string
+        var prix float64
+        if err := rows.Scan(&id_evt, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image, &dateFinBoost); err == nil {
+            events = append(events, map[string]interface{}{
+                "id_evenement": id_evt, "nom": nom, "description": desc, "lieu": lieu,
+                "nombre_place": places, "prix": prix, "date_debut": debut, "date_fin": fin,
+                "image": image, "date_fin_boost": dateFinBoost,
+            })
+        }
+    }
+    if events == nil { events = []map[string]interface{}{} }
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(events)
+}
+
+func Get_Events_A_Venir(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
 
 	providerID := request.PathValue("id")
-	tab := request.URL.Query().Get("tab")
 
 	condition := "IFNULL(NULLIF(e.date_fin, ''), DATE_ADD(e.date_debut, INTERVAL 2 HOUR))"
 
-	var sqlQuery string
-	if tab == "history" {
-		sqlQuery = fmt.Sprintf(`
-			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
-			FROM evenement e
-			JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
-			WHERE pe.id_prestataire = ? AND %s < NOW()
-			ORDER BY e.date_debut DESC
-		`, condition)
-	} else {
-		sqlQuery = fmt.Sprintf(`
+    sqlQuery := fmt.Sprintf(`
 			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
 			FROM evenement e
 			JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
 			WHERE pe.id_prestataire = ? AND %s >= NOW()
 			ORDER BY e.date_debut ASC
 		`, condition)
-	}
 
-	rows, err := db.DB.Query(sqlQuery, providerID)
-	if err != nil {
-		fmt.Println("Erreur lors de la récupération des évènements:", err)
-		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+
+	fetchAndSendEvents(response, sqlQuery, providerID)
+}
+
+func Get_Historique_Events(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
 		return
 	}
-	defer rows.Close()
 
-	var events []map[string]interface{}
-	for rows.Next() {
-		var id, places int
-		var nom, desc, lieu, debut, fin, image, dateFinBoost string
-		var prix float64
+	providerID := request.PathValue("id")
 
-		if err := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image, &dateFinBoost); err == nil {
-			events = append(events, map[string]interface{}{
-				"id_evenement":   id,
-				"nom":            nom,
-				"description":    desc,
-				"lieu":           lieu,
-				"nombre_place":   places,
-				"prix":           prix,
-				"date_debut":     debut,
-				"date_fin":       fin,
-				"image":          image,
-				"date_fin_boost": dateFinBoost,
-			})
-		}
-	}
+	condition := "IFNULL(NULLIF(e.date_fin, ''), DATE_ADD(e.date_debut, INTERVAL 2 HOUR))"
 
-	if events == nil {
-		events = []map[string]interface{}{}
-	}
+    sqlQuery := fmt.Sprintf(`
+			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
+			FROM evenement e
+			JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+			WHERE pe.id_prestataire = ? AND %s < NOW()
+			ORDER BY e.date_debut DESC
+		`, condition)
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(events)
+	fetchAndSendEvents(response, sqlQuery, providerID)
 }

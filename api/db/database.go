@@ -125,7 +125,6 @@ func InitDB() {
 		status ENUM('en attente', 'validé', 'refusé') DEFAULT 'en attente',
 		motif_refus VARCHAR(250) DEFAULT NULL,
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-		tarifs DOUBLE,
 		id_abonnement INT,
 		debut_abonnement DATETIME NULL, 
 		id_categorie INT,

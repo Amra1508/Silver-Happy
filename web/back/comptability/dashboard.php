@@ -39,14 +39,14 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 <p class="text-xs text-blue-300 uppercase tracking-widest mt-1">Espace Comptable</p>
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <a href="/back/comptability/dashboard.php" class="block px-4 py-3 hover:bg-white/10 rounded-xl font-bold flex items-center gap-3">
-                    <img src="/back/icons/chiffres.svg" alt="dashboard" class="w-5 h-5">
-                    <span>Récapitulatif des chiffres</span>
-                </a>
-
                 <a href="/back/comptability/comptability.php" class="block px-4 py-3 hover:bg-white/10 rounded-xl font-bold flex items-center gap-3">
                     <img src="/back/icons/factures.svg" alt="dashboard" class="w-5 h-5">
                     <span>Gestion des Factures</span>
+                </a>
+
+                <a href="/back/comptability/dashboard.php" class="block px-4 py-3 hover:bg-white/10 rounded-xl font-bold flex items-center gap-3">
+                    <img src="/back/icons/chiffres.svg" alt="dashboard" class="w-5 h-5">
+                    <span>Récapitulatif des chiffres</span>
                 </a>
 
                 <button onclick="logoutAccountant()" class="w-full text-left block px-4 py-3 text-red-200 hover:text-white hover:bg-red-500/20 rounded-xl transition-colors font-bold flex items-center gap-3 mt-10">
@@ -251,6 +251,19 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 });
             } catch (err) {
                 console.error("Erreur détails:", err);
+            }
+        }
+
+        async function logoutAccountant() {
+            try {
+                await fetch(`${window.API_BASE_URL}/auth/logout`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                window.location.href = '/front/index.php';
+            } catch (error) {
+                console.error(error);
+                window.location.href = '/front/index.php';
             }
         }
 

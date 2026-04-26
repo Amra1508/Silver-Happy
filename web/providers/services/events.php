@@ -43,7 +43,7 @@
 
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                         <div>
-                            <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Évènements & Services</h1>
+                            <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mes Évènements</h1>
                             <p class="text-gray-500 mt-1">Gérez vos prestations, ateliers et interventions.</p>
                         </div>
                         <button onclick="openCreateModal()" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-6 rounded-xl shadow-md transition-all flex items-center gap-2">
@@ -52,8 +52,7 @@
                     </div>
 
                     <div class="flex gap-6 border-b border-gray-200 mt-6">
-                        <button id="tab-upcoming" onclick="switchTab('upcoming')" class="pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors">À venir</button>
-                        <button id="tab-history" onclick="switchTab('history')" class="pb-3 px-2 text-gray-500 font-semibold hover:text-[#1C5B8F] border-b-2 border-transparent transition-colors">Historique</button>
+                        <button class="pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors">À venir</button>
                     </div>
 
                     <div id="page-alert" class="hidden p-4 rounded-xl font-semibold text-sm text-center"></div>
@@ -231,61 +230,31 @@
     <script>
         let currentProviderId = null;
         let allEvents = [];
-        let currentTab = 'upcoming';
         const API_URL = window.API_BASE_URL || 'http://localhost:8082';
 
-        function switchTab(tab) {
-            currentTab = tab;
-            
-            const tabUpcoming = document.getElementById('tab-upcoming');
-            const tabHistory = document.getElementById('tab-history');
-
-            if (tab === 'upcoming') {
-                tabUpcoming.className = "pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors";
-                tabHistory.className = "pb-3 px-2 text-gray-500 font-semibold hover:text-[#1C5B8F] border-b-2 border-transparent transition-colors";
-            } else {
-                tabHistory.className = "pb-3 px-2 text-[#1C5B8F] font-bold border-b-2 border-[#1C5B8F] transition-colors";
-                tabUpcoming.className = "pb-3 px-2 text-gray-500 font-semibold hover:text-[#1C5B8F] border-b-2 border-transparent transition-colors";
-            }
-
-            loadEvents(currentProviderId, currentTab);
-        }
-
-        async function loadEvents(providerId, tab = 'upcoming') {
+        async function loadUpcomingEvents(providerId) {
             const container = document.getElementById('events-container');
-            container.innerHTML = '<div class="col-span-full py-10 text-center text-gray-500 flex flex-col items-center">Chargement...</div>';
-
             try {
-                const res = await fetch(`${API_URL}/prestataire/${providerId}/events?tab=${tab}`, {
-                    method: 'GET'
-                });
-                
+                const res = await fetch(`${API_URL}/prestataire/${providerId}/events`);
                 if (res.ok) {
                     allEvents = await res.json();
-                    renderEvents(); 
-                } else {
-                    showAlert("Erreur lors de la récupération.", "error");
+                    renderEvents();
                 }
             } catch (err) {
                 console.error("Erreur :", err);
-                showAlert("Impossible de charger les évènements.", "error");
             }
         }
-        
+
         function renderEvents() {
             const container = document.getElementById('events-container');
             container.innerHTML = '';
-            
-            if (allEvents.length === 0) {
-                const emptyMsg = currentTab === 'upcoming' 
-                    ? "Vous n'avez pas encore créé d'évènement à venir."
-                    : "Votre historique est vide, vous n'avez pas d'évènements terminés.";
 
+            if (allEvents.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full bg-white rounded-3xl p-10 text-center border border-gray-100 shadow-sm mt-6">
                         <h3 class="text-xl font-bold text-gray-800 mb-2">Aucun évènement</h3>
-                        <p class="text-gray-500 mb-6">${emptyMsg}</p>
-                        ${currentTab === 'upcoming' ? `<button onclick="openCreateModal()" class="text-[#1C5B8F] font-bold hover:underline">Créer mon premier évènement</button>` : ''}
+                        <p class="text-gray-500 mb-6">Vous n'avez pas encore créé d'évènement à venir.</p>
+                        <button onclick="openCreateModal()" class="text-[#1C5B8F] font-bold hover:underline">Créer mon premier évènement</button>
                     </div>
                 `;
                 return;
@@ -301,7 +270,7 @@
                 const badgePrice = evt.prix > 0 ? `${evt.prix} €` : 'Gratuit';
                 const imgSrc = evt.image ? `${API_URL}${evt.image}` : null;
                 const boostDate = evt.date_fin_boost || evt.DateFinBoost;
-                
+
                 let isBoosted = false;
                 if (boostDate && boostDate.trim() !== '') {
                     isBoosted = new Date(boostDate.replace(' ', 'T')) > currentDate;
@@ -309,24 +278,18 @@
 
                 let boostBadge = isBoosted ? `<div class="absolute top-3 right-3 bg-[#E1AB2B] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 border border-yellow-300">⭐ Boosté</div>` : '';
 
-                let boostActionBtn = '';
-                if (currentTab === 'upcoming') {
-                    if (isBoosted) {
-                        boostActionBtn = `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate.replace(' ', 'T')).toLocaleDateString('fr-FR')}</span>`;
-                    } else {
-                        boostActionBtn = `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
-                    }
-                } else {
-                     boostActionBtn = `<span class="text-xs text-gray-400 font-bold px-2 flex items-center gap-1">Terminé</span>`;
-                }
+                let boostActionBtn = isBoosted ?
+                    `<span class="text-xs text-[#E1AB2B] font-bold px-2 flex items-center gap-1">⭐ Jusqu'au ${new Date(boostDate.replace(' ', 'T')).toLocaleDateString('fr-FR')}</span>` :
+                    `<button onclick="acheterBoost('evenement', ${evtId})" class="flex items-center gap-1 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 px-3 py-1 rounded-full text-xs font-bold transition-colors border border-yellow-200">⭐ Booster</button>`;
+
 
                 let imageBlock = imgSrc ?
                     `<div class="relative"><img src="${imgSrc}" alt="${evt.nom}" class="w-full h-40 object-cover cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>` :
-                    `<div class="relative h-40 w-full bg-gradient-to-r ${currentTab === 'history' ? 'from-gray-500 to-gray-400' : 'from-[#1C5B8F] to-blue-600'} cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
+                    `<div class="relative h-40 w-full bg-gradient-to-r from-[#1C5B8F] to-blue-600 cursor-pointer" onclick="openDetailsModal(${evtId})">${boostBadge}</div>`;
 
                 card.innerHTML = `
                     ${imageBlock}
-                    <div class="p-6 flex-1 flex flex-col ${currentTab === 'history' ? 'opacity-80' : ''}">
+                    <div class="p-6 flex-1 flex flex-col">
                         <div class="flex justify-between items-start mb-3">
                             <span class="inline-block px-3 py-1 bg-[#1C5B8F] text-white text-xs font-bold rounded-full shadow-sm">${badgePrice}</span>
                             <span class="text-xs font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">${evt.nombre_place} places</span>
@@ -336,15 +299,15 @@
                         <p class="text-sm text-gray-500 mb-6 flex-1 line-clamp-2">${evt.description}</p>
                         
                         <div class="space-y-2 mt-auto text-sm text-gray-600">
-                            <div class="flex items-start"><span class="truncate">📍 ${evt.lieu}</span></div>
-                            <div class="flex items-center"><span class="truncate">📅 ${formatDisplayDate(evt.date_debut)}</span></div>
+                            <div class="flex items-start"><span class="truncate">${evt.lieu}</span></div>
+                            <div class="flex items-center"><span class="truncate">${formatDisplayDate(evt.date_debut)}</span></div>
                         </div>
 
                         <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center gap-2">
                             <div class="flex gap-2 flex-wrap justify-end items-center w-full">
                                 ${boostActionBtn}
-                                <button onclick="openParticipantsModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">👥 Inscrits</button>
-                                ${currentTab === 'upcoming' ? `<button onclick="openEditModal(${evtId})" class="text-blue-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>` : ''}
+                                <button onclick="openParticipantsModal(${evtId})" class="text-[#1C5B8F] font-bold text-xs hover:underline flex items-center gap-1 px-1">Inscrits</button>
+                                <button onclick="openEditModal(${evtId})" class="text-blue-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Modifier</button>
                                 <button onclick="openDeleteModal(${evtId})" class="text-red-500 font-bold text-xs hover:underline flex items-center gap-1 px-1">Supprimer</button>
                             </div>
                         </div>
@@ -366,8 +329,8 @@
                         document.getElementById('main-content-valide').classList.remove('hidden');
                         currentProviderId = data.id_prestataire || data.id || data.ID;
                         window.currentUserId = currentProviderId;
-                        
-                        loadEvents(currentProviderId, currentTab);
+
+                        loadUpcomingEvents(currentProviderId);
                     }
                 } else {
                     window.location.href = "/providers/account/signin.php";
@@ -390,7 +353,9 @@
             try {
                 const response = await fetch(`${API_URL}/prestataire/paiement-boost`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(data)
                 });
 
@@ -411,8 +376,11 @@
             const d = new Date(dateStr.replace(' ', 'T'));
             if (isNaN(d)) return "-";
             return d.toLocaleString('fr-FR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
             });
         }
 
@@ -475,7 +443,7 @@
                 if (res.ok) {
                     toggleModal('create-modal');
                     showAlert("Évènement créé avec succès !", "success");
-                    loadEvents(currentProviderId);
+                    loadUpcomingEvents(currentProviderId);
                 } else {
                     const errorMsg = await res.text();
                     showAlert("Erreur : " + errorMsg, "error");
@@ -504,7 +472,7 @@
             if (evt.image) {
                 header.style.backgroundImage = `url('${API_URL}${evt.image}')`;
             } else {
-                header.style.backgroundImage = currentTab === 'history' ? `linear-gradient(to right, #6B7280, #9CA3AF)` : `linear-gradient(to right, #1C5B8F, #2563EB)`;
+                header.style.backgroundImage = `linear-gradient(to right, #1C5B8F, #2563EB)`;
             }
 
             toggleModal('details-modal');
@@ -532,7 +500,7 @@
 
                             const li = document.createElement('li');
                             li.className = 'flex justify-between items-center p-4 bg-white shadow-sm rounded-xl border border-gray-100';
-                            
+
                             li.innerHTML = `
                                 <div class="flex items-center gap-3">
                                     <div class="bg-blue-100 text-[#1C5B8F] w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0">
@@ -543,7 +511,7 @@
                                         <a href="mailto:${p.email}" class="text-sm text-[#1C5B8F] hover:underline truncate block">${p.email}</a>
                                     </div>
                                 </div>
-                                <a href="/providers/communication/messaging.php/${p.prenom}/${p.nom}/${seniorId}" class="flex items-center gap-2 bg-[#1C5B8F] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors shadow-sm shrink-0">
+                                <a href="/providers/communication/messaging.php/${p.prenom}/${p.nom}/${seniorId}/senior" class="flex items-center gap-2 bg-[#1C5B8F] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-800 transition-colors shadow-sm shrink-0">
                                     Message
                                 </a>
                             `;
@@ -606,7 +574,7 @@
                 if (res.ok) {
                     toggleModal('edit-modal');
                     showAlert("Modifications enregistrées avec succès !", "success");
-                    loadEvents(currentProviderId);
+                    loadUpcomingEvents(currentProviderId);
                 } else {
                     showAlert("Erreur lors de la mise à jour.", "error");
                 }
@@ -638,7 +606,7 @@
                 if (res.ok) {
                     toggleModal('delete-modal');
                     showAlert("Évènement supprimé avec succès.", "success");
-                    loadEvents(currentProviderId);
+                    loadUpcomingEvents(currentProviderId);
                 } else {
                     showAlert("Erreur lors de la suppression.", "error");
                 }

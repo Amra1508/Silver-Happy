@@ -145,7 +145,8 @@ func main() {
 	http.HandleFunc("/prestataire/stripe-connect", providers.CreateStripeAccountLink)
 
 	http.HandleFunc("/prestataire/evenement/create", providers.Create_Prestataire_Evenement)
-	http.HandleFunc("/prestataire/{id}/events", providers.Get_Prestataire_Events)
+	http.HandleFunc("/prestataire/{id}/events", providers.Get_Events_A_Venir)
+	http.HandleFunc("/prestataire/{id}/past-events", providers.Get_Historique_Events)
 	http.HandleFunc("/prestataire/evenement/{id}/participants", providers.Get_Event_Participants)
 
 	http.HandleFunc("/prestataire/planning", providers.Read_Provider_Planning)
@@ -167,6 +168,7 @@ func main() {
 	http.HandleFunc("/prestataire/{id}/read-avis", communication.Read_Prestataire_Avis)
 	http.HandleFunc("/prestataire/{id}/read-one", communication.Read_One_Prestataire_Avis)
 	http.HandleFunc("/prestataire/{id}/note-moyenne", users.Get_Note_Moyenne)
+	http.HandleFunc("/prestataire/{id}/count", providers.Count_Message)
 	
 	http.HandleFunc("/message/prestataire/get/{id1}/with/{id2}", providers.Get_Message)
 	http.HandleFunc("/message/prestataire/add", providers.Add_Message)
@@ -176,6 +178,7 @@ func main() {
 	http.HandleFunc("/message/prestataire/reject/{id}", providers.Reject_Offer)
 
 	http.HandleFunc("/prestataire/services/{id}/get", providers.Get_Services_Provider)
+	http.HandleFunc("/prestataire/{id}/past-services", providers.Get_Historique_Services)
 	http.HandleFunc("/prestataire/services/{id}/create", providers.Create_Service_Provider)
 	http.HandleFunc("/prestataire/services/{id}/{id_service}/delete", providers.Delete_Service_Provider)
 	http.HandleFunc("/prestataire/services/{id}/{id_service}/update", providers.Update_Service_Provider)

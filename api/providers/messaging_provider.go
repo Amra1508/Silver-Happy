@@ -224,3 +224,38 @@ func Reject_Offer(response http.ResponseWriter, request *http.Request) {
     response.WriteHeader(http.StatusOK)
     json.NewEncoder(response).Encode(map[string]string{"message": "Offre refusée."})
 }
+
+func Count_Message(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+    prestaID := request.PathValue("id")
+
+    var countPresta, countAdmin, count int
+
+	queryPresta := `SELECT COUNT(id_message)
+              FROM MESSAGE_PRESTATAIRE 
+              WHERE id_prestataire = ? AND expediteur = 0 AND est_lu = 0`
+
+    errPresta := db.DB.QueryRow(queryPresta, prestaID).Scan(&countPresta)
+    if errPresta != nil {
+        http.Error(response, "Erreur SQL", http.StatusInternalServerError)
+        return
+    }
+
+    queryAdmin := `SELECT COUNT(id_message)
+              FROM MESSAGE_ADMIN 
+              WHERE id_utilisateur2 = ? AND est_lu = 0`
+
+    err := db.DB.QueryRow(queryAdmin, prestaID).Scan(&countAdmin)
+    if err != nil {
+        http.Error(response, "Erreur SQL", http.StatusInternalServerError)
+        return
+    }
+
+    count = countPresta + countAdmin;
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]int{"count": count})
+}

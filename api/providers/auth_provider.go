@@ -88,13 +88,13 @@ func RegisterPrestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	queryUser := `INSERT INTO PRESTATAIRE (siret, prenom, nom, email, mdp, date_naissance, num_telephone, id_categorie, tarifs, date_creation) 
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`
+	queryUser := `INSERT INTO PRESTATAIRE (siret, prenom, nom, email, mdp, date_naissance, num_telephone, id_categorie, date_creation) 
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`
 
 	res, err := db.DB.Exec(queryUser,
 		provider.Siret, provider.Prenom, provider.Nom, provider.Email,
 		string(hashedPassword), provider.DateNaissance, provider.NumTelephone,
-		provider.IdCategorie, provider.Tarifs,
+		provider.IdCategorie,
 	)
 
 	if err != nil {
@@ -209,7 +209,7 @@ func MePrestataire(response http.ResponseWriter, request *http.Request) {
 	query := `
 		SELECT p.id_prestataire, IFNULL(p.siret,''), IFNULL(p.nom,''), IFNULL(p.prenom,''), p.email, 
 		       IFNULL(p.num_telephone,''), IFNULL(p.date_naissance,''), p.status, IFNULL(p.motif_refus,''),
-		       IFNULL(p.tarifs,0), IFNULL(p.id_categorie,0), IFNULL(id_abonnement, 0), IFNULL(date_fin_boost, ''), IFNULL(c.nom,'') as categorie_nom, IFNULL(stripe_account_id, '')
+		       IFNULL(p.id_categorie,0), IFNULL(id_abonnement, 0), IFNULL(date_fin_boost, ''), IFNULL(c.nom,'') as categorie_nom, IFNULL(stripe_account_id, '')
 		FROM PRESTATAIRE p
 		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
 		WHERE p.id_prestataire = ?
@@ -219,7 +219,7 @@ func MePrestataire(response http.ResponseWriter, request *http.Request) {
 	errDB := db.DB.QueryRow(query, claims.UserID).Scan(
 		&provider.ID, &provider.Siret, &provider.Nom, &provider.Prenom, &provider.Email,
 		&provider.NumTelephone, &provider.DateNaissance, &provider.Status, &provider.MotifRefus,
-		&provider.Tarifs, &provider.IdCategorie, &provider.IdAbonnement, &provider.DateFinBoost, &provider.CategorieNom, &provider.IdStripeAccount,
+		&provider.IdCategorie, &provider.IdAbonnement, &provider.DateFinBoost, &provider.CategorieNom, &provider.IdStripeAccount,
 	)
 
 	if errDB != nil {
@@ -332,14 +332,14 @@ func UpdatePrestataire(response http.ResponseWriter, request *http.Request) {
 		}
 
 		query = `UPDATE PRESTATAIRE 
-                 SET prenom = ?, nom = ?, email = ?, num_telephone = ?, siret = ?, tarifs = ?, id_categorie = ?, mdp = ? 
+                 SET prenom = ?, nom = ?, email = ?, num_telephone = ?, siret = ?, id_categorie = ?, mdp = ? 
                  WHERE id_prestataire = ?`
-		args = []interface{}{p.Prenom, p.Nom, p.Email, p.NumTelephone, p.Siret, p.Tarifs, p.IdCategorie, string(hashedPassword), providerID}
+		args = []interface{}{p.Prenom, p.Nom, p.Email, p.NumTelephone, p.Siret, p.IdCategorie, string(hashedPassword), providerID}
 	} else {
 		query = `UPDATE PRESTATAIRE 
-                 SET prenom = ?, nom = ?, email = ?, num_telephone = ?, siret = ?, tarifs = ?, id_categorie = ? 
+                 SET prenom = ?, nom = ?, email = ?, num_telephone = ?, siret = ?, id_categorie = ? 
                  WHERE id_prestataire = ?`
-		args = []interface{}{p.Prenom, p.Nom, p.Email, p.NumTelephone, p.Siret, p.Tarifs, p.IdCategorie, providerID}
+		args = []interface{}{p.Prenom, p.Nom, p.Email, p.NumTelephone, p.Siret, p.IdCategorie, providerID}
 	}
 
 	_, err = db.DB.Exec(query, args...)

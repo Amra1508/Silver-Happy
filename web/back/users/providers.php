@@ -104,7 +104,6 @@
                                 <h4 class="font-bold text-[#1C5B8F] text-base mb-2 border-b pb-1">Activité</h4>
                                 <p><span class="text-gray-500">SIRET :</span> <strong id="vp-siret"></strong></p>
                                 <p><span class="text-gray-500">Prestation :</span> <strong id="vp-type"></strong></p>
-                                <p><span class="text-gray-500">Tarifs :</span> <strong id="vp-tarifs"></strong> €</p>
                                 <p><span class="text-gray-500">Statut actuel :</span> <span id="vp-validation"></span></p>
                             </div>
                         </div>
@@ -164,7 +163,7 @@
                             </div>
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="add-siret" class="add-input"></div>
-                                
+
                                 <div>
                                     <label class="text-sm text-gray-500">Catégorie prestation *</label>
                                     <select id="add-type" class="add-input bg-white" required>
@@ -172,7 +171,6 @@
                                     </select>
                                 </div>
 
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="0" step="0.01" id="add-tarifs" class="add-input"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="add-date" class="add-input" required></div>
@@ -220,7 +218,7 @@
                             </div>
                             <div class="grid grid-cols-3 gap-4">
                                 <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="edit-siret" class="edit-input"></div>
-                                
+
                                 <div>
                                     <label class="text-sm text-gray-500">Catégorie prestation *</label>
                                     <select id="edit-type" class="edit-input bg-white" required>
@@ -228,7 +226,6 @@
                                     </select>
                                 </div>
 
-                                <div><label class="text-sm text-gray-500">Tarifs (€)</label><input type="number" min="0" step="0.01" id="edit-tarifs" class="edit-input"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="text-sm text-gray-500">Date de naissance *</label><input type="date" id="edit-date" class="edit-input" required></div>
@@ -281,7 +278,7 @@
 
     <script>
         const API_BASE = `${window.API_BASE_URL}/prestataires`;
-        const API_CATEGORIES = `${window.API_BASE_URL}/categorie/read`; 
+        const API_CATEGORIES = `${window.API_BASE_URL}/categorie/read`;
         const messageBox = document.getElementById('api-message');
 
         let allProviders = [];
@@ -317,11 +314,11 @@
                 const res = await fetch(API_CATEGORIES);
                 if (res.ok) {
                     const jsonResponse = await res.json();
-                    
+
                     const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
 
                     let optionsHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
-                    
+
                     if (categories && categories.length > 0) {
                         categories.forEach(cat => {
                             const catId = cat.id_categorie || cat.id || cat.ID;
@@ -381,8 +378,7 @@
                     }
 
                     let phone = provider.num_telephone ? provider.num_telephone : "-";
-                    let price = provider.tarifs ? provider.tarifs : 0;
-                    
+
                     let categoryName = provider.categorie ? provider.categorie : "Non définie";
 
                     let detailsButton = "<button onclick='openDetailsModal(" + provider.id + ")' class='add-button text-sm'>Voir détails</button>";
@@ -397,7 +393,6 @@
                             <td class="p-4">${phone}</td>
                             <td class="p-4">
                                 <span class="font-semibold">${categoryName}</span><br>
-                                <span class="text-sm text-gray-500">Tarifs: ${price} €</span>
                             </td>
                             <td class="p-4">${badge}</td>
                             <td class="p-4 text-center">${detailsButton}</td>
@@ -460,10 +455,8 @@
             document.getElementById('vp-date').textContent = provider.date_naissance ? provider.date_naissance.substring(0, 10) : "-";
             document.getElementById('vp-date-creation').textContent = provider.date_creation ? provider.date_creation : "-";
             document.getElementById('vp-siret').textContent = provider.siret;
-            
+
             document.getElementById('vp-type').textContent = provider.categorie || "Non définie";
-            
-            document.getElementById('vp-tarifs').textContent = provider.tarifs;
 
             if (provider.status === 'validé') {
                 document.getElementById('vp-validation').innerHTML = '<span class="font-bold">Validé</span>';
@@ -489,7 +482,7 @@
                         let documentItem = documentList[i];
                         documentsArea.innerHTML += `
                             <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                                <a href=`${window.API_BASE_URL}/${documentItem.lien}` target="_blank" class="text-[#1C5B8F] font-semibold text-sm hover:underline truncate">
+                                <a href="${window.API_BASE_URL}/${documentItem.lien}" target="_blank" class="text-[#1C5B8F] font-semibold text-sm hover:underline truncate">
                                     📄 ${documentItem.type}
                                 </a>
                                 <button type="button" onclick="prepareDeleteDoc(${documentItem.id_document})" class="text-red-400 font-bold hover:text-red-600 px-2 text-xl transition">
@@ -580,7 +573,6 @@
                 date_naissance: currentProvider.date_naissance,
                 siret: currentProvider.siret,
                 id_categorie: currentProvider.id_categorie,
-                tarifs: currentProvider.tarifs,
                 status: newStatus,
                 motif_refus: currentMotif
             };
@@ -619,10 +611,9 @@
             document.getElementById('edit-email').value = provider.email;
             document.getElementById('edit-tel').value = provider.num_telephone;
             document.getElementById('edit-siret').value = provider.siret;
-            
-            document.getElementById('edit-type').value = provider.id_categorie; 
-            
-            document.getElementById('edit-tarifs').value = provider.tarifs;
+
+            document.getElementById('edit-type').value = provider.id_categorie;
+
             document.getElementById('edit-motif').value = provider.motif_refus;
 
             if (provider.date_naissance) {
@@ -633,16 +624,16 @@
 
             const statusMenu = document.getElementById('edit-status');
             if (provider.status === "refusé") {
-                statusMenu.innerHTML = `
-                    <option value="refusé">Refusé</option>
-                    <option value="en attente">Remettre en attente</option>
-                `;
+                statusMenu.innerHTML = ` <
+                                option value = "refusé" > Refusé < /option> <
+                            option value = "en attente" > Remettre en attente < /option>
+                            `;
             } else {
-                statusMenu.innerHTML = `
-                    <option value="en attente">En attente</option>
-                    <option value="validé">Validé</option>
-                    <option value="refusé">Refusé</option>
-                `;
+                statusMenu.innerHTML = ` <
+                            option value = "en attente" > En attente < /option> <
+                            option value = "validé" > Validé < /option> <
+                            option value = "refusé" > Refusé < /option>
+                            `;
             }
 
             statusMenu.value = provider.status;
@@ -666,7 +657,6 @@
                 date_naissance: document.getElementById('add-date').value,
                 siret: document.getElementById('add-siret').value,
                 id_categorie: parseInt(document.getElementById('add-type').value),
-                tarifs: parseFloat(document.getElementById('add-tarifs').value) || 0,
                 status: document.getElementById('add-status').value,
                 motif_refus: ""
             };
@@ -717,7 +707,6 @@
                 date_naissance: document.getElementById('edit-date').value,
                 siret: document.getElementById('edit-siret').value,
                 id_categorie: parseInt(document.getElementById('edit-type').value),
-                tarifs: parseFloat(document.getElementById('edit-tarifs').value) || 0,
                 status: document.getElementById('edit-status').value,
                 motif_refus: document.getElementById('edit-motif').value
             };
@@ -810,4 +799,5 @@
     </script>
 
 </body>
+
 </html>

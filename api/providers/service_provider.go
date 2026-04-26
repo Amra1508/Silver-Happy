@@ -56,6 +56,56 @@ func Get_Services_Provider(response http.ResponseWriter, request *http.Request) 
 	json.NewEncoder(response).Encode(services)
 }
 
+func Get_Historique_Services(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	providerID := request.PathValue("id")
+
+    sqlQuery := `
+			SELECT r.id_reservation, r.id_utilisateur, r.prix_final, r.date_heure, s.nom, s.description, u.prenom, u.nom
+			FROM RESERVATION_SERVICE r
+			JOIN SERVICE s ON r.id_service = s.id_service
+			JOIN UTILISATEUR u ON r.id_utilisateur = u.id_utilisateur
+			WHERE s.id_prestataire = ? AND r.date_heure < NOW()
+			ORDER BY r.date_heure DESC
+		`
+
+	rows, err := db.DB.Query(sqlQuery, providerID)
+    if err != nil {
+        http.Error(response, "Erreur SQL", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    history := []map[string]interface{}{}
+    for rows.Next() {
+        var idRes, idUser int
+        var prix float64
+        var dateHeure, sNom, sDescription, uPrenom, uNom string
+        
+        err := rows.Scan(&idRes, &idUser, &prix, &dateHeure, &sNom, &sDescription, &uPrenom, &uNom)
+        if err != nil {
+            continue
+        }
+
+        history = append(history, map[string]interface{}{
+            "id_reservation": idRes,
+            "id_utilisateur": idUser,
+            "prix_final":     prix,
+            "date_heure":     dateHeure,
+            "service_nom":    sNom,
+			"service_description":    sDescription,
+            "client_prenom":  uPrenom,
+            "client_nom":     uNom,
+        })
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(history)
+}
+
 func Update_Service_Provider(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "PUT") {
 		return

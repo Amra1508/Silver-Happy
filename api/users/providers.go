@@ -72,7 +72,6 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
             COALESCE(p.status, 'en attente'), 
             COALESCE(p.motif_refus, ''), 
             COALESCE(DATE_FORMAT(p.date_creation, '%d/%m/%Y %H:%i:%s'), ''), 
-            COALESCE(p.tarifs, 0.0), 
             COALESCE(p.id_abonnement, 0), 
             COALESCE(p.id_categorie, 0), 
             COALESCE(c.nom, '') 
@@ -104,7 +103,6 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
             &p.Status, 
             &p.MotifRefus, 
             &p.DateCreation, 
-            &p.Tarifs, 
             &p.IdAbonnement, 
             &p.IdCategorie, 
             &p.CategorieNom,
@@ -383,8 +381,8 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, tarifs, id_categorie, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
-		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.IdCategorie, string(hashMdp))
+	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, id_categorie, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
+		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.IdCategorie, string(hashMdp))
 
 	if err != nil {
 		http.Error(response, "Erreur création prestataire", http.StatusInternalServerError)
@@ -418,8 +416,8 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	db.DB.Exec("UPDATE PRESTATAIRE SET siret=?, nom=?, prenom=?, email=?, num_telephone=?, date_naissance=NULLIF(?, ''), status=?, motif_refus=?, tarifs=?, id_categorie=? WHERE id_prestataire=?",
-		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.Tarifs, p.IdCategorie, id)
+	db.DB.Exec("UPDATE PRESTATAIRE SET siret=?, nom=?, prenom=?, email=?, num_telephone=?, date_naissance=NULLIF(?, ''), status=?, motif_refus=?, id_categorie=? WHERE id_prestataire=?",
+		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.IdCategorie, id)
 
 	json.NewEncoder(response).Encode("OK")
 }
@@ -542,11 +540,11 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
 
     err := db.DB.QueryRow(`
         SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
-               IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), IFNULL(p.tarifs, 0), p.date_fin_boost
+               IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), p.date_fin_boost
         FROM PRESTATAIRE p
         LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
         WHERE p.id_prestataire = ? AND p.status = 'validé'
-    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &prestataire.Tarifs, &dateFinBoostPresta)
+    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &dateFinBoostPresta)
 
     if err != nil {
         http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)

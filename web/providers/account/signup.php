@@ -1,8 +1,9 @@
-<?php 
-require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php'); 
+<?php
+require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,7 +57,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             <div id="response_message" class="hidden max-w-4xl mx-auto mb-6 p-4 rounded-lg border"></div>
 
             <div class="border border-[#1C5B8F] bg-white rounded-[2.5rem] py-10 px-10 grid gap-x-6 gap-y-8 sm:grid-cols-6 max-w-4xl mx-auto shadow-md">
-                
+
                 <div class="sm:col-span-3">
                     <label class="text-sm text-gray-600 font-semibold">Prénom</label>
                     <div class="mt-2">
@@ -115,16 +116,9 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                     </div>
                 </div>
 
-                <div class="sm:col-span-3">
-                    <label class="text-sm text-gray-600 font-semibold">Tarif horaire/forfait (€)</label>
-                    <div class="mt-2">
-                        <input id="tarif" type="number" step="0.01" min="0" placeholder="Ex: 25.50" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-[#1C5B8F]" required />
-                    </div>
-                </div>
-
                 <div class="sm:col-span-6 mt-4 border-t border-gray-200 pt-6">
                     <h3 class="text-lg font-semibold text-[#1C5B8F] mb-4">Documents justificatifs</h3>
-                    
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <label class="text-sm text-gray-600 font-semibold">Pièce d'identité <span class="text-red-500">*</span></label>
@@ -159,7 +153,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 
                 <button id="btn_register" class="sm:col-span-6 mx-auto px-14 py-3 bg-[#1C5B8F] text-white font-semibold rounded-md hover:bg-blue-800 transition-colors shadow-md">Envoyer ma demande</button>
             </div>
-            
+
             <div class="mt-8 text-center">
                 <span class="text-gray-600">Vous avez déjà un compte validé ?</span>
                 <a href="signin.php" class="text-[#E1AB2B] font-semibold hover:underline ml-1 transition-all">
@@ -172,42 +166,42 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
     </main>
 
     <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-    const selectCategorie = document.getElementById('id_categorie');
-    try {
-        const res = await fetch(`${window.API_BASE_URL}/categorie/read`);
-        if (res.ok) {
-            const jsonResponse = await res.json();
-            const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
-            selectCategorie.innerHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
-            if (categories.length > 0) {
-                categories.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat.id_categorie || cat.id || cat.ID; 
-                    option.textContent = cat.nom || cat.Nom;
-                    selectCategorie.appendChild(option);
-                });
-            } else {
-                selectCategorie.innerHTML = '<option value="" disabled>Aucune catégorie disponible</option>';
+        document.addEventListener('DOMContentLoaded', async () => {
+            const selectCategorie = document.getElementById('id_categorie');
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/categorie/read`);
+                if (res.ok) {
+                    const jsonResponse = await res.json();
+                    const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
+                    selectCategorie.innerHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
+                    if (categories.length > 0) {
+                        categories.forEach(cat => {
+                            const option = document.createElement('option');
+                            option.value = cat.id_categorie || cat.id || cat.ID;
+                            option.textContent = cat.nom || cat.Nom;
+                            selectCategorie.appendChild(option);
+                        });
+                    } else {
+                        selectCategorie.innerHTML = '<option value="" disabled>Aucune catégorie disponible</option>';
+                    }
+                }
+            } catch (err) {
+                selectCategorie.innerHTML = '<option value="" disabled>Serveur injoignable</option>';
             }
-        }
-    } catch (err) {
-        selectCategorie.innerHTML = '<option value="" disabled>Serveur injoignable</option>';
-    }
 
-    const limitDate = new Date();
-    limitDate.setFullYear(limitDate.getFullYear() - 18);
-    const strMax = limitDate.toISOString().split('T')[0];
-    document.getElementById('birth_date').max = strMax;
+            const limitDate = new Date();
+            limitDate.setFullYear(limitDate.getFullYear() - 18);
+            const strMax = limitDate.toISOString().split('T')[0];
+            document.getElementById('birth_date').max = strMax;
 
-    const btnAddDoc = document.getElementById('btn_add_doc');
-    const extraDocsContainer = document.getElementById('extra_docs_container');
+            const btnAddDoc = document.getElementById('btn_add_doc');
+            const extraDocsContainer = document.getElementById('extra_docs_container');
 
-    btnAddDoc.addEventListener('click', () => {
-        const div = document.createElement('div');
-        div.className = 'grid grid-cols-1 sm:grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200';
-        
-        div.innerHTML = `
+            btnAddDoc.addEventListener('click', () => {
+                const div = document.createElement('div');
+                div.className = 'grid grid-cols-1 sm:grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200';
+
+                div.innerHTML = `
             <div class="sm:col-span-5">
                 <label class="text-sm text-gray-600 font-semibold">Nom du document</label>
                 <input type="text" class="extra-doc-name w-full border border-gray-300 rounded-md p-2 mt-2 focus:outline-none focus:border-[#1C5B8F]" placeholder="Ex: Attestation RC Pro" required />
@@ -221,124 +215,132 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 </button>
             </div>
         `;
-        extraDocsContainer.appendChild(div);
+                extraDocsContainer.appendChild(div);
 
-        div.querySelector('.btn-remove-doc').addEventListener('click', () => {
-            div.remove();
-        });
-    });
-
-    const btnSubmit = document.getElementById('btn_register');
-    
-    btnSubmit.addEventListener('click', async (e) => {
-        e.preventDefault();
-
-        const messageBox = document.getElementById('response_message');
-        const showError = (msg) => {
-            messageBox.textContent = msg;
-            messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
-            messageBox.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        const inputBirth = document.getElementById('birth_date').value;
-        if (inputBirth > strMax) {
-            return showError("Désolé, vous devez avoir au moins 18 ans pour devenir prestataire.");
-        }
-
-        const data = {
-            prenom: document.getElementById('first_name').value,
-            nom: document.getElementById('last_name').value,
-            date_naissance: inputBirth,
-            num_telephone: document.getElementById('phone_number').value,
-            email: document.getElementById('signup_email').value,
-            mdp: document.getElementById('signup_password').value,
-            siret: document.getElementById('siret').value,
-            id_categorie: parseInt(document.getElementById('id_categorie').value),
-            tarifs: parseFloat(document.getElementById('tarif').value),
-            "cf-turnstile-response": document.querySelector('[name="cf-turnstile-response"]')?.value
-        };
-
-        if (!data.prenom || !data.nom || !data.date_naissance || !data.email || !data.mdp || !data.siret || !data.id_categorie || isNaN(data.tarifs)) {
-            return showError("Veuillez remplir tous les champs obligatoires du formulaire.");
-        }
-        if (data.siret.length !== 14 || isNaN(data.siret)) {
-            return showError("Le numéro SIRET doit contenir exactement 14 chiffres.");
-        }
-        if (!data["cf-turnstile-response"]) {
-            return showError("Veuillez valider la vérification de sécurité (Captcha).");
-        }
-
-        const fileIdentite = document.getElementById('doc_identite').files[0];
-        const fileKbis = document.getElementById('doc_kbis').files[0];
-        const casireJudiciaire = document.getElementById('casier_judiciaire').files[0];
-        
-
-        if (!fileIdentite || !fileKbis || !casireJudiciaire) {
-            return showError("Vous devez obligatoirement fournir tous les documents attendus.");
-        }
-
-        const extraNames = document.querySelectorAll('.extra-doc-name');
-        const extraFiles = document.querySelectorAll('.extra-doc-file');
-        
-        for (let i = 0; i < extraNames.length; i++) {
-            if (!extraNames[i].value.trim() || !extraFiles[i].files[0]) {
-                return showError("Veuillez renseigner un nom et sélectionner un fichier pour tous vos documents supplémentaires.");
-            }
-        }
-
-        try {
-            const response = await fetch(`${window.API_BASE_URL}/auth/register-provider`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                div.querySelector('.btn-remove-doc').addEventListener('click', () => {
+                    div.remove();
+                });
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                return showError("Erreur : " + errorText);
-            }
+            const btnSubmit = document.getElementById('btn_register');
 
-            const result = await response.json();
-            const newProviderId = result.ID || result.id || result.id_prestataire; 
+            btnSubmit.addEventListener('click', async (e) => {
+                e.preventDefault();
 
-            const uploadPromises = [];
+                const messageBox = document.getElementById('response_message');
+                const showError = (msg) => {
+                    messageBox.textContent = msg;
+                    messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-red-100 border-red-400 text-red-700";
+                    messageBox.classList.remove('hidden');
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                };
 
-            const uploadDoc = async (file, typeDoc) => {
-                const formData = new FormData();
-                formData.append('fichier_document', file);
-                formData.append('type_document', typeDoc);
+                const inputBirth = document.getElementById('birth_date').value;
+                if (inputBirth > strMax) {
+                    return showError("Désolé, vous devez avoir au moins 18 ans pour devenir prestataire.");
+                }
 
-                return fetch(`${window.API_BASE_URL}/prestataires/upload/${newProviderId}`, { 
-                    method: 'POST',
-                    body: formData 
-                });
-            };
+                const data = {
+                    prenom: document.getElementById('first_name').value,
+                    nom: document.getElementById('last_name').value,
+                    date_naissance: inputBirth,
+                    num_telephone: document.getElementById('phone_number').value,
+                    email: document.getElementById('signup_email').value,
+                    mdp: document.getElementById('signup_password').value,
+                    siret: document.getElementById('siret').value,
+                    id_categorie: parseInt(document.getElementById('id_categorie').value),
+                    "cf-turnstile-response": document.querySelector('[name="cf-turnstile-response"]')?.value
+                };
 
-            uploadPromises.push(uploadDoc(fileIdentite, "Pièce d'identité"));
-            uploadPromises.push(uploadDoc(fileKbis, "KBIS"));
+                if (!data.prenom || !data.nom || !data.date_naissance || !data.email || !data.mdp || !data.siret || !data.id_categorie) {
+                    return showError("Veuillez remplir tous les champs obligatoires du formulaire.");
+                }
+                if (data.siret.length !== 14 || isNaN(data.siret)) {
+                    return showError("Le numéro SIRET doit contenir exactement 14 chiffres.");
+                }
+                if (!data["cf-turnstile-response"]) {
+                    return showError("Veuillez valider la vérification de sécurité (Captcha).");
+                }
 
-            for (let i = 0; i < extraNames.length; i++) {
-                uploadPromises.push(uploadDoc(extraFiles[i].files[0], extraNames[i].value.trim()));
-            }
+                const fileIdentite = document.getElementById('doc_identite').files[0];
+                const fileKbis = document.getElementById('doc_kbis').files[0];
+                const casireJudiciaire = document.getElementById('casier_judiciaire').files[0];
 
-            await Promise.all(uploadPromises);
 
-            messageBox.textContent = "Demande envoyée avec succès ! Vos documents ont bien été joints. Votre compte est en attente de validation.";
-            messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700";
-            messageBox.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (!fileIdentite || !fileKbis || !casireJudiciaire) {
+                    return showError("Vous devez obligatoirement fournir tous les documents attendus.");
+                }
 
-            setTimeout(() => {
-                window.location.href = "signin.php";
-            }, 3000);
+                const extraNames = document.querySelectorAll('.extra-doc-name');
+                const extraFiles = document.querySelectorAll('.extra-doc-file');
 
-        } catch (error) {
-            showError("Impossible de joindre le serveur. Vérifiez votre connexion.");
-        }
-    });
-});
-</script>
+                for (let i = 0; i < extraNames.length; i++) {
+                    if (!extraNames[i].value.trim() || !extraFiles[i].files[0]) {
+                        return showError("Veuillez renseigner un nom et sélectionner un fichier pour tous vos documents supplémentaires.");
+                    }
+                }
+
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/auth/register-provider`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        return showError("Erreur : " + errorText);
+                    }
+
+                    const result = await response.json();
+                    const newProviderId = result.ID || result.id || result.id_prestataire;
+
+                    const uploadPromises = [];
+
+                    const uploadDoc = async (file, typeDoc) => {
+                        const formData = new FormData();
+                        formData.append('fichier_document', file);
+                        formData.append('type_document', typeDoc);
+
+                        return fetch(`${window.API_BASE_URL}/prestataires/upload/${newProviderId}`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    };
+
+                    uploadPromises.push(uploadDoc(fileIdentite, "Pièce d'identité"));
+                    uploadPromises.push(uploadDoc(fileKbis, "KBIS"));
+
+                    for (let i = 0; i < extraNames.length; i++) {
+                        uploadPromises.push(uploadDoc(extraFiles[i].files[0], extraNames[i].value.trim()));
+                    }
+
+                    await Promise.all(uploadPromises);
+
+                    messageBox.textContent = "Demande envoyée avec succès ! Vos documents ont bien été joints. Votre compte est en attente de validation.";
+                    messageBox.className = "max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold bg-green-100 border-green-400 text-green-700";
+                    messageBox.classList.remove('hidden');
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+
+                    setTimeout(() => {
+                        window.location.href = "signin.php";
+                    }, 3000);
+
+                } catch (error) {
+                    showError("Impossible de joindre le serveur. Vérifiez votre connexion.");
+                }
+            });
+        });
+    </script>
 
 </body>
+
 </html>
