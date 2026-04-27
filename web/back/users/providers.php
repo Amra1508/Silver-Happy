@@ -102,7 +102,7 @@
                             </div>
                             <div class="space-y-2">
                                 <h4 class="font-bold text-[#1C5B8F] text-base mb-2 border-b pb-1">Activité</h4>
-                                <p><span class="text-gray-500">SIRET :</span> <strong id="vp-siret"></strong></p>
+                                <p><span class="text-gray-500">SIRET :</span> <strong id="vp-siret"></strong> <span id="vp-siret-icon" class="ml-1 text-base cursor-help"></span></p>   
                                 <p><span class="text-gray-500">Prestation :</span> <strong id="vp-type"></strong></p>
                                 <p><span class="text-gray-500">Statut actuel :</span> <span id="vp-validation"></span></p>
                             </div>
@@ -162,7 +162,11 @@
                                 <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="add-tel" class="add-input"></div>
                             </div>
                             <div class="grid grid-cols-3 gap-4">
-                                <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="add-siret" class="add-input"></div>
+                                <div>
+                                    <label class="text-sm text-gray-500">N° SIRET</label>
+                                    <input type="text" id="add-siret" maxlength="14" class="add-input" oninput="verifierSiret('add-siret', 'add-siret-status')">
+                                    <p id="add-siret-status" class="hidden"></p>
+                                </div>
 
                                 <div>
                                     <label class="text-sm text-gray-500">Catégorie prestation *</label>
@@ -217,8 +221,11 @@
                                 <div><label class="text-sm text-gray-500">Téléphone</label><input type="text" id="edit-tel" class="edit-input"></div>
                             </div>
                             <div class="grid grid-cols-3 gap-4">
-                                <div><label class="text-sm text-gray-500">N° SIRET</label><input type="text" id="edit-siret" class="edit-input"></div>
-
+                                <div>
+                                    <label class="text-sm text-gray-500">N° SIRET</label>
+                                    <input type="text" id="edit-siret" maxlength="14" class="edit-input" oninput="verifierSiret('edit-siret', 'edit-siret-status')">
+                                    <p id="edit-siret-status" class="hidden"></p>
+                                </div>
                                 <div>
                                     <label class="text-sm text-gray-500">Catégorie prestation *</label>
                                     <select id="edit-type" class="edit-input bg-white" required>
@@ -456,6 +463,30 @@
             document.getElementById('vp-date-creation').textContent = provider.date_creation ? provider.date_creation : "-";
             document.getElementById('vp-siret').textContent = provider.siret;
 
+                const icon = document.getElementById('vp-siret-icon');
+
+                const imgLoading = '<img src="/back/icons/loading.png" class="w-5 h-5 inline-block animate-spin" alt="Vérification...">';
+                const imgValid   = '<img src="/back/icons/check.png" class="w-5 h-5 inline-block" alt="Valide">';
+                const imgInvalid = '<img src="/back/icons/cross.png" class="w-5 h-5 inline-block" alt="Invalide">';
+                const imgWarning = '<img src="/back/icons/warning.png" class="w-5 h-5 inline-block" alt="Erreur">';
+
+                icon.innerHTML = provider.siret?.length === 14 ? imgLoading : imgInvalid;
+
+                if (provider.siret?.length === 14) {
+                    try {
+                        const req = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${provider.siret}&page=1&per_page=1`);
+                        const { results } = await req.json();
+                        
+                        const isOk = results?.[0]?.etat_administratif === 'A';
+                        
+                        icon.innerHTML = isOk ? imgValid : imgInvalid;
+                        icon.title = isOk ? results[0].nom_complet : 'Fermée ou introuvable';
+                    } catch {
+                        icon.innerHTML = imgWarning;
+                        icon.title = "Erreur de connexion à l'API";
+                    }
+                }
+            
             document.getElementById('vp-type').textContent = provider.categorie || "Non définie";
 
             if (provider.status === 'validé') {
@@ -612,6 +643,10 @@
             document.getElementById('edit-tel').value = provider.num_telephone;
             document.getElementById('edit-siret').value = provider.siret;
 
+            if (provider.siret) {
+                verifierSiret('edit-siret', 'edit-siret-status');
+            }
+
             document.getElementById('edit-type').value = provider.id_categorie;
 
             document.getElementById('edit-motif').value = provider.motif_refus;
@@ -624,16 +659,16 @@
 
             const statusMenu = document.getElementById('edit-status');
             if (provider.status === "refusé") {
-                statusMenu.innerHTML = ` <
-                                option value = "refusé" > Refusé < /option> <
-                            option value = "en attente" > Remettre en attente < /option>
-                            `;
+                statusMenu.innerHTML = `
+                    <option value="refusé">Refusé</option>
+                    <option value="en attente">Remettre en attente</option>
+                `;
             } else {
-                statusMenu.innerHTML = ` <
-                            option value = "en attente" > En attente < /option> <
-                            option value = "validé" > Validé < /option> <
-                            option value = "refusé" > Refusé < /option>
-                            `;
+                statusMenu.innerHTML = `
+                    <option value="en attente">En attente</option>
+                    <option value="valide">Validé</option> 
+                    <option value="refusé">Refusé</option>
+                `;
             }
 
             statusMenu.value = provider.status;
@@ -646,8 +681,50 @@
             toggleModal('delete-modal');
         }
 
+        async function verifierSiret(inputId, statusId) {
+            const siretInput = document.getElementById(inputId);
+            const status_siret = document.getElementById(statusId);
+
+            if (!siretInput || !status_siret) return false;
+
+            const siret = siretInput.value.trim();
+
+            status_siret.className = 'hidden';
+            if (siret.length !== 14 || isNaN(siret)) return false;
+
+            status_siret.textContent = 'Vérification...';
+            status_siret.className = 'text-sm text-gray-500 mt-1';
+
+            try {
+                const res = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${siret}&page=1&per_page=1`);
+                const { results } = await res.json();
+
+                if (results && results.length && results[0].etat_administratif === 'A') {
+                    status_siret.textContent = `${results[0].nom_complet}`;
+                    status_siret.className = 'text-sm text-green-600 font-semibold mt-1';
+                    return true;
+                }
+                        
+                status_siret.textContent = (results && results.length) ? 'Entreprise fermée (cessé)' : 'SIRET introuvable.';
+                status_siret.className = 'text-sm text-red-600 font-semibold mt-1';
+                return false;
+
+            } catch {
+                status_siret.textContent = 'Vérification impossible. Veuillez réssayer';
+                status_siret.className = 'text-sm text-orange-500 mt-1';
+                return false;
+            }
+        }
+
         document.getElementById('add-form').addEventListener('submit', async function(event) {
             event.preventDefault();
+
+            const siretSaisi = document.getElementById('add-siret').value.trim();
+            if (siretSaisi !== "" && siretSaisi.length !== 14) {
+                showAlert("Le SIRET doit faire exactement 14 caractères.", false);
+                return;
+            }
+            if (siretSaisi.length === 14 && !await verifierSiret('add-siret', 'add-siret-status')) return;
 
             let payload = {
                 nom: document.getElementById('add-nom').value,
@@ -686,7 +763,7 @@
                 }
 
                 toggleModal('add-modal');
-                document.getElementById('add-form').reset();
+                document.getElementById('add-form').reset(); 
                 showAlert("Prestataire ajouté avec succès !", true);
                 loadProviders(1);
             } else {
@@ -696,6 +773,13 @@
 
         document.getElementById('edit-form').addEventListener('submit', async function(event) {
             event.preventDefault();
+
+            const siretSaisi = document.getElementById('edit-siret').value.trim();
+            if (siretSaisi !== "" && siretSaisi.length !== 14) {
+                showAlert("Le SIRET doit faire exactement 14 caractères.", false);
+                return;
+            }
+            if (siretSaisi.length === 14 && !await verifierSiret('edit-siret', 'edit-siret-status')) return;
 
             let id = document.getElementById('edit-id').value;
 

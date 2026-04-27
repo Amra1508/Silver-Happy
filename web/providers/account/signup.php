@@ -103,7 +103,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 <div class="sm:col-span-3">
                     <label class="text-sm text-gray-600 font-semibold">Numéro SIRET (14 chiffres)</label>
                     <div class="mt-2">
-                        <input id="siret" type="text" maxlength="14" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-[#1C5B8F]" required />
+                        <input id="siret" type="text" maxlength="14"
+                            oninput="verifierSiret('siret', 'siret-status')"
+                            class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-[#1C5B8F]" required />
+                        <p id="siret-status" class="hidden"></p>
                     </div>
                 </div>
 
@@ -166,6 +169,41 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
     </main>
 
     <script>
+        async function verifierSiret(inputId, statusId) {
+            const siretInput = document.getElementById(inputId);
+            const status_siret = document.getElementById(statusId);
+
+            if (!siretInput || !status_siret) return false;
+
+            const siret = siretInput.value.trim();
+
+            status_siret.className = 'hidden';
+            if (siret.length !== 14 || isNaN(siret)) return false;
+
+            status_siret.textContent = 'Vérification...';
+            status_siret.className = 'text-sm text-gray-500 mt-1';
+
+            try {
+                const res = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${siret}&page=1&per_page=1`);
+                const { results } = await res.json();
+
+                if (results && results.length && results[0].etat_administratif === 'A') {
+                    status_siret.textContent = `${results[0].nom_complet}`;
+                    status_siret.className = 'text-sm text-green-600 font-semibold mt-1';
+                    return true;
+                }
+                        
+                status_siret.textContent = (results && results.length) ? 'Entreprise fermée (cessé)' : 'SIRET introuvable.';
+                status_siret.className = 'text-sm text-red-600 font-semibold mt-1';
+                return false;
+
+            } catch {
+                status_siret.textContent = 'Vérification impossible. Veuillez réssayeer';
+                status_siret.className = 'text-sm text-orange-500 mt-1';
+                return false;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const selectCategorie = document.getElementById('id_categorie');
             try {
@@ -261,16 +299,19 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 if (data.siret.length !== 14 || isNaN(data.siret)) {
                     return showError("Le numéro SIRET doit contenir exactement 14 chiffres.");
                 }
+                if (!await verifierSiret('siret', 'siret-status')) {
+                    return showError("Le SIRET saisi n'est pas valide ou correspond à une entreprise fermée.");
+                }   
                 if (!data["cf-turnstile-response"]) {
                     return showError("Veuillez valider la vérification de sécurité (Captcha).");
                 }
 
                 const fileIdentite = document.getElementById('doc_identite').files[0];
                 const fileKbis = document.getElementById('doc_kbis').files[0];
-                const casireJudiciaire = document.getElementById('casier_judiciaire').files[0];
+                const fileCasierJudiciaire = document.getElementById('casier_judiciaire').files[0];
 
-
-                if (!fileIdentite || !fileKbis || !casireJudiciaire) {
+                
+                if (!fileIdentite || !fileKbis || !fileCasierJudiciaire) {
                     return showError("Vous devez obligatoirement fournir tous les documents attendus.");
                 }
 
@@ -315,6 +356,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 
                     uploadPromises.push(uploadDoc(fileIdentite, "Pièce d'identité"));
                     uploadPromises.push(uploadDoc(fileKbis, "KBIS"));
+                    uploadPromises.push(uploadDoc(fileCasierJudiciaire, "Casier Judiciaire"));
 
                     for (let i = 0; i < extraNames.length; i++) {
                         uploadPromises.push(uploadDoc(extraFiles[i].files[0], extraNames[i].value.trim()));
