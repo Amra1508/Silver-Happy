@@ -113,7 +113,10 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="text-sm text-gray-600 font-semibold block mb-2">Numéro SIRET</label>
-                                    <input type="text" id="siret" maxlength="14" class="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:border-[#1C5B8F] focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                    <input type="text" id="siret" maxlength="14"
+                                        oninput="verifierSiret('siret', 'siret-status')"
+                                        class="w-full border border-gray-300 rounded-xl p-3 focus:outline-none focus:border-[#1C5B8F] focus:ring-1 focus:ring-[#1C5B8F]" required>
+                                    <p id="siret-status" class="hidden"></p>
                                 </div>
                                 <div>
                                     <label class="text-sm text-gray-600 font-semibold block mb-2">Catégorie</label>
@@ -167,6 +170,41 @@
         } else if (urlParams.get('stripe') === 'error') {
             alert("L'association du compte Stripe n'a pas pu aboutir. Veuillez réessayer.");
             window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        async function verifierSiret(inputId, statusId) {
+            const siretInput = document.getElementById(inputId);
+            const status_siret = document.getElementById(statusId);
+
+            if (!siretInput || !status_siret) return false;
+
+            const siret = siretInput.value.trim();
+
+            status_siret.className = 'hidden';
+            if (siret.length !== 14 || isNaN(siret)) return false;
+
+            status_siret.textContent = 'Vérification...';
+            status_siret.className = 'text-sm text-gray-500 mt-1';
+
+            try {
+                const res = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${siret}&page=1&per_page=1`);
+                const { results } = await res.json();
+
+                if (results && results.length && results[0].etat_administratif === 'A') {
+                    status_siret.textContent = `${results[0].nom_complet}`;
+                    status_siret.className = 'text-sm text-green-600 font-semibold mt-1';
+                    return true;
+                }
+                        
+                status_siret.textContent = (results && results.length) ? 'Entreprise fermée (cessé)' : 'SIRET introuvable.';
+                status_siret.className = 'text-sm text-red-600 font-semibold mt-1';
+                return false;
+
+            } catch {
+                status_siret.textContent = 'Vérification impossible. Veuillez réssayeer';
+                status_siret.className = 'text-sm text-orange-500 mt-1';
+                return false;
+            }
         }
 
         async function connectStripe() {
@@ -338,6 +376,10 @@
                     document.getElementById('telephone').value = providerData.num_telephone || '';
                     document.getElementById('siret').value = providerData.siret || '';
 
+                    if (providerData.siret) {
+                        verifierSiret('siret', 'siret-status');
+                    }
+
                     if (providerData.id_categorie || providerData.IdCategorie) {
                         selectCategorie.value = providerData.id_categorie || providerData.IdCategorie;
                     }
@@ -404,6 +446,12 @@
                 e.preventDefault();
                 btnSave.disabled = true;
                 btnSave.innerHTML = "Sauvegarde...";
+
+                    if (!await verifierSiret('siret', 'siret-status')) {
+                        btnSave.disabled = false;
+                        btnSave.innerHTML = "Enregistrer les modifications";
+                        return;
+                    }
 
                 const pwd = document.getElementById('mdp').value.trim();
                 const updatedData = {

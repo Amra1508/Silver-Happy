@@ -20,47 +20,47 @@ import (
 )
 
 func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
-    statusFilter := query.Get("status")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
+	statusFilter := query.Get("status")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    whereClause := ""
-    var argsCount []interface{}
-    var argsQuery []interface{}
+	whereClause := ""
+	var argsCount []interface{}
+	var argsQuery []interface{}
 
-    if statusFilter != "" && statusFilter != "tous" {
-        whereClause = " WHERE p.status = ?"
-        argsCount = append(argsCount, statusFilter)
-        argsQuery = append(argsQuery, statusFilter)
-    }
+	if statusFilter != "" && statusFilter != "tous" {
+		whereClause = " WHERE p.status = ?"
+		argsCount = append(argsCount, statusFilter)
+		argsQuery = append(argsQuery, statusFilter)
+	}
 
-    var total int
-    errCount := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE p"+whereClause, argsCount...).Scan(&total)
-    if errCount != nil {
-        http.Error(response, "Erreur lors du comptage", http.StatusInternalServerError)
-        return
-    }
+	var total int
+	errCount := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE p"+whereClause, argsCount...).Scan(&total)
+	if errCount != nil {
+		http.Error(response, "Erreur lors du comptage", http.StatusInternalServerError)
+		return
+	}
 
-    argsQuery = append(argsQuery, limit, offset)
-    
-    sqlQuery := `
+	argsQuery = append(argsQuery, limit, offset)
+
+	sqlQuery := `
         SELECT 
             p.id_prestataire, 
             COALESCE(p.siret, ''), 
@@ -81,54 +81,54 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
         LIMIT ? OFFSET ?
     `
 
-    rows, err := db.DB.Query(sqlQuery, argsQuery...)
-    if err != nil {
-        http.Error(response, "Erreur BDD lors de la récupération", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, err := db.DB.Query(sqlQuery, argsQuery...)
+	if err != nil {
+		http.Error(response, "Erreur BDD lors de la récupération", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    var list []models.Prestataire
-    for rows.Next() {
-        var p models.Prestataire
-        
-        errScan := rows.Scan(
-            &p.ID, 
-            &p.Siret, 
-            &p.Prenom, 
-            &p.Nom, 
-            &p.Email, 
-            &p.DateNaissance, 
-            &p.NumTelephone, 
-            &p.Status, 
-            &p.MotifRefus, 
-            &p.DateCreation, 
-            &p.IdAbonnement, 
-            &p.IdCategorie, 
-            &p.CategorieNom,
-        )
-        
-        if errScan != nil {
-            fmt.Println("Ligne ignorée ! Erreur de Scan sur le Prestataire :", errScan)
-            continue
-        }
-        
-        list = append(list, p)
-    }
+	var list []models.Prestataire
+	for rows.Next() {
+		var p models.Prestataire
 
-    if list == nil {
-        list = []models.Prestataire{}
-    }
+		errScan := rows.Scan(
+			&p.ID,
+			&p.Siret,
+			&p.Prenom,
+			&p.Nom,
+			&p.Email,
+			&p.DateNaissance,
+			&p.NumTelephone,
+			&p.Status,
+			&p.MotifRefus,
+			&p.DateCreation,
+			&p.IdAbonnement,
+			&p.IdCategorie,
+			&p.CategorieNom,
+		)
 
-    dataResponse := map[string]interface{}{
-        "data":        list,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+		if errScan != nil {
+			fmt.Println("Ligne ignorée ! Erreur de Scan sur le Prestataire :", errScan)
+			continue
+		}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+		list = append(list, p)
+	}
+
+	if list == nil {
+		list = []models.Prestataire{}
+	}
+
+	dataResponse := map[string]interface{}{
+		"data":        list,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func List_Prestataires(response http.ResponseWriter, request *http.Request) {
@@ -139,7 +139,7 @@ func List_Prestataires(response http.ResponseWriter, request *http.Request) {
 	queryParams := request.URL.Query()
 	limitStr := queryParams.Get("limit")
 	pageStr := queryParams.Get("page")
-	userIdStr := queryParams.Get("user_id") 
+	userIdStr := queryParams.Get("user_id")
 
 	limit := 10
 	offset := 0
@@ -158,10 +158,10 @@ func List_Prestataires(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-    errCount := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE WHERE status = 'valide'").Scan(&total)
-    if errCount != nil {
-        total = 0
-    }
+	errCount := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE WHERE status = 'valide'").Scan(&total)
+	if errCount != nil {
+		total = 0
+	}
 
 	query := `
         SELECT p.id_prestataire, p.nom, p.prenom, p.email, 
@@ -183,7 +183,7 @@ func List_Prestataires(response http.ResponseWriter, request *http.Request) {
 	var tabUtilisateur []models.Utilisateur
 	for rows.Next() {
 		var user models.Utilisateur
-		var estLu int 
+		var estLu int
 
 		err := rows.Scan(
 			&user.ID, &user.Nom, &user.Prenom, &user.Email,
@@ -213,34 +213,34 @@ func List_Prestataires(response http.ResponseWriter, request *http.Request) {
 }
 
 func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
+	query := request.URL.Query()
+	limitStr := query.Get("limit")
+	pageStr := query.Get("page")
 
-    limit := 10
-    offset := 0
-    page := 1
+	limit := 10
+	offset := 0
+	page := 1
 
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
+	if limitStr != "" {
+		fmt.Sscanf(limitStr, "%d", &limit)
+	}
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+		offset = (page - 1) * limit
+	}
 
-    var total int
-    errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE p.status = 'valide'").Scan(&total)
-    if errTotal != nil {
-        http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
-        return
-    }
+	var total int
+	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE p.status = 'valide'").Scan(&total)
+	if errTotal != nil {
+		http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
+		return
+	}
 
-    sqlQuery := `
+	sqlQuery := `
         SELECT p.id_prestataire, 
                COALESCE(p.prenom, ''), 
                COALESCE(p.nom, ''), 
@@ -255,78 +255,80 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
         ORDER BY moyenne DESC 
         LIMIT ? OFFSET ?`
 
-    rows, err := db.DB.Query(sqlQuery, limit, offset)
-    if err != nil {
-        fmt.Println("Erreur SQL:", err)
-        http.Error(response, "Erreur BDD", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, err := db.DB.Query(sqlQuery, limit, offset)
+	if err != nil {
+		fmt.Println("Erreur SQL:", err)
+		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
-    list := make([]map[string]interface{}, 0)
-    for rows.Next() {
-        var id int64
-        var prenom, nom, typePresta string
-        var moyenne float64
-        var nbAvis int
+	list := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var id int64
+		var prenom, nom, typePresta string
+		var moyenne float64
+		var nbAvis int
 
-        if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis); err != nil {
-            fmt.Println("Ligne ignorée dans le Top ! Erreur de Scan :", err)
-            continue
-        }
+		if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis); err != nil {
+			fmt.Println("Ligne ignorée dans le Top ! Erreur de Scan :", err)
+			continue
+		}
 
-        list = append(list, map[string]interface{}{
-            "id_prestataire":  id,
-            "prenom":          prenom,
-            "nom":             nom,
-            "type_prestation": typePresta,
-            "moyenne":         moyenne,
-            "nombre_avis":     nbAvis,
-        })
-    }
+		list = append(list, map[string]interface{}{
+			"id_prestataire":  id,
+			"prenom":          prenom,
+			"nom":             nom,
+			"type_prestation": typePresta,
+			"moyenne":         moyenne,
+			"nombre_avis":     nbAvis,
+		})
+	}
 
-    if len(list) == 0 {
-        list = []map[string]interface{}{}
-    }
+	if len(list) == 0 {
+		list = []map[string]interface{}{}
+	}
 
-    dataResponse := map[string]interface{}{
-        "data":        list,
-        "total":       total,
-        "currentPage": page,
-        "totalPages":  (total + limit - 1) / limit,
-    }
+	dataResponse := map[string]interface{}{
+		"data":        list,
+		"total":       total,
+		"currentPage": page,
+		"totalPages":  (total + limit - 1) / limit,
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(dataResponse)
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Get_Note_Moyenne(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") { return }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    prestaID := request.PathValue("id")
+	prestaID := request.PathValue("id")
 
-    sqlQuery := `
+	sqlQuery := `
         SELECT 
             COALESCE(AVG(note), 0) as moyenne, 
             COUNT(id_avis) as nombre_avis 
         FROM AVIS 
         WHERE id_prestataire = ?`
 
-    var moyenne float64
-    var nbAvis int
+	var moyenne float64
+	var nbAvis int
 
-    err := db.DB.QueryRow(sqlQuery, prestaID).Scan(&moyenne, &nbAvis)
-    if err != nil {
-        fmt.Println("Erreur SQL:", err)
-        http.Error(response, "Erreur lors de la récupération des notes", http.StatusInternalServerError)
-        return
-    }
+	err := db.DB.QueryRow(sqlQuery, prestaID).Scan(&moyenne, &nbAvis)
+	if err != nil {
+		fmt.Println("Erreur SQL:", err)
+		http.Error(response, "Erreur lors de la récupération des notes", http.StatusInternalServerError)
+		return
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(map[string]interface{}{
-        "moyenne":     moyenne,
-        "nombre_avis": nbAvis,
-    })
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"moyenne":     moyenne,
+		"nombre_avis": nbAvis,
+	})
 }
 
 func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
@@ -348,6 +350,16 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 
 	if p.Nom == "" || p.Prenom == "" || p.Email == "" {
 		http.Error(response, "Le nom, prénom et email sont obligatoires", http.StatusBadRequest)
+		return
+	}
+
+	if len(p.Siret) != 14 {
+		http.Error(response, "Le SIRET est obligatoire et doit faire exactement 14 caractères", http.StatusBadRequest)
+		return
+	}
+
+	if p.IdCategorie <= 0 {
+		http.Error(response, "Une catégorie valide est obligatoire", http.StatusBadRequest)
 		return
 	}
 
@@ -381,7 +393,7 @@ func Create_Prestataire(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, id_categorie, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)",
+	_, err = db.DB.Exec("INSERT INTO PRESTATAIRE (siret, nom, prenom, email, num_telephone, date_naissance, status, motif_refus, id_categorie, mdp) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?)",
 		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.IdCategorie, string(hashMdp))
 
 	if err != nil {
@@ -418,7 +430,6 @@ func Update_Prestataire(response http.ResponseWriter, request *http.Request) {
 
 	db.DB.Exec("UPDATE PRESTATAIRE SET siret=?, nom=?, prenom=?, email=?, num_telephone=?, date_naissance=NULLIF(?, ''), status=?, motif_refus=?, id_categorie=? WHERE id_prestataire=?",
 		p.Siret, p.Nom, p.Prenom, p.Email, p.NumTelephone, p.DateNaissance, p.Status, p.MotifRefus, p.IdCategorie, id)
-
 	json.NewEncoder(response).Encode("OK")
 }
 
@@ -475,8 +486,10 @@ func Read_Prestataire_Documents(response http.ResponseWriter, request *http.Requ
 }
 
 func Upload_Prestataire_Document(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") { return }
-	
+	if utils.HandleCORS(response, request, "POST") {
+		return
+	}
+
 	id := request.PathValue("id")
 	if err := request.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(response, "Fichier trop volumineux", http.StatusBadRequest)
@@ -503,8 +516,8 @@ func Upload_Prestataire_Document(response http.ResponseWriter, request *http.Req
 	io.Copy(dst, file)
 
 	typeDoc := html.EscapeString(request.FormValue("type_document"))
-	db.DB.Exec("INSERT INTO DOCUMENT_PRESTATAIRE (type, nom, id_prestataire) VALUES (?, ?, ?)", 
-        typeDoc, "uploads/documents/"+safeFileName, id)
+	db.DB.Exec("INSERT INTO DOCUMENT_PRESTATAIRE (type, nom, id_prestataire) VALUES (?, ?, ?)",
+		typeDoc, "uploads/documents/"+safeFileName, id)
 
 	json.NewEncoder(response).Encode(map[string]string{"message": "Document uploadé"})
 }
@@ -529,16 +542,16 @@ func Delete_Prestataire_Document(response http.ResponseWriter, request *http.Req
 }
 
 func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Request) {
-    if utils.HandleCORS(response, request, "GET") {
-        return
-    }
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
 
-    idStr := request.PathValue("id")
+	idStr := request.PathValue("id")
 
-    prestataire := models.Prestataire{}
-    var dateFinBoostPresta sql.NullString 
+	prestataire := models.Prestataire{}
+	var dateFinBoostPresta sql.NullString
 
-    err := db.DB.QueryRow(`
+	err := db.DB.QueryRow(`
         SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
                IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), p.date_fin_boost
         FROM PRESTATAIRE p
@@ -546,12 +559,12 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
         WHERE p.id_prestataire = ? AND p.status = 'validé'
     `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &dateFinBoostPresta)
 
-    if err != nil {
-        http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
-        return
-    }
+	if err != nil {
+		http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
+		return
+	}
 
-    rows, err := db.DB.Query(`
+	rows, err := db.DB.Query(`
         SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image, e.date_fin_boost
         FROM evenement e
         INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
@@ -561,63 +574,63 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
             e.date_debut ASC
     `, idStr)
 
-    var events []map[string]interface{}
-    if err == nil {
-        defer rows.Close()
-        for rows.Next() {
-            var id, places int
-            var nom, desc, lieu string
-            var prix float64
-            var debut, fin, image, dateFinBoostEvt sql.NullString 
+	var events []map[string]interface{}
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var id, places int
+			var nom, desc, lieu string
+			var prix float64
+			var debut, fin, image, dateFinBoostEvt sql.NullString
 
-            if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image, &dateFinBoostEvt); errScan == nil {
-                evt := map[string]interface{}{
-                    "id_evenement": id,
-                    "nom":          nom,
-                    "description":  desc,
-                    "lieu":         lieu,
-                    "nombre_place": places,
-                    "prix":         prix,
-                }
-                if debut.Valid {
-                    evt["date_debut"] = debut.String
-                }
-                if fin.Valid {
-                    evt["date_fin"] = fin.String
-                }
-                if image.Valid && image.String != "" {
-                    evt["image"] = image.String
-                }
-                if dateFinBoostEvt.Valid {
-                    evt["date_fin_boost"] = dateFinBoostEvt.String
-                }
-                
-                events = append(events, evt)
-            } else {
-                fmt.Println("Erreur Scan Evenement:", errScan)
-            }
-        }
-    }
+			if errScan := rows.Scan(&id, &nom, &desc, &lieu, &places, &prix, &debut, &fin, &image, &dateFinBoostEvt); errScan == nil {
+				evt := map[string]interface{}{
+					"id_evenement": id,
+					"nom":          nom,
+					"description":  desc,
+					"lieu":         lieu,
+					"nombre_place": places,
+					"prix":         prix,
+				}
+				if debut.Valid {
+					evt["date_debut"] = debut.String
+				}
+				if fin.Valid {
+					evt["date_fin"] = fin.String
+				}
+				if image.Valid && image.String != "" {
+					evt["image"] = image.String
+				}
+				if dateFinBoostEvt.Valid {
+					evt["date_fin_boost"] = dateFinBoostEvt.String
+				}
 
-    if events == nil {
-        events = []map[string]interface{}{}
-    }
+				events = append(events, evt)
+			} else {
+				fmt.Println("Erreur Scan Evenement:", errScan)
+			}
+		}
+	}
 
-    type PrestataireWithBoost struct {
-        models.Prestataire
-        DateFinBoost string `json:"date_fin_boost,omitempty"`
-    }
+	if events == nil {
+		events = []map[string]interface{}{}
+	}
 
-    responsePresta := PrestataireWithBoost{
-        Prestataire: prestataire,
-    }
-    if dateFinBoostPresta.Valid {
-        responsePresta.DateFinBoost = dateFinBoostPresta.String
-    }
+	type PrestataireWithBoost struct {
+		models.Prestataire
+		DateFinBoost string `json:"date_fin_boost,omitempty"`
+	}
 
-    response.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(response).Encode(map[string]interface{}{
-        "prestataire": responsePresta,
-        "evenements":  events,
-    })
+	responsePresta := PrestataireWithBoost{
+		Prestataire: prestataire,
+	}
+	if dateFinBoostPresta.Valid {
+		responsePresta.DateFinBoost = dateFinBoostPresta.String
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(map[string]interface{}{
+		"prestataire": responsePresta,
+		"evenements":  events,
+	})
 }
