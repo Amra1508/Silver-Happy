@@ -105,7 +105,7 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
     overlapQuery := `
         SELECT COALESCE(SUM(conflits), 0) FROM (
 	            SELECT COUNT(*) as conflits 
-            FROM evenement e
+            FROM EVENEMENT e
             INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
             WHERE pe.id_prestataire = ?
               AND e.date_debut < IFNULL(NULLIF(?, ''), DATE_ADD(?, INTERVAL 1 HOUR))
@@ -185,7 +185,7 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
         return
     }
 
-    queryInsert := `INSERT INTO evenement (nom, description, lieu, nombre_place, prix, date_debut, date_fin, id_categorie, image) 
+    queryInsert := `INSERT INTO EVENEMENT (nom, description, lieu, nombre_place, prix, date_debut, date_fin, id_categorie, image) 
                     VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?)`
 
     res, err := tx.Exec(queryInsert, nom, description, lieu, nombrePlace, prix, dateDebut, dateFin, categorieID, imagePath)
@@ -294,7 +294,7 @@ func Get_Events_A_Venir(response http.ResponseWriter, request *http.Request) {
 
     sqlQuery := fmt.Sprintf(`
 			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
-			FROM evenement e
+			FROM EVENEMENT e
 			JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
 			WHERE pe.id_prestataire = ? AND %s >= NOW()
 			ORDER BY e.date_debut ASC
@@ -315,7 +315,7 @@ func Get_Historique_Events(response http.ResponseWriter, request *http.Request) 
 
     sqlQuery := fmt.Sprintf(`
 			SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, IFNULL(e.date_fin, ''), IFNULL(e.image, ''), IFNULL(e.date_fin_boost, '')
-			FROM evenement e
+			FROM EVENEMENT e
 			JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
 			WHERE pe.id_prestataire = ? AND %s < NOW()
 			ORDER BY e.date_debut DESC

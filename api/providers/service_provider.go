@@ -297,7 +297,7 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 					UNION ALL
 					
 					SELECT COUNT(*) as conflits 
-					FROM evenement e
+					FROM EVENEMENT e
 					INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
 					WHERE pe.id_prestataire = ?
 					  AND e.date_debut < ?

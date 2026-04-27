@@ -84,11 +84,11 @@ func Read_Evenement(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM evenement").Scan(&total)
+	db.DB.QueryRow("SELECT COUNT(*) FROM EVENEMENT").Scan(&total)
 
 	sqlQuery := `
         SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
-        FROM evenement 
+        FROM EVENEMENT 
         ORDER BY 
             (date_fin_boost IS NOT NULL AND date_fin_boost > NOW()) DESC,
             date_debut ASC 
@@ -199,7 +199,7 @@ func Create_Evenement(response http.ResponseWriter, request *http.Request) {
 	}
 
 	res, errorCreate := db.DB.Exec(
-		"INSERT INTO evenement (nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO EVENEMENT (nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		nom, desc, lieu, places, imagePath, debut, fin, idCategorie, prix,
 	)
 	if errorCreate != nil {
@@ -224,7 +224,7 @@ func Read_One_Evenement(response http.ResponseWriter, request *http.Request) {
 	var dateFin sql.NullString
 
 	err := db.DB.QueryRow(
-		"SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix FROM evenement WHERE id_evenement = ?",
+		"SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix FROM EVENEMENT WHERE id_evenement = ?",
 		id,
 	).Scan(&evt.ID, &evt.Nom, &evt.Description, &evt.Lieu, &evt.NombrePlace, &imagePath, &dateDebut, &dateFin, &evt.IDCategorie, &evt.Prix)
 
@@ -334,18 +334,18 @@ func Update_Evenement(response http.ResponseWriter, request *http.Request) {
 
 	if imagePath != "" {
 		var oldImage sql.NullString
-		db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&oldImage)
+		db.DB.QueryRow("SELECT image FROM EVENEMENT WHERE id_evenement = ?", id).Scan(&oldImage)
 		if oldImage.Valid && oldImage.String != "" {
 			os.Remove(oldImage.String)
 		}
 
 		_, errDb = db.DB.Exec(
-			"UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, image = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
+			"UPDATE EVENEMENT SET nom = ?, description = ?, lieu = ?, nombre_place = ?, image = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
 			nom, desc, lieu, places, imagePath, debut, dateFinPtr, idCategorie, prix, id,
 		)
 	} else {
 		_, errDb = db.DB.Exec(
-			"UPDATE evenement SET nom = ?, description = ?, lieu = ?, nombre_place = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
+			"UPDATE EVENEMENT SET nom = ?, description = ?, lieu = ?, nombre_place = ?, date_debut = ?, date_fin = ?, id_categorie = ?, prix = ? WHERE id_evenement = ?",
 			nom, desc, lieu, places, debut, dateFinPtr, idCategorie, prix, id,
 		)
 	}
@@ -368,7 +368,7 @@ func Delete_Evenement(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 
 	var imagePath sql.NullString
-	err := db.DB.QueryRow("SELECT image FROM evenement WHERE id_evenement = ?", id).Scan(&imagePath)
+	err := db.DB.QueryRow("SELECT image FROM EVENEMENT WHERE id_evenement = ?", id).Scan(&imagePath)
 	if err != nil && err != sql.ErrNoRows {
 		fmt.Println("Erreur SELECT image :", err)
 		http.Error(response, "Erreur lors de la lecture de l'évènement", http.StatusInternalServerError)
@@ -389,9 +389,9 @@ func Delete_Evenement(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err = db.DB.Exec("DELETE FROM evenement WHERE id_evenement = ?", id)
+	_, err = db.DB.Exec("DELETE FROM EVENEMENT WHERE id_evenement = ?", id)
 	if err != nil {
-		fmt.Println("Erreur DELETE evenement :", err)
+		fmt.Println("Erreur DELETE EVENEMENT :", err)
 		http.Error(response, "Erreur lors de la suppression de l'évènement", http.StatusInternalServerError)
 		return
 	}
@@ -410,7 +410,7 @@ func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
 	idUser := request.PathValue("id")
 	query := `
 		SELECT e.id_evenement, e.nom, e.description, e.lieu, e.image, e.date_debut, e.date_fin, e.id_categorie, e.prix
-		FROM evenement e
+		FROM EVENEMENT e
 		JOIN INSCRIPTION i ON e.id_evenement = i.id_evenement
 		WHERE i.id_utilisateur = ? ORDER BY e.date_debut ASC`
 
@@ -447,7 +447,7 @@ func GetEvenementsByCategory(response http.ResponseWriter, request *http.Request
 	}
 
 	categorieIDStr := request.URL.Query().Get("categorie")
-	query := `SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix FROM evenement WHERE id_categorie = ?`
+	query := `SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix FROM EVENEMENT WHERE id_categorie = ?`
 
 	rows, err := db.DB.Query(query, categorieIDStr)
 	if err != nil {
@@ -581,7 +581,7 @@ func Register_Evenement(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var dateCible string
-	errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
+	errDate := db.DB.QueryRow("SELECT date_debut FROM EVENEMENT WHERE id_evenement = ?", idEvt).Scan(&dateCible)
 	if errDate != nil {
 		http.Error(response, "Événement introuvable", http.StatusNotFound)
 		return
@@ -591,7 +591,7 @@ func Register_Evenement(response http.ResponseWriter, request *http.Request) {
 	queryConflict := `
         SELECT COUNT(*) 
         FROM INSCRIPTION i
-        JOIN evenement e ON i.id_evenement = e.id_evenement
+        JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
         WHERE i.id_utilisateur = ? 
         AND DATE_FORMAT(e.date_debut, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')`
 
@@ -603,7 +603,7 @@ func Register_Evenement(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var places int
-	err := db.DB.QueryRow("SELECT nombre_place FROM evenement WHERE id_evenement = ?", idEvt).Scan(&places)
+	err := db.DB.QueryRow("SELECT nombre_place FROM EVENEMENT WHERE id_evenement = ?", idEvt).Scan(&places)
 	if err != nil {
 		http.Error(response, "Événement introuvable", http.StatusNotFound)
 		return
@@ -619,7 +619,7 @@ func Register_Evenement(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
+	db.DB.Exec("UPDATE EVENEMENT SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
 
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Inscription réussie !"})
@@ -685,7 +685,7 @@ func Unregister_Evenement(response http.ResponseWriter, request *http.Request) {
 
 	affected, _ := res.RowsAffected()
 	if affected > 0 {
-		db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place + 1 WHERE id_evenement = ?", idEvt)
+		db.DB.Exec("UPDATE EVENEMENT SET nombre_place = nombre_place + 1 WHERE id_evenement = ?", idEvt)
 	}
 
 	response.WriteHeader(http.StatusOK)
@@ -720,7 +720,7 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 	}
 
 	var dateCible string
-	errDate := db.DB.QueryRow("SELECT date_debut FROM evenement WHERE id_evenement = ?", idEvt).Scan(&dateCible)
+	errDate := db.DB.QueryRow("SELECT date_debut FROM EVENEMENT WHERE id_evenement = ?", idEvt).Scan(&dateCible)
 	if errDate != nil {
 		http.Error(response, "Événement introuvable", http.StatusNotFound)
 		return
@@ -730,7 +730,7 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 	queryConflict := `
         SELECT COUNT(*) 
         FROM INSCRIPTION i
-        JOIN evenement e ON i.id_evenement = e.id_evenement
+        JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
         WHERE i.id_utilisateur = ? 
         AND DATE_FORMAT(e.date_debut, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')`
 
@@ -745,7 +745,7 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 	var places int
 	var prix float64
 
-	err := db.DB.QueryRow("SELECT nom, nombre_place, prix FROM evenement WHERE id_evenement = ?", idEvt).Scan(&nomEvt, &places, &prix)
+	err := db.DB.QueryRow("SELECT nom, nombre_place, prix FROM EVENEMENT WHERE id_evenement = ?", idEvt).Scan(&nomEvt, &places, &prix)
 	if err != nil || places <= 0 {
 		http.Error(response, "Événement introuvable ou complet.", http.StatusForbidden)
 		return
@@ -754,7 +754,7 @@ func CreateEventCheckoutSession(response http.ResponseWriter, request *http.Requ
 	if prix <= 0 {
 		_, errInsert := db.DB.Exec("INSERT INTO INSCRIPTION (id_utilisateur, id_evenement) VALUES (?, ?)", idUser, idEvt)
 		if errInsert == nil {
-			db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
+			db.DB.Exec("UPDATE EVENEMENT SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", idEvt)
 		}
 		json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Inscription gratuite réussie"})
 		return
@@ -838,7 +838,7 @@ func Success_Event_Payment(response http.ResponseWriter, request *http.Request) 
 		if errInsert == nil {
 			affected, _ := res.RowsAffected()
 			if affected > 0 {
-				db.DB.Exec("UPDATE evenement SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", eventID)
+				db.DB.Exec("UPDATE EVENEMENT SET nombre_place = nombre_place - 1 WHERE id_evenement = ?", eventID)
 			}
 		}
 	}
