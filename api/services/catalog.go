@@ -227,7 +227,7 @@ func Read_User_Services(response http.ResponseWriter, request *http.Request) {
 	query := `
 		SELECT r.id_reservation, s.id_service, s.nom, s.description, r.date_heure 
 		FROM RESERVATION_SERVICE r 
-		JOIN service s ON r.id_service = s.id_service 
+		JOIN SERVICE s ON r.id_service = s.id_service 
 		WHERE r.id_utilisateur = ? 
 		ORDER BY r.date_heure ASC
 	`
@@ -278,7 +278,7 @@ func Register_Service(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	_, err := db.DB.Exec("INSERT INTO reservation_service (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", idService, payload.IdUtilisateur, payload.DateHeure)
+	_, err := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)", idService, payload.IdUtilisateur, payload.DateHeure)
 	if err != nil {
 		http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError)
 		return

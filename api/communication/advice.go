@@ -235,7 +235,7 @@ func Like_Conseil(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    _, err := db.DB.Exec("INSERT INTO like_conseil (id_conseil, id_utilisateur) VALUES (?, ?)", idConseil, reqBody.IDUtilisateur)
+    _, err := db.DB.Exec("INSERT INTO LIKE_CONSEIL (id_conseil, id_utilisateur) VALUES (?, ?)", idConseil, reqBody.IDUtilisateur)
     
     if err != nil {
         http.Error(response, "Erreur lors de l'ajout du like", http.StatusInternalServerError)

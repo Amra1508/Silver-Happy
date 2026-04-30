@@ -122,8 +122,8 @@ func GetRevenusDetails(response http.ResponseWriter, request *http.Request) {
                 SUM(CASE WHEN c.id_commande IS NOT NULL THEN p.prix ELSE 0 END) as total_commandes,
                 SUM(CASE WHEN a.id_abonnement IS NOT NULL THEN p.prix ELSE 0 END) as total_abonnements
             FROM PAIEMENT p
-            LEFT JOIN commande c ON p.id_paiement = c.id_paiement
-            LEFT JOIN abonnement a ON p.id_paiement = a.id_paiement
+            LEFT JOIN COMMANDE c ON p.id_paiement = c.id_paiement
+            LEFT JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
             WHERE p.date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             GROUP BY jour
             ORDER BY jour ASC
