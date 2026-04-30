@@ -177,7 +177,7 @@ func Create_Prestataire_Evenement(response http.ResponseWriter, request *http.Re
     }
 
     var categorieID int
-    queryCat := `SELECT id_categorie FROM prestataire WHERE id_prestataire = ?` 
+    queryCat := `SELECT id_categorie FROM PRESTATAIRE WHERE id_prestataire = ?` 
     err = tx.QueryRow(queryCat, providerID).Scan(&categorieID)
     if err != nil {
         tx.Rollback()

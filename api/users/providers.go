@@ -566,7 +566,7 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
 
 	rows, err := db.DB.Query(`
         SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image, e.date_fin_boost
-        FROM evenement e
+        FROM EVENEMENT e
         INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
         WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
         ORDER BY 

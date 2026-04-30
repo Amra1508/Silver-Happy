@@ -206,7 +206,7 @@ func Read_One_Service(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	var service models.Service
 
-	err := db.DB.QueryRow("SELECT id_service, nom, description FROM service WHERE id_service = ?", id).Scan(&service.ID, &service.Nom, &service.Description)
+	err := db.DB.QueryRow("SELECT id_service, nom, description FROM SERVICE WHERE id_service = ?", id).Scan(&service.ID, &service.Nom, &service.Description)
 
 	if err != nil {
 		http.Error(response, "Service non trouvé", http.StatusNotFound)
@@ -226,7 +226,7 @@ func Read_User_Services(response http.ResponseWriter, request *http.Request) {
 
 	query := `
 		SELECT r.id_reservation, s.id_service, s.nom, s.description, r.date_heure 
-		FROM reservation_service r 
+		FROM RESERVATION_SERVICE r 
 		JOIN service s ON r.id_service = s.id_service 
 		WHERE r.id_utilisateur = ? 
 		ORDER BY r.date_heure ASC
@@ -361,7 +361,7 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 	err = db.DB.QueryRow("SELECT id_prestataire FROM SERVICE WHERE id_service = ?", idService).Scan(&idPrestataire)
 	
 	if err != nil {
-		fmt.Println("❌ ERREUR : Impossible de trouver le prestataire pour le service :", err)
+		fmt.Println("ERREUR : Impossible de trouver le prestataire pour le service :", err)
 	} else {
 		cleanDate := CleanDateForMySQL(dateHeure)
 
@@ -371,10 +371,10 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 		)
 
 		if errUpdate != nil {
-			fmt.Println("❌ ERREUR UPDATE DISPONIBILITE :", errUpdate)
+			fmt.Println("ERREUR UPDATE DISPONIBILITE :", errUpdate)
 		} else {
 			affectedRows, _ := resUpdate.RowsAffected()
-			fmt.Printf("✅ DEBUG - Créneaux libérés : %d (Prestataire: %d, Date: %s)\n", affectedRows, idPrestataire, cleanDate)
+			fmt.Printf("DEBUG - Créneaux libérés : %d (Prestataire: %d, Date: %s)\n", affectedRows, idPrestataire, cleanDate)
 		}
 	}
 

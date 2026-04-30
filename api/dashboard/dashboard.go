@@ -75,7 +75,7 @@ func Revenus(response http.ResponseWriter, request *http.Request) {
 			SUM(
 				CASE 
 					WHEN id_paiement IN (SELECT id_paiement FROM INSCRIPTION WHERE id_paiement IS NOT NULL) THEN prix * 0.01
-					WHEN id_paiement IN (SELECT id_paiement FROM reservation_service WHERE id_paiement IS NOT NULL) THEN prix * 0.01
+					WHEN id_paiement IN (SELECT id_paiement FROM RESERVATION_SERVICE WHERE id_paiement IS NOT NULL) THEN prix * 0.01
 					ELSE prix 
 				END
 			) as total 
@@ -121,7 +121,7 @@ func GetRevenusDetails(response http.ResponseWriter, request *http.Request) {
                 DATE(p.date_paiement) as jour,
                 SUM(CASE WHEN c.id_commande IS NOT NULL THEN p.prix ELSE 0 END) as total_commandes,
                 SUM(CASE WHEN a.id_abonnement IS NOT NULL THEN p.prix ELSE 0 END) as total_abonnements
-            FROM paiement p
+            FROM PAIEMENT p
             LEFT JOIN commande c ON p.id_paiement = c.id_paiement
             LEFT JOIN abonnement a ON p.id_paiement = a.id_paiement
             WHERE p.date_paiement >= DATE_SUB(NOW(), INTERVAL 30 DAY)

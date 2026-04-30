@@ -268,7 +268,7 @@ func Unlike_Conseil(response http.ResponseWriter, request *http.Request) {
         return
     }
 
-    res, err := db.DB.Exec("DELETE FROM like_conseil WHERE id_conseil = ? AND id_utilisateur = ?", idConseil, reqBody.IDUtilisateur)
+    res, err := db.DB.Exec("DELETE FROM LIKE_CONSEIL WHERE id_conseil = ? AND id_utilisateur = ?", idConseil, reqBody.IDUtilisateur)
     
     if err != nil {
         http.Error(response, "Erreur lors de la suppression du like", http.StatusInternalServerError)

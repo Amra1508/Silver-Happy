@@ -398,7 +398,7 @@ func Success_Boost(response http.ResponseWriter, request *http.Request) {
 	}
 
 	if typeBoost == "evenement" {
-		_, errDB := db.DB.Exec(`UPDATE evenement SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_evenement = ?`, targetID)
+		_, errDB := db.DB.Exec(`UPDATE EVENEMENT SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_evenement = ?`, targetID)
 
 		if errDB != nil {
 			fmt.Println("Erreur MAJ événement boost:", errDB)

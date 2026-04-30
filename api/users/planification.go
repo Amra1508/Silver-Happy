@@ -29,7 +29,7 @@ func Read_User_Planning(response http.ResponseWriter, request *http.Request) {
 
 	sqlEvents := `
 		SELECT e.id_evenement, e.nom, e.description, e.lieu, e.date_debut, e.date_fin
-		FROM evenement e
+		FROM EVENEMENT e
 		JOIN INSCRIPTION i ON e.id_evenement = i.id_evenement
 		WHERE i.id_utilisateur = ?
 	`
