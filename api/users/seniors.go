@@ -750,7 +750,7 @@ func Success_Subscription(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var nomU, prenomU string
-	errInfo := db.DB.QueryRow("SELECT nom, prenom FROM UTILISATEUR WHERE id = ?", userID).Scan(&nomU, &prenomU)
+	errInfo := db.DB.QueryRow("SELECT nom, prenom FROM UTILISATEUR WHERE id_utilisateur = ?", userID).Scan(&nomU, &prenomU)
 
 	if errInfo == nil {
 		formule := "Abonnement Senior Silver Happy (" + periode + ")"
@@ -822,4 +822,49 @@ func Cancel_Subscription(response http.ResponseWriter, request *http.Request) {
 
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(map[string]string{"message": "Renouvellement automatique désactivé."})
+}
+
+func Get_Contrat(response http.ResponseWriter, request *http.Request) {
+	if utils.HandleCORS(response, request, "GET") {
+		return
+	}
+
+	providerID := request.PathValue("id")
+
+	sqlQuery := `
+		SELECT p.id_paiement, IFNULL(p.date_paiement, NOW()), p.prix, p.statut, IFNULL(p.url_facture, ''), a.description, COALESCE(a.url_contrat, '')
+		FROM PAIEMENT p
+		JOIN ABONNEMENT a ON p.id_paiement = a.id_paiement
+		JOIN UTILISATEUR u ON u.id_abonnement = a.id_abonnement
+		WHERE u.id_utilisateur = ?
+		ORDER BY p.date_paiement DESC
+	`
+
+	rows, err := db.DB.Query(sqlQuery, providerID)
+	if err != nil {
+		http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var invoices []models.InvoiceResponse
+
+	for rows.Next() {
+		var inv models.InvoiceResponse
+		var urlContrat string
+
+		if err := rows.Scan(&inv.ID, &inv.DatePaiement, &inv.Prix, &inv.Statut, &inv.URLFacture, &inv.Description, &urlContrat); err == nil {
+			if urlContrat != "" {
+				inv.URLContrat = utils.GetAPIBaseURL() + urlContrat
+			}
+			invoices = append(invoices, inv)
+		}
+	}
+
+	if invoices == nil {
+		invoices = []models.InvoiceResponse{}
+	}
+
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(invoices)
 }

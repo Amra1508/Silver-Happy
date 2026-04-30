@@ -277,7 +277,9 @@
                                 <span class="text-xs text-gray-400">${s.adresse || ''} ${s.code_postal || ''} ${s.ville || ''}</span>
                             </td>
                             <td class="p-4">
-                                Statut: <strong>${s.statut}</strong>
+                                <button onclick="adminViewContract(${s.id})" class="flex items-center gap-2 text-[#1C5B8F] bg-[#1C5B8F]/10 hover:bg-[#1C5B8F]/20 px-3 py-1.5 rounded-full text-xs font-bold transition-all">
+                                    Voir contrat
+                                </button>
                             </td>
                             <td class="p-4">${banCol}</td>
                             <td class="p-4 flex justify-center gap-3 mt-2">
@@ -294,6 +296,28 @@
                 showAlert(err.message || "Erreur réseau lors de la récupération des seniors.", false);
             }
         }
+
+        window.adminViewContract = async function(userId) {
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/contrat/${userId}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0 && data[0].url_contrat) {
+                        window.open(data[0].url_contrat, '_blank');
+                    } else {
+                        alert("Aucun document de contrat disponible pour cet abonnement.");
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur contrat:", error);
+            }
+        };
 
         function renderPagination(totalPages, totalItems) {
             let paginationContainer = document.getElementById('pagination-controls');
@@ -524,7 +548,7 @@
         });
 
         async function searchAddress(ChampSelected, suggestionsId, cityId, zipCodeId, countryId) {
-        
+
             const addressInput = document.getElementById(ChampSelected);
             const resultBox = document.getElementById(suggestionsId);
             const typedText = addressInput.value;
@@ -539,21 +563,21 @@
             resultBox.innerHTML = '';
 
             data.features.forEach(foundAddress => {
-                
-                const clickableItem = document.createElement('li'); 
-                
+
+                const clickableItem = document.createElement('li');
+
                 clickableItem.className = "px-4 py-2 cursor-pointer hover:bg-[#1C5B8F] hover:text-white border-b text-sm";
-                clickableItem.textContent = foundAddress.properties.label; 
-                
+                clickableItem.textContent = foundAddress.properties.label;
+
                 clickableItem.onclick = () => {
-                    addressInput.value = foundAddress.properties.name; 
-                    document.getElementById(cityId).value = foundAddress.properties.city; 
+                    addressInput.value = foundAddress.properties.name;
+                    document.getElementById(cityId).value = foundAddress.properties.city;
                     document.getElementById(zipCodeId).value = foundAddress.properties.postcode;
                     document.getElementById(countryId).value = "France";
-                    
+
                     resultBox.innerHTML = '';
                 };
-                
+
                 resultBox.appendChild(clickableItem);
             });
         }

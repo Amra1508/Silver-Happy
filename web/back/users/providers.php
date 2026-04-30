@@ -102,13 +102,21 @@
                             </div>
                             <div class="space-y-2">
                                 <h4 class="font-bold text-[#1C5B8F] text-base mb-2 border-b pb-1">Activité</h4>
-                                <p><span class="text-gray-500">SIRET :</span> <strong id="vp-siret"></strong> <span id="vp-siret-icon" class="ml-1 text-base cursor-help"></span></p>   
+                                <p><span class="text-gray-500">SIRET :</span> <strong id="vp-siret"></strong> <span id="vp-siret-icon" class="ml-1 text-base cursor-help"></span></p>
                                 <p><span class="text-gray-500">Prestation :</span> <strong id="vp-type"></strong></p>
                                 <p><span class="text-gray-500">Statut actuel :</span> <span id="vp-validation"></span></p>
                             </div>
                         </div>
 
                         <div>
+                            <h4 class="font-bold text-[#1C5B8F] text-base mb-2 border-b pb-1">Contrat d'abonnement</h4>
+
+                            <div id="container-contrat-prestataire" class="mt-3 hidden">
+                                <a id="btn-voir-contrat" target="_blank" class="flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100 shadow-sm mb-8 text-[#1C5B8F] font-semibold text-sm truncate">
+                                    📄 Voir le contrat
+                                </a>
+                            </div>
+
                             <h4 class="font-bold text-[#1C5B8F] text-base mb-2 border-b pb-1">Documents du prestataire</h4>
 
                             <div id="vp-documents-list" class="text-sm text-gray-500 mb-8">
@@ -463,30 +471,32 @@
             document.getElementById('vp-date-creation').textContent = provider.date_creation ? provider.date_creation : "-";
             document.getElementById('vp-siret').textContent = provider.siret;
 
-                const icon = document.getElementById('vp-siret-icon');
+            const icon = document.getElementById('vp-siret-icon');
 
-                const imgLoading = '<img src="/back/icons/loading.png" class="w-5 h-5 inline-block animate-spin" alt="Vérification...">';
-                const imgValid   = '<img src="/back/icons/check.png" class="w-5 h-5 inline-block" alt="Valide">';
-                const imgInvalid = '<img src="/back/icons/cross.png" class="w-5 h-5 inline-block" alt="Invalide">';
-                const imgWarning = '<img src="/back/icons/warning.png" class="w-5 h-5 inline-block" alt="Erreur">';
+            const imgLoading = '<img src="/back/icons/loading.png" class="w-5 h-5 inline-block animate-spin" alt="Vérification...">';
+            const imgValid = '<img src="/back/icons/check.png" class="w-5 h-5 inline-block" alt="Valide">';
+            const imgInvalid = '<img src="/back/icons/cross.png" class="w-5 h-5 inline-block" alt="Invalide">';
+            const imgWarning = '<img src="/back/icons/warning.png" class="w-5 h-5 inline-block" alt="Erreur">';
 
-                icon.innerHTML = provider.siret?.length === 14 ? imgLoading : imgInvalid;
+            icon.innerHTML = provider.siret?.length === 14 ? imgLoading : imgInvalid;
 
-                if (provider.siret?.length === 14) {
-                    try {
-                        const req = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${provider.siret}&page=1&per_page=1`);
-                        const { results } = await req.json();
-                        
-                        const isOk = results?.[0]?.etat_administratif === 'A';
-                        
-                        icon.innerHTML = isOk ? imgValid : imgInvalid;
-                        icon.title = isOk ? results[0].nom_complet : 'Fermée ou introuvable';
-                    } catch {
-                        icon.innerHTML = imgWarning;
-                        icon.title = "Erreur de connexion à l'API";
-                    }
+            if (provider.siret?.length === 14) {
+                try {
+                    const req = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${provider.siret}&page=1&per_page=1`);
+                    const {
+                        results
+                    } = await req.json();
+
+                    const isOk = results?.[0]?.etat_administratif === 'A';
+
+                    icon.innerHTML = isOk ? imgValid : imgInvalid;
+                    icon.title = isOk ? results[0].nom_complet : 'Fermée ou introuvable';
+                } catch {
+                    icon.innerHTML = imgWarning;
+                    icon.title = "Erreur de connexion à l'API";
                 }
-            
+            }
+
             document.getElementById('vp-type').textContent = provider.categorie || "Non définie";
 
             if (provider.status === 'validé') {
@@ -495,6 +505,32 @@
                 document.getElementById('vp-validation').innerHTML = '<span class="font-bold">Refusé (' + provider.motif_refus + ')</span>';
             } else {
                 document.getElementById('vp-validation').innerHTML = '<span class="font-bold">En attente</span>';
+            }
+
+            const containerContrat = document.getElementById('container-contrat-prestataire');
+            const btnContrat = document.getElementById('btn-voir-contrat');
+
+            try {
+                const resContrat = await fetch(`${window.API_BASE_URL}/prestataire/${id}/invoices`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (resContrat.ok) {
+                    const invoices = await resContrat.json();
+
+                    const invoiceWithContract = invoices.find(inv => inv.url_contrat && inv.url_contrat !== "");
+
+                    if (invoiceWithContract) {
+                        containerContrat.classList.remove('hidden');
+                        btnContrat.href = invoiceWithContract.url_contrat;
+                    } else {
+                        containerContrat.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur lors de la récupération du contrat prestataire:", err);
+                containerContrat.classList.add('hidden');
             }
 
             const documentsArea = document.getElementById('vp-documents-list');
@@ -697,14 +733,16 @@
 
             try {
                 const res = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${siret}&page=1&per_page=1`);
-                const { results } = await res.json();
+                const {
+                    results
+                } = await res.json();
 
                 if (results && results.length && results[0].etat_administratif === 'A') {
                     status_siret.textContent = `${results[0].nom_complet}`;
                     status_siret.className = 'text-sm text-green-600 font-semibold mt-1';
                     return true;
                 }
-                        
+
                 status_siret.textContent = (results && results.length) ? 'Entreprise fermée (cessé)' : 'SIRET introuvable.';
                 status_siret.className = 'text-sm text-red-600 font-semibold mt-1';
                 return false;
@@ -763,7 +801,7 @@
                 }
 
                 toggleModal('add-modal');
-                document.getElementById('add-form').reset(); 
+                document.getElementById('add-form').reset();
                 showAlert("Prestataire ajouté avec succès !", true);
                 loadProviders(1);
             } else {

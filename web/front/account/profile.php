@@ -209,7 +209,7 @@ if (!isset($_COOKIE['session_token'])) {
 
                 if (response.ok) {
                     const user = await response.json();
-                    
+
                     currentUserId = user.id_utilisateur || user.id;
 
                     if (user.id_abonnement && user.id_abonnement !== null && user.id_abonnement !== 0) {
@@ -230,7 +230,11 @@ if (!isset($_COOKIE['session_token'])) {
                                 isExpired = true;
                             }
 
-                            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                            const options = {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            };
                             dateFinFormatee = debutDate.toLocaleDateString('fr-FR', options);
                         }
 
@@ -240,17 +244,29 @@ if (!isset($_COOKIE['session_token'])) {
                             authBadge.onclick = () => window.location.href = "/front/services/subscription.php";
                         } else {
                             authBadge.innerHTML = `
-                                Abonné(e) jusqu'au ${dateFinFormatee} 
-                                <span onclick="cancelSubscription()" class="ml-3 text-red-500 hover:text-red-700 underline text-xs cursor-pointer transition-colors">
-                                    Résilier
-                                </span>
+                            <div class="flex items-center gap-3">
+                                    <span>Abonné(e) jusqu'au ${dateFinFormatee}</span>
+                                    <div class="flex items-center gap-2 ml-2 border-l border-yellow-700/30 pl-3">
+                                        <button onclick="viewContract()" class="text-[#1C5B8F] hover:text-[#154670] underline text-xs transition-colors">
+                                            Voir mon contrat
+                                        </button>
+                                        <span onclick="cancelSubscription()" class="text-red-500 hover:text-red-700 underline text-xs cursor-pointer transition-colors">
+                                            Résilier
+                                        </span>
+                                    </div>
+                                </div>
+                                
                             `;
                             authBadge.className = "text-sm pl-4 pr-3 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm flex items-center";
                         }
                     } else {
-                        authBadge.innerHTML = "Non abonné(e) <span class='ml-1 text-[#1C5B8F] underline text-xs'>S'abonner</span>";
-                        authBadge.className = "cursor-pointer text-sm px-4 py-1 bg-gray-100 border border-gray-300 text-gray-500 rounded-full font-bold shadow-sm hover:bg-gray-200 transition-colors";
-                        authBadge.onclick = () => window.location.href = "/front/services/subscription.php";
+                        authBadge.innerHTML = `
+                                Abonné(e) jusqu'au ${dateFinFormatee} 
+                                <span onclick="cancelSubscription()" class="ml-3 text-red-500 hover:text-red-700 underline text-xs cursor-pointer transition-colors">
+                                    Résilier
+                                </span>
+                        `;
+                        authBadge.className = "text-sm pl-4 pr-3 py-1 bg-[#E1AB2B]/20 border border-[#E1AB2B] text-yellow-700 rounded-full font-bold shadow-sm flex items-center";
                     }
 
                     document.getElementById('first_name').value = user.prenom || '';
@@ -306,7 +322,9 @@ if (!isset($_COOKIE['session_token'])) {
                 try {
                     const response = await fetch(`${window.API_BASE_URL}/auth/update`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         credentials: 'include',
                         body: JSON.stringify(data)
                     });
@@ -328,7 +346,29 @@ if (!isset($_COOKIE['session_token'])) {
                     messageBox.classList.remove('hidden');
                 }
             });
-            
+
+            window.viewContract = async function() {
+                if (!currentUserId) return;
+
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/contrat/${currentUserId}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data && data.length > 0 && data[0].url_contrat) {
+                            window.open(data[0].url_contrat, '_blank');
+                        } else {
+                            alert("Aucun document de contrat disponible pour cet abonnement.");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Erreur contrat:", error);
+                }
+            };
+
             const btnDeleteTrigger = document.getElementById('btn_delete_account_trigger');
             const btnCancelDelete = document.getElementById('btn_cancel_delete');
             const btnConfirmDelete = document.getElementById('btn_confirm_delete');
@@ -350,7 +390,7 @@ if (!isset($_COOKIE['session_token'])) {
 
                 try {
                     const deleteRes = await fetch(`${window.API_BASE_URL}/seniors/delete/${currentUserId}`, {
-                        method: 'DELETE', 
+                        method: 'DELETE',
                         credentials: 'include'
                     });
 
@@ -362,7 +402,7 @@ if (!isset($_COOKIE['session_token'])) {
                     }
 
                     await fetch(`${window.API_BASE_URL}/auth/logout`, {
-                        method: 'POST', 
+                        method: 'POST',
                         credentials: 'include'
                     });
 
@@ -382,13 +422,19 @@ if (!isset($_COOKIE['session_token'])) {
             }
 
             try {
-                const responseMe = await fetch(`${window.API_BASE_URL}/auth/me`, { credentials: 'include' });
+                const responseMe = await fetch(`${window.API_BASE_URL}/auth/me`, {
+                    credentials: 'include'
+                });
                 const user = await responseMe.json();
 
                 const response = await fetch(`${window.API_BASE_URL}/abonnement/cancel`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_utilisateur: user.id_utilisateur || user.id })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: user.id_utilisateur || user.id
+                    })
                 });
 
                 if (response.ok) {
@@ -406,39 +452,38 @@ if (!isset($_COOKIE['session_token'])) {
         const addressInput = document.getElementById('address');
         const resultBox = document.getElementById('address_suggestions');
 
-            addressInput.addEventListener('input', async () => {
-                const typedText = addressInput.value;
+        addressInput.addEventListener('input', async () => {
+            const typedText = addressInput.value;
 
             if (typedText.length < 3) {
                 resultBox.innerHTML = '';
                 return;
             }
 
-            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);            
+            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);
             const data = await response.json();
 
             resultBox.innerHTML = '';
 
             data.features.forEach(foundAddress => {
-                
-                const clickableItem = document.createElement('li'); 
-                
+
+                const clickableItem = document.createElement('li');
+
                 clickableItem.className = "px-4 py-2 cursor-pointer hover:bg-[#1C5B8F] hover:text-white border-b text-sm";
-                clickableItem.textContent = foundAddress.properties.label; 
-                
+                clickableItem.textContent = foundAddress.properties.label;
+
                 clickableItem.onclick = () => {
                     addressInput.value = foundAddress.properties.name;
                     document.getElementById('city').value = foundAddress.properties.city;
                     document.getElementById('zip_code').value = foundAddress.properties.postcode;
                     document.getElementById('country').value = "France";
-                    
-                    resultBox.innerHTML = ''; 
+
+                    resultBox.innerHTML = '';
                 };
-                
+
                 resultBox.appendChild(clickableItem);
             });
         });
-
     </script>
 </body>
 

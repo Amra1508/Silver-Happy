@@ -47,6 +47,7 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	os.MkdirAll(dossier, os.ModePerm)
 
 	pdf := gofpdf.New("P", "mm", "A4", "")
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	pdf.AddPage()
 
 	colTitleR, colTitleG, colTitleB := 40, 40, 40
@@ -68,7 +69,7 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	dateJour := time.Now().Format("02/01/2006")
 	refContrat := fmt.Sprintf("REF : SH-%s-%d", strings.ToUpper(typeUtilisateur[:3]), id)
 
-	pdf.CellFormat(190, 5, fmt.Sprintf("Date d'emission : %s", dateJour), "", 1, "R", false, 0, "")
+	pdf.CellFormat(190, 5, tr("Date d'émission : ") + dateJour, "", 1, "R", false, 0, "")
 	pdf.CellFormat(190, 5, refContrat, "", 1, "R", false, 0, "")
 	pdf.Ln(10)
 
@@ -88,11 +89,11 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	pdf.Ln(8)
 
 	pdf.SetFont("Arial", "B", 11)
-	pdf.Cell(0, 6, "D'autre part, l'abonne(e) :")
+	pdf.Cell(0, 6, tr("D'autre part, l'abonné(e) :"))
 	pdf.Ln(5)
 	pdf.SetFont("Arial", "", 11)
 	pdf.SetX(15)
-	pdf.Cell(0, 6, fmt.Sprintf("%s %s (Statut : %s)", strings.ToUpper(nom), prenom, typeUtilisateur))
+	pdf.Cell(0, 6, prenom + " " + strings.ToUpper(nom) + " Statut (" + typeUtilisateur + ")")
 	pdf.Ln(12)
 
 	pdf.SetDrawColor(colLineR, colLineG, colLineB)
@@ -109,15 +110,23 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	}
 
 	drawArticleTitle("Article 1 - Objet du contrat")
-	pdf.MultiCell(0, 6, fmt.Sprintf("Le present contrat a pour objet de definir les conditions dans lesquelles l'abonne(e) beneficie des services de la plateforme Silver Happy, selon la formule choisie : %s.", formule), "", "J", false)
+	pdf.MultiCell(0, 6, tr("Le présent contrat a pour objet de définir les conditions dans lesquelles l'abonné(e) bénéficie des services de la plateforme Silver Happy, selon la formule choisie : " + formule), "", "J", false)
 	pdf.Ln(6)
 
-	drawArticleTitle("Article 2 - Conditions Financieres")
-	pdf.MultiCell(0, 6, fmt.Sprintf("Le montant de l'abonnement est fixe a %s Euros TTC. Ce reglement a ete valide et traite de maniere securisee lors de la souscription sur le site.", prix), "", "J", false)
+	var renouvellement string
+
+	if strings.Contains(strings.ToLower(formule), "mensuel") {
+		renouvellement = "3 euros"
+	} else {
+		renouvellement = "35 euros"
+	}
+
+	drawArticleTitle(tr("Article 2 - Conditions Financières"))
+	pdf.MultiCell(0, 6, tr("Le montant de l'abonnement est de " + prix + " euros TTC, puis sera de " + renouvellement + " par prélèvement automatique. Ce règlement a été validé et traité de manière sécurisée lors de la souscription sur le site."), "", "J", false)
 	pdf.Ln(6)
 
-	drawArticleTitle("Article 3 - Engagement et Modalites")
-	pdf.MultiCell(0, 6, "L'abonnement est effectif des la date de signature numerique du present document. Les conditions de renouvellement, de retractation ou de resiliation sont regies par les Conditions Generales d'Utilisation (CGU) acceptees par l'abonne(e).", "", "J", false)
+	drawArticleTitle(tr("Article 3 - Engagement et Modalités"))
+	pdf.MultiCell(0, 6, tr("L'abonnement est effectif dès la date de signature numérique du présent document. Les conditions de renouvellement, de rétractation ou de résiliation sont régies par les Conditions Générales d'Utilisation (CGU) acceptées par l'abonné(e)."), "", "J", false)
 	pdf.Ln(15)
 
 	pdf.SetFont("Arial", "B", 11)
@@ -134,23 +143,24 @@ func GenerateSubscriptionContract(id int64, nom, prenom, typeUtilisateur, formul
 	pdf.CellFormat(80, 6, "SILVER HAPPY", "", 2, "C", false, 0, "")
 	pdf.SetFont("Arial", "I", 9)
 	pdf.SetTextColor(150, 150, 150)
-	pdf.CellFormat(80, 15, "Validation numerique certifiee", "", 0, "C", false, 0, "")
+	pdf.CellFormat(80, 15, tr("Validation numérique certifiée"), "", 0, "C", false, 0, "")
 
 	pdf.Rect(115, ySig, 80, 30, "D")
 	pdf.SetXY(115, ySig+2)
 	pdf.SetFont("Arial", "B", 10)
 	pdf.SetTextColor(colTextR, colTextG, colTextB)
-	pdf.CellFormat(80, 6, fmt.Sprintf("L'abonne(e) : %s", strings.ToUpper(nom)), "", 2, "C", false, 0, "")
+	pdf.CellFormat(80, 6, tr("L'abonné(e) : " + prenom + " " + strings.ToUpper(nom)), "", 2, "C", false, 0, "")
 	pdf.SetFont("Arial", "I", 9)
 	pdf.SetTextColor(150, 150, 150)
-	pdf.CellFormat(80, 15, "Lu et approuve", "", 0, "C", false, 0, "")
+	pdf.CellFormat(80, 15, tr("Lu et approuvé"), "", 0, "C", false, 0, "")
 
 	pdf.SetY(-20)
 	pdf.SetFont("Arial", "", 8)
 	pdf.SetTextColor(150, 150, 150)
-	pdf.CellFormat(0, 4, "Silver Happy - Document genere automatiquement a la suite de votre paiement.", "", 1, "C", false, 0, "")
+	pdf.CellFormat(0, 4, tr("Silver Happy - Document généré automatiquement à la suite de votre paiement."), "", 1, "C", false, 0, "")
 
-	fileName := fmt.Sprintf("contrat_%s_%d_%d.pdf", typeUtilisateur, id, time.Now().Unix())
+	dateFichier := time.Now().Format("02-01-2006")
+	fileName := fmt.Sprintf("Contrat_Abonnement_%s_%d_%s.pdf", typeUtilisateur, id, dateFichier)
 	filePath := fmt.Sprintf("%s/%s", dossier, fileName)
 
 	err := pdf.OutputFileAndClose(filePath)

@@ -75,7 +75,7 @@
     </div>
 
     <script>
-        const API_BASE = `${window.API_BASE_URL}/dashboard`; 
+        const API_BASE = `${window.API_BASE_URL}/dashboard`;
         const messageBox = document.getElementById('api-message');
 
         function showAlert(msg, isSuccess) {
@@ -154,7 +154,7 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        let valeur = context.parsed.y;
+                                        let valeur = (context.parsed.y).toFixed(2);
                                         let type = valeur < 0 ? 'Dépense' : 'Revenu';
                                         return `${type} : ${valeur} €`;
                                     }
