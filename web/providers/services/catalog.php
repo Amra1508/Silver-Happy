@@ -195,8 +195,22 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         </div>
                     </div>
                 </div>
+
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Durée de récurrence</label>
+                    <select id="recurrence_mois" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
+                        <option value="1">1 mois</option>
+                        <option value="2">2 mois</option>
+                        <option value="3" selected>3 mois</option>
+                        <option value="4">4 mois</option>
+                        <option value="6">6 mois</option>
+                        <option value="12">1 an</option>
+                        <option value="24">2 ans</option>
+                        <option value="36">3 ans</option>
+                    </select>
+                </div>
                 <div class="bg-blue-50 text-[#1C5B8F] p-3 rounded-lg text-xs font-semibold mt-2 border border-blue-100">
-                    ℹ️ Cela génèrera automatiquement tous les créneaux pour ce jour sur les 3 prochains mois. 
+                    ℹ️ Cela génèrera automatiquement tous les créneaux pour ce jour sur la période sélectionnée. 
                 </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('dispoModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
@@ -208,10 +222,20 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
     <script>
         let currentProviderId = null;
+        let isAbonne = false; 
 
         function toggleModal(modalID) {
             document.getElementById(modalID).classList.toggle('hidden');
         }
+
+        const originalToggleModal = toggleModal;
+        toggleModal = function(modalID) {
+            if ((modalID === 'serviceModal' || modalID === 'dispoModal') && !isAbonne) {
+                showAlert("Oups ! Vous devez souscrire à l'Abonnement Pro dans 'Mon Profil' pour utiliser cette fonctionnalité.", false);
+                return; 
+            }
+            originalToggleModal(modalID);
+        };
 
         function showAlert(msg, isSuccess = false) {
             const alertBox = document.getElementById('alert-box');
@@ -423,9 +447,9 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 heure_debut: document.getElementById('heure_debut').value,
                 heure_fin: document.getElementById('heure_fin').value,
                 duree_minutes: parseInt(document.getElementById('duree_minutes').value),
-                
                 pause_debut: document.getElementById('pause_debut').value,
-                pause_fin: document.getElementById('pause_fin').value
+                pause_fin: document.getElementById('pause_fin').value,
+                recurrence_mois: parseInt(document.getElementById('recurrence_mois').value)
             };
 
             try {
@@ -456,6 +480,9 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 if (meRes.ok) {
                     const data = await meRes.json();
                     currentProviderId = data.id_prestataire || data.id || data.ID;
+                    
+                    isAbonne = (data.id_abonnement && data.id_abonnement != 0);
+
                     loadServices(); loadDispos();
                 } else window.location.href = "/providers/account/signin.php";
             } catch (err) { console.error("Non connecté"); }

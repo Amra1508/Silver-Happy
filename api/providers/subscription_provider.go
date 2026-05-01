@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/stripe/stripe-go/v78"
 	"github.com/stripe/stripe-go/v78/charge"
@@ -42,9 +43,10 @@ func Paiement_Abonnement_Prestataire(response http.ResponseWriter, request *http
 		       p.debut_abonnement, 
 		       a.type_paiement,
 		       COALESCE((CASE 
+		           WHEN p.id_abonnement IS NULL THEN 0
 		           WHEN a.type_paiement = 'mensuel' THEN DATE_ADD(p.debut_abonnement, INTERVAL 1 MONTH) > NOW()
 		           WHEN a.type_paiement = 'annuel' THEN DATE_ADD(p.debut_abonnement, INTERVAL 1 YEAR) > NOW()
-		           ELSE DATE_ADD(p.debut_abonnement, INTERVAL 1 YEAR) > NOW()
+		           ELSE 0
 		       END), 0) as est_actif
 		FROM PRESTATAIRE p 
 		LEFT JOIN ABONNEMENT a ON p.id_abonnement = a.id_abonnement 
@@ -296,6 +298,23 @@ func Cancel_Subscription_Prestataire(response http.ResponseWriter, request *http
 	if errUpdate != nil {
 		http.Error(response, "Erreur lors de la mise à jour BDD.", http.StatusInternalServerError)
 		return
+	}
+
+	db.DB.Exec("UPDATE PRESTATAIRE SET id_abonnement = NULL WHERE id_prestataire = ?", idProvider)
+
+	now := time.Now()
+	lastDayOfMonth := time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 0, time.Local)
+
+	queryPurgerPlanning := `
+		DELETE FROM DISPONIBILITE 
+		WHERE id_prestataire = ? 
+		AND date_heure > ? 
+		AND est_reserve = 0
+	`
+	_, errPurge := db.DB.Exec(queryPurgerPlanning, idProvider, lastDayOfMonth)
+
+	if errPurge != nil {
+		fmt.Println("Erreur lors de la purge du planning après désabonnement :", errPurge)
 	}
 
 	response.WriteHeader(http.StatusOK)

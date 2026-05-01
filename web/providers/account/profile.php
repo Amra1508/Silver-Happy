@@ -415,7 +415,7 @@
                 const dateFin = getLastDayOfMonth();
                 if (confirm(`Confirmez-vous la résiliation ? Votre accès Premium restera actif jusqu'au ${dateFin}.`)) {
                     try {
-                        const res = await fetch(`${window.API_BASE_URL}/cancel-subscription-prestataire`, {
+                        const res = await fetch(`${window.API_BASE_URL}/prestataire/cancel-subscription`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
