@@ -435,7 +435,12 @@
                     <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-1.5 bg-[#1C5B8F] rounded-b-md"></div>
                     
                     <div class="mt-2 mb-1 flex justify-between items-center">
-                        <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${typePrestation}</span>
+                        <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                        ${s.prestataire_prenom} ${s.prestataire_nom}  
+                        </span>
+                        <a href="profile_provider.php?id=${idPrestataire}&from=services" class="text-[#1C5B8F] hover:text-[#E1AB2B] text-xs font-bold normal-case">
+                            Voir le profil complet
+                        </a>
                     </div>
 
                     <h3 class="text-2xl text-[#1C5B8F] font-bold mt-3 mb-1">${nom}</h3>

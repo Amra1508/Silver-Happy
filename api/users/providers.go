@@ -266,27 +266,26 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 
 	list := make([]map[string]interface{}, 0)
 	for rows.Next() {
-		var id int64
-		var prenom, nom, typePresta string
-		var moyenne float64
-		var nbAvis int
-		var isBoosted int
+    var p models.Prestataire
+    var moyenne float64
+    var nbAvis int
+    var isBoosted int
 
-		if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis, &isBoosted); err != nil {
-			fmt.Println("Ligne ignorée dans le Top ! Erreur de Scan :", err)
-			continue
-		}
+    err := rows.Scan(&p.ID, &p.Prenom, &p.Nom, &p.CategorieNom, &moyenne, &nbAvis, &isBoosted)
+    if err != nil {
+        continue
+    }
 
-		list = append(list, map[string]interface{}{
-			"id_prestataire":  id,
-			"prenom":          prenom,
-			"nom":             nom,
-			"type_prestation": typePresta,
-			"moyenne":         moyenne,
-			"nombre_avis":     nbAvis,
-			"is_boosted":      isBoosted,
-		})
-	}
+    list = append(list, map[string]interface{}{
+        "id_prestataire": p.ID,
+        "prenom":         p.Prenom,
+        "nom":            p.Nom,
+        "categorie":      p.CategorieNom,
+        "moyenne":        moyenne,
+        "nombre_avis":    nbAvis,
+        "is_boosted":     isBoosted,
+    })
+}
 
 	if len(list) == 0 {
 		list = []map[string]interface{}{}

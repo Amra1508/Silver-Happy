@@ -31,9 +31,10 @@
         <div id="alert-box" class="hidden max-w-2xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold shadow-sm"></div>
 
         <div class="flex justify-between items-center mx-8">
-            <a href="/front/services/providers.php">
+            <a href="/front/services/providers.php" id="back-button-link">
                 <button class="flex items-center rounded-md px-6 button-blue">
-                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir aux prestataires
+                    <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2">
+                    <span id="back-button-text">Revenir aux prestataires</span>
                 </button>
             </a>
         </div>
@@ -235,6 +236,22 @@
                 showAlert("Impossible de joindre le serveur.", "error");
             }
         };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromPage = urlParams.get('from');
+
+            const backLink = document.getElementById('back-button-link');
+            const backText = document.getElementById('back-button-text');
+
+            if (fromPage === 'services') {
+                backLink.href = "/front/services/catalog.php";
+                backText.textContent = "Revenir aux services";
+            } else {
+                backLink.href = "/front/services/providers.php";
+                backText.textContent = "Revenir aux prestataires";
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchCurrentUser();

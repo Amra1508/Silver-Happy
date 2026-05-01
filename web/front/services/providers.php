@@ -85,7 +85,7 @@
                 prestataires.forEach(p => {
                     const id = p.id_prestataire;
                     const nomComplet = `${p.prenom} ${p.nom}`;
-                    const categorie = p.type_prestation || 'Non spécifié';
+                    const categorie = p.categorie || 'Non spécifié';
 
                     const noteMoyenne = parseFloat(p.moyenne).toFixed(1);
                     const nbAvis = p.nombre_avis;
@@ -93,8 +93,8 @@
                     const stars = "★".repeat(Math.round(noteMoyenne)) + "☆".repeat(5 - Math.round(noteMoyenne));
 
                     const isBoosted = p.is_boosted === 1 || p.is_boosted === true;
-                    
-                    const borderClass = isBoosted ? "border-2 border-[#E1AB2B] shadow-[#E1AB2B]/20 shadow-xl" : "border-l-8 border-[#1C5B8F] shadow-md"; 
+
+                    const borderClass = isBoosted ? "border-2 border-[#E1AB2B] shadow-[#E1AB2B]/20 shadow-xl" : "border-l-8 border-[#1C5B8F] shadow-md";
 
                     const badgeBoost = isBoosted ? `<span class="absolute -top-5 -left-5 bg-[#E1AB2B] text-white p-3 rounded-full shadow-lg text-2xl z-10" title="Top Prestataire">⭐</span>` : "";
 
