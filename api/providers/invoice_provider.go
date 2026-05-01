@@ -8,6 +8,7 @@ import (
 	"main/models"
 	"main/utils"
 	"net/http"
+	"sort"
 
 	"github.com/jung-kurt/gofpdf"
 )
@@ -104,7 +105,7 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 	idFacture := request.PathValue("id")
 
 	query := `
-		SELECT f.mois_annee, f.montant, f.frais_plateforme, f.montant_net, f.date, f.statut, f.stripe_transfer_id,
+		SELECT f.id_prestataire, f.mois_annee, f.montant, f.frais_plateforme, f.montant_net, f.date, f.statut, f.stripe_transfer_id,
 		       p.nom, p.prenom, p.email, p.siret
 		FROM FACTURE f
 		JOIN PRESTATAIRE p ON f.id_prestataire = p.id_prestataire
@@ -114,9 +115,10 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 	var moisAnnee, dateFacture, statut, nom, prenom, email, siret string
 	var transferID sql.NullString
 	var montantBrut, frais, montantNet float64
+	var providerID int
 
 	err := db.DB.QueryRow(query, idFacture).Scan(
-		&moisAnnee, &montantBrut, &frais, &montantNet, &dateFacture, &statut, &transferID,
+		&providerID, &moisAnnee, &montantBrut, &frais, &montantNet, &dateFacture, &statut, &transferID,
 		&nom, &prenom, &email, &siret,
 	)
 
@@ -125,7 +127,63 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 		return
 	}
 
+	var details []models.FactureDetail
+
+	rowsServ, err := db.DB.Query(`
+    SELECT s.nom, s.prix, d.date_heure
+    FROM DISPONIBILITE d
+    JOIN SERVICE s ON d.id_prestataire = s.id_prestataire
+    WHERE d.id_prestataire = ? 
+      AND d.est_reserve = 1 
+      AND DATE_FORMAT(d.date_heure, '%Y-%m') = ?`, providerID, moisAnnee)
+
+	if err != nil {
+		fmt.Println("Erreur SQL Services:", err)
+		http.Error(response, "Erreur lors de la récupération des services", 500)
+		return
+	}
+	defer rowsServ.Close()
+
+	for rowsServ.Next() {
+		var l models.FactureDetail
+		l.Type = "Service"
+		if err := rowsServ.Scan(&l.Libelle, &l.Prix, &l.Date); err != nil {
+			fmt.Println("Erreur Scan Service:", err)
+			continue
+		}
+		details = append(details, l)
+	}
+
+	rowsEv, err := db.DB.Query(`
+    SELECT e.nom, e.prix, e.date_debut
+    FROM EVENEMENT e
+    JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+    WHERE pe.id_prestataire = ? 
+      AND DATE_FORMAT(e.date_debut, '%Y-%m') = ?`, providerID, moisAnnee)
+
+	if err != nil {
+		fmt.Println("Erreur SQL détaillée Evenements:", err)
+		http.Error(response, "Erreur lors de la récupération des évènements", 500)
+		return
+	}
+	defer rowsEv.Close()
+
+	for rowsEv.Next() {
+		var l models.FactureDetail
+		l.Type = "Evènement"
+		if err := rowsEv.Scan(&l.Libelle, &l.Prix, &l.Date); err != nil {
+			fmt.Println("Erreur Scan Evenement:", err)
+			continue
+		}
+		details = append(details, l)
+	}
+
+	sort.Slice(details, func(i, j int) bool {
+        return details[i].Date < details[j].Date
+    })
+
 	pdf := gofpdf.New("P", "mm", "A4", "")
+    tr := pdf.UnicodeTranslatorFromDescriptor("")
 	pdf.AddPage()
 	pdf.SetMargins(15, 15, 15)
 
@@ -158,7 +216,7 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 	pdf.Cell(0, 5, "Plateforme de mise en relation")
 
 	pdf.SetXY(110, yPos)
-	pdf.Rect(110, yPos, 85, 35, "F")
+	pdf.Rect(110, yPos, 85, 25, "F")
 	pdf.SetXY(113, yPos+5)
 	pdf.SetFont("Arial", "B", 10)
 	pdf.Cell(0, 5, "Destinataire :")
@@ -174,19 +232,36 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 	pdf.Cell(0, 5, fmt.Sprintf("SIRET: %s", siret))
 	pdf.Ln(15)
 
-	pdf.SetFillColor(28, 91, 143)
+	pdf.SetFont("Arial", "B", 11)
+    pdf.Cell(0, 10, tr("Détail des prestations du mois :"))
+    pdf.Ln(12)
+
+    pdf.SetFillColor(28, 91, 143)
 	pdf.SetTextColor(255, 255, 255)
 	pdf.SetFont("Arial", "B", 10)
-	pdf.CellFormat(100, 10, "Description", "1", 0, "L", true, 0, "")
-	pdf.CellFormat(40, 10, "Periode", "1", 0, "C", true, 0, "")
-	pdf.CellFormat(40, 10, "Montant Brut", "1", 1, "R", true, 0, "")
+    pdf.CellFormat(30, 8, "Date", "B", 0, "L", true, 0, "")
+    pdf.CellFormat(25, 8, "Type", "B", 0, "L", true, 0, "")
+    pdf.CellFormat(95, 8, "Description", "B", 0, "L", true, 0, "")
+    pdf.CellFormat(35, 8, "Montant HT", "B", 1, "R", true, 0, "")
 
-	pdf.SetTextColor(51, 51, 51)
-	pdf.SetFont("Arial", "", 10)
-	pdf.CellFormat(100, 10, "Revenus (Prestations & Evenements)", "1", 0, "L", false, 0, "")
-	pdf.CellFormat(40, 10, moisAnnee, "1", 0, "C", false, 0, "")
-	pdf.CellFormat(40, 10, fmt.Sprintf("%.2f EUR", montantBrut), "1", 1, "R", false, 0, "")
-	pdf.Ln(10)
+    pdf.SetFont("Arial", "", 9)
+    pdf.SetTextColor(50, 50, 50)
+
+    for _, l := range details {
+        dateStr := l.Date
+        if len(l.Date) >= 10 {
+            dateStr = l.Date[8:10] + "/" + l.Date[5:7] + "/" + l.Date[0:4]
+        }
+
+        pdf.CellFormat(30, 8, dateStr, "", 0, "L", false, 0, "")
+        pdf.CellFormat(25, 8, tr(l.Type), "", 0, "L", false, 0, "")
+        pdf.CellFormat(95, 8, tr(l.Libelle), "", 0, "L", false, 0, "")
+        pdf.CellFormat(35, 8, fmt.Sprintf(tr("%.2f €"), l.Prix), "", 1, "R", false, 0, "")
+        
+        pdf.SetDrawColor(230, 230, 230)
+        pdf.Line(15, pdf.GetY(), 195, pdf.GetY())
+    }
+    pdf.Ln(10)
 
 	pdf.SetX(120)
 	pdf.SetFont("Arial", "B", 10)

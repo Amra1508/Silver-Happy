@@ -266,6 +266,13 @@ type FactureMensuelle struct {
 	Statut          string  `json:"statut"`
 }
 
+type FactureDetail struct {
+    Date    string
+    Libelle string
+    Type    string
+    Prix    float64
+}
+
 type CreationDisponibilite struct {
 	JourSemaine    int    `json:"jour_semaine"`
 	HeureDebut     string `json:"heure_debut"`
