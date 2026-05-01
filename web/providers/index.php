@@ -45,18 +45,20 @@
                         </a>
                     </div>
 
-                    <div class="bg-gradient-to-r from-[#1C5B8F] to-blue-800 rounded-[2rem] p-8 shadow-lg flex flex-col md:flex-row items-center justify-between border border-blue-400">
-                        <div class="text-white mb-4 md:mb-0">
-                            <h3 class="text-2xl font-bold flex items-center gap-2">
-                                Manque de visibilité ?
-                            </h3>
-                            <p class="text-blue-100 mt-2">Faites apparaître votre profil en tête de liste dans l'Espace Senior pendant 7 jours.</p>
+                    <div id="banner-boost" class="hidden bg-[#1C5B8F] rounded-3xl p-8 text-white flex flex-col lg:flex-row items-center justify-between shadow-lg relative overflow-hidden mt-2 mb-2">
+                        <div class="relative z-10 mb-6 lg:mb-0 text-center lg:text-left">
+                            <h2 class="text-2xl font-bold mb-2">Manque de visibilité ?</h2>
+                            <p class="text-blue-100 text-sm">Démarquez-vous dans l'Espace Senior et obtenez plus de réservations.</p>
                         </div>
-                        <button onclick="acheterBoost('compte')" class="bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-6 rounded-full shadow-md transition-transform hover:scale-105 whitespace-nowrap">
-                            Booster mon profil (10€)
-                        </button>
+                        <div class="flex flex-col sm:flex-row gap-3 relative z-10">
+                            <button id="btn-boost-services" onclick="acheterBoost('services')" class="hidden bg-[#E1AB2B] hover:bg-yellow-500 text-[#1C5B8F] font-bold py-3 px-5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm">
+                                Booster mes services (10€)
+                            </button>
+                            <button id="btn-boost-profil" onclick="acheterBoost('profil')" class="hidden bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm border border-purple-400">
+                                Booster mon profil (15€)
+                            </button>
+                        </div>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
                             <div class="bg-blue-100 p-4 rounded-full text-[#1C5B8F]"></div>
@@ -223,10 +225,10 @@
         }
 
         async function acheterBoost(typeBoost, targetId = 0) {
-            if (!providerId) return alert("Vous devez être connecté pour effectuer cette action.");
+            if (!window.currentUserId) return alert("Vous devez être connecté pour effectuer cette action.");
 
             const data = {
-                provider_id: parseInt(providerId),
+                provider_id: parseInt(window.currentUserId),
                 type_boost: typeBoost,
                 target_id: parseInt(targetId)
             };
@@ -251,6 +253,38 @@
                 alert("Serveur inaccessible.");
             }
         }
+
+        const updateBannerUI = (dateServices, dateProfil) => {
+            const now = new Date();
+            
+            const isServicesActive = dateServices && new Date(dateServices) > now;
+            const isProfilActive = dateProfil && new Date(dateProfil) > now;
+
+            const banner = document.getElementById('banner-boost');
+            const btnServices = document.getElementById('btn-boost-services');
+            const btnProfil = document.getElementById('btn-boost-profil');
+
+            if (!banner || !btnServices || !btnProfil) return;
+
+            if (isServicesActive && isProfilActive) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            banner.classList.remove('hidden');
+
+            if (!isServicesActive) {
+                btnServices.classList.remove('hidden');
+            } else {
+                btnServices.classList.add('hidden');
+            }
+
+            if (!isProfilActive) {
+                btnProfil.classList.remove('hidden');
+            } else {
+                btnProfil.classList.add('hidden');
+            }
+        };
 
         async function loadRevenueChart(providerId) {
             try {
@@ -293,13 +327,13 @@
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: {
-                                    display: false
+                                legend: { 
+                                    display: false 
                                 },
                                 tooltip: {
                                     callbacks: {
-                                        label: function(context) {
-                                            return context.parsed.y.toFixed(2) + ' €';
+                                        label: function(context) { 
+                                            return context.parsed.y.toFixed(2) + ' €'; 
                                         }
                                     }
                                 }
@@ -307,18 +341,18 @@
                             scales: {
                                 y: {
                                     beginAtZero: true,
-                                    grid: {
-                                        color: '#f3f4f6'
+                                    grid: { 
+                                        color: '#f3f4f6' 
                                     },
                                     ticks: {
-                                        callback: function(value) {
-                                            return value + ' €';
+                                        callback: function(value) { 
+                                            return value + ' €'; 
                                         }
                                     }
                                 },
                                 x: {
-                                    grid: {
-                                        display: false
+                                    grid: { 
+                                        display: false 
                                     }
                                 }
                             }
@@ -331,7 +365,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-
             try {
                 const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
                     method: 'GET',
@@ -346,6 +379,10 @@
                     if (meData.status && (meData.status.toLowerCase() === 'validé' || meData.status.toLowerCase() === 'valide')) {
 
                         document.getElementById('welcome-text').textContent = `Bonjour ${meData.prenom}, voici l'activité de votre profil.`;
+
+                        const dServ = meData.date_fin_boost || meData.DateFinBoost;
+                        const dProf = meData.date_fin_boost_profil || meData.DateFinBoostProfil;
+                        updateBannerUI(dServ, dProf);
 
                         loadRevenueChart(providerId);
 

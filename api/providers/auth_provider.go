@@ -209,7 +209,7 @@ func MePrestataire(response http.ResponseWriter, request *http.Request) {
 	query := `
 		SELECT p.id_prestataire, IFNULL(p.siret,''), IFNULL(p.nom,''), IFNULL(p.prenom,''), p.email, 
 		       IFNULL(p.num_telephone,''), IFNULL(p.date_naissance,''), p.status, IFNULL(p.motif_refus,''),
-		       IFNULL(p.id_categorie,0), IFNULL(id_abonnement, 0), IFNULL(date_fin_boost, ''), IFNULL(c.nom,'') as categorie_nom, IFNULL(stripe_account_id, '')
+		       IFNULL(p.id_categorie,0), IFNULL(id_abonnement, 0), IFNULL(date_fin_boost, ''), IFNULL(date_fin_boost_profil, ''), IFNULL(c.nom,'') as categorie_nom, IFNULL(stripe_account_id, '')
 		FROM PRESTATAIRE p
 		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
 		WHERE p.id_prestataire = ?
@@ -219,7 +219,7 @@ func MePrestataire(response http.ResponseWriter, request *http.Request) {
 	errDB := db.DB.QueryRow(query, claims.UserID).Scan(
 		&provider.ID, &provider.Siret, &provider.Nom, &provider.Prenom, &provider.Email,
 		&provider.NumTelephone, &provider.DateNaissance, &provider.Status, &provider.MotifRefus,
-		&provider.IdCategorie, &provider.IdAbonnement, &provider.DateFinBoost, &provider.CategorieNom, &provider.IdStripeAccount,
+		&provider.IdCategorie, &provider.IdAbonnement, &provider.DateFinBoost, &provider.DateFinBoostProfil, &provider.CategorieNom, &provider.IdStripeAccount,
 	)
 
 	if errDB != nil {

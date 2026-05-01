@@ -44,7 +44,7 @@
             </h2>
         </div>
 
-        <div id="prestataires-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-16 py-4 overflow-hidden">
+        <div id="prestataires-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-16 pt-8 pb-4">
             <div class="w-full text-center py-10 col-span-full">
                 <p class="text-xl text-gray-500 animate-pulse">Chargement des prestataires...</p>
             </div>
@@ -92,10 +92,18 @@
 
                     const stars = "★".repeat(Math.round(noteMoyenne)) + "☆".repeat(5 - Math.round(noteMoyenne));
 
+                    const isBoosted = p.is_boosted === 1 || p.is_boosted === true;
+                    
+                    const borderClass = isBoosted ? "border-2 border-[#E1AB2B] shadow-[#E1AB2B]/20 shadow-xl" : "border-l-8 border-[#1C5B8F] shadow-md"; 
+
+                    const badgeBoost = isBoosted ? `<span class="absolute -top-5 -left-5 bg-[#E1AB2B] text-white p-3 rounded-full shadow-lg text-2xl z-10" title="Top Prestataire">⭐</span>` : "";
+
                     container.innerHTML += `
-                        <div class="bg-white border-l-8 border-[#1C5B8F] rounded-xl shadow-md p-6 flex flex-col hover:shadow-lg transition-all relative overflow-hidden h-full">
+                        <div class="bg-white ${borderClass} rounded-xl p-6 flex flex-col hover:shadow-lg transition-all relative h-full">
                             
-                            <div class="absolute top-4 right-4 flex flex-col items-end">
+                            ${badgeBoost}
+                            
+                            <div class="absolute top-4 right-4 flex flex-col items-end z-10">
                                 <div class="bg-[#E1AB2B] text-white font-bold px-3 py-1 rounded-lg shadow-sm">
                                     ${noteMoyenne} / 5
                                 </div>

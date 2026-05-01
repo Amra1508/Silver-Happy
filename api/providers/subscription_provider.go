@@ -340,8 +340,11 @@ func Paiement_Boost(response http.ResponseWriter, request *http.Request) {
 	if req.TypeBoost == "evenement" {
 		nomProduit = "Boost de l'événement pour 7 jours"
 		prixBoost = 500
-	} else {
+	} else if req.TypeBoost == "profil" {
 		nomProduit = "Boost du profil Prestataire pour 7 jours"
+		prixBoost = 1500
+	} else if req.TypeBoost == "services" {
+		nomProduit = "Boost des services pour 7 jours"
 		prixBoost = 1000
 	}
 
@@ -425,11 +428,22 @@ func Success_Boost(response http.ResponseWriter, request *http.Request) {
 			return
 		}
 		http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/services/events.php?success=boost_valide", http.StatusSeeOther)
-	} else {
+
+	} else if typeBoost == "profil" {
+		_, errDB := db.DB.Exec(`UPDATE PRESTATAIRE SET date_fin_boost_profil = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_prestataire = ?`, providerID)
+
+		if errDB != nil {
+			fmt.Println("Erreur MAJ prestataire boost profil:", errDB)
+			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(response, request, utils.GetFrontBaseURL()+"/providers/account/profile.php?success=boost_profil_valide", http.StatusSeeOther)
+
+	} else if typeBoost == "services" {
 		_, errDB := db.DB.Exec(`UPDATE PRESTATAIRE SET date_fin_boost = DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE id_prestataire = ?`, providerID)
 
 		if errDB != nil {
-			fmt.Println("Erreur MAJ prestataire boost:", errDB)
+			fmt.Println("Erreur MAJ prestataire boost services:", errDB)
 			http.Error(response, "Erreur BDD", http.StatusInternalServerError)
 			return
 		}

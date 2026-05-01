@@ -86,22 +86,23 @@ type Conseil struct {
 }
 
 type Prestataire struct {
-	ID              int64  `json:"id"`
-	Siret           string `json:"siret"`
-	Nom             string `json:"nom"`
-	Prenom          string `json:"prenom"`
-	Email           string `json:"email"`
-	Mdp             string `json:"mdp,omitempty"`
-	NumTelephone    string `json:"num_telephone"`
-	DateNaissance   string `json:"date_naissance"`
-	Status          string `json:"status"`
-	MotifRefus      string `json:"motif_refus"`
-	IdCategorie     int    `json:"id_categorie"`
-	IdAbonnement    int    `json:"id_abonnement"`
-	CategorieNom    string `json:"categorie,omitempty"`
-	DateCreation    string `json:"date_creation"`
-	DateFinBoost    string `json:"date_fin_boost"`
-	IdStripeAccount string `json:"stripe_account_id"`
+	ID                 int64  `json:"id"`
+	Siret              string `json:"siret"`
+	Nom                string `json:"nom"`
+	Prenom             string `json:"prenom"`
+	Email              string `json:"email"`
+	Mdp                string `json:"mdp,omitempty"`
+	NumTelephone       string `json:"num_telephone"`
+	DateNaissance      string `json:"date_naissance"`
+	Status             string `json:"status"`
+	MotifRefus         string `json:"motif_refus"`
+	IdCategorie        int    `json:"id_categorie"`
+	IdAbonnement       int    `json:"id_abonnement"`
+	CategorieNom       string `json:"categorie,omitempty"`
+	DateCreation       string `json:"date_creation"`
+	DateFinBoost       string `json:"date_fin_boost"`
+	DateFinBoostProfil string `json:"date_fin_boost_profil"`
+	IdStripeAccount    string `json:"stripe_account_id"`
 }
 
 type Document struct {
@@ -274,10 +275,10 @@ type FactureMensuelle struct {
 }
 
 type FactureDetail struct {
-    Date    string
-    Libelle string
-    Type    string
-    Prix    float64
+	Date    string
+	Libelle string
+	Type    string
+	Prix    float64
 }
 
 type CreationDisponibilite struct {

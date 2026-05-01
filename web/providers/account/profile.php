@@ -87,21 +87,38 @@
                                 </button>
                             </div>
                             <p id="sub-info-text" class="text-xs text-gray-400 mt-2 mb-6"></p>
-
-                            <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-yellow-50/50 rounded-2xl border border-yellow-100 gap-4">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between p-5 bg-yellow-50 rounded-2xl border border-yellow-200 gap-4 mb-4">
                                 <div>
-                                    <p class="text-sm text-gray-600 font-semibold flex items-center gap-2">
-                                        Visibilité Boostée
+                                    <p class="text-sm text-yellow-900 font-bold flex items-center gap-2">
+                                        Visibilité de vos Services
                                     </p>
-                                    <div id="boost-status" class="mt-1 flex items-center gap-2">
-                                        <span class="inline-block w-3 h-3 rounded-full bg-gray-300 animate-pulse"></span>
-                                        <span class="text-gray-500 italic">Vérification...</span>
+                                    <p class="text-xs text-yellow-700 mb-2">Mettez vos prestations en haut des résultats de recherche.</p>
+                                    <div id="boost-services-status" class="flex items-center gap-2">
+                                        <span class="inline-block w-3 h-3 rounded-full bg-gray-300"></span>
+                                        <span class="text-gray-500 italic text-sm">Vérification...</span>
                                     </div>
                                 </div>
-                                <button type="button" id="btn-buy-boost" onclick="acheterBoost('compte')" class="hidden text-sm font-bold text-[#1C5B8F] hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-xl transition-all border border-blue-300 shadow-sm">
-                                    ⭐ Booster mon profil (10€)
+                                <button type="button" id="btn-buy-boost-services" onclick="acheterBoost('services')" class="text-sm font-bold text-yellow-800 bg-yellow-200 hover:bg-yellow-300 px-5 py-2.5 rounded-xl transition-all border border-yellow-300 shadow-sm whitespace-nowrap">
+                                    ⭐ Booster mes services (10€)
                                 </button>
                             </div>
+
+                            <div class="flex flex-col md:flex-row md:items-center justify-between p-5 bg-purple-50 rounded-2xl border border-purple-200 gap-4">
+                                <div>
+                                    <p class="text-sm text-purple-900 font-bold flex items-center gap-2">
+                                        Visibilité de votre Profil Prestataire
+                                    </p>
+                                    <p class="text-xs text-purple-700 mb-2">Apparaissez tout en haut de la liste des prestataires.</p>
+                                    <div id="boost-profil-status" class="flex items-center gap-2">
+                                        <span class="inline-block w-3 h-3 rounded-full bg-gray-300"></span>
+                                        <span class="text-gray-500 italic text-sm">Vérification...</span>
+                                    </div>
+                                </div>
+                                <button type="button" id="btn-buy-boost-profil" onclick="acheterBoost('profil')" class="text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
+                                    🚀 Booster mon profil (15€)
+                                </button>
+                            </div>
+                            
                             <p id="boost-info-text" class="text-xs text-gray-400 mt-2"></p>
                         </div>
 
@@ -257,8 +274,8 @@
 
             try {
                 const apiBase = window.API_BASE_URL;
-                const response = await fetch(`${apiBase}/paiement-boost`, {
-                    method: 'POST',
+                const response = await fetch(`${apiBase}/prestataire/paiement-boost`, {
+                        method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -284,10 +301,6 @@
             const subStatusDiv = document.getElementById('subscription-status');
             const btnCancelSub = document.getElementById('btn-cancel-sub');
             const subInfoText = document.getElementById('sub-info-text');
-
-            const boostStatusDiv = document.getElementById('boost-status');
-            const btnBuyBoost = document.getElementById('btn-buy-boost');
-            const boostInfoText = document.getElementById('boost-info-text');
 
             const btnStripeConnect = document.getElementById('btn-stripe-connect');
             const stripeStatusText = document.getElementById('stripe-status-text');
@@ -320,30 +333,25 @@
                 }
             };
 
-            const updateBoostUI = (dateFinBoost) => {
-                if (dateFinBoost && new Date(dateFinBoost) > new Date()) {
-                    const d = new Date(dateFinBoost);
-                    const dateStr = d.toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
+            const updateBoostUI = (dateFinBoostServices, dateFinBoostProfil) => {
+                const now = new Date();
 
-                    boostStatusDiv.innerHTML = `
+                if (dateFinBoostServices && new Date(dateFinBoostServices) > now) {
+                    const dServices = new Date(dateFinBoostServices);
+                    document.getElementById('boost-services-status').innerHTML = `
                         <span class="w-3 h-3 rounded-full bg-[#E1AB2B] shadow-[0_0_8px_rgba(225,171,43,0.6)]"></span>
-                        <span class="font-bold text-yellow-700">Boost Actif</span>
+                        <span class="font-bold text-yellow-700 text-sm">Actif jusqu'au ${dServices.toLocaleDateString('fr-FR')}</span>
                     `;
-                    btnBuyBoost.classList.add('hidden');
-                    boostInfoText.textContent = `Votre profil est mis en avant jusqu'au ${dateStr}.`;
-                } else {
-                    boostStatusDiv.innerHTML = `
-                        <span class="w-3 h-3 rounded-full bg-gray-400"></span>
-                        <span class="font-bold text-gray-600">Non boosté</span>
+                    document.getElementById('btn-buy-boost-services').classList.add('hidden');
+                }
+
+                if (dateFinBoostProfil && new Date(dateFinBoostProfil) > now) {
+                    const dProfil = new Date(dateFinBoostProfil);
+                    document.getElementById('boost-profil-status').innerHTML = `
+                        <span class="w-3 h-3 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span>
+                        <span class="font-bold text-purple-700 text-sm">Actif jusqu'au ${dProfil.toLocaleDateString('fr-FR')}</span>
                     `;
-                    btnBuyBoost.classList.remove('hidden');
-                    boostInfoText.textContent = "Améliorez votre visibilité et remontez dans les recherches de nos Seniors.";
+                    document.getElementById('btn-buy-boost-profil').classList.add('hidden');
                 }
             };
 
@@ -401,8 +409,9 @@
                     const isSub = providerData.id_abonnement != 0;
                     updateSubscriptionUI(isSub);
 
-                    const boostDate = providerData.date_fin_boost || providerData.DateFinBoost;
-                    updateBoostUI(boostDate);
+                    const dateServices = providerData.date_fin_boost || providerData.DateFinBoost;
+                    const dateProfil = providerData.date_fin_boost_profil || providerData.DateFinBoostProfil;
+                    updateBoostUI(dateServices, dateProfil);                   
 
                 } else {
                     window.location.href = "/front/providers/account/signin.php";

@@ -61,25 +61,25 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	argsQuery = append(argsQuery, limit, offset)
 
 	sqlQuery := `
-        SELECT 
-            p.id_prestataire, 
-            COALESCE(p.siret, ''), 
-            COALESCE(p.prenom, ''), 
-            COALESCE(p.nom, ''), 
-            COALESCE(p.email, ''), 
-            COALESCE(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
-            COALESCE(p.num_telephone, ''), 
-            COALESCE(p.status, 'en attente'), 
-            COALESCE(p.motif_refus, ''), 
-            COALESCE(DATE_FORMAT(p.date_creation, '%d/%m/%Y %H:%i:%s'), ''), 
-            COALESCE(p.id_abonnement, 0), 
-            COALESCE(p.id_categorie, 0), 
-            COALESCE(c.nom, '') 
-        FROM PRESTATAIRE p
-        LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
-        ` + whereClause + `
-        LIMIT ? OFFSET ?
-    `
+		SELECT 
+			p.id_prestataire, 
+			COALESCE(p.siret, ''), 
+			COALESCE(p.prenom, ''), 
+			COALESCE(p.nom, ''), 
+			COALESCE(p.email, ''), 
+			COALESCE(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
+			COALESCE(p.num_telephone, ''), 
+			COALESCE(p.status, 'en attente'), 
+			COALESCE(p.motif_refus, ''), 
+			COALESCE(DATE_FORMAT(p.date_creation, '%d/%m/%Y %H:%i:%s'), ''), 
+			COALESCE(p.id_abonnement, 0), 
+			COALESCE(p.id_categorie, 0), 
+			COALESCE(c.nom, '') 
+		FROM PRESTATAIRE p
+		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+		` + whereClause + `
+		LIMIT ? OFFSET ?
+	`
 
 	rows, err := db.DB.Query(sqlQuery, argsQuery...)
 	if err != nil {
@@ -164,14 +164,14 @@ func List_Prestataires(response http.ResponseWriter, request *http.Request) {
 	}
 
 	query := `
-        SELECT p.id_prestataire, p.nom, p.prenom, p.email, 
-               (SELECT COUNT(*) FROM MESSAGE_PRESTATAIRE 
-                WHERE id_prestataire = p.id_prestataire 
-                AND id_utilisateur = ? AND est_lu = 0 AND expediteur = 1) AS est_lu
-        FROM PRESTATAIRE p
-        WHERE p.status = 'valide'
-        ORDER BY est_lu DESC, p.nom ASC
-        LIMIT ? OFFSET ?`
+		SELECT p.id_prestataire, p.nom, p.prenom, p.email, 
+			   (SELECT COUNT(*) FROM MESSAGE_PRESTATAIRE 
+				WHERE id_prestataire = p.id_prestataire 
+				AND id_utilisateur = ? AND est_lu = 0 AND expediteur = 1) AS est_lu
+		FROM PRESTATAIRE p
+		WHERE p.status = 'valide'
+		ORDER BY est_lu DESC, p.nom ASC
+		LIMIT ? OFFSET ?`
 
 	rows, err := db.DB.Query(query, userId, limit, offset)
 	if err != nil {
@@ -241,19 +241,20 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 	}
 
 	sqlQuery := `
-        SELECT p.id_prestataire, 
-               COALESCE(p.prenom, ''), 
-               COALESCE(p.nom, ''), 
-               COALESCE(c.nom, ''), 
-               COALESCE(AVG(a.note), 0) as moyenne, 
-               COUNT(a.id_avis) as nombre_avis 
-        FROM PRESTATAIRE AS p 
-        LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
-        LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
-        WHERE p.status = 'valide'
-        GROUP BY p.id_prestataire 
-        ORDER BY moyenne DESC 
-        LIMIT ? OFFSET ?`
+		SELECT p.id_prestataire, 
+			   COALESCE(p.prenom, ''), 
+			   COALESCE(p.nom, ''), 
+			   COALESCE(c.nom, ''), 
+			   COALESCE(AVG(a.note), 0) as moyenne, 
+			   COUNT(a.id_avis) as nombre_avis,
+			   (p.date_fin_boost_profil IS NOT NULL AND p.date_fin_boost_profil > NOW()) as is_boosted
+		FROM PRESTATAIRE AS p 
+		LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
+		LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
+		WHERE p.status = 'valide'
+		GROUP BY p.id_prestataire 
+		ORDER BY is_boosted DESC, moyenne DESC 
+		LIMIT ? OFFSET ?`
 
 	rows, err := db.DB.Query(sqlQuery, limit, offset)
 	if err != nil {
@@ -269,8 +270,9 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 		var prenom, nom, typePresta string
 		var moyenne float64
 		var nbAvis int
+		var isBoosted int
 
-		if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis); err != nil {
+		if err := rows.Scan(&id, &prenom, &nom, &typePresta, &moyenne, &nbAvis, &isBoosted); err != nil {
 			fmt.Println("Ligne ignorée dans le Top ! Erreur de Scan :", err)
 			continue
 		}
@@ -282,6 +284,7 @@ func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
 			"type_prestation": typePresta,
 			"moyenne":         moyenne,
 			"nombre_avis":     nbAvis,
+			"is_boosted":      isBoosted,
 		})
 	}
 
@@ -308,11 +311,11 @@ func Get_Note_Moyenne(response http.ResponseWriter, request *http.Request) {
 	prestaID := request.PathValue("id")
 
 	sqlQuery := `
-        SELECT 
-            COALESCE(AVG(note), 0) as moyenne, 
-            COUNT(id_avis) as nombre_avis 
-        FROM AVIS 
-        WHERE id_prestataire = ?`
+		SELECT 
+			COALESCE(AVG(note), 0) as moyenne, 
+			COUNT(id_avis) as nombre_avis 
+		FROM AVIS 
+		WHERE id_prestataire = ?`
 
 	var moyenne float64
 	var nbAvis int
@@ -552,12 +555,12 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
 	var dateFinBoostPresta sql.NullString
 
 	err := db.DB.QueryRow(`
-        SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
-               IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), p.date_fin_boost
-        FROM PRESTATAIRE p
-        LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
-        WHERE p.id_prestataire = ? AND p.status = 'validé'
-    `, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &dateFinBoostPresta)
+		SELECT p.id_prestataire, IFNULL(p.prenom, ''), IFNULL(p.nom, ''), IFNULL(p.email, ''), 
+			   IFNULL(p.num_telephone, ''), IFNULL(c.nom, ''), p.date_fin_boost
+		FROM PRESTATAIRE p
+		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+		WHERE p.id_prestataire = ? AND p.status = 'validé'
+	`, idStr).Scan(&prestataire.ID, &prestataire.Prenom, &prestataire.Nom, &prestataire.Email, &prestataire.NumTelephone, &prestataire.CategorieNom, &dateFinBoostPresta)
 
 	if err != nil {
 		http.Error(response, "Prestataire non trouvé ou non validé", http.StatusNotFound)
@@ -565,14 +568,14 @@ func Read_One_Prestataire_Profile(response http.ResponseWriter, request *http.Re
 	}
 
 	rows, err := db.DB.Query(`
-        SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image, e.date_fin_boost
-        FROM EVENEMENT e
-        INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
-        WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
-        ORDER BY 
-            (e.date_fin_boost IS NOT NULL AND e.date_fin_boost > NOW()) DESC,
-            e.date_debut ASC
-    `, idStr)
+		SELECT e.id_evenement, e.nom, e.description, e.lieu, e.nombre_place, e.prix, e.date_debut, e.date_fin, e.image, e.date_fin_boost
+		FROM EVENEMENT e
+		INNER JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+		WHERE pe.id_prestataire = ? AND e.date_debut >= NOW()
+		ORDER BY 
+			(e.date_fin_boost IS NOT NULL AND e.date_fin_boost > NOW()) DESC,
+			e.date_debut ASC
+	`, idStr)
 
 	var events []map[string]interface{}
 	if err == nil {
