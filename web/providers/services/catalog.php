@@ -4,6 +4,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,11 +16,16 @@ $is_logged_in = isset($_SESSION['provider_id']);
     <script>
         tailwind.config = {
             theme: {
-                extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } }
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
             }
         }
     </script>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="flex min-h-screen relative">
@@ -29,7 +35,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
             <main class="p-8">
                 <?php if ($is_logged_in): ?>
                     <div id="main-content" class="space-y-12 max-w-6xl mx-auto">
-                        
+
                         <div id="alert-box" class="hidden p-4 rounded-xl font-semibold text-sm transition-all"></div>
 
                         <div>
@@ -39,7 +45,9 @@ $is_logged_in = isset($_SESSION['provider_id']);
                                     <p class="text-gray-500 mt-1">Gérez les prestations que vous proposez à vos clients.</p>
                                 </div>
                                 <button onclick="toggleModal('serviceModal')" class="rounded-full px-6 py-2.5 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
                                     Ajouter un service
                                 </button>
                             </div>
@@ -52,6 +60,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                                                 <th class="pb-4 font-medium px-4">Nom du Service</th>
                                                 <th class="pb-4 font-medium px-4">Description</th>
                                                 <th class="pb-4 font-medium px-4">Prix</th>
+                                                <th class="pb-4 font-medium px-4">Statut</th>
                                                 <th class="pb-4 font-medium text-right px-4">Actions</th>
                                             </tr>
                                         </thead>
@@ -74,7 +83,9 @@ $is_logged_in = isset($_SESSION['provider_id']);
                                     <p class="text-gray-500 mt-1">Vos créneaux ouverts à la réservation pour les 3 prochains mois.</p>
                                 </div>
                                 <button onclick="toggleModal('dispoModal')" class="rounded-full px-6 py-2.5 bg-[#E1AB2B] text-white font-bold hover:bg-[#c99723] transition-colors shadow-md flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
                                     Générer des créneaux
                                 </button>
                             </div>
@@ -210,7 +221,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     </select>
                 </div>
                 <div class="bg-blue-50 text-[#1C5B8F] p-3 rounded-lg text-xs font-semibold mt-2 border border-blue-100">
-                    ℹ️ Cela génèrera automatiquement tous les créneaux pour ce jour sur la période sélectionnée. 
+                    ℹ️ Cela génèrera automatiquement tous les créneaux pour ce jour sur la période sélectionnée.
                 </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('dispoModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
@@ -222,7 +233,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
     <script>
         let currentProviderId = null;
-        let isAbonne = false; 
+        let isAbonne = false;
 
         function toggleModal(modalID) {
             document.getElementById(modalID).classList.toggle('hidden');
@@ -232,7 +243,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
         toggleModal = function(modalID) {
             if ((modalID === 'serviceModal' || modalID === 'dispoModal') && !isAbonne) {
                 showAlert("Oups ! Vous devez souscrire à l'Abonnement Pro dans 'Mon Profil' pour utiliser cette fonctionnalité.", false);
-                return; 
+                return;
             }
             originalToggleModal(modalID);
         };
@@ -242,14 +253,19 @@ $is_logged_in = isset($_SESSION['provider_id']);
             alertBox.textContent = msg;
             alertBox.className = `p-4 mb-6 rounded-xl font-bold block ${isSuccess ? 'text-green-700 bg-green-100 border border-green-400' : 'text-red-700 bg-red-100 border border-red-400'}`;
             alertBox.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(() => alertBox.classList.add('hidden'), 5000); 
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            setTimeout(() => alertBox.classList.add('hidden'), 5000);
         }
 
         async function loadServices() {
             const tbody = document.getElementById('services-table-body');
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, { credentials: 'include' });
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, {
+                    credentials: 'include'
+                });
                 if (!res.ok) throw new Error('Erreur');
                 const services = await res.json();
                 tbody.innerHTML = '';
@@ -258,12 +274,31 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     return;
                 }
                 services.forEach(s => {
+                    let statusBadge = '';
+                    let motifHtml = '';
+
+                    if (s.statut === 'accepte') {
+                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">Accepté</span>`;
+                    } else if (s.statut === 'refuse') {
+                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">Refusé</span>`;
+
+                        if (s.motif_refus) {
+                            motifHtml = `<p class="text-[10px] text-red-400 mt-1 italic max-w-[150px]">Motif : ${s.motif_refus}</p>`;
+                        }
+                    } else {
+                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-600">En attente</span>`;
+                    }
+
                     const tr = document.createElement('tr');
                     tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
                     tr.innerHTML = `
                         <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${s.nom}</td>
-                        <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate" title="${s.description}">${s.description}</td>
+                        <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate">${s.description}</td>
                         <td class="py-4 px-4 text-sm font-bold text-[#E1AB2B]">${parseFloat(s.prix).toFixed(2)} €</td>
+                        <td class="py-4 px-4">
+                            ${statusBadge}
+                            ${motifHtml} 
+                        </td>
                         <td class="py-4 px-4 text-right flex justify-end gap-2">
                             <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">Modifier</button>
                             <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">Supprimer</button>
@@ -286,14 +321,22 @@ $is_logged_in = isset($_SESSION['provider_id']);
             };
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/create`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
-                    toggleModal('serviceModal'); e.target.reset(); 
-                    showAlert("Service ajouté !", true); loadServices(); 
+                    toggleModal('serviceModal');
+                    e.target.reset();
+                    showAlert("Service ajouté !", true);
+                    loadServices();
                 } else showAlert("Erreur lors de l'ajout.");
-            } catch (err) { showAlert("Erreur serveur."); }
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
         });
 
         function openEditModal(id, nom, desc, prix) {
@@ -314,31 +357,47 @@ $is_logged_in = isset($_SESSION['provider_id']);
             };
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/update`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     toggleModal('editServiceModal');
-                    showAlert("Service modifié !", true); loadServices();
+                    showAlert("Service modifié !", true);
+                    loadServices();
                 } else showAlert("Erreur modification.");
-            } catch (err) { showAlert("Erreur serveur."); }
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
         });
 
         async function deleteService(idService) {
             if (!confirm("Voulez-vous vraiment supprimer ce service ?")) return;
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/delete`, { method: 'DELETE', credentials: 'include' });
-                if (res.ok) { showAlert("Service supprimé.", true); loadServices(); } 
-                else showAlert("Erreur suppression.");
-            } catch (err) { showAlert("Erreur serveur."); }
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/delete`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    showAlert("Service supprimé.", true);
+                    loadServices();
+                } else showAlert("Erreur suppression.");
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
         }
 
         async function loadDispos() {
             const container = document.getElementById('dispos-container');
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/get`, { credentials: 'include' });
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/get`, {
+                    credentials: 'include'
+                });
                 if (!res.ok) throw new Error('Erreur réseau');
-                
+
                 const dispos = await res.json();
                 container.innerHTML = '';
 
@@ -348,18 +407,23 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 }
 
                 const grouped = {};
-                const now = new Date(); 
+                const now = new Date();
 
                 dispos.forEach(d => {
                     const dateObj = new Date(d.date_heure);
 
                     if (dateObj <= now) {
-                        return; 
+                        return;
                     }
 
-                    const dateDisplay = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const dateDisplay = dateObj.toLocaleDateString('fr-FR', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
                     const dateIso = dateObj.toISOString().split('T')[0];
-                    
+
                     if (!grouped[dateDisplay]) {
                         grouped[dateDisplay] = {
                             iso: dateIso,
@@ -368,7 +432,10 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     }
                     grouped[dateDisplay].slots.push({
                         id: d.id_disponibilite,
-                        time: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                        time: dateObj.toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
                         isReserved: d.est_reserve
                     });
                 });
@@ -382,7 +449,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     const dayData = grouped[dateStr];
                     const dayDiv = document.createElement('div');
                     dayDiv.className = "bg-gray-50 rounded-2xl p-5 border border-gray-100 mb-6";
-                    
+
                     let pillsHtml = '';
                     dayData.slots.forEach(slot => {
                         const statusColor = slot.isReserved ? 'bg-red-500' : 'bg-green-500';
@@ -421,13 +488,13 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
         async function deleteDay(dateIso) {
             if (!confirm(`Voulez-vous vraiment supprimer TOUS les créneaux du ${dateIso} ? Les créneaux déjà réservés pourraient poser problème.`)) return;
-            
+
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/date/${dateIso}/delete`, { 
-                    method: 'DELETE', 
-                    credentials: 'include' 
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/date/${dateIso}/delete`, {
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
-                
+
                 if (res.ok) {
                     showAlert(`Planning du ${dateIso} supprimé avec succès.`, true);
                     loadDispos();
@@ -454,39 +521,61 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/create`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    toggleModal('dispoModal'); e.target.reset(); 
-                    showAlert(data.message || "Créneaux générés avec succès !", true); loadDispos(); 
+                    toggleModal('dispoModal');
+                    e.target.reset();
+                    showAlert(data.message || "Créneaux générés avec succès !", true);
+                    loadDispos();
                 } else showAlert(data.message || "Erreur de génération.");
-            } catch (err) { showAlert("Erreur serveur."); }
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
         });
 
         async function deleteDispo(idDispo) {
             if (!confirm("Supprimer ce créneau unique ?")) return;
             try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/${idDispo}/delete`, { method: 'DELETE', credentials: 'include' });
-                if (res.ok) { showAlert("Créneau supprimé.", true); loadDispos(); } 
-                else showAlert("Erreur suppression.");
-            } catch (err) { showAlert("Erreur serveur."); }
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${currentProviderId}/${idDispo}/delete`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    showAlert("Créneau supprimé.", true);
+                    loadDispos();
+                } else showAlert("Erreur suppression.");
+            } catch (err) {
+                showAlert("Erreur serveur.");
+            }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, { method: 'GET', credentials: 'include' });
+                const meRes = await fetch(`${window.API_BASE_URL}/auth/me-provider`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
                 if (meRes.ok) {
                     const data = await meRes.json();
                     currentProviderId = data.id_prestataire || data.id || data.ID;
-                    
+
                     isAbonne = (data.id_abonnement && data.id_abonnement != 0);
 
-                    loadServices(); loadDispos();
+                    loadServices();
+                    loadDispos();
                 } else window.location.href = "/providers/account/signin.php";
-            } catch (err) { console.error("Non connecté"); }
+            } catch (err) {
+                console.error("Non connecté");
+            }
         });
     </script>
 </body>
+
 </html>

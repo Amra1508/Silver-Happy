@@ -36,7 +36,7 @@ func Read_Categorie(response http.ResponseWriter, request *http.Request) {
 	var total int
 	db.DB.QueryRow("SELECT COUNT(*) FROM CATEGORIE").Scan(&total)
 
-	rows, errorFetch := db.DB.Query("SELECT id_categorie, nom, description FROM CATEGORIE LIMIT ? OFFSET ?", limit, offset)
+	rows, errorFetch := db.DB.Query("SELECT id_categorie, nom FROM CATEGORIE LIMIT ? OFFSET ?", limit, offset)
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return
@@ -46,7 +46,7 @@ func Read_Categorie(response http.ResponseWriter, request *http.Request) {
 	var tabCategorie []models.Categorie
 	for rows.Next() {
 		var categorie models.Categorie
-		if err := rows.Scan(&categorie.ID, &categorie.Nom, &categorie.Description); err != nil {
+		if err := rows.Scan(&categorie.ID, &categorie.Nom); err != nil {
 			fmt.Printf("ERREUR SCAN SUR CATEGORIE: %v\n", err)
 			continue
 		}
@@ -80,14 +80,13 @@ func Create_Categorie(response http.ResponseWriter, request *http.Request) {
 	}
 
 	categorie.Nom = html.EscapeString(strings.TrimSpace(categorie.Nom))
-	categorie.Description = html.EscapeString(strings.TrimSpace(categorie.Description))
 
 	if categorie.Nom == "" {
 		http.Error(response, "Le nom de la catégorie ne peut pas être vide.", http.StatusBadRequest)
 		return
 	}
 
-	res, errorCreate := db.DB.Exec("INSERT INTO CATEGORIE (nom, description) VALUES (?, ?)", categorie.Nom, categorie.Description)
+	res, errorCreate := db.DB.Exec("INSERT INTO CATEGORIE (nom) VALUES (?)", categorie.Nom)
 	if errorCreate != nil {
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
 		return
@@ -109,7 +108,7 @@ func Read_One_Categorie(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	var categorie models.Categorie
 
-	err := db.DB.QueryRow("SELECT id_categorie, nom, description FROM CATEGORIE WHERE id_categorie = ?", id).Scan(&categorie.ID, &categorie.Nom, &categorie.Description)
+	err := db.DB.QueryRow("SELECT id_categorie, nom FROM CATEGORIE WHERE id_categorie = ?", id).Scan(&categorie.ID, &categorie.Nom)
 
 	if err != nil {
 		http.Error(response, "Catégorie non trouvée", http.StatusNotFound)
@@ -134,14 +133,13 @@ func Update_Categorie(response http.ResponseWriter, request *http.Request) {
 	}
 
 	categorie.Nom = html.EscapeString(strings.TrimSpace(categorie.Nom))
-	categorie.Description = html.EscapeString(strings.TrimSpace(categorie.Description))
 
 	if categorie.Nom == "" {
 		http.Error(response, "Le nom ne peut pas être vide.", http.StatusBadRequest)
 		return
 	}
 
-	res, err := db.DB.Exec("UPDATE CATEGORIE SET nom = ?, description = ? WHERE id_categorie = ?", categorie.Nom, categorie.Description, id)
+	res, err := db.DB.Exec("UPDATE CATEGORIE SET nom = ? WHERE id_categorie = ?", categorie.Nom, id)
 
 	if err != nil {
 		http.Error(response, "Erreur lors de la mise à jour", http.StatusInternalServerError)

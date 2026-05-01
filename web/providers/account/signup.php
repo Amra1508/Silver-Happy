@@ -110,12 +110,16 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                     </div>
                 </div>
 
-                <div class="sm:col-span-3">
-                    <label class="text-sm text-gray-600 font-semibold">Catégorie de prestation</label>
+                <div class="sm:col-span-3 relative">
+                    <label class="text-sm text-gray-600 font-semibold">Votre métier / spécialité</label>
                     <div class="mt-2">
-                        <select id="id_categorie" class="w-full border border-gray-300 rounded-md p-2 bg-white focus:outline-none focus:border-[#1C5B8F]" required>
-                            <option value="" disabled selected>Chargement des catégories...</option>
-                        </select>
+                        <input id="search_categorie" type="text" placeholder="Rechercher un métier (ex: Yoga, Infirmier...)"
+                            class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-[#1C5B8F]" autocomplete="off" required />
+
+                        <input type="hidden" id="id_categorie" name="id_categorie" required>
+
+                        <div id="categorie_list" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        </div>
                     </div>
                 </div>
 
@@ -185,14 +189,16 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
 
             try {
                 const res = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${siret}&page=1&per_page=1`);
-                const { results } = await res.json();
+                const {
+                    results
+                } = await res.json();
 
                 if (results && results.length && results[0].etat_administratif === 'A') {
                     status_siret.textContent = `${results[0].nom_complet}`;
                     status_siret.className = 'text-sm text-green-600 font-semibold mt-1';
                     return true;
                 }
-                        
+
                 status_siret.textContent = (results && results.length) ? 'Entreprise fermée (cessé)' : 'SIRET introuvable.';
                 status_siret.className = 'text-sm text-red-600 font-semibold mt-1';
                 return false;
@@ -204,28 +210,58 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             }
         }
 
+        let allCategories = [];
+
         document.addEventListener('DOMContentLoaded', async () => {
-            const selectCategorie = document.getElementById('id_categorie');
+            const searchInput = document.getElementById('search_categorie');
+            const categorieList = document.getElementById('categorie_list');
+            const hiddenInput = document.getElementById('id_categorie');
+
             try {
                 const res = await fetch(`${window.API_BASE_URL}/categorie/read`);
                 if (res.ok) {
                     const jsonResponse = await res.json();
-                    const categories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
-                    selectCategorie.innerHTML = '<option value="" disabled selected>Sélectionnez une catégorie</option>';
-                    if (categories.length > 0) {
-                        categories.forEach(cat => {
-                            const option = document.createElement('option');
-                            option.value = cat.id_categorie || cat.id || cat.ID;
-                            option.textContent = cat.nom || cat.Nom;
-                            selectCategorie.appendChild(option);
-                        });
-                    } else {
-                        selectCategorie.innerHTML = '<option value="" disabled>Aucune catégorie disponible</option>';
-                    }
+                    allCategories = Array.isArray(jsonResponse) ? jsonResponse : (jsonResponse.data || []);
                 }
             } catch (err) {
-                selectCategorie.innerHTML = '<option value="" disabled>Serveur injoignable</option>';
+                console.error("Erreur chargement métiers:", err);
             }
+
+            const filterCategories = (query) => {
+                const filtered = allCategories.filter(cat =>
+                    (cat.nom || cat.Nom).toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (filtered.length > 0 && query.length > 0) {
+                    categorieList.innerHTML = '';
+                    filtered.forEach(cat => {
+                        const div = document.createElement('div');
+                        div.className = "p-2 hover:bg-[#1C5B8F] hover:text-white cursor-pointer transition-colors";
+                        div.textContent = cat.nom || cat.Nom;
+                        div.onclick = () => {
+                            searchInput.value = cat.nom || cat.Nom;
+                            hiddenInput.value = cat.id_categorie || cat.id || cat.ID;
+                            categorieList.classList.add('hidden');
+                        };
+                        categorieList.appendChild(div);
+                    });
+                    categorieList.classList.remove('hidden');
+                } else {
+                    categorieList.classList.add('hidden');
+                }
+            };
+
+            searchInput.addEventListener('input', (e) => filterCategories(e.target.value));
+
+            searchInput.addEventListener('focus', () => {
+                if (searchInput.value === "") filterCategories("");
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !categorieList.contains(e.target)) {
+                    categorieList.classList.add('hidden');
+                }
+            });
 
             const limitDate = new Date();
             limitDate.setFullYear(limitDate.getFullYear() - 18);
@@ -301,7 +337,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 }
                 if (!await verifierSiret('siret', 'siret-status')) {
                     return showError("Le SIRET saisi n'est pas valide ou correspond à une entreprise fermée.");
-                }   
+                }
                 if (!data["cf-turnstile-response"]) {
                     return showError("Veuillez valider la vérification de sécurité (Captcha).");
                 }
@@ -310,7 +346,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 const fileKbis = document.getElementById('doc_kbis').files[0];
                 const fileCasierJudiciaire = document.getElementById('casier_judiciaire').files[0];
 
-                
+
                 if (!fileIdentite || !fileKbis || !fileCasierJudiciaire) {
                     return showError("Vous devez obligatoirement fournir tous les documents attendus.");
                 }

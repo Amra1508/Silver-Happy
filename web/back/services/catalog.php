@@ -1,6 +1,7 @@
 <?php include("../includes/login.php"); ?>
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,10 +14,13 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Alata', 'sans-serif'], }
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif'],
+                    }
                 }
             }
         }
+
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
             if (modal) {
@@ -28,383 +32,481 @@
 </head>
 
 <body>
-<div class="flex min-h-screen">
-    <?php include("../includes/sidebar.php"); ?>
-    <div class="flex-1 flex flex-col">
-        <?php include("../includes/header.php"); ?>
-        <main class="p-8">
+    <div class="flex min-h-screen">
+        <?php include("../includes/sidebar.php"); ?>
+        <div class="flex-1 flex flex-col">
+            <?php include("../includes/header.php"); ?>
+            <main class="p-8">
 
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="title-text">Gestion des Services</h1>
-                <div class="flex items-center gap-4">
-                    <label for="filter-category" class="font-semibold text-gray-700">Filtrer par :</label>
-                    <select id="filter-category" class="filter-select w-48" onchange="fetchServices(1)">
-                        <option value="">Toutes les catégories</option>
-                    </select>
-                    <button onclick="toggleModal('add-modal')" class="add-button" type="button">
-                        + Ajouter un Service
-                    </button>
-                </div>
-            </div>
-
-            <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
-
-            <div class="table-container bg-white shadow-md rounded-lg overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-[#1C5B8F] text-white">
-                        <tr>
-                            <th class="p-4 font-semibold">ID</th>
-                            <th class="p-4 font-semibold">Nom</th>
-                            <th class="p-4 font-semibold">Catégorie</th>
-                            <th class="p-4 font-semibold">Description</th>
-                            <th class="p-4 font-semibold">Prix</th>
-                            <th class="p-4 font-semibold">Prestataire</th>
-                            <th class="p-4 font-semibold text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="service-table-body" class="divide-y divide-gray-100"></tbody>
-                </table>
-            </div>
-
-            <div id="add-modal" class="hidden modal">
-                <div class="add-modal w-full max-w-lg">
-                    <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Service</h3>
-                    <form id="add-form" class="space-y-4">
-                        <div>
-                            <label class="text-sm text-gray-500">Nom</label>
-                            <input type="text" id="add-nom" class="add-input w-full p-2 border rounded" required>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm text-gray-500">Prix (€)</label>
-                                <input type="number" id="add-prix" step="0.01" min="0" class="add-input w-full p-2 border rounded" required>
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-500">ID Prestataire</label>
-                                <input type="number" id="add-prestataire" min="1" class="add-input w-full p-2 border rounded" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">Catégorie</label>
-                            <select id="add-categorie" class="add-input w-full p-2 border rounded">
-                                <option value="">-- Sans catégorie --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">Description</label>
-                            <textarea id="add-description" class="add-input w-full p-2 border rounded" rows="3" required></textarea>
-                        </div>
-                        <div class="flex justify-end gap-4 mt-8 pt-4">
-                            <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
-                            <button type="submit" class="add-button bg-[#1C5B8F] text-white px-4 py-2 rounded">Ajouter</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div id="edit-modal" class="hidden modal">
-                <div class="edit-modal w-full max-w-lg">
-                    <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Service</h3>
-                    <form id="edit-form" class="space-y-4">
-                        <input type="hidden" id="edit-id">
-                        <div>
-                            <label class="text-sm text-gray-500">Nom</label>
-                            <input type="text" id="edit-nom" class="edit-input w-full p-2 border rounded" required>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm text-gray-500">Prix (€)</label>
-                                <input type="number" id="edit-prix" step="0.01" min="0" class="edit-input w-full p-2 border rounded" required>
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-500">ID Prestataire</label>
-                                <input type="number" id="edit-prestataire" min="1" class="edit-input w-full p-2 border rounded" required>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">Catégorie</label>
-                            <select id="edit-categorie" class="edit-input w-full p-2 border rounded">
-                                <option value="">-- Sans catégorie --</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-sm text-gray-500">Description</label>
-                            <textarea id="edit-description" class="edit-input w-full p-2 border rounded" rows="3" required></textarea>
-                        </div>
-                        <div class="flex justify-end gap-4 mt-8 pt-4">
-                            <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
-                            <button type="submit" class="edit-button bg-[#E1AB2B] text-white px-4 py-2 rounded">Sauvegarder</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div id="delete-modal" class="hidden modal">
-                <div class="delete-modal text-center bg-white p-8 rounded-lg shadow-xl">
-                    <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
-                    <h3 class="text-2xl font-semibold mb-2">Supprimer le service ?</h3>
-                    <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
-                    <input type="hidden" id="delete-id">
-                    <div class="flex justify-center gap-6">
-                        <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
-                        <button type="button" id="confirm-delete" class="delete-button bg-red-500 text-white px-4 py-2 rounded">Oui, supprimer</button>
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="title-text">Gestion des Services</h1>
+                    <div class="flex items-center gap-4">
+                        <label for="filter-category" class="font-semibold text-gray-700">Filtrer par :</label>
+                        <select id="filter-category" class="filter-select w-48" onchange="fetchServices(1)">
+                            <option value="">Toutes les catégories</option>
+                        </select>
+                        <button onclick="toggleModal('add-modal')" class="add-button" type="button">
+                            + Ajouter un Service
+                        </button>
                     </div>
                 </div>
-            </div>
-        </main>
+
+                <div id="api-message" class="hidden max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold"></div>
+
+                <div class="table-container bg-white shadow-md rounded-lg overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-[#1C5B8F] text-white">
+                            <tr>
+                                <th class="p-4 font-semibold">ID</th>
+                                <th class="p-4 font-semibold">Nom</th>
+                                <th class="p-4 font-semibold">Statut</th>
+                                <th class="p-4 font-semibold">Catégorie</th>
+                                <th class="p-4 font-semibold">Description</th>
+                                <th class="p-4 font-semibold">Prix</th>
+                                <th class="p-4 font-semibold">Prestataire</th>
+                                <th class="p-4 font-semibold text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="service-table-body" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+
+                <div id="refus-modal" class="hidden modal fixed inset-0 bg-black/50 items-center justify-center z-50">
+                    <div class="bg-white p-6 rounded-lg w-96 shadow-xl">
+                        <h3 class="text-xl font-bold mb-4">Motif du refus</h3>
+                        <input type="hidden" id="refus-service-id">
+                        <textarea id="motif-refus-service" class="w-full border p-2 rounded mb-4" rows="3" placeholder="Expliquez pourquoi le service est refusé..."></textarea>
+                        <div class="flex justify-end gap-2">
+                            <button onclick="toggleModal('refus-modal')" class="px-4 py-2 text-gray-500">Annuler</button>
+                            <button onclick="confirmRefus()" class="px-4 py-2 bg-red-500 text-white rounded">Confirmer le refus</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="add-modal" class="hidden modal">
+                    <div class="add-modal w-full max-w-lg">
+                        <h3 class="text-2xl font-semibold text-[#1C5B8F] mb-6">Ajouter un Service</h3>
+                        <form id="add-form" class="space-y-4">
+                            <div>
+                                <label class="text-sm text-gray-500">Nom</label>
+                                <input type="text" id="add-nom" class="add-input w-full p-2 border rounded" required>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Prix (€)</label>
+                                    <input type="number" id="add-prix" step="0.01" min="0" class="add-input w-full p-2 border rounded" required>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">ID Prestataire</label>
+                                    <input type="number" id="add-prestataire" min="1" class="add-input w-full p-2 border rounded" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Catégorie</label>
+                                <select id="add-categorie" class="add-input w-full p-2 border rounded">
+                                    <option value="">-- Sans catégorie --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Description</label>
+                                <textarea id="add-description" class="add-input w-full p-2 border rounded" rows="3" required></textarea>
+                            </div>
+                            <div class="flex justify-end gap-4 mt-8 pt-4">
+                                <button type="button" onclick="toggleModal('add-modal')" class="text-gray-400">Annuler</button>
+                                <button type="submit" class="add-button bg-[#1C5B8F] text-white px-4 py-2 rounded">Ajouter</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="edit-modal" class="hidden modal">
+                    <div class="edit-modal w-full max-w-lg">
+                        <h3 class="text-2xl font-semibold text-[#E1AB2B] mb-6">Modifier le Service</h3>
+                        <form id="edit-form" class="space-y-4">
+                            <input type="hidden" id="edit-id">
+                            <div>
+                                <label class="text-sm text-gray-500">Nom</label>
+                                <input type="text" id="edit-nom" class="edit-input w-full p-2 border rounded" required>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm text-gray-500">Prix (€)</label>
+                                    <input type="number" id="edit-prix" step="0.01" min="0" class="edit-input w-full p-2 border rounded" required>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-500">ID Prestataire</label>
+                                    <input type="number" id="edit-prestataire" min="1" class="edit-input w-full p-2 border rounded" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Catégorie</label>
+                                <select id="edit-categorie" class="edit-input w-full p-2 border rounded">
+                                    <option value="">-- Sans catégorie --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Description</label>
+                                <textarea id="edit-description" class="edit-input w-full p-2 border rounded" rows="3" required></textarea>
+                            </div>
+                            <div class="flex justify-end gap-4 mt-8 pt-4">
+                                <button type="button" onclick="toggleModal('edit-modal')" class="text-gray-400">Annuler</button>
+                                <button type="submit" class="edit-button bg-[#E1AB2B] text-white px-4 py-2 rounded">Sauvegarder</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="delete-modal" class="hidden modal">
+                    <div class="delete-modal text-center bg-white p-8 rounded-lg shadow-xl">
+                        <div class="text-red-500 text-6xl mb-4 font-bold">!</div>
+                        <h3 class="text-2xl font-semibold mb-2">Supprimer le service ?</h3>
+                        <p class="text-gray-400 mb-8 font-light">Cette action est irréversible.</p>
+                        <input type="hidden" id="delete-id">
+                        <div class="flex justify-center gap-6">
+                            <button type="button" onclick="toggleModal('delete-modal')" class="text-gray-400">Annuler</button>
+                            <button type="button" id="confirm-delete" class="delete-button bg-red-500 text-white px-4 py-2 rounded">Oui, supprimer</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
-</div>
 
-<script>
-    const API_BASE_SERVICE = `${window.API_BASE_URL}/service`;
-    const API_BASE_CATEGORIE = `${window.API_BASE_URL}/categorie`;
-    
-    let currentPage = 1;
-    const limit = 10;
-    const messageBox = document.getElementById('api-message');
-    let categoriesData = []; 
+    <script>
+        const API_BASE_SERVICE = `${window.API_BASE_URL}/service`;
+        const API_BASE_CATEGORIE = `${window.API_BASE_URL}/categorie`;
 
-    function showAlert(msg, isSuccess) {
-        messageBox.textContent = msg;
-        messageBox.className = `max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
-        messageBox.classList.remove('hidden');
-        setTimeout(() => messageBox.classList.add('hidden'), 3500);
-    }
+        let currentPage = 1;
+        const limit = 10;
+        const messageBox = document.getElementById('api-message');
+        let categoriesData = [];
 
-    async function fetchCategories() {
-        try {
-            const response = await fetch(`${API_BASE_CATEGORIE}/read`); 
-            if(!response.ok) return;
-            const result = await response.json();
-            categoriesData = result.data || result || []; 
-            populateCategorySelects();
-        } catch (err) {
-            console.error(err);
+        function showAlert(msg, isSuccess) {
+            messageBox.textContent = msg;
+            messageBox.className = `max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
-    }
 
-    function populateCategorySelects() {
-        const filterSelect = document.getElementById('filter-category');
-        const addSelect = document.getElementById('add-categorie');
-        const editSelect = document.getElementById('edit-categorie');
+        async function fetchCategories() {
+            try {
+                const response = await fetch(`${API_BASE_CATEGORIE}/read`);
+                if (!response.ok) return;
+                const result = await response.json();
+                categoriesData = result.data || result || [];
+                populateCategorySelects();
+            } catch (err) {
+                console.error(err);
+            }
+        }
 
-        let optionsHTML = '';
-        categoriesData.forEach(cat => {
-            const id = cat.id_categorie || cat.id || cat.ID;
-            const nom = cat.nom || cat.Nom || `Catégorie ${id}`;
-            optionsHTML += `<option value="${id}">${nom}</option>`;
-        });
+        function populateCategorySelects() {
+            const filterSelect = document.getElementById('filter-category');
+            const addSelect = document.getElementById('add-categorie');
+            const editSelect = document.getElementById('edit-categorie');
 
-        filterSelect.innerHTML = `<option value="">Toutes les catégories</option>` + optionsHTML;
-        addSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
-        editSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
-    }
+            let optionsHTML = '';
+            categoriesData.forEach(cat => {
+                const id = cat.id_categorie || cat.id || cat.ID;
+                const nom = cat.nom || cat.Nom || `Catégorie ${id}`;
+                optionsHTML += `<option value="${id}">${nom}</option>`;
+            });
 
-    function getCategoryName(id) {
-        if(!id) return "-";
-        const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
-        return cat ? (cat.nom || cat.Nom) : "-";
-    }
+            filterSelect.innerHTML = `<option value="">Toutes les catégories</option>` + optionsHTML;
+            addSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
+            editSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
+        }
 
-    async function fetchServices(page = 1) {
-        try {
-            currentPage = page;
-            const categoryId = document.getElementById('filter-category').value;
-            
-            let url = `${API_BASE_SERVICE}/read?page=${currentPage}&limit=${limit}`;
+        function getCategoryName(id) {
+            if (!id) return "-";
+            const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
+            return cat ? (cat.nom || cat.Nom) : "-";
+        }
 
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Erreur serveur");
-            const result = await response.json();
+        async function fetchServices(page = 1) {
+            try {
+                currentPage = page;
+                const categoryId = document.getElementById('filter-category').value;
 
-            let services = Array.isArray(result) ? result : (result.data || []); 
+                let url = `${API_BASE_SERVICE}/read?page=${currentPage}&limit=${limit}`;
 
-            if (categoryId) {
-                services = services.filter(service => {
-                    const idCat = service.id_categorie || service.IDCategorie;
-                    return idCat == categoryId; 
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Erreur serveur");
+                const result = await response.json();
+
+                let services = Array.isArray(result) ? result : (result.data || []);
+
+                if (categoryId) {
+                    services = services.filter(service => {
+                        const idCat = service.id_categorie || service.IDCategorie;
+                        return idCat == categoryId;
+                    });
+                }
+
+                const tbody = document.getElementById('service-table-body');
+                tbody.innerHTML = '';
+
+                if (services.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">Aucun service trouvé.</td></tr>';
+                    renderPagination(0, 0);
+                    return;
+                }
+
+                services.forEach(c => {
+                    const id = c.id_service || c.id || c.ID;
+                    const nom = c.nom || c.Nom || '';
+                    const status = c.statut || 'en_attente';
+                    const description = c.description || c.Description || '';
+                    const idCat = c.id_categorie || c.IDCategorie || '';
+                    const nomCat = c.categorie_nom || getCategoryName(idCat);
+                    const prix = c.prix !== undefined ? parseFloat(c.prix).toFixed(2) + ' €' : '0.00 €';
+                    const idPrestataire = c.id_prestataire || c.IDPrestataire || '';
+                    const prestataireAffiche = idPrestataire ? `Prestataire #${idPrestataire}` : `<span class="text-red-400 italic">Non assigné</span>`;
+
+                    const statusColors = {
+                        'accepte': 'bg-green-100 text-green-700 border-green-200',
+                        'refuse': 'bg-red-100 text-red-700 border-red-200',
+                        'en_attente': 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                    };
+
+                    const currentColorClass = statusColors[status] || statusColors['en_attente'];
+
+                    let statusSelectHTML = `
+                        <select onchange="handleStatusChange(${id}, this.value)" 
+                                class="${currentColorClass} text-xs font-bold px-2 py-1 rounded border cursor-pointer focus:outline-none">
+                            <option value="en_attente" ${status === 'en_attente' ? 'selected' : ''}>En attente</option>
+                            <option value="accepte" ${status === 'accepte' ? 'selected' : ''}>Accepté</option>
+                            <option value="refuse" ${status === 'refuse' ? 'selected' : ''}>Refusé</option>
+                        </select>
+                    `;
+
+                    let actionsHTML = `
+                        <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${idCat}', ${c.prix || 0}, '${idPrestataire}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-3 py-1 rounded-lg font-bold text-sm transition">Modifier</button>
+                        <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-3 py-1 rounded-lg font-bold text-sm transition">Supprimer</button>
+                    `;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition border-b">
+                            <td class="p-4 text-gray-400">#${id}</td>
+                            <td class="p-4 font-medium">${nom}</td>
+                            <td class="p-4">${statusSelectHTML}</td>
+                            <td class="p-4 text-sm text-gray-600">
+                                <span class="bg-gray-100 px-2 py-1 rounded border">${nomCat}</span>
+                            </td>
+                            <td class="p-4 text-sm text-gray-600 max-w-xs truncate" title="${description}">${description}</td>
+                            <td class="p-4 font-bold text-[#E1AB2B]">${prix}</td>
+                            <td class="p-4 text-sm font-semibold text-[#1C5B8F]">${prestataireAffiche}</td>
+                            <td class="p-4 flex justify-center gap-2">
+                                    ${actionsHTML}
+                            </td>
+                        </tr>
+                        `;
                 });
+
+                if (categoryId) {
+                    renderPagination(1, services.length);
+                } else {
+                    if (Array.isArray(result) && !result.totalPages) {
+                        renderPagination(0, 0);
+                    } else {
+                        renderPagination(result.totalPages, result.total);
+                    }
+                }
+
+            } catch (err) {
+                showAlert("Erreur lors de la récupération des services.", false);
+            }
+        }
+
+        async function handleStatusChange(idService, newStatus) {
+            if (newStatus === 'refuse') {
+                openRefusModal(idService);
+            } else {
+                await updateServiceStatus(idService, newStatus, "");
+            }
+        }
+
+        async function updateServiceStatus(idService, newStatus, motif = "") {
+            const payload = {
+                statut: newStatus,
+                motif_refus: motif
+            };
+
+            const response = await fetch(`${window.API_BASE_URL}/service/update-status/${idService}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                let message = "";
+                if (newStatus === 'accepte') message = "Service accepté !";
+                else if (newStatus === 'refuse') message = "Service refusé.";
+                else message = "Service remis en attente.";
+
+                showAlert(message, true);
+                fetchServices(currentPage);
+            } else {
+                showAlert("Erreur lors de la mise à jour", false);
+            }
+        }
+
+        function openRefusModal(id) {
+            document.getElementById('refus-service-id').value = id;
+            document.getElementById('motif-refus-service').value = "";
+            toggleModal('refus-modal');
+        }
+
+        function confirmRefus() {
+            const id = document.getElementById('refus-service-id').value;
+            const motif = document.getElementById('motif-refus-service').value;
+            if (!motif) return alert("Veuillez saisir un motif");
+            updateServiceStatus(id, 'refuse', motif);
+            toggleModal('refus-modal');
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            let paginationContainer = document.getElementById('pagination-controls');
+            if (!paginationContainer) {
+                const tableContainer = document.querySelector('.table-container');
+                paginationContainer = document.createElement('div');
+                paginationContainer.id = 'pagination-controls';
+                tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
             }
 
-            const tbody = document.getElementById('service-table-body');
-            tbody.innerHTML = '';
-
-            if (services.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-400">Aucun service trouvé.</td></tr>';
-                renderPagination(0, 0);
+            if (totalItems === 0 || totalPages === 0) {
+                paginationContainer.innerHTML = '';
                 return;
             }
 
-            services.forEach(c => {
-                const id = c.id_service || c.id || c.ID;
-                const nom = c.nom || c.Nom || '';
-                const description = c.description || c.Description || '';
-                const idCat = c.id_categorie || c.IDCategorie || '';
-                const nomCat = c.categorie_nom || getCategoryName(idCat);
-                const prix = c.prix !== undefined ? parseFloat(c.prix).toFixed(2) + ' €' : '0.00 €';
-                const idPrestataire = c.id_prestataire || c.IDPrestataire || '';
-                const prestataireAffiche = idPrestataire ? `Prestataire #${idPrestataire}` : `<span class="text-red-400 italic">Non assigné</span>`;
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition border-b">
-                        <td class="p-4 text-gray-400">#${id}</td>
-                        <td class="p-4 font-medium">${nom}</td>
-                        <td class="p-4 text-sm text-gray-600">
-                            <span class="bg-gray-100 px-2 py-1 rounded border">${nomCat}</span>
-                        </td>
-                        <td class="p-4 text-sm text-gray-600 max-w-xs truncate" title="${description}">${description}</td>
-                        <td class="p-4 font-bold text-[#E1AB2B]">${prix}</td>
-                        <td class="p-4 text-sm font-semibold text-[#1C5B8F]">${prestataireAffiche}</td>
-                        <td class="p-4 flex justify-center gap-2">
-                            <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${idCat}', ${c.prix || 0}, '${idPrestataire}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-3 py-1 rounded-lg font-bold text-sm">Modifier</button>
-                            <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-3 py-1 rounded-lg font-bold text-sm">Supprimer</button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            if (categoryId) {
-                 renderPagination(1, services.length);
-            } else {
-                if (Array.isArray(result) && !result.totalPages) {
-                    renderPagination(0, 0); 
-                } else {
-                    renderPagination(result.totalPages, result.total);
-                }
-            }
-
-        } catch (err) {
-            showAlert("Erreur lors de la récupération des services.", false);
-        }
-    }
-
-    function renderPagination(totalPages, totalItems) {
-        let paginationContainer = document.getElementById('pagination-controls');
-        if (!paginationContainer) {
-            const tableContainer = document.querySelector('.table-container');
-            paginationContainer = document.createElement('div');
-            paginationContainer.id = 'pagination-controls';
-            tableContainer.parentNode.insertBefore(paginationContainer, tableContainer.nextSibling);
-        }
-
-        if (totalItems === 0 || totalPages === 0) {
-            paginationContainer.innerHTML = '';
-            return;
-        }
-
-        let html = `
+            let html = `
             <div class="flex justify-between items-center mt-6 px-4 text-sm">
                 <span class="text-gray-500 font-semibold">Total : ${totalItems} services</span>
                 <div class="flex gap-2">
                     <button ${currentPage === 1 ? 'disabled' : ''} onclick="fetchServices(${currentPage - 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Précédent</button>
         `;
 
-        for (let i = 1; i <= totalPages; i++) {
-            const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
-            html += `<button onclick="fetchServices(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
-        }
+            for (let i = 1; i <= totalPages; i++) {
+                const activeClass = i === currentPage ? 'bg-[#1C5B8F] text-white' : 'text-[#1C5B8F] hover:bg-blue-50';
+                html += `<button onclick="fetchServices(${i})" class="px-3 py-1 border border-[#1C5B8F] rounded transition ${activeClass}">${i}</button>`;
+            }
 
-        html += `
+            html += `
                     <button ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchServices(${currentPage + 1})" class="px-3 py-1 border border-[#1C5B8F] text-[#1C5B8F] rounded disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50">Suivant</button>
                 </div>
             </div>
         `;
-        paginationContainer.innerHTML = html;
-    }
+            paginationContainer.innerHTML = html;
+        }
 
-    document.getElementById('add-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        let catValue = document.getElementById('add-categorie').value;
-        let idCategorie = catValue ? parseInt(catValue) : null; 
-        
-        const data = {
-            nom: document.getElementById('add-nom').value,
-            description: document.getElementById('add-description').value,
-            id_categorie: idCategorie,
-            prix: parseFloat(document.getElementById('add-prix').value),
-            id_prestataire: parseInt(document.getElementById('add-prestataire').value)
+        document.getElementById('add-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let catValue = document.getElementById('add-categorie').value;
+            let idCategorie = catValue ? parseInt(catValue) : null;
+
+            const data = {
+                nom: document.getElementById('add-nom').value,
+                description: document.getElementById('add-description').value,
+                id_categorie: idCategorie,
+                prix: parseFloat(document.getElementById('add-prix').value),
+                id_prestataire: parseInt(document.getElementById('add-prestataire').value)
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_SERVICE}/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    toggleModal('add-modal');
+                    e.target.reset();
+                    showAlert("Service ajouté !", true);
+                    fetchServices(1);
+                } else {
+                    showAlert("Erreur lors de l'envoi", false);
+                }
+            } catch (err) {
+                showAlert("Erreur réseau", false);
+            }
+        });
+
+        function openEditModal(id, nom, description, idCat, prix, idPrestataire) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-nom').value = nom;
+            document.getElementById('edit-description').value = description;
+            document.getElementById('edit-categorie').value = idCat || "";
+            document.getElementById('edit-prix').value = prix;
+            document.getElementById('edit-prestataire').value = idPrestataire || "";
+            toggleModal('edit-modal');
+        }
+
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            let catValue = document.getElementById('edit-categorie').value;
+            let idCategorie = catValue ? parseInt(catValue) : null;
+
+            const data = {
+                nom: document.getElementById('edit-nom').value,
+                description: document.getElementById('edit-description').value,
+                id_categorie: idCategorie,
+                prix: parseFloat(document.getElementById('edit-prix').value),
+                id_prestataire: parseInt(document.getElementById('edit-prestataire').value)
+            };
+
+            try {
+                const res = await fetch(`${API_BASE_SERVICE}/update/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    toggleModal('edit-modal');
+                    showAlert("Modifications enregistrées", true);
+                    fetchServices(currentPage);
+                } else {
+                    showAlert("Erreur lors de la mise à jour", false);
+                }
+            } catch (err) {
+                showAlert("Erreur réseau", false);
+            }
+        });
+
+        function openDeleteModal(id) {
+            document.getElementById('delete-id').value = id;
+            toggleModal('delete-modal');
+        }
+
+        document.getElementById('confirm-delete').addEventListener('click', async () => {
+            const id = document.getElementById('delete-id').value;
+            try {
+                const res = await fetch(`${API_BASE_SERVICE}/delete/${id}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    toggleModal('delete-modal');
+                    showAlert("Service supprimé", true);
+                    fetchServices(currentPage);
+                } else {
+                    showAlert("Erreur de suppression", false);
+                }
+            } catch (err) {
+                showAlert("Erreur réseau", false);
+            }
+        });
+
+        window.onload = async () => {
+            await fetchCategories();
+            fetchServices(1);
         };
-
-        try {
-            const response = await fetch(`${API_BASE_SERVICE}/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (response.ok) {
-                toggleModal('add-modal');
-                e.target.reset();
-                showAlert("Service ajouté !", true);
-                fetchServices(1);
-            } else {
-                showAlert("Erreur lors de l'envoi", false);
-            }
-        } catch (err) { showAlert("Erreur réseau", false); }
-    });
-
-    function openEditModal(id, nom, description, idCat, prix, idPrestataire) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-nom').value = nom;
-        document.getElementById('edit-description').value = description;
-        document.getElementById('edit-categorie').value = idCat || ""; 
-        document.getElementById('edit-prix').value = prix;
-        document.getElementById('edit-prestataire').value = idPrestataire || "";
-        toggleModal('edit-modal');
-    }
-
-    document.getElementById('edit-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('edit-id').value;
-        let catValue = document.getElementById('edit-categorie').value;
-        let idCategorie = catValue ? parseInt(catValue) : null;
-        
-        const data = {
-            nom: document.getElementById('edit-nom').value,
-            description: document.getElementById('edit-description').value,
-            id_categorie: idCategorie,
-            prix: parseFloat(document.getElementById('edit-prix').value),
-            id_prestataire: parseInt(document.getElementById('edit-prestataire').value)
-        };
-
-        try {
-            const res = await fetch(`${API_BASE_SERVICE}/update/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                toggleModal('edit-modal');
-                showAlert("Modifications enregistrées", true);
-                fetchServices(currentPage);
-            } else {
-                showAlert("Erreur lors de la mise à jour", false);
-            }
-        } catch (err) { showAlert("Erreur réseau", false); }
-    });
-
-    function openDeleteModal(id) {
-        document.getElementById('delete-id').value = id;
-        toggleModal('delete-modal');
-    }
-
-    document.getElementById('confirm-delete').addEventListener('click', async () => {
-        const id = document.getElementById('delete-id').value;
-        try {
-            const res = await fetch(`${API_BASE_SERVICE}/delete/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                toggleModal('delete-modal');
-                showAlert("Service supprimé", true);
-                fetchServices(currentPage);
-            } else {
-                showAlert("Erreur de suppression", false);
-            }
-        } catch (err) { showAlert("Erreur réseau", false); }
-    });
-
-    window.onload = async () => {
-        await fetchCategories();
-        fetchServices(1);
-    };
-</script>
+    </script>
 </body>
+
 </html>

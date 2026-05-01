@@ -66,8 +66,7 @@ func InitDB() {
 	);
 	CREATE TABLE IF NOT EXISTS CATEGORIE (
 		id_categorie INT AUTO_INCREMENT PRIMARY KEY,
-		nom VARCHAR(100) NOT NULL,
-		description TEXT
+		nom VARCHAR(100) NOT NULL
 	);
 	CREATE TABLE IF NOT EXISTS CONSEIL(
 		id_conseil INT AUTO_INCREMENT PRIMARY KEY,
@@ -206,6 +205,8 @@ func InitDB() {
 		id_categorie INT,
 		id_prestataire INT NOT NULL,
 		prix DOUBLE NOT NULL DEFAULT 0.0,
+		statut ENUM('en_attente', 'accepte', 'refuse') DEFAULT 'en_attente',
+		motif_refus VARCHAR(250) DEFAULT NULL,
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);

@@ -1,6 +1,10 @@
 package models
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"database/sql"
+
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type Utilisateur struct {
 	ID                int64  `json:"id"`
@@ -55,6 +59,9 @@ type Service struct {
 	CategorieNom      string  `json:"categorie_nom"`
 	IDPrestataire     int64   `json:"id_prestataire"`
 	Prix              float64 `json:"prix"`
+	Statut            string  `json:"statut"`
+	MotifRefus        sql.NullString  `json:"-"`
+	MotifRefusJS      string  `json:"motif_refus"`
 	IsBoosted         bool    `json:"is_boosted"`
 	PrestataireNom    string  `json:"prestataire_nom"`
 	PrestatairePrenom string  `json:"prestataire_prenom"`

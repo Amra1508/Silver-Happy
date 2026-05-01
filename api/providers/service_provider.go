@@ -20,7 +20,7 @@ func Get_Services_Provider(response http.ResponseWriter, request *http.Request) 
 	providerID := request.PathValue("id")
 
 	query := `
-		SELECT id_service, nom, description, id_categorie, prix 
+		SELECT id_service, nom, description, id_categorie, prix, statut, motif_refus 
 		FROM SERVICE 
 		WHERE id_prestataire = ?
 		ORDER BY id_service DESC
@@ -38,11 +38,16 @@ func Get_Services_Provider(response http.ResponseWriter, request *http.Request) 
 	for rows.Next() {
 		var s models.Service
 		var catID sql.NullInt64
+		var motif sql.NullString
 
-		if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &catID, &s.Prix); err == nil {
+		if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &catID, &s.Prix, &s.Statut, &motif); err == nil {
 			if catID.Valid {
 				id := int(catID.Int64)
 				s.IDCategorie = &id
+			}
+			s.MotifRefusJS = ""
+			if motif.Valid {
+				s.MotifRefusJS = motif.String
 			}
 			services = append(services, s)
 		}
@@ -122,7 +127,7 @@ func Update_Service_Provider(response http.ResponseWriter, request *http.Request
 
 	query := `
 		UPDATE SERVICE 
-		SET nom = ?, description = ?, prix = ? 
+		SET nom = ?, description = ?, prix = ?, statut = 'en_attente'
 		WHERE id_service = ? AND id_prestataire = ?
 	`
 	res, err := db.DB.Exec(query, s.Nom, s.Description, s.Prix, serviceID, providerID)
@@ -176,7 +181,7 @@ func Create_Service_Provider(response http.ResponseWriter, request *http.Request
 		s.IDCategorie = &id
 	}
 
-	query := `INSERT INTO SERVICE (nom, description, id_categorie, id_prestataire, prix) VALUES (?, ?, ?, ?, ?)`
+	query := `INSERT INTO SERVICE (nom, description, id_categorie, id_prestataire, prix, statut) VALUES (?, ?, ?, ?, ?, 'en_attente')`
 	_, err = db.DB.Exec(query, s.Nom, s.Description, s.IDCategorie, providerID, s.Prix)
 
 	if err != nil {

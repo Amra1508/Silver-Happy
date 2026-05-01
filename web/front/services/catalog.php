@@ -175,11 +175,11 @@
 
                 slots.forEach(slot => {
                     const dateObj = new Date(slot.date_heure);
-                    
+
                     if (dateObj <= now) {
-                        return; 
+                        return;
                     }
-                    
+
                     const dateOnly = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
                     const key = dateOnly.toISOString();
 
@@ -355,7 +355,7 @@
         async function fetchServices(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/service/read?page=${currentPage}&limit=${limit}`);
+                const response = await fetch(`${API_BASE}/service/read?statut=accepte&page=${currentPage}&limit=${limit}`);
                 const result = await response.json();
                 currentServicesData = result.data || [];
 
