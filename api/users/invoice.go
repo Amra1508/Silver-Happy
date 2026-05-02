@@ -203,14 +203,23 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
         WHERE p.id_paiement = ?`, paymentID)
 
     for rowsServ.Next() {
-        var l models.InvoiceLine
-        l.Type = "SERVICE"
-        l.Qty = 1
-        rowsServ.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.Qty, &l.UnitPrice, &l.Info1)
-        l.Description = "Service : " + l.Description
-        l.Total = l.UnitPrice
-        lines = append(lines, l)
+    var l models.InvoiceLine
+    var tHeure time.Time
+    
+    l.Type = "SERVICE"
+    l.Qty = 1
+    
+    err := rowsServ.Scan(&datePaiementStr, &clientNom, &clientPrenom, &clientEmail, &l.Description, &l.Qty, &l.UnitPrice, &tHeure)
+    if err != nil {
+        continue
     }
+
+    l.Info1 = tHeure.Format("2006-01-02 15:04:05") 
+    
+    l.Description = "Service : " + l.Description
+    l.Total = l.UnitPrice
+    lines = append(lines, l)
+}
 
     if len(lines) == 0 {
         http.Error(response, "Facture vide ou introuvable", http.StatusNotFound)
@@ -292,8 +301,12 @@ func GenerateInvoicePDF(response http.ResponseWriter, request *http.Request) {
                 pdf.Cell(0, 5, tr("Évènement du ") + tD.Format("02/01/2006") + " au " + tF.Format("02/01/2006"))
                 pdf.Ln(7)
             case "SERVICE":
-                tServ, _ := time.Parse("2006-01-02T15:00", l.Info1[:16])
-                pdf.Cell(0, 5, tr("Prestation prévue le ") + tServ.Format("02/01/2006") + tr(" à ") + tServ.Format("15h04"))
+                tServ, err := time.Parse("2006-01-02 15:04:05", l.Info1)
+                if err != nil {
+                    pdf.Cell(0, 5, tr("Date invalide"))
+                } else {
+                    pdf.Cell(0, 5, tr("Prestation prévue le ") + tServ.Format("02/01/2006") + tr(" à ") + tServ.Format("15h04"))
+                }
                 pdf.Ln(7)
         }
         pdf.SetTextColor(0, 0, 0)

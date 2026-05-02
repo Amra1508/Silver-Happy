@@ -80,8 +80,8 @@
                     </table>
                 </div>
 
-                <div id="voir-plus-modal" class="hidden modal">
-                    <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-2xl shadow-xl shadow-[#1C5B8F]/20 overflow-y-auto">
+                <div id="voir-plus-modal" class="hidden modal fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">
+                    <div class="bg-white p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] w-full max-w-2xl shadow-xl shadow-[#1C5B8F]/20 my-auto">
 
                         <div class="flex justify-between items-center pb-6">
                             <h3 class="text-2xl font-semibold text-[#1C5B8F]">Détails du Prestataire</h3>

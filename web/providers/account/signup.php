@@ -124,7 +124,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                 </div>
 
                 <div class="sm:col-span-6 mt-4 border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-semibold text-[#1C5B8F] mb-4">Documents justificatifs</h3>
+                    <h3 class="text-lg font-semibold text-[#1C5B8F] mb-4">Documents d'identité</h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
@@ -147,10 +147,17 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                         </div>
                     </div>
 
-                    <div id="extra_docs_container" class="mt-6 space-y-4"></div>
+                    <div class="sm:col-span-6 mt-8">
+                        <h3 id="title_extra_docs" class="text-lg font-semibold text-[#1C5B8F] mb-4">
+                            Documents professionnels
+                        </h3>
 
-                    <button type="button" id="btn_add_doc" class="mt-4 text-sm font-semibold text-[#E1AB2B] hover:text-yellow-600 transition-colors flex items-center">
-                        Ajouter un autre document (Attestation, Diplôme...)
+                        <div id="extra_docs_container" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn_add_doc" class="mt-6 text-sm font-semibold text-[#E1AB2B] hover:text-yellow-600 transition-colors flex items-center">
+                        + Ajouter un autre document
                     </button>
                 </div>
 
@@ -239,9 +246,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                         div.className = "p-2 hover:bg-[#1C5B8F] hover:text-white cursor-pointer transition-colors";
                         div.textContent = cat.nom || cat.Nom;
                         div.onclick = () => {
-                            searchInput.value = cat.nom || cat.Nom;
+                            selectedNom = cat.nom || cat.Nom;
+                            searchInput.value = selectedNom;
                             hiddenInput.value = cat.id_categorie || cat.id || cat.ID;
                             categorieList.classList.add('hidden');
+                            updateRequiredDocs(selectedNom);
                         };
                         categorieList.appendChild(div);
                     });
@@ -268,28 +277,162 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             const strMax = limitDate.toISOString().split('T')[0];
             document.getElementById('birth_date').max = strMax;
 
+            const commun = {
+                label: 'Diplôme / Certificat de formation'
+            }
+
+            const rcp = {
+                label: 'Attestation RCP'
+            }
+
+            const orias = {
+                label: 'Attestation ORIAS'
+            }
+
+            const da = {
+                label: 'Portfolio / Illustration'
+            }
+
+            const docsSante = [{
+                    label: 'Diplôme d\'État'
+                },
+                {
+                    label: 'Numéro RPPS ou ADELI'
+                },
+                rcp,
+            ];
+
+            const docsTransport = [{
+                label: 'Permis de conduire'
+            }, {
+                label: 'Assurance véhicule'
+            }, {
+                label: 'Carte Grise'
+            }];
+
+            const docsSport = [{
+                label: 'Carte Professionnelle'
+            }, {
+                label: 'Diplôme (BPJEPS, STAPS...)'
+            }];
+
+            const METIERS_DOCS_CONFIG = {
+                'Agent d\'entretien (ménage et repassage)': [commun],
+                'Agent immobilier': [{
+                    label: 'Carte Professionnelle (Carte T)'
+                }],
+                'Aide administrative': [commun],
+                'Aide au déménagement': [commun],
+                'Animateur d\'ateliers de cuisine': [commun],
+                'Animateur d\'événements (jeux, visites, soirées)': [commun],
+                'Artisan (création et artisanat)': [commun, da],
+                'Assistant de vie / Aide aux personnes âgées': [{
+                    label: 'Diplôme / Certification SAP (DEAVS, ADVF)'
+                }],
+                'Bricoleur (petit bricolage / travaux)': [commun],
+                'Chauffeur (covoiturage / auto)': docsTransport,
+                'Coach (divers domaines)': [commun],
+                'Conférencier': [commun],
+                'Conseiller en économie d\'énergie': [{
+                    label: 'Certification RGE / Qualibat'
+                }],
+                'Conseiller en emploi pour seniors': [commun],
+                'Conseiller en finances et assurances': [orias,
+                    rcp
+                ],
+                'Conseiller Juridique': [{
+                    label: 'Master en Droit / Titre'
+                }],
+                'Couturier / Couturière': [commun, da],
+                'Décorateur / Décoratrice d\'intérieur': [commun, da],
+                'Dépanneur informatique et multimédia': [commun],
+                'Éducateur d\'animaux / Garde d\'animaux': [{
+                    label: 'Attestation ACACED'
+                }, rcp],
+                'Formateur / Enseignant': [{
+                    label: 'Diplôme / NDA'
+                }],
+                'Gestionnaire de patrimoine': [orias,
+                    rcp
+                ],
+                'Jardinier (petit jardinage)': [commun],
+                'Kinésithérapeute': [commun,
+                    rcp
+                ],
+                'Livreur de courses': docsTransport,
+                'Livreur de repas (portage de repas)': docsTransport,
+                'Magicien / Artiste de cirque': [commun],
+                'Masseur / Spécialiste du bien-être': [commun],
+                'Médecin': docsSante,
+                'Opticien': docsSante,
+                'Organisateur de voyages et sorties': [commun,
+                    rcp
+                ],
+                'Ostéopathe': docsSante,
+                'Photographe / Vidéaste': [commun, da],
+                'Professeur d\'informatique': [commun],
+                'Professeur de langues / d\'écriture': [commun],
+                'Professeur de musique / de danse': [commun],
+                'Prothésiste dentaire': docsSante,
+                'Psychologue': docsSante,
+                'Spécialiste de l\'amélioration de l\'habitat': [{
+                    label: 'Assurance Décennale'
+                }, {
+                    label: 'Qualification Pro (RGE, Qualibat...)'
+                }],
+                'Spécialiste en soins naturels et bio': [commun],
+                'Thérapeute': [commun]
+            };
+
+            const updateRequiredDocs = (metierNom) => {
+                extraDocsContainer.innerHTML = '';
+
+                const docsRequiers = METIERS_DOCS_CONFIG[metierNom];
+
+                if (docsRequiers) {
+                    docsRequiers.forEach(doc => {
+                        addExtraDocField(doc.label, true);
+                    });
+                }
+            };
+
+            const addExtraDocField = (labelValue = '', isRequired = false) => {
+                const div = document.createElement('div');
+                div.className = "flex flex-col dynamic-doc";
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm text-gray-600 font-semibold">
+                            ${isRequired ? labelValue : 'Nom du document'} ${isRequired ? '<span class="text-red-500">*</span>' : ''}
+                        </label>
+                        ${!isRequired ? `
+                            <button type="button" class="btn-remove-doc text-red-400 hover:text-red-600">
+                                x
+                            </button>
+                        ` : `<input type="hidden" class="extra-doc-name" value="${labelValue}" />`}
+                    </div>
+
+                    ${!isRequired ? `
+                        <div class="mt-2"><input type="text" class="extra-doc-name w-full border border-gray-300 rounded-md p-2 text-xs" required /></div>
+                    ` : ''}
+
+                    <div class="mt-2">
+                        <input type="file" accept=".pdf,.png,.jpg,.jpeg" class="extra-doc-file w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#1C5B8F]/10 file:text-[#1C5B8F] hover:file:bg-[#1C5B8F]/20 cursor-pointer" required />
+                    </div>
+                `;
+
+                extraDocsContainer.appendChild(div);
+
+                if (!isRequired) {
+                    div.querySelector('.btn-remove-doc').onclick = () => div.remove();
+                }
+            };
+
             const btnAddDoc = document.getElementById('btn_add_doc');
             const extraDocsContainer = document.getElementById('extra_docs_container');
 
             btnAddDoc.addEventListener('click', () => {
-                const div = document.createElement('div');
-                div.className = 'grid grid-cols-1 sm:grid-cols-12 gap-4 items-end bg-gray-50 p-4 rounded-lg border border-gray-200';
-
-                div.innerHTML = `
-            <div class="sm:col-span-5">
-                <label class="text-sm text-gray-600 font-semibold">Nom du document</label>
-                <input type="text" class="extra-doc-name w-full border border-gray-300 rounded-md p-2 mt-2 focus:outline-none focus:border-[#1C5B8F]" placeholder="Ex: Attestation RC Pro" required />
-            </div>
-            <div class="sm:col-span-6">
-                <label class="text-sm text-gray-600 font-semibold">Fichier</label>
-                <input type="file" accept=".pdf,.png,.jpg,.jpeg" class="extra-doc-file w-full mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 cursor-pointer" required />
-            </div>
-            <div class="sm:col-span-1 flex justify-end pb-1">
-                <button type="button" class="btn-remove-doc text-red-500 hover:text-red-700 p-2" title="Supprimer">
-                </button>
-            </div>
-        `;
-                extraDocsContainer.appendChild(div);
+                addExtraDocField();
 
                 div.querySelector('.btn-remove-doc').addEventListener('click', () => {
                     div.remove();

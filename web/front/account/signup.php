@@ -116,7 +116,7 @@
 
         <div class="mt-8 text-center">
             <span class="text-gray-600">Vous proposez des services ?</span>
-            <a href="/providers/account/signin.php" class="text-[#1C5B8F] font-semibold hover:underline ml-1 transition-all">
+            <a href="/providers/account/signup.php" class="text-[#1C5B8F] font-semibold hover:underline ml-1 transition-all">
                 Je suis prestataire
             </a>
         </div>
@@ -213,35 +213,35 @@
         const addressInput = document.getElementById('address');
         const resultBox = document.getElementById('address_suggestions');
 
-            addressInput.addEventListener('input', async () => {
-                const typedText = addressInput.value;
+        addressInput.addEventListener('input', async () => {
+            const typedText = addressInput.value;
 
             if (typedText.length < 3) {
                 resultBox.innerHTML = '';
                 return;
             }
 
-            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);            
+            const response = await fetch(`https://data.geopf.fr/geocodage/search?q=${typedText}&limit=5`);
             const data = await response.json();
 
             resultBox.innerHTML = '';
 
             data.features.forEach(foundAddress => {
-                
-                const clickableItem = document.createElement('li'); 
-                
+
+                const clickableItem = document.createElement('li');
+
                 clickableItem.className = "px-4 py-2 cursor-pointer hover:bg-[#1C5B8F] hover:text-white border-b text-sm";
-                clickableItem.textContent = foundAddress.properties.label; 
-                
+                clickableItem.textContent = foundAddress.properties.label;
+
                 clickableItem.onclick = () => {
                     addressInput.value = foundAddress.properties.name;
                     document.getElementById('city').value = foundAddress.properties.city;
                     document.getElementById('zip_code').value = foundAddress.properties.postcode;
                     document.getElementById('country').value = "France";
-                    
-                    resultBox.innerHTML = ''; 
+
+                    resultBox.innerHTML = '';
                 };
-                
+
                 resultBox.appendChild(clickableItem);
             });
         });
