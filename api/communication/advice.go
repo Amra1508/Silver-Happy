@@ -253,22 +253,20 @@ func Unlike_Conseil(response http.ResponseWriter, request *http.Request) {
     }
 
     idConseil := request.PathValue("id")
-
-    var reqBody struct {
-        IDUtilisateur int `json:"id_utilisateur"`
+    
+    userIdStr := request.URL.Query().Get("user_id")
+    var idUtilisateur int
+    
+    if userIdStr != "" {
+        fmt.Sscanf(userIdStr, "%d", &idUtilisateur)
     }
 
-    if err := json.NewDecoder(request.Body).Decode(&reqBody); err != nil {
-        http.Error(response, "Format JSON invalide", http.StatusBadRequest)
-        return
-    }
-
-    if reqBody.IDUtilisateur == 0 {
+    if idUtilisateur == 0 {
         http.Error(response, "ID utilisateur manquant", http.StatusBadRequest)
         return
     }
 
-    res, err := db.DB.Exec("DELETE FROM LIKE_CONSEIL WHERE id_conseil = ? AND id_utilisateur = ?", idConseil, reqBody.IDUtilisateur)
+    res, err := db.DB.Exec("DELETE FROM LIKE_CONSEIL WHERE id_conseil = ? AND id_utilisateur = ?", idConseil, idUtilisateur)
     
     if err != nil {
         http.Error(response, "Erreur lors de la suppression du like", http.StatusInternalServerError)

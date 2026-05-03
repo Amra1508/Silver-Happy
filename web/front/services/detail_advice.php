@@ -149,18 +149,24 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
             const isLiked = iconSpan.innerText === '❤️';
             const method = isLiked ? 'DELETE' : 'POST';
-            const endpoint = isLiked ? `/conseil/unlike/${conseilId}` : `/conseil/like/${conseilId}`;
+            
+            const endpoint = isLiked 
+                ? `/conseil/unlike/${conseilId}?user_id=${userId}` 
+                : `/conseil/like/${conseilId}`;
+
+            const fetchOptions = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (!isLiked) {
+                fetchOptions.body = JSON.stringify({ id_utilisateur: userId });
+            }
 
             try {
-                const response = await fetch(`${API_BASE}${endpoint}`, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id_utilisateur: userId
-                    })
-                });
+                const response = await fetch(`${API_BASE}${endpoint}`, fetchOptions);
 
                 if (response.ok) {
                     if (isLiked) {
@@ -171,11 +177,12 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         countSpan.innerText = currentCount + 1;
                     }
                 } else {
-                    const errorData = await response.json();
-                    alert("Erreur: " + (errorData.message || "Impossible de modifier le like."));
+                    const errorText = await response.text();
+                    console.error("Erreur renvoyée par le serveur :", errorText);
+                    alert("Erreur : Impossible de modifier le like.");
                 }
             } catch (error) {
-                console.error("Erreur réseau lors du like", error);
+                console.error("Erreur réseau lors du like :", error);
             }
         }
 
