@@ -72,7 +72,6 @@ func InitDB() {
 		id_conseil INT AUTO_INCREMENT PRIMARY KEY,
 		titre VARCHAR(80),
 		description VARCHAR(200),
-		image VARCHAR(250) DEFAULT NULL,
 		date_publication DATETIME DEFAULT CURRENT_TIMESTAMP,
 		categorie VARCHAR(80)
 	);
@@ -107,8 +106,8 @@ func InitDB() {
 		type_paiement ENUM('mensuel', 'annuel'),
 		methode_paiement ENUM('carte', 'cheque', 'prelevement'),
 		tarif DOUBLE,
-		stripe_sub VARCHAR(255) DEFAULT NULL,
 		id_paiement INT NOT NULL,
+		stripe_sub VARCHAR(255) DEFAULT NULL,
 		url_contrat VARCHAR(500),
 		FOREIGN KEY (id_paiement) REFERENCES PAIEMENT(id_paiement)
 	);
@@ -125,9 +124,10 @@ func InitDB() {
 		motif_refus VARCHAR(250) DEFAULT NULL,
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_abonnement INT,
+		id_categorie INT NOT NULL,
 		debut_abonnement DATETIME NULL, 
-		id_categorie INT,
 		date_fin_boost DATETIME NULL DEFAULT NULL,
+		date_fin_boost_profil DATETIME NULL DEFAULT NULL,
 		stripe_account_id VARCHAR(255) DEFAULT NULL,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
@@ -202,12 +202,10 @@ func InitDB() {
 		id_service INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(255) NOT NULL,
 		description TEXT,
-		id_categorie INT,
-		id_prestataire INT NOT NULL,
-		prix DOUBLE NOT NULL DEFAULT 0.0,
 		statut ENUM('en_attente', 'accepte', 'refuse') DEFAULT 'en_attente',
 		motif_refus VARCHAR(250) DEFAULT NULL,
-		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL,
+		id_prestataire INT NOT NULL,
+		prix DOUBLE NOT NULL DEFAULT 0.0,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS MESSAGE_PRESTATAIRE(
@@ -218,7 +216,6 @@ func InitDB() {
 		id_utilisateur INT,
 		expediteur BOOLEAN DEFAULT 0,
 		est_lu BOOLEAN DEFAULT 0,
-		stripe_account_id VARCHAR(255) DEFAULT NULL,
 		id_service INT,
 		id_disponibilite INT,
 		prix_propose DOUBLE,
@@ -317,15 +314,6 @@ func InitDB() {
 		date_utilisation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
-	);
-	CREATE TABLE IF NOT EXISTS DEVIS(
-		id_devis INT AUTO_INCREMENT PRIMARY KEY,
-		description VARCHAR(200),
-		prix DOUBLE,
-		id_utilisateur INT NOT NULL,
-		id_prestataire INT NOT NULL,
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur)
 	);
 	CREATE TABLE IF NOT EXISTS NEWSLETTER(
   		id_newsletter INT AUTO_INCREMENT PRIMARY KEY,
