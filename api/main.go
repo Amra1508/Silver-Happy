@@ -75,7 +75,6 @@ func main() {
     http.HandleFunc("/service/user/{id}", services.Read_User_Services)
     http.HandleFunc("/service/register/{id}", services.Register_Service)
     http.HandleFunc("/service/unregister/{id}", services.Unregister_Service)
-	http.HandleFunc("/services/filter", services.GetServicesByCategory)
 	http.HandleFunc("/service/checkout/{id}", services.CreateServiceCheckoutSession)
 	http.HandleFunc("/success-service", services.Success_Service_Payment)
 

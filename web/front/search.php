@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Résultats de recherche</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-50 flex flex-col min-h-screen">
 
     <?php include("includes/header.php"); ?>
@@ -18,29 +20,29 @@
         <div id="loading" class="text-center text-gray-500 text-xl py-12">Recherche en cours...</div>
 
         <div id="results-wrapper" class="hidden space-y-12">
-            
+
             <section id="section-produits" class="hidden">
-                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">🛒 Produits</h2>
+                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">Produits</h2>
                 <div id="grid-produits" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </section>
 
             <section id="section-evenements" class="hidden">
-                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">📅 Événements</h2>
+                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">Événements</h2>
                 <div id="grid-evenements" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </section>
 
             <section id="section-services" class="hidden">
-                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">🤝 Prestations & Services</h2>
+                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">Services</h2>
                 <div id="grid-services" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </section>
 
             <section id="section-avis" class="hidden">
-                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">⭐ Avis Clients</h2>
+                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">Avis Clients</h2>
                 <div id="grid-avis" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </section>
 
             <section id="section-conseils" class="hidden">
-                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">💡 Conseils & Astuces</h2>
+                <h2 class="text-2xl font-bold text-[#1C5B8F] mb-4 flex items-center gap-2">Conseils</h2>
                 <div id="grid-conseils" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </section>
 
@@ -70,18 +72,18 @@
             try {
                 const response = await fetch(`${window.API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error("Erreur serveur");
-                
+
                 const data = await response.json();
-                
+
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('results-wrapper').classList.remove('hidden');
 
-                if (data.produits.length === 0 && 
-                    data.evenements.length === 0 && 
-                    data.services.length === 0 && 
-                    (!data.avis || data.avis.length === 0) && 
+                if (data.produits.length === 0 &&
+                    data.evenements.length === 0 &&
+                    data.services.length === 0 &&
+                    (!data.avis || data.avis.length === 0) &&
                     (!data.conseils || data.conseils.length === 0)) {
-                    
+
                     document.getElementById('no-results').classList.remove('hidden');
                     return;
                 }
@@ -127,4 +129,5 @@
         }
     </script>
 </body>
+
 </html>

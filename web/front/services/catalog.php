@@ -53,9 +53,10 @@
             </h2>
 
             <div class="flex justify-center items-center gap-4">
-                <label for="category-filter" class="font-bold text-gray-700">Trier par type :</label>
-                <select id="category-filter" onchange="applyCategoryFilter()" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E1AB2B] bg-white shadow-sm cursor-pointer">
-                    <option value="all">Toutes les prestations</option>
+                <select id="price-sort" onchange="applyPriceSort()" class="p-2 border rounded-lg">
+                    <option value="none">Trier par...</option>
+                    <option value="asc">Prix : Croissant</option>
+                    <option value="desc">Prix : Décroissant</option>
                 </select>
             </div>
         </div>
@@ -367,8 +368,6 @@
                     renderPagination(0);
                     return;
                 }
-
-                updateCategoryDropdown(currentServicesData);
                 renderServiceCards(currentServicesData);
                 renderPagination(result.totalPages);
             } catch (err) {
@@ -376,30 +375,34 @@
             }
         }
 
-        function updateCategoryDropdown(services) {
-            const select = document.getElementById('category-filter');
-            const currentValue = select.value;
-            const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
+        // function updateCategoryDropdown(services) {
+        //     const select = document.getElementById('category-filter');
+        //     const currentValue = select.value;
+        //     const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
 
-            let optionsHtml = '<option value="all">Toutes les prestations</option>';
-            categories.forEach(catName => {
-                optionsHtml += `<option value="${catName}">${catName}</option>`;
-            });
+        //     let optionsHtml = '<option value="all">Toutes les prestations</option>';
+        //     categories.forEach(catName => {
+        //         optionsHtml += `<option value="${catName}">${catName}</option>`;
+        //     });
 
-            select.innerHTML = optionsHtml;
-            if (currentValue !== 'all' && categories.includes(currentValue)) {
-                select.value = currentValue;
+        //     select.innerHTML = optionsHtml;
+        //     if (currentValue !== 'all' && categories.includes(currentValue)) {
+        //         select.value = currentValue;
+        //     }
+        // }
+
+        function applyPriceSort() {
+            const sortOrder = document.getElementById('price-sort').value;
+
+            let sortedServices = [...currentServicesData];
+
+            if (sortOrder === 'asc') {
+                sortedServices.sort((a, b) => a.prix - b.prix);
+            } else if (sortOrder === 'desc') {
+                sortedServices.sort((a, b) => b.prix - a.prix);
             }
-        }
 
-        function applyCategoryFilter() {
-            const selectedCategory = document.getElementById('category-filter').value;
-            if (selectedCategory === 'all') {
-                renderServiceCards(currentServicesData);
-            } else {
-                const filteredServices = currentServicesData.filter(s => (s.categorie_nom || 'Autre') === selectedCategory);
-                renderServiceCards(filteredServices);
-            }
+            renderServiceCards(sortedServices);
         }
 
         function renderServiceCards(services) {
@@ -416,7 +419,6 @@
                 const id = s.id_service || s.ID;
                 const nom = s.nom || 'Service sans nom';
                 const description = s.description || '';
-                const typePrestation = s.categorie_nom || 'Autre';
                 const idPrestataire = s.id_prestataire;
 
 

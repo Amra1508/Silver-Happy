@@ -71,14 +71,12 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 	}
 
 	sqlQuery := `
-    SELECT s.id_service, s.nom, s.description, s.prix, s.id_categorie, s.id_prestataire, 
-            IFNULL(c.nom, 'Autre') as categorie_nom,
+    SELECT s.id_service, s.nom, s.description, s.prix, s.id_prestataire,
             IF(p.date_fin_boost > NOW(), 1, 0) as is_boosted,
             p.nom, 
             p.prenom,
             s.statut
     FROM SERVICE s
-    LEFT JOIN CATEGORIE c ON s.id_categorie = c.id_categorie
     JOIN PRESTATAIRE p ON s.id_prestataire = p.id_prestataire `
 
 	var rows *sql.Rows
@@ -102,7 +100,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
 	var tabService []models.Service
 	for rows.Next() {
 		var service models.Service
-		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDCategorie, &service.IDPrestataire, &service.CategorieNom, &service.IsBoosted, &service.PrestataireNom, &service.PrestatairePrenom, &service.Statut); err != nil {
+		if err := rows.Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.IDPrestataire, &service.IsBoosted, &service.PrestataireNom, &service.PrestatairePrenom, &service.Statut); err != nil {
 			fmt.Printf("ERREUR SCAN SUR SERVICE: %v\n", err)
 			continue
 		}
@@ -143,7 +141,7 @@ func Create_Service(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	res, errorCreate := db.DB.Exec("INSERT INTO SERVICE (nom, description, id_categorie, prix, id_prestataire, statut) VALUES (?, ?, ?, ?, ?, 'accepte')", service.Nom, service.Description, service.IDCategorie, service.Prix, service.IDPrestataire)
+	res, errorCreate := db.DB.Exec("INSERT INTO SERVICE (nom, description, prix, id_prestataire, statut) VALUES (?, ?, ?, ?, 'accepte')", service.Nom, service.Description, service.Prix, service.IDPrestataire)
 	if errorCreate != nil {
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
 		return
@@ -180,11 +178,11 @@ func Update_Service(response http.ResponseWriter, request *http.Request) {
 
 	query := `
 		UPDATE SERVICE 
-		SET nom = ?, description = ?, id_categorie = ?, prix = ?, id_prestataire = ? 
+		SET nom = ?, description = ?, prix = ?, id_prestataire = ? 
 		WHERE id_service = ?
 	`
 
-	res, err := db.DB.Exec(query, service.Nom, service.Description, service.IDCategorie, service.Prix, service.IDPrestataire, id)
+	res, err := db.DB.Exec(query, service.Nom, service.Description, service.Prix, service.IDPrestataire, id)
 
 	if err != nil {
 		http.Error(response, "Erreur lors de la mise à jour en base de données", http.StatusInternalServerError)
@@ -244,7 +242,7 @@ func Read_One_Service(response http.ResponseWriter, request *http.Request) {
 	id := request.PathValue("id")
 	var service models.Service
 
-	err := db.DB.QueryRow("SELECT id_service, nom, description FROM SERVICE WHERE id_service = ?", id).Scan(&service.ID, &service.Nom, &service.Description)
+	err := db.DB.QueryRow("SELECT id_service, nom, description, prix, statut FROM SERVICE WHERE id_service = ?", id).Scan(&service.ID, &service.Nom, &service.Description, &service.Prix, &service.Statut)
 
 	if err != nil {
 		http.Error(response, "Service non trouvé", http.StatusNotFound)
@@ -425,36 +423,39 @@ func Unregister_Service(response http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(response).Encode(map[string]string{"message": msg})
 }
 
-func GetServicesByCategory(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+func GetServicesSortedByPrice(response http.ResponseWriter, request *http.Request) {
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	categorieIDStr := request.URL.Query().Get("categorie")
-	
-	query := `SELECT id_service, nom, description, id_categorie FROM SERVICE WHERE id_categorie = ?`
-	rows, err := db.DB.Query(query, categorieIDStr)
-	if err != nil {
-		http.Error(response, "Erreur récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    query := `
+        SELECT id_service, nom, description, prix, id_prestataire 
+        FROM SERVICE 
+        WHERE statut = 'accepte' 
+        ORDER BY prix ASC
+    `
+    
+    rows, err := db.DB.Query(query)
+    if err != nil {
+        http.Error(response, "Erreur lors de la récupération des prix", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-	var services []models.Service
-	for rows.Next() {
-		var s models.Service
-		if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &s.IDCategorie); err == nil {
-			services = append(services, s)
-		}
-	}
+    var services []models.Service
+    for rows.Next() {
+        var s models.Service
+        if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &s.Prix, &s.IDPrestataire); err == nil {
+            services = append(services, s)
+        }
+    }
 
-	if services == nil {
-		services = []models.Service{}
-	}
+    if services == nil {
+        services = []models.Service{}
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	response.WriteHeader(http.StatusOK)
-	json.NewEncoder(response).Encode(services)
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(services)
 }
 
 func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Request) {

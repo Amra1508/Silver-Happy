@@ -1,3 +1,7 @@
+<?php
+$is_logged_in = isset($_COOKIE['session_token']);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -31,17 +35,6 @@
 
     <main class="flex-1 relative">
 
-        <div id="no-sub-container" class="hidden max-w-4xl mx-auto mt-12 mb-8">
-            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/10 px-8">
-                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8">
-                    Vous devez posséder un abonnement Silver Happy pour accéder à nos conseils pratiques.
-                </p>
-                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white hover:bg-[#154670] transition font-bold text-lg shadow-md" href="/front/services/subscription.php">
-                    Découvrir nos abonnements
-                </a>
-            </div>
-        </div>
-
         <div id="main-content-container">
             <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
                 <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] leading-tight mb-4">
@@ -50,22 +43,31 @@
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
                     Découvrez nos astuces, recommandations et guides pour profiter pleinement de chaque instant en toute sérénité.
                 </p>
-
-                <div class="flex justify-center">
-                    <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
-                        Dernières publications
-                    </h2>
-                </div>
             </div>
-
+        </div>
+        <?php if ($is_logged_in): ?>
+            <div class="flex justify-center">
+                <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
+                    Dernières publications
+                </h2>
+            </div>
             <div id="advice-container" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
                 <div class="w-full text-center py-10">
                     <p class="text-xl text-gray-500 animate-pulse">Chargement de nos conseils...</p>
                 </div>
             </div>
-
             <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
-        </div>
+        <?php else: ?>
+            <div class="flex flex-col items-center justify-center py-20 rounded-[2.5rem] bg-white shadow-xl shadow-blue-900/10 px-6 mt-10">
+                <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8 px-4">
+                    Vous devez être connecté(e) pour lire nos conseils.
+                </p>
+                <a class="rounded-full px-4 py-2 button-blue" href="/front/account/signin.php?redirect=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>">
+                    Je me connecte
+                </a>
+            </div>
+        <?php endif; ?>
+
 
     </main>
 
@@ -108,7 +110,7 @@
         async function fetchConseils(page = 1) {
             try {
                 currentPage = page;
-                
+
                 const newUrl = new URL(window.location);
                 newUrl.searchParams.set('page', currentPage);
                 window.history.pushState({}, '', newUrl);
@@ -202,7 +204,6 @@
             const page = parseInt(urlParams.get('page')) || 1;
             fetchConseils(page);
         });
-
     </script>
 </body>
 
