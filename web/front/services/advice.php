@@ -36,20 +36,22 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <main class="flex-1 relative">
 
         <div id="main-content-container">
-            <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
+            <div class="w-full px-6 md:px-16 mt-16 mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] leading-tight mb-4">
                     Nos conseils pratiques
                 </h1>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
+                <p class="text-xl md:text-2xl text-gray-700 max-w-2xl mb-6">
                     Découvrez nos astuces, recommandations et guides pour profiter pleinement de chaque instant en toute sérénité.
                 </p>
             </div>
         </div>
         <?php if ($is_logged_in): ?>
-            <div class="flex justify-center">
-                <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
-                    Dernières publications
-                </h2>
+            <div class="w-full px-6 md:px-16 mb-2">
+                <label class="font-bold text-gray-700">Trier par :</label>
+                <select id="sort-conseil" onchange="applySortConseil()" class="p-2 border rounded-lg bg-white shadow-sm">
+                    <option value="likes">Les plus aimés</option>
+                    <option value="date">Les plus récents</option>
+                </select>
             </div>
             <div id="advice-container" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
                 <div class="w-full text-center py-10">
@@ -115,9 +117,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 newUrl.searchParams.set('page', currentPage);
                 window.history.pushState({}, '', newUrl);
 
+                const sortValue = document.getElementById('sort-conseil')?.value || "date";
                 const userId = window.currentUserId || 1;
 
-                const response = await fetch(`${API_BASE}/conseil/read?page=${currentPage}&limit=${limit}&user_id=${userId}`);
+                const response = await fetch(`${API_BASE}/conseil/read?page=${currentPage}&limit=${limit}&user_id=${userId}&sort=${sortValue}`);
 
                 if (!response.ok) throw new Error("Erreur de récupération des données");
 
@@ -130,8 +133,6 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic col-span-full text-center">Aucun conseil disponible pour le moment.</p>';
                     return;
                 }
-
-                conseils.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
                 conseils.forEach(c => {
                     const id = c.id_conseil || c.ID || c.id;
@@ -180,6 +181,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         <p class="text-gray-500 mt-2">Vérifiez que votre API est bien lancée.</p>
                     </div>`;
             }
+        }
+
+        function applySortConseil() {
+            fetchConseils(1);
         }
 
         function renderPagination(totalPages) {

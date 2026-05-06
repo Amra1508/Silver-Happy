@@ -25,6 +25,7 @@ func Read_Produit(response http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	limitStr := query.Get("limit")
 	pageStr := query.Get("page")
+	sort := query.Get("sort")
 
 	limit := 10
 	offset := 0
@@ -41,12 +42,20 @@ func Read_Produit(response http.ResponseWriter, request *http.Request) {
 	var total int
 	db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT").Scan(&total)
 
-	rows, errorFetch := db.DB.Query("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT LIMIT ? OFFSET ?", limit, offset)
-	if errorFetch != nil {
-		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+	querySQL := `SELECT id_produit, nom, description, prix, stock, image 
+	FROM PRODUIT 
+	ORDER BY 
+            CASE WHEN ? = 'price_asc' THEN prix END ASC,
+            CASE WHEN ? = 'price_desc' THEN prix END DESC,
+            id_produit DESC
+	LIMIT ? OFFSET ?`
+
+	rows, err := db.DB.Query(querySQL, sort, sort, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur SQL", 500)
+        return
+    }
+    defer rows.Close()
 
 	var tabProduit []models.Produit
 	for rows.Next() {

@@ -82,7 +82,16 @@
                             <div>
                                 <label class="text-sm text-gray-500">Catégorie</label>
                                 <select id="add-categorie" class="w-full border border-gray-300 rounded-md px-3 py-2 mt-1" required>
-                                    <option value="">Chargement...</option>
+                                    <option value="">Sélectionnez une catégorie</option>
+
+                                    <option value="Santé & Bien-être">Santé & Bien-être</option>
+                                    <option value="Sport">Sport</option>
+                                    <option value="Nutrition">Nutrition</option>
+                                    <option value="Nouvelles technologies">Nouvelles technologies</option>
+                                    <option value="Finances & Administratif">Finances & Administratif</option>
+                                    <option value="Mobilité & Déplacements">Mobilité & Déplacements</option>
+                                    <option value="Sécurité & Prévention">Sécurité & Prévention</option>
+                                    <option value="Loisirs & Vie Sociale">Loisirs & Vie Sociale</option>
                                 </select>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
@@ -109,7 +118,16 @@
                             <div>
                                 <label class="text-sm text-gray-500">Catégorie</label>
                                 <select id="edit-categorie" class="w-full border border-gray-300 rounded-md px-3 py-2 mt-1" required>
-                                    <option value="">Chargement...</option>
+                                    <option value="">Sélectionnez une catégorie</option>
+
+                                    <option value="Santé & Bien-être">Santé & Bien-être</option>
+                                    <option value="Sport">Sport</option>
+                                    <option value="Nutrition">Nutrition</option>
+                                    <option value="Nouvelles technologies">Nouvelles technologies</option>
+                                    <option value="Finances & Administratif">Finances & Administratif</option>
+                                    <option value="Mobilité & Déplacements">Mobilité & Déplacements</option>
+                                    <option value="Sécurité & Prévention">Sécurité & Prévention</option>
+                                    <option value="Loisirs & Vie Sociale">Loisirs & Vie Sociale</option>
                                 </select>
                             </div>
                             <div class="flex justify-end gap-4 mt-8 pt-4">
@@ -138,7 +156,7 @@
 
     <script>
         const API_BASE = `${window.API_BASE_URL}/conseil`;
-        const API_CATEGORIE_BASE = `${window.API_BASE_URL}/categorie`; 
+        const API_CATEGORIE_BASE = `${window.API_BASE_URL}/categorie`;
         let currentPage = 1;
         const limit = 10;
         const messageBox = document.getElementById('api-message');
@@ -160,32 +178,6 @@
             messageBox.className = `max-w-xl mx-auto mb-6 p-4 rounded-lg border text-center font-bold ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
             messageBox.classList.remove('hidden');
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
-        }
-
-        async function fetchCategories() {
-            try {
-                const response = await fetch(`${API_CATEGORIE_BASE}/read`);
-                if (response.ok) {
-                    const result = await response.json();
-                    const categories = result.data || [];
-                    
-                    const addSelect = document.getElementById('add-categorie');
-                    const editSelect = document.getElementById('edit-categorie');
-                    
-                    const defaultOption = '<option value="">Sélectionnez une catégorie</option>';
-                    addSelect.innerHTML = defaultOption;
-                    editSelect.innerHTML = defaultOption;
-
-                    categories.forEach(cat => {
-                        const optionHtml = `<option value="${cat.nom}">${cat.nom}</option>`;
-                        addSelect.innerHTML += optionHtml;
-                        editSelect.innerHTML += optionHtml;
-                    });
-                }
-            } catch (err) {
-                console.error("Erreur de chargement des catégories:", err);
-                document.getElementById('add-categorie').innerHTML = '<option value="">Erreur API</option>';
-            }
         }
 
         async function fetchConseils(page = 1) {
@@ -268,7 +260,7 @@
             const data = {
                 titre: document.getElementById('add-titre').value,
                 description: document.getElementById('add-description').value,
-                categorie: document.getElementById('add-categorie').value 
+                categorie: document.getElementById('add-categorie').value
             };
             try {
                 const response = await fetch(`${API_BASE}/create`, {
@@ -293,10 +285,10 @@
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-titre').value = titre;
             document.getElementById('edit-description').value = description;
-            
+
             const editSelect = document.getElementById('edit-categorie');
-            editSelect.value = categorie; 
-            
+            editSelect.value = categorie;
+
             toggleModal('edit-modal');
         }
 
@@ -306,7 +298,7 @@
             const data = {
                 titre: document.getElementById('edit-titre').value,
                 description: document.getElementById('edit-description').value,
-                categorie: document.getElementById('edit-categorie').value 
+                categorie: document.getElementById('edit-categorie').value
             };
             try {
                 const res = await fetch(`${API_BASE}/update/${id}`, {
@@ -348,7 +340,6 @@
         });
 
         window.onload = () => {
-            fetchCategories(); 
             fetchConseils(1);
         };
     </script>

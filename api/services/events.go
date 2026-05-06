@@ -70,6 +70,8 @@ func Read_Evenement(response http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	limitStr := query.Get("limit")
 	pageStr := query.Get("page")
+	sort := query.Get("sort")
+	view := query.Get("view")
 
 	limit := 10
 	offset := 0
@@ -84,23 +86,30 @@ func Read_Evenement(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM EVENEMENT").Scan(&total)
+    db.DB.QueryRow(`
+        SELECT COUNT(*) FROM EVENEMENT 
+        WHERE (NOT (? = 'senior' OR ? = 'date_asc') OR date_debut >= NOW())
+    `, view, sort).Scan(&total)
 
 	sqlQuery := `
         SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
         FROM EVENEMENT 
+        WHERE (NOT (? = 'senior' OR ? = 'date_asc') OR date_debut >= NOW())
         ORDER BY 
+            CASE WHEN ? = 'date_asc' THEN date_debut END ASC,
+            CASE WHEN ? = 'price_asc' THEN prix END ASC,
+            CASE WHEN ? = 'price_desc' THEN prix END DESC,
             (date_fin_boost IS NOT NULL AND date_fin_boost > NOW()) DESC,
-            date_debut ASC 
+            id_evenement DESC
         LIMIT ? OFFSET ?
     `
 
-	rows, errorFetch := db.DB.Query(sqlQuery, limit, offset)
-	if errorFetch != nil {
-		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+	rows, errorFetch := db.DB.Query(sqlQuery, view, sort, sort, sort, sort, limit, offset)
+    if errorFetch != nil {
+        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
 	var tabEvenement []models.Evenement
 	for rows.Next() {

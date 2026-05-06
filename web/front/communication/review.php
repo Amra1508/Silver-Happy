@@ -31,27 +31,55 @@ $is_logged_in = isset($_COOKIE['session_token']);
     <?php include("../includes/header.php") ?>
 
     <main class="flex-1 relative">
-        <div class="w-full px-6 md:px-16 mt-8 mb-8 text-center">
-            <h2 class="text-4xl font-bold mb-4 text-[#1C5B8F]">Avis de la communauté</h2>
-            <p class="text-lg max-w-4xl mx-auto text-gray-600 mb-8">
+        <div class="w-full px-6 md:px-16 mt-8 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <h2 class="text-4xl font-bold text-[#1C5B8F]">Avis de la communauté</h2>
+
+                <?php if ($is_logged_in): ?>
+                    <div class="flex gap-4">
+                        <button onclick="toggleModal(true)" class="whitespace-nowrap rounded-full px-6 py-2 bg-[#E1AB2B] font-bold text-white hover:bg-[#1C5B8F] transition-all shadow-lg transform hover:scale-105">
+                            Laisser mon avis
+                        </button>
+
+                        <a href="/front/communication/my_reviews.php" class="whitespace-nowrap rounded-full px-6 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-all shadow-md transform hover:scale-105">
+                            Voir mes avis
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <p class="text-lg text-gray-600 mb-6">
                 Découvrez les retours d'expérience de nos membres ou partagez le vôtre pour aider la communauté.
             </p>
-
             <?php if ($is_logged_in): ?>
-                <div class="flex justify-center items-center gap-4">
-                    <button onclick="toggleModal(true)" class="rounded-full px-8 py-3 bg-[#E1AB2B] font-bold text-white hover:bg-[#1C5B8F] transition-all shadow-lg transform hover:scale-105">
-                        Laisser mon avis
-                    </button>
+                <div class="flex flex-wrap gap-4 mb-8">
+                    <div class="flex flex-col">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase mb-1 ml-2">Filtrer par catégorie</label>
+                        <select id="filter-category" onchange="applyFilters()" class="p-3 border-2 border-gray-100 rounded-2xl bg-white focus:border-[#E1AB2B] outline-none transition-all">
+                            <option value="Toutes">Toutes les catégories</option>
+                            <option value="Service">Service</option>
+                            <option value="Evenement">Événement</option>
+                            <option value="Prestataire">Prestataire</option>
+                            <option value="Communication">Communication</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
 
-                    <a href="/front/communication/my_reviews.php" class="rounded-full px-8 py-3 border-2 border-[#1C5B8F] text-[#1C5B8F] font-bold hover:bg-[#1C5B8F] hover:text-white transition-all shadow-md transform hover:scale-105">
-                        Voir mes avis
-                    </a>
+                    <div class="flex flex-col">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase mb-1 ml-2">Trier par</label>
+                        <select id="sort-avis" onchange="applyFilters()" class="p-3 border-2 border-gray-100 rounded-2xl bg-white focus:border-[#E1AB2B] outline-none transition-all">
+                            <option value="date">Plus récents</option>
+                            <option value="good">Meilleures notes ★</option>
+                            <option value="bad">Moins bonnes notes</option>
+                        </select>
+                    </div>
                 </div>
             <?php endif; ?>
         </div>
+        </div>
 
         <?php if ($is_logged_in): ?>
-            <div id="list-review" class="flex flex-wrap gap-10 px-6 md:px-16 py-10 justify-center">
+            <div id="list-review" class="flex flex-wrap gap-10 px-6 md:px-16 py-10">
             </div>
 
             <div id="pagination-controls" class="flex justify-center items-center gap-4 pb-16"></div>
@@ -219,11 +247,17 @@ $is_logged_in = isset($_COOKIE['session_token']);
             });
         }
 
+        function applyFilters() {
+            fetchAvis(1);
+        }
+
         async function fetchAvis(page = 1) {
             try {
                 currentPage = page;
                 const userid = window.currentUserId;
-                const response = await fetch(`${API_BASE}/avis/read?page=${currentPage}&limit=${limit}&user=${userid}`);
+                const cat = document.getElementById('filter-category').value;
+                const sort = document.getElementById('sort-avis').value;
+                const response = await fetch(`${API_BASE}/avis/read?page=${currentPage}&limit=${limit}&user=${userid}&category=${encodeURIComponent(cat)}&sort=${sort}`);
                 const result = await response.json();
                 const avis = result.data || [];
                 const container = document.getElementById('list-review');

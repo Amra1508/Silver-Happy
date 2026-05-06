@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -213,94 +214,86 @@ func List_Prestataires(response http.ResponseWriter, request *http.Request) {
 }
 
 func Get_Prestataire_Top(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
-
-	query := request.URL.Query()
-	limitStr := query.Get("limit")
-	pageStr := query.Get("page")
-
-	limit := 10
-	offset := 0
-	page := 1
-
-	if limitStr != "" {
-		fmt.Sscanf(limitStr, "%d", &limit)
-	}
-	if pageStr != "" {
-		fmt.Sscanf(pageStr, "%d", &page)
-		offset = (page - 1) * limit
-	}
-
-	var total int
-	errTotal := db.DB.QueryRow("SELECT COUNT(*) FROM PRESTATAIRE AS p WHERE p.status = 'valide'").Scan(&total)
-	if errTotal != nil {
-		http.Error(response, "Erreur calcul total", http.StatusInternalServerError)
-		return
-	}
-
-	sqlQuery := `
-		SELECT p.id_prestataire, 
-			   COALESCE(p.prenom, ''), 
-			   COALESCE(p.nom, ''), 
-			   COALESCE(c.nom, ''), 
-			   COALESCE(AVG(a.note), 0) as moyenne, 
-			   COUNT(a.id_avis) as nombre_avis,
-			   (p.date_fin_boost_profil IS NOT NULL AND p.date_fin_boost_profil > NOW()) as is_boosted
-		FROM PRESTATAIRE AS p 
-		LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
-		LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
-		WHERE p.status = 'valide'
-		GROUP BY p.id_prestataire 
-		ORDER BY is_boosted DESC, moyenne DESC 
-		LIMIT ? OFFSET ?`
-
-	rows, err := db.DB.Query(sqlQuery, limit, offset)
-	if err != nil {
-		fmt.Println("Erreur SQL:", err)
-		http.Error(response, "Erreur BDD", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	list := make([]map[string]interface{}, 0)
-	for rows.Next() {
-    var p models.Prestataire
-    var moyenne float64
-    var nbAvis int
-    var isBoosted int
-
-    err := rows.Scan(&p.ID, &p.Prenom, &p.Nom, &p.CategorieNom, &moyenne, &nbAvis, &isBoosted)
-    if err != nil {
-        continue
+    if utils.HandleCORS(response, request, "GET") {
+        return
     }
 
-    list = append(list, map[string]interface{}{
-        "id_prestataire": p.ID,
-        "prenom":         p.Prenom,
-        "nom":            p.Nom,
-        "categorie":      p.CategorieNom,
-        "moyenne":        moyenne,
-        "nombre_avis":    nbAvis,
-        "is_boosted":     isBoosted,
-    })
+    query := request.URL.Query()
+    cat := query.Get("category")
+    
+    limit, _ := strconv.Atoi(query.Get("limit"))
+    if limit == 0 { limit = 6 }
+    
+    page, _ := strconv.Atoi(query.Get("page"))
+    if page == 0 { page = 1 }
+    offset := (page - 1) * limit
+
+    var total int
+    countQuery := `
+        SELECT COUNT(DISTINCT p.id_prestataire) 
+        FROM PRESTATAIRE p 
+        LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie 
+        WHERE p.status = 'valide' AND (c.nom = ? OR ? = '' OR ? = 'all')`
+    
+    db.DB.QueryRow(countQuery, cat, cat, cat).Scan(&total)
+
+    sqlQuery := `
+        SELECT p.id_prestataire, 
+               COALESCE(p.prenom, ''), 
+               COALESCE(p.nom, ''), 
+               COALESCE(c.nom, 'Autre') as cat_nom, 
+               COALESCE(AVG(a.note), 0) as moyenne, 
+               COUNT(a.id_avis) as nombre_avis,
+               (p.date_fin_boost_profil IS NOT NULL AND p.date_fin_boost_profil > NOW()) as is_boosted
+        FROM PRESTATAIRE AS p 
+        LEFT JOIN AVIS AS a ON p.id_prestataire = a.id_prestataire 
+        LEFT JOIN CATEGORIE AS c ON p.id_categorie = c.id_categorie
+        WHERE p.status = 'valide' AND (c.nom = ? OR ? = '' OR ? = 'all')
+        GROUP BY p.id_prestataire 
+        ORDER BY is_boosted DESC, moyenne DESC 
+        LIMIT ? OFFSET ?`
+
+    rows, err := db.DB.Query(sqlQuery, cat, cat, cat, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var list []map[string]interface{}
+    for rows.Next() {
+        var id, nbAvis int
+        var prenom, nom, categorie string
+        var moyenne float64
+        var isBoosted bool
+
+        err := rows.Scan(&id, &prenom, &nom, &categorie, &moyenne, &nbAvis, &isBoosted)
+        if err != nil { continue }
+
+        list = append(list, map[string]interface{}{
+            "id_prestataire": id,
+            "prenom":         prenom,
+            "nom":            nom,
+            "categorie":      categorie,
+            "moyenne":        moyenne,
+            "nombre_avis":    nbAvis,
+            "is_boosted":     isBoosted,
+        })
+    }
+
+    if list == nil { list = []map[string]interface{}{} }
+
+    dataResponse := map[string]interface{}{
+        "data":        list,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
-	if len(list) == 0 {
-		list = []map[string]interface{}{}
-	}
-
-	dataResponse := map[string]interface{}{
-		"data":        list,
-		"total":       total,
-		"currentPage": page,
-		"totalPages":  (total + limit - 1) / limit,
-	}
-
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(dataResponse)
-}
 
 func Get_Note_Moyenne(response http.ResponseWriter, request *http.Request) {
 	if utils.HandleCORS(response, request, "GET") {

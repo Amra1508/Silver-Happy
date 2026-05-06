@@ -375,22 +375,6 @@
             }
         }
 
-        // function updateCategoryDropdown(services) {
-        //     const select = document.getElementById('category-filter');
-        //     const currentValue = select.value;
-        //     const categories = [...new Set(services.map(s => s.categorie_nom || 'Autre'))];
-
-        //     let optionsHtml = '<option value="all">Toutes les prestations</option>';
-        //     categories.forEach(catName => {
-        //         optionsHtml += `<option value="${catName}">${catName}</option>`;
-        //     });
-
-        //     select.innerHTML = optionsHtml;
-        //     if (currentValue !== 'all' && categories.includes(currentValue)) {
-        //         select.value = currentValue;
-        //     }
-        // }
-
         function applyPriceSort() {
             const sortOrder = document.getElementById('price-sort').value;
 

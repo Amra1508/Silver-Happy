@@ -34,11 +34,21 @@
             </div>
             <div class="max-w-6xl mx-auto px-4">
                 <div class="w-full">
-                    <h1 class="mb-5 text-center big-text">Nos Produits</h1>
-                    <h2 class="text-lg text-gray-600 text-center mb-10">
+                    <h1 class="mb-5 big-text">Nos Produits</h1>
+                    <h2 class="text-lg text-gray-600 mb-6">
                         Découvrez notre large gamme de produits Silver Happy.
                     </h2>
                 </div>
+
+                <div class="flex items-center gap-3 mb-6">
+                    <label class="font-bold text-[#1C5B8F]">Trier par :</label>
+                    <select id="sort-price" onchange="fetchProduits(1)" class="p-2 border-2 border-gray-100 rounded-xl bg-white outline-none focus:border-[#E1AB2B] transition-all">
+                        <option value="">Nouveautés</option>
+                        <option value="price_asc">Prix : Croissant</option>
+                        <option value="price_desc">Prix : Décroissant</option>
+                    </select>
+                </div>
+
 
                 <div id="produit-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
                 </div>
@@ -62,7 +72,9 @@
         async function fetchProduits(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/produit/read?page=${currentPage}&limit=${limit}`);
+                const sortElement = document.getElementById('sort-price');
+                const sortValue = sortElement ? sortElement.value : "";
+                const response = await fetch(`${API_BASE}/produit/read?page=${currentPage}&limit=${limit}&sort=${sortValue}`);
                 const result = await response.json();
 
                 const produits = result.data || [];

@@ -19,6 +19,9 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 	limitStr := query.Get("limit")
 	pageStr := query.Get("page")
 	user, _ := strconv.Atoi(query.Get("user"))
+	sort := query.Get("sort")
+    filterCat := query.Get("category")
+	if filterCat == "" { filterCat = "Toutes" }
 
 	limit := 10
 	offset := 0
@@ -31,7 +34,8 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM AVIS WHERE id_utilisateur != ?", user).Scan(&total)
+    countSQL := `SELECT COUNT(*) FROM AVIS WHERE id_utilisateur != ? AND (categorie = ? OR ? = 'Toutes')`
+    db.DB.QueryRow(countSQL, user, filterCat, filterCat).Scan(&total)
 
 	querySQL := `
 		SELECT 
@@ -41,10 +45,14 @@ func Read_Avis(response http.ResponseWriter, request *http.Request) {
 		FROM AVIS a
 		LEFT JOIN PRESTATAIRE p ON a.id_prestataire = p.id_prestataire
 		WHERE a.id_utilisateur != ?
-		ORDER BY a.date DESC
+		AND (a.categorie = ? OR ? = 'Toutes')
+        ORDER BY 
+            CASE WHEN ? = 'good' THEN a.note END DESC,
+            CASE WHEN ? = 'bad' THEN a.note END ASC,
+            CASE WHEN ? = 'date' OR ? = '' THEN a.date END DESC
 		LIMIT ? OFFSET ?`
 
-	rows, errorFetch := db.DB.Query(querySQL, user, limit, offset)
+	rows, errorFetch := db.DB.Query(querySQL, user, filterCat, filterCat, sort, sort, sort, sort, limit, offset)
 	if errorFetch != nil {
 		http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
 		return

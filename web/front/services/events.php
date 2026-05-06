@@ -48,11 +48,11 @@
             <h2 class="big-text mb-4 text-[#1C5B8F] text-4xl font-bold">L'agenda complet</h2>
             <p class="text-gray-600 max-w-4xl mx-auto mb-6">Découvrez le programme et réservez votre place.</p>
 
-            <div class="max-w-xs mx-auto">
-                <select id="filter-category" class="w-full p-3 border border-gray-300 text-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1C5B8F]" onchange="fetchEvenements(1)">
-                    <option value="">Toutes les catégories</option>
-                </select>
-            </div>
+            <select id="sort-filter" onchange="fetchEvenements(1)" class="p-2 border rounded-xl">
+                <option value="date_asc">Prochainement</option>
+                <option value="price_asc">Prix : Croissant</option>
+                <option value="price_desc">Prix : Décroissant</option>
+            </select>
         </div>
 
         <div id="events-container" class="flex flex-wrap gap-8 px-6 md:px-16 py-4 justify-center">
@@ -72,8 +72,6 @@
         let currentPage = 1;
         const limit = 6;
         const messageBox = document.getElementById('api-message');
-
-        let categoriesData = [];
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -137,30 +135,6 @@
                 isPast: false,
                 text: timeParts.length > 0 ? `⏳ Dans ${timeParts.join(' ')}` : "⏳ Commence bientôt"
             };
-        }
-
-        async function fetchCategories() {
-            try {
-                const response = await fetch(`${API_BASE}/categorie/read`);
-                if (!response.ok) return;
-                const result = await response.json();
-                categoriesData = result.data || result || [];
-
-                const select = document.getElementById('filter-category');
-                categoriesData.forEach(cat => {
-                    const id = cat.id_categorie || cat.id || cat.ID;
-                    const nom = cat.nom || cat.Nom;
-                    select.innerHTML += `<option value="${id}">${nom}</option>`;
-                });
-            } catch (err) {
-                console.error("Erreur de chargement des catégories:", err);
-            }
-        }
-
-        function getCategoryName(id) {
-            if (!id) return null;
-            const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
-            return cat ? (cat.nom || cat.Nom) : null;
         }
 
         async function fetchMyEvenements() {
@@ -301,31 +275,22 @@
         async function fetchEvenements(page = 1) {
             try {
                 currentPage = page;
-                const categoryId = document.getElementById('filter-category').value;
+                const sortValue = document.getElementById('sort-filter').value;
 
-                let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`;
-
-                if (categoryId) {
-                    url = `${API_BASE}/evenement/filter?categorie=${categoryId}`;
-                }
+                let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}&sort=${sortValue}&view=senior`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("Erreur de récupération");
 
                 const result = await response.json();
 
-                const evenementsAPI = Array.isArray(result) ? result : (result.data || []);
-
-                const evenements = evenementsAPI.filter(e => {
-                    if (!e.date_debut) return true;
-                    return new Date(e.date_debut) >= new Date();
-                });
+                const evenements = Array.isArray(result) ? result : (result.data || []);
 
                 const container = document.getElementById('events-container');
                 container.innerHTML = '';
 
                 if (evenements.length === 0) {
-                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun événement prévu dans cette catégorie.</p>';
+                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic">Aucun événement prévu.</p>';
                     renderPagination(Array.isArray(result) ? 0 : (result.totalPages || 0));
                     return;
                 }
@@ -339,9 +304,6 @@
                     const displayDebut = formatDisplayDate(e.date_debut);
                     const timeStatus = getTimeRemaining(e.date_debut);
                     const imgSrc = e.image ? `${API_BASE}/${e.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/400x250?text=Silver+Happy';
-
-                    const catName = getCategoryName(e.id_categorie || e.IDCategorie);
-                    const catBadge = catName ? `<span class="text-xs bg-[#1C5B8F]/10 text-[#1C5B8F] px-3 py-1 rounded-full mb-3 inline-block font-bold border border-[#1C5B8F]/20">${catName}</span>` : '';
 
                     const prix = parseFloat(e.prix || e.Prix || 0);
                     const displayPrix = prix > 0 ? `${prix.toFixed(2)} €` : 'Gratuit';
@@ -362,7 +324,6 @@
                                 <div class="absolute top-4 right-4">${badgeHTML}</div>
                             </div>
                             <div class="p-6 flex flex-col flex-grow">
-                                ${catBadge}
                                 ${prixBadge}
                                 <h3 class="text-2xl text-[#1C5B8F] font-bold mb-3">${nom}</h3>
                                 <div class="flex items-center text-sm text-gray-600 mb-2 font-semibold">📅 ${displayDebut}</div>
@@ -406,7 +367,6 @@
         });
 
         window.onload = async () => {
-            await fetchCategories();
             fetchEvenements(1);
 
             const urlParams = new URLSearchParams(window.location.search);

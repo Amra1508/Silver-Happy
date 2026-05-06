@@ -21,6 +21,7 @@ func Read_Conseil(response http.ResponseWriter, request *http.Request) {
     limitStr := query.Get("limit")
     pageStr := query.Get("page")
     userIdStr := query.Get("user_id")
+    sort := query.Get("sort")
 
     limit := 10
     offset := 0
@@ -47,13 +48,15 @@ func Read_Conseil(response http.ResponseWriter, request *http.Request) {
             (SELECT COUNT(*) FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil) AS likes,
             (SELECT COUNT(*) > 0 FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil AND id_utilisateur = ?) AS is_liked
         FROM CONSEIL c 
-        ORDER BY c.date_publication DESC
+        ORDER BY 
+            CASE WHEN ? = 'likes' THEN (SELECT COUNT(*) FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil) END DESC,
+            CASE WHEN ? = 'date' OR ? = '' THEN c.date_publication END DESC
         LIMIT ? OFFSET ?
     `
 
-    rows, errorFetch := db.DB.Query(sqlQuery, userId, limit, offset)
-    if errorFetch != nil {
-        http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
+    rows, err := db.DB.Query(sqlQuery, userId, sort, sort, sort, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur SQL", 500)
         return
     }
     defer rows.Close()

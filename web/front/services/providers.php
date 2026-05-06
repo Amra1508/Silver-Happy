@@ -33,15 +33,15 @@
 
         <div class="w-full px-6 md:px-16 mt-16 mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-[#1C5B8F] leading-tight mb-4">
-                Nos Meilleurs Prestataires
+                Nos Prestataires
             </h1>
-            <p class="text-xl md:text-2xl text-gray-700 max-w-2xl mb-12">
-                Découvrez les professionnels les mieux notés par notre communauté pour vos besoins et services.
+            <p class="text-xl md:text-2xl text-gray-700 max-w-2xl mb-6">
+                Découvrez les professionnels classés par note selon notre communauté pour vos besoins et services.
             </p>
 
-            <h2 class="text-3xl font-bold text-[#1C5B8F] border-b-4 border-[#E1AB2B] inline-block pb-2">
-                Classement par note moyenne
-            </h2>
+            <select id="category-filter" onchange="applyCategoryFilter()" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E1AB2B] bg-white shadow-sm cursor-pointer">
+                <option value="all">Toutes les professions</option>
+            </select>
         </div>
 
         <div id="prestataires-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-6 md:px-16 pt-8 pb-4">
@@ -59,46 +59,57 @@
     <script>
         const API_BASE = window.API_BASE_URL;
         let currentPage = 1;
+        let currentCategory = "all";
         const limit = 6;
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchPrestataires(1);
+            loadCategories();
         });
 
         async function fetchPrestataires(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/prestataires/top?page=${currentPage}&limit=${limit}&status=valide`);
 
-                if (!response.ok) throw new Error("Erreur de récupération des données");
+                const url = `${API_BASE}/prestataires/top?page=${currentPage}&limit=${limit}&category=${currentCategory}`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Erreur de récupération");
 
                 const result = await response.json();
-                const prestataires = result.data || [];
-                const container = document.getElementById('prestataires-container');
-                container.innerHTML = '';
 
-                if (prestataires.length === 0) {
-                    container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic col-span-full text-center">Aucun prestataire trouvé.</p>';
-                    return;
-                }
+                renderPrestataireCards(result.data || []);
 
-                prestataires.forEach(p => {
-                    const id = p.id_prestataire;
-                    const nomComplet = `${p.prenom} ${p.nom}`;
-                    const categorie = p.categorie || 'Non spécifié';
+                renderPagination(result.totalPages);
 
-                    const noteMoyenne = parseFloat(p.moyenne).toFixed(1);
-                    const nbAvis = p.nombre_avis;
+            } catch (err) {
+                console.error("Erreur fetch:", err);
+                document.getElementById('prestataires-container').innerHTML = `<p class="text-red-500 text-center col-span-full">Erreur de connexion au serveur.</p>`;
+            }
+        }
 
-                    const stars = "★".repeat(Math.round(noteMoyenne)) + "☆".repeat(5 - Math.round(noteMoyenne));
+        function renderPrestataireCards(list) {
+            const container = document.getElementById('prestataires-container');
+            container.innerHTML = '';
 
-                    const isBoosted = p.is_boosted === 1 || p.is_boosted === true;
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-xl text-gray-500 py-10 italic col-span-full text-center">Aucun prestataire trouvé pour cette catégorie.</p>';
+                return;
+            }
 
-                    const borderClass = isBoosted ? "border-2 border-[#E1AB2B] shadow-[#E1AB2B]/20 shadow-xl" : "border-l-8 border-[#1C5B8F] shadow-md";
+            list.forEach(p => {
+                const id = p.id_prestataire;
+                const nomComplet = `${p.prenom} ${p.nom}`;
+                const categorie = p.categorie || 'Non spécifié';
+                const noteMoyenne = parseFloat(p.moyenne);
+                const noteTexte = noteMoyenne > 0 ? `${noteMoyenne.toFixed(1)} / 5` : "Nouveau";
+                const stars = "★".repeat(Math.round(noteMoyenne)) + "☆".repeat(5 - Math.round(noteMoyenne));
+                const nbAvis = p.nombre_avis;
 
-                    const badgeBoost = isBoosted ? `<span class="absolute -top-5 -left-5 bg-[#E1AB2B] text-white p-3 rounded-full shadow-lg text-2xl z-10" title="Top Prestataire">⭐</span>` : "";
+                const borderClass = p.is_boosted ? "border-2 border-[#E1AB2B] shadow-xl" : "border-l-8 border-[#1C5B8F] shadow-md";
+                const badgeBoost = p.is_boosted ? `<span class="absolute -top-3 -left-3 bg-[#E1AB2B] text-white p-2 rounded-full z-10">⭐</span>` : "";
 
-                    container.innerHTML += `
+                container.innerHTML += `
                         <div class="bg-white ${borderClass} rounded-xl p-6 flex flex-col hover:shadow-lg transition-all relative h-full">
                             
                             ${badgeBoost}
@@ -124,47 +135,57 @@
                             </div>
                         </div>
                     `;
-                });
+            });
+        }
 
-                renderPagination(result.totalPages);
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('prestataires-container').innerHTML = `
-                    <div class="w-full text-center py-10 col-span-full">
-                        <p class="text-xl text-red-500 font-bold">Impossible de charger les prestataires.</p>
-                        <p class="text-gray-500 mt-2">Vérifiez que votre API Go est bien lancée.</p>
-                    </div>`;
-            }
+        function applyCategoryFilter() {
+            currentCategory = document.getElementById('category-filter').value;
+            fetchPrestataires(1);
         }
 
         function renderPagination(totalPages) {
-            const paginationContainer = document.getElementById('pagination-controls');
-            if (!paginationContainer) return;
-            paginationContainer.innerHTML = '';
+            const container = document.getElementById('pagination-controls');
+            if (!container) return;
+            container.innerHTML = '';
 
             if (totalPages <= 1) return;
 
-            const prevDisabled = currentPage === 1 ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-[#1C5B8F] hover:text-white';
-            paginationContainer.innerHTML += `
-                <button onclick="fetchPrestataires(${currentPage - 1})" 
-                    class="px-6 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-all ${prevDisabled}" 
-                    ${currentPage === 1 ? 'disabled' : ''}>
-                    ← Précédent
-                </button>`;
+            const btnClass = "px-6 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-all";
 
-            paginationContainer.innerHTML += `
-                <span class="text-gray-600 font-medium px-4">
-                    Page <strong class="text-[#1C5B8F] text-xl">${currentPage}</strong> sur ${totalPages}
-                </span>`;
+            const prevDisabled = currentPage === 1;
+            container.innerHTML += `
+        <button onclick="fetchPrestataires(${currentPage - 1})" 
+            class="${btnClass} ${prevDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#1C5B8F] hover:text-white'}"
+            ${prevDisabled ? 'disabled' : ''}>← Précédent</button>`;
 
-            const nextDisabled = currentPage === totalPages ? 'disabled opacity-50 cursor-not-allowed' : 'hover:bg-[#1C5B8F] hover:text-white';
-            paginationContainer.innerHTML += `
-                <button onclick="fetchPrestataires(${currentPage + 1})" 
-                    class="px-6 py-2 border-2 border-[#1C5B8F] text-[#1C5B8F] rounded-full font-bold transition-all ${nextDisabled}" 
-                    ${currentPage === totalPages ? 'disabled' : ''}>
-                    Suivant →
-                </button>`;
+            container.innerHTML += `<span class="text-gray-600 font-medium">Page <strong class="text-[#1C5B8F] text-xl">${currentPage}</strong> sur ${totalPages}</span>`;
+
+            const nextDisabled = currentPage === totalPages;
+            container.innerHTML += `
+        <button onclick="fetchPrestataires(${currentPage + 1})" 
+            class="${btnClass} ${nextDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#1C5B8F] hover:text-white'}"
+            ${nextDisabled ? 'disabled' : ''}>Suivant →</button>`;
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categorie/read`);
+                if (!response.ok) throw new Error("Erreur");
+
+                const result = await response.json();
+                const select = document.getElementById('category-filter');
+
+                if (result.data && Array.isArray(result.data)) {
+                    result.data.forEach(cat => {
+                        const option = document.createElement('option');
+                        option.value = cat.nom;
+                        option.textContent = cat.nom;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (e) {
+                console.error("Impossible de charger les catégories :", e);
+            }
         }
     </script>
 </body>
