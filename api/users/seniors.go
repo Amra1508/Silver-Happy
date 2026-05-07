@@ -62,6 +62,8 @@ func Read_User_Admin(response http.ResponseWriter, request *http.Request) {
 	queryParams := request.URL.Query()
 	limitStr := queryParams.Get("limit")
 	pageStr := queryParams.Get("page")
+	hasAbo := queryParams.Get("abonnement")
+    sortDate := queryParams.Get("sort_date")
 
 	limit := 10
 	offset := 0
@@ -76,7 +78,13 @@ func Read_User_Admin(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'user'").Scan(&total)
+	countQuery := `SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'user' AND (
+            ? = '' 
+            OR (? = 'oui' AND id_abonnement IS NOT NULL)
+            OR (? = 'non' AND id_abonnement IS NULL)
+        )`
+		
+	db.DB.QueryRow(countQuery, hasAbo, hasAbo, hasAbo).Scan(&total)
 
 	query := `
         SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
@@ -87,20 +95,30 @@ func Read_User_Admin(response http.ResponseWriter, request *http.Request) {
         FROM UTILISATEUR u
         LEFT JOIN ADRESSE a ON u.id_adresse = a.id_adresse
         LEFT JOIN MESSAGE_ADMIN m ON u.id_utilisateur = m.id_utilisateur1
-        WHERE u.statut = 'user' OR u.statut = 'banni'
+        WHERE (u.statut = 'user' OR u.statut = 'banni')
+        AND (
+            ? = '' 
+            OR (? = 'oui' AND u.id_abonnement IS NOT NULL)
+            OR (? = 'non' AND u.id_abonnement IS NULL)
+        )
         GROUP BY u.id_utilisateur, u.nom, u.prenom, u.email, 
                  u.num_telephone, u.date_naissance, u.statut, 
                  u.date_creation, u.motif_bannissement, u.duree_bannissement,
                  a.rue, a.ville, a.code_postal, a.pays
-        ORDER BY est_lu DESC, u.id_utilisateur ASC
+        ORDER BY 
+            est_lu DESC, 
+            CASE WHEN ? = 'asc' THEN u.date_creation END ASC,
+            CASE WHEN ? = 'desc' OR ? = '' THEN u.date_creation END DESC,
+            u.id_utilisateur ASC
         LIMIT ? OFFSET ?
     `
-	rows, err := db.DB.Query(query, limit, offset)
-	if err != nil {
-		http.Error(response, "Erreur serveur", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+
+	rows, err := db.DB.Query(query, hasAbo, hasAbo, hasAbo, sortDate, sortDate, sortDate, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur serveur", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
 	var tabUtilisateur []models.Utilisateur
 	for rows.Next() {

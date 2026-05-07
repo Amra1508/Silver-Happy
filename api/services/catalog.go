@@ -77,7 +77,7 @@ func Read_Service(response http.ResponseWriter, request *http.Request) {
             p.prenom,
             s.statut
     FROM SERVICE s
-    JOIN PRESTATAIRE p ON s.id_prestataire = p.id_prestataire `
+    LEFT JOIN PRESTATAIRE p ON s.id_prestataire = p.id_prestataire `
 
 	var rows *sql.Rows
     var errorFetch error

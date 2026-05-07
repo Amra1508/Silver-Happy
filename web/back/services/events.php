@@ -43,13 +43,13 @@
 
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="title-text text-3xl font-semibold text-[#1C5B8F]">Gestion des Événements</h1>
-                    
+
                     <div class="flex items-center gap-4">
-                        <label for="filter-category" class="font-semibold text-gray-700">Filtrer par :</label>
-                        <select id="filter-category" class="border border-gray-300 rounded p-2 text-sm w-48" onchange="fetchEvenements(1)">
-                            <option value="">Toutes les catégories</option>
-                            </select>
-                        <button onclick="toggleModal('add-modal')" class="bg-[#1C5B8F] text-white px-6 py-2 rounded-full font-semibold hover:bg-blue-800 transition" type="button">
+                        <select id="sort-filter" onchange="fetchEvenements(1)" class="bg-[#F5F5F5]/40 shadow-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold hover:bg-[#D9D9D9]/40 focus:outline-none shadow-sm cursor-pointer">
+                            <option value="price_asc">Prix : Croissant</option>
+                            <option value="price_desc">Prix : Décroissant</option>
+                        </select>
+                        <button onclick="toggleModal('add-modal')" class="add-button" type="button">
                             + Ajouter un Événement
                         </button>
                     </div>
@@ -63,7 +63,6 @@
                             <tr>
                                 <th class="p-4 font-semibold">Image</th>
                                 <th class="p-4 font-semibold">Nom</th>
-                                <th class="p-4 font-semibold">Catégorie</th>
                                 <th class="p-4 font-semibold">Description</th>
                                 <th class="p-4 font-semibold">Lieu</th>
                                 <th class="p-4 font-semibold text-center">Prix</th>
@@ -85,12 +84,6 @@
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
                                 <input type="text" id="add-nom" class="w-full p-2 border rounded" required>
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-500">Catégorie</label>
-                                <select id="add-categorie" class="w-full p-2 border rounded">
-                                    <option value="">-- Sans catégorie --</option>
-                                </select>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
@@ -140,12 +133,6 @@
                             <div>
                                 <label class="text-sm text-gray-500">Nom</label>
                                 <input type="text" id="edit-nom" class="w-full p-2 border rounded" required>
-                            </div>
-                            <div>
-                                <label class="text-sm text-gray-500">Catégorie</label>
-                                <select id="edit-categorie" class="w-full p-2 border rounded">
-                                    <option value="">-- Sans catégorie --</option>
-                                </select>
                             </div>
                             <div>
                                 <label class="text-sm text-gray-500">Description</label>
@@ -240,8 +227,6 @@
         let currentPage = 1;
         const limit = 10;
         const messageBox = document.getElementById('api-message');
-        
-        let categoriesData = [];
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -316,52 +301,12 @@
         document.getElementById('edit-debut').min = minDT;
         document.getElementById('edit-fin').min = minDT;
 
-        async function fetchCategories() {
-            try {
-                const response = await fetch(`${API_BASE}/categorie/read`); 
-                if(!response.ok) return;
-                
-                const result = await response.json();
-                categoriesData = result.data || result || []; 
-                
-                populateCategorySelects();
-            } catch (err) {
-                console.error("Erreur chargement catégories:", err);
-            }
-        }
-
-        function populateCategorySelects() {
-            const filterSelect = document.getElementById('filter-category');
-            const addSelect = document.getElementById('add-categorie');
-            const editSelect = document.getElementById('edit-categorie');
-
-            let optionsHTML = '';
-            categoriesData.forEach(cat => {
-                const id = cat.id_categorie || cat.id || cat.ID;
-                const nom = cat.nom || cat.Nom;
-                optionsHTML += `<option value="${id}">${nom}</option>`;
-            });
-
-            filterSelect.innerHTML = `<option value="">Toutes les catégories</option>` + optionsHTML;
-            addSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
-            editSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
-        }
-
-        function getCategoryName(id) {
-            if(!id) return "-";
-            const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
-            return cat ? (cat.nom || cat.Nom) : "-";
-        }
-
         async function fetchEvenements(page = 1) {
             try {
                 currentPage = page;
-                const categoryId = document.getElementById('filter-category').value;
-                let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}`;
+                const sortValue = document.getElementById('sort-filter').value;
 
-                if(categoryId) {
-                    url = `${API_BASE}/evenement/filter?categorie=${categoryId}`;
-                }
+                let url = `${API_BASE}/evenement/read?page=${currentPage}&limit=${limit}&sort=${sortValue}&view=admin`;
 
                 const response = await fetch(url);
 
@@ -389,7 +334,6 @@
                     const places = c.nombre_place || c.NombrePlace || 0;
                     const date_debut = c.date_debut || c.DateDebut || '';
                     const date_fin = c.date_fin || c.DateFin || '';
-                    const idCat = c.id_categorie || c.IDCategorie || ''; 
                     const prix = parseFloat(c.prix || c.Prix || 0);
 
                     const imgSrc = c.image ? `${API_BASE}/${c.image.replace(/\\/g, '/')}` : 'https://via.placeholder.com/150?text=Pas+d%27image';
@@ -404,9 +348,6 @@
                                 <img src="${imgSrc}" class="w-16 h-16 object-cover rounded-lg border border-gray-200" alt="Image event">
                             </td>
                             <td class="p-4 font-medium text-[#1C5B8F]">${nom}</td>
-                            <td class="p-4 text-sm text-gray-600">
-                                <span class="bg-gray-100 px-2 py-1 rounded border border-gray-200">${getCategoryName(idCat)}</span>
-                            </td>
                             <td class="p-4 text-sm max-w-[200px] truncate" title="${description}">${description}</td>
                             <td class="p-4">${lieu}</td>
                             <td class="p-4 text-center font-bold text-gray-700">${displayPrix}</td>
@@ -415,15 +356,15 @@
                             <td class="p-4 text-sm">${displayFin}</td>
                             <td class="p-4 flex justify-center gap-2">
                                 <button onclick="openLinkModal(${id})" class="text-[#1C5B8F] bg-[#1C5B8F]/10 hover:bg-[#1C5B8F]/20 px-2 py-1 rounded-lg font-bold text-xs">Prestas</button>
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', '${idCat}', ${prix})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Edit</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', ${prix})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Edit</button>
                                 <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-2 py-1 rounded-lg font-bold text-xs">Suppr</button>
                             </td>
                         </tr>
                     `;
                 });
 
-                if(Array.isArray(result) && !result.totalPages) {
-                    renderPagination(0, 0); 
+                if (Array.isArray(result) && !result.totalPages) {
+                    renderPagination(0, 0);
                 } else {
                     renderPagination(result.totalPages, result.total);
                 }
@@ -479,9 +420,6 @@
             formData.append('prix', document.getElementById('add-prix').value);
             formData.append('date_debut', document.getElementById('add-debut').value);
             formData.append('date_fin', document.getElementById('add-fin').value);
-            
-            const catValue = document.getElementById('add-categorie').value;
-            if(catValue) formData.append('id_categorie', catValue);
 
             const fileInput = document.getElementById('add-image');
             if (fileInput.files[0]) {
@@ -506,7 +444,7 @@
             }
         });
 
-        function openEditModal(id, nom, description, lieu, places, debut, fin, idCat, prix) {
+        function openEditModal(id, nom, description, lieu, places, debut, fin, prix) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-nom').value = nom;
             document.getElementById('edit-description').value = description;
@@ -515,7 +453,6 @@
             document.getElementById('edit-prix').value = prix;
             document.getElementById('edit-debut').value = formatDateForInput(debut);
             document.getElementById('edit-fin').value = formatDateForInput(fin);
-            document.getElementById('edit-categorie').value = idCat || ""; 
             document.getElementById('edit-image').value = '';
             toggleModal('edit-modal');
         }
@@ -532,9 +469,6 @@
             formData.append('prix', document.getElementById('edit-prix').value);
             formData.append('date_debut', document.getElementById('edit-debut').value);
             formData.append('date_fin', document.getElementById('edit-fin').value);
-            
-            const catValue = document.getElementById('edit-categorie').value;
-            if(catValue) formData.append('id_categorie', catValue);
 
             const fileInput = document.getElementById('edit-image');
             if (fileInput.files[0]) {
@@ -644,8 +578,12 @@
             try {
                 const res = await fetch(`${API_BASE}/evenement/prestataires/link/${eventId}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_prestataire: parseInt(providerId) })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_prestataire: parseInt(providerId)
+                    })
                 });
 
                 if (res.ok) {
@@ -678,7 +616,6 @@
         }
 
         window.onload = async () => {
-            await fetchCategories();
             fetchEvenements(1);
         };
     </script>

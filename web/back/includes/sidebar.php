@@ -21,7 +21,7 @@
 
         <a href="/back/services/categories.php" class="sidebar-links">
             <img src="/back/icons/categories.svg" alt="catalogue" class="w-7 h-7 mx-4">
-            <span>Catégories</span>
+            <span>Catégories de prestation</span>
         </a>
 
         <a href="/back/services/catalog.php" class="sidebar-links">
@@ -31,7 +31,7 @@
 
         <a href="/back/services/events.php" class="sidebar-links">
             <img src="/back/icons/evenements.svg" alt="evenements" class="w-7 h-7 mx-4">
-            <span>Évènements & Planning</span>
+            <span>Évènements</span>
         </a>
 
         <a href="/back/services/products.php" class="sidebar-links">

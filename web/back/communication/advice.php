@@ -43,9 +43,15 @@
 
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="title-text text-3xl font-bold text-[#1C5B8F]">Gestion des Conseils</h1>
-                    <button onclick="toggleModal('add-modal')" class="add-button bg-[#1C5B8F] text-white px-4 py-2 rounded-lg" type="button">
-                        + Ajouter un Conseil
-                    </button>
+                    <div class="flex items-center gap-4">
+                        <select id="sort-conseil" onchange="applySortConseil()" class="bg-[#F5F5F5]/40 shadow-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold hover:bg-[#D9D9D9]/40 focus:outline-none shadow-sm cursor-pointer">
+                            <option value="date">Les plus récents</option>
+                            <option value="likes">Les plus aimés</option>
+                        </select>
+                        <button onclick="toggleModal('add-modal')" class="add-button" type="button">
+                            + Ajouter un Conseil
+                        </button>
+                    </div>
                 </div>
 
                 <div id="api-message" class="hidden"></div>
@@ -183,7 +189,9 @@
         async function fetchConseils(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+                const sortValue = document.getElementById('sort-conseil')?.value || "date";
+
+                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}&sort=${sortValue}`);
                 const result = await response.json();
 
                 const conseils = result.data || [];
@@ -218,6 +226,10 @@
             } catch (err) {
                 showAlert("Erreur lors de la récupération des conseils.", false);
             }
+        }
+
+        function applySortConseil() {
+            fetchConseils(1);
         }
 
         function renderPagination(totalPages, totalItems) {

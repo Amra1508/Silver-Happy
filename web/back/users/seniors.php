@@ -42,9 +42,20 @@
             <main class="p-8">
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="title-text">Gestion des Seniors</h1>
-                    <button onclick="toggleModal('add-modal')" class="add-button" type="button">
-                        + Ajouter un Senior
-                    </button>
+                    <div class="flex items-center gap-4">
+                        <select id="filter-abo" onchange="fetchSeniors(1)" class="bg-[#F5F5F5]/40 shadow-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold hover:bg-[#D9D9D9]/40 focus:outline-none shadow-sm cursor-pointer">
+                            <option value="">Tous les abonnements</option>
+                            <option value="oui">Abonnés</option>
+                            <option value="non">Non abonnés</option>
+                        </select>
+                        <select id="sort-date" onchange="fetchSeniors(1)" class="bg-[#F5F5F5]/40 shadow-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold hover:bg-[#D9D9D9]/40 focus:outline-none shadow-sm cursor-pointer">
+                            <option value="desc">Plus récents d'abord</option>
+                            <option value="asc">Plus anciens d'abord</option>
+                        </select>
+                        <button onclick="toggleModal('add-modal')" class="add-button" type="button">
+                            + Ajouter un Senior
+                        </button>
+                    </div>
                 </div>
 
                 <div id="api-message" class="hidden"></div>
@@ -229,7 +240,11 @@
         async function fetchSeniors(page = 1) {
             try {
                 currentPage = page;
-                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}`);
+
+                const abonnement = document.getElementById('filter-abo')?.value || '';
+                const sortDate = document.getElementById('sort-date')?.value || '';
+
+                const response = await fetch(`${API_BASE}/read?page=${currentPage}&limit=${limit}&abonnement=${abonnement}&sort_date=${sortDate}`);
 
                 if (!response.ok) {
                     await showErrorFromResponse(response, "Erreur lors de la récupération des seniors.");

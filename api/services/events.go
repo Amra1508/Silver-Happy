@@ -86,26 +86,25 @@ func Read_Evenement(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var total int
-    db.DB.QueryRow(`
-        SELECT COUNT(*) FROM EVENEMENT 
-        WHERE (NOT (? = 'senior' OR ? = 'date_asc') OR date_debut >= NOW())
-    `, view, sort).Scan(&total)
+	db.DB.QueryRow(`
+		SELECT COUNT(*) FROM EVENEMENT 
+		WHERE (? = 'admin' OR date_debut >= NOW())
+	`, view).Scan(&total)
 
-	sqlQuery := `
-        SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
-        FROM EVENEMENT 
-        WHERE (NOT (? = 'senior' OR ? = 'date_asc') OR date_debut >= NOW())
-        ORDER BY 
-            CASE WHEN ? = 'date_asc' THEN date_debut END ASC,
-            CASE WHEN ? = 'price_asc' THEN prix END ASC,
-            CASE WHEN ? = 'price_desc' THEN prix END DESC,
-            (date_fin_boost IS NOT NULL AND date_fin_boost > NOW()) DESC,
-            id_evenement DESC
-        LIMIT ? OFFSET ?
-    `
+	rows, err := db.DB.Query(`
+    SELECT id_evenement, nom, description, lieu, nombre_place, image, date_debut, date_fin, id_categorie, prix 
+    FROM EVENEMENT 
+    WHERE (? = 'admin' OR date_debut >= NOW())
+    ORDER BY 
+        CASE WHEN ? = 'date_asc' THEN date_debut END ASC,
+        CASE WHEN ? = 'price_asc' THEN prix END ASC,
+        CASE WHEN ? = 'price_desc' THEN prix END DESC,
+        (date_fin_boost IS NOT NULL AND date_fin_boost > NOW()) DESC,
+        id_evenement DESC
+    LIMIT ? OFFSET ?
+	`, view, sort, sort, sort, limit, offset)
 
-	rows, errorFetch := db.DB.Query(sqlQuery, view, sort, sort, sort, sort, limit, offset)
-    if errorFetch != nil {
+    if err != nil {
         http.Error(response, "Erreur lors de la récupération", http.StatusInternalServerError)
         return
     }

@@ -41,9 +41,11 @@
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="title-text">Gestion des Services</h1>
                     <div class="flex items-center gap-4">
-                        <label for="filter-category" class="font-semibold text-gray-700">Filtrer par :</label>
-                        <select id="filter-category" class="filter-select w-48" onchange="fetchServices(1)">
-                            <option value="">Toutes les catégories</option>
+                        <select id="status-filter" onchange="fetchServices(1)" class="bg-[#F5F5F5]/40 shadow-[#1C5B8F] text-[#1C5B8F] py-2 px-4 rounded-full font-semibold hover:bg-[#D9D9D9]/40 focus:outline-none shadow-sm cursor-pointer">
+                            <option value="tous">Tous les statuts</option>
+                            <option value="en_attente">En attente</option>
+                            <option value="accepte">Accepté</option>
+                            <option value="refuse">Refusé</option>
                         </select>
                         <button onclick="toggleModal('add-modal')" class="add-button" type="button">
                             + Ajouter un Service
@@ -60,7 +62,6 @@
                                 <th class="p-4 font-semibold">ID</th>
                                 <th class="p-4 font-semibold">Nom</th>
                                 <th class="p-4 font-semibold">Statut</th>
-                                <th class="p-4 font-semibold">Catégorie</th>
                                 <th class="p-4 font-semibold">Description</th>
                                 <th class="p-4 font-semibold">Prix</th>
                                 <th class="p-4 font-semibold">Prestataire</th>
@@ -102,12 +103,6 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="text-sm text-gray-500">Catégorie</label>
-                                <select id="add-categorie" class="add-input w-full p-2 border rounded">
-                                    <option value="">-- Sans catégorie --</option>
-                                </select>
-                            </div>
-                            <div>
                                 <label class="text-sm text-gray-500">Description</label>
                                 <textarea id="add-description" class="add-input w-full p-2 border rounded" rows="3" required></textarea>
                             </div>
@@ -139,12 +134,6 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="text-sm text-gray-500">Catégorie</label>
-                                <select id="edit-categorie" class="edit-input w-full p-2 border rounded">
-                                    <option value="">-- Sans catégorie --</option>
-                                </select>
-                            </div>
-                            <div>
                                 <label class="text-sm text-gray-500">Description</label>
                                 <textarea id="edit-description" class="edit-input w-full p-2 border rounded" rows="3" required></textarea>
                             </div>
@@ -174,12 +163,10 @@
 
     <script>
         const API_BASE_SERVICE = `${window.API_BASE_URL}/service`;
-        const API_BASE_CATEGORIE = `${window.API_BASE_URL}/categorie`;
 
         let currentPage = 1;
         const limit = 10;
         const messageBox = document.getElementById('api-message');
-        let categoriesData = [];
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
@@ -188,60 +175,21 @@
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
-        async function fetchCategories() {
-            try {
-                const response = await fetch(`${API_BASE_CATEGORIE}/read`);
-                if (!response.ok) return;
-                const result = await response.json();
-                categoriesData = result.data || result || [];
-                populateCategorySelects();
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function populateCategorySelects() {
-            const filterSelect = document.getElementById('filter-category');
-            const addSelect = document.getElementById('add-categorie');
-            const editSelect = document.getElementById('edit-categorie');
-
-            let optionsHTML = '';
-            categoriesData.forEach(cat => {
-                const id = cat.id_categorie || cat.id || cat.ID;
-                const nom = cat.nom || cat.Nom || `Catégorie ${id}`;
-                optionsHTML += `<option value="${id}">${nom}</option>`;
-            });
-
-            filterSelect.innerHTML = `<option value="">Toutes les catégories</option>` + optionsHTML;
-            addSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
-            editSelect.innerHTML = `<option value="">-- Sans catégorie --</option>` + optionsHTML;
-        }
-
-        function getCategoryName(id) {
-            if (!id) return "-";
-            const cat = categoriesData.find(c => (c.id_categorie || c.id || c.ID) == id);
-            return cat ? (cat.nom || cat.Nom) : "-";
-        }
-
         async function fetchServices(page = 1) {
             try {
                 currentPage = page;
-                const categoryId = document.getElementById('filter-category').value;
 
-                let url = `${API_BASE_SERVICE}/read?page=${currentPage}&limit=${limit}`;
+                const statusFilterElement = document.getElementById('status-filter');
+                let statusFilter = statusFilterElement ? statusFilterElement.value : '';
+                if (statusFilter === 'tous') statusFilter = '';
+
+                let url = `${API_BASE_SERVICE}/read?page=${currentPage}&limit=${limit}&statut=${statusFilter}`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("Erreur serveur");
                 const result = await response.json();
 
                 let services = Array.isArray(result) ? result : (result.data || []);
-
-                if (categoryId) {
-                    services = services.filter(service => {
-                        const idCat = service.id_categorie || service.IDCategorie;
-                        return idCat == categoryId;
-                    });
-                }
 
                 const tbody = document.getElementById('service-table-body');
                 tbody.innerHTML = '';
@@ -257,8 +205,6 @@
                     const nom = c.nom || c.Nom || '';
                     const status = c.statut || 'en_attente';
                     const description = c.description || c.Description || '';
-                    const idCat = c.id_categorie || c.IDCategorie || '';
-                    const nomCat = c.categorie_nom || getCategoryName(idCat);
                     const prix = c.prix !== undefined ? parseFloat(c.prix).toFixed(2) + ' €' : '0.00 €';
                     const idPrestataire = c.id_prestataire || c.IDPrestataire || '';
                     const prestataireAffiche = idPrestataire ? `Prestataire #${idPrestataire}` : `<span class="text-red-400 italic">Non assigné</span>`;
@@ -281,7 +227,7 @@
                     `;
 
                     let actionsHTML = `
-                        <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${idCat}', ${c.prix || 0}, '${idPrestataire}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-3 py-1 rounded-lg font-bold text-sm transition">Modifier</button>
+                        <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', ${c.prix || 0}, '${idPrestataire}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-3 py-1 rounded-lg font-bold text-sm transition">Modifier</button>
                         <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-3 py-1 rounded-lg font-bold text-sm transition">Supprimer</button>
                     `;
 
@@ -290,9 +236,6 @@
                             <td class="p-4 text-gray-400">#${id}</td>
                             <td class="p-4 font-medium">${nom}</td>
                             <td class="p-4">${statusSelectHTML}</td>
-                            <td class="p-4 text-sm text-gray-600">
-                                <span class="bg-gray-100 px-2 py-1 rounded border">${nomCat}</span>
-                            </td>
                             <td class="p-4 text-sm text-gray-600 max-w-xs truncate" title="${description}">${description}</td>
                             <td class="p-4 font-bold text-[#E1AB2B]">${prix}</td>
                             <td class="p-4 text-sm font-semibold text-[#1C5B8F]">${prestataireAffiche}</td>
@@ -302,16 +245,6 @@
                         </tr>
                         `;
                 });
-
-                if (categoryId) {
-                    renderPagination(1, services.length);
-                } else {
-                    if (Array.isArray(result) && !result.totalPages) {
-                        renderPagination(0, 0);
-                    } else {
-                        renderPagination(result.totalPages, result.total);
-                    }
-                }
 
             } catch (err) {
                 showAlert("Erreur lors de la récupération des services.", false);
@@ -403,13 +336,10 @@
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            let catValue = document.getElementById('add-categorie').value;
-            let idCategorie = catValue ? parseInt(catValue) : null;
 
             const data = {
                 nom: document.getElementById('add-nom').value,
                 description: document.getElementById('add-description').value,
-                id_categorie: idCategorie,
                 prix: parseFloat(document.getElementById('add-prix').value),
                 id_prestataire: parseInt(document.getElementById('add-prestataire').value)
             };
@@ -435,11 +365,10 @@
             }
         });
 
-        function openEditModal(id, nom, description, idCat, prix, idPrestataire) {
+        function openEditModal(id, nom, description, prix, idPrestataire) {
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-nom').value = nom;
             document.getElementById('edit-description').value = description;
-            document.getElementById('edit-categorie').value = idCat || "";
             document.getElementById('edit-prix').value = prix;
             document.getElementById('edit-prestataire').value = idPrestataire || "";
             toggleModal('edit-modal');
@@ -448,13 +377,10 @@
         document.getElementById('edit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
-            let catValue = document.getElementById('edit-categorie').value;
-            let idCategorie = catValue ? parseInt(catValue) : null;
 
             const data = {
                 nom: document.getElementById('edit-nom').value,
                 description: document.getElementById('edit-description').value,
-                id_categorie: idCategorie,
                 prix: parseFloat(document.getElementById('edit-prix').value),
                 id_prestataire: parseInt(document.getElementById('edit-prestataire').value)
             };
@@ -503,9 +429,11 @@
         });
 
         window.onload = async () => {
-            await fetchCategories();
             fetchServices(1);
         };
+        document.getElementById('status-filter').addEventListener('change', () => {
+            fetchServices(1);
+        });
     </script>
 </body>
 
