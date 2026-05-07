@@ -56,14 +56,6 @@ func InitDB() {
 		image VARCHAR(250) DEFAULT NULL,
 		date_ajout DATE DEFAULT (CURRENT_DATE)
 	);
-	CREATE TABLE IF NOT EXISTS NOTIFICATION(
-		id_notification INT AUTO_INCREMENT PRIMARY KEY,
-		destinataire VARCHAR(100),
-		contenu VARCHAR(200),
-		date_envoi DATETIME DEFAULT CURRENT_TIMESTAMP,
-		statut ENUM('lu','envoye','en attente') DEFAULT 'en attente',
-		priorite INT
-	);
 	CREATE TABLE IF NOT EXISTS CATEGORIE (
 		id_categorie INT AUTO_INCREMENT PRIMARY KEY,
 		nom VARCHAR(100) NOT NULL
@@ -95,6 +87,7 @@ func InitDB() {
 		date_ajout DATETIME DEFAULT CURRENT_TIMESTAMP,
 		id_categorie INT,
 		prix FLOAT DEFAULT 0.0,
+		notif_rappel_envoyee TINYINT(1) DEFAULT 0,
 		date_fin_boost DATETIME NULL DEFAULT NULL,
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie) ON DELETE SET NULL
 	);
@@ -129,6 +122,7 @@ func InitDB() {
 		date_fin_boost DATETIME NULL DEFAULT NULL,
 		date_fin_boost_profil DATETIME NULL DEFAULT NULL,
 		stripe_account_id VARCHAR(255) DEFAULT NULL,
+		onesignal_player_id VARCHAR(255) NULL,
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement),
 		FOREIGN KEY (id_categorie) REFERENCES CATEGORIE(id_categorie)
 	);
@@ -137,6 +131,7 @@ func InitDB() {
 		id_prestataire INT NOT NULL,
 		date_heure DATETIME NOT NULL,
 		est_reserve BOOLEAN DEFAULT 0,
+		notif_rappel_envoyee TINYINT(1) DEFAULT 0,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS PRESTATAIRE_EVENEMENT (
@@ -161,6 +156,7 @@ func InitDB() {
 		id_adresse INT NOT NULL,
 		id_abonnement INT,
 		debut_abonnement DATETIME,
+		onesignal_player_id VARCHAR(255) NULL,
 		FOREIGN KEY (id_adresse) REFERENCES ADRESSE(id_adresse),
 		FOREIGN KEY (id_abonnement) REFERENCES ABONNEMENT(id_abonnement)
 	);

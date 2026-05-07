@@ -261,55 +261,59 @@ $is_logged_in = isset($_SESSION['provider_id']);
         }
 
         async function loadServices() {
-            const tbody = document.getElementById('services-table-body');
-            try {
-                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, {
-                    credentials: 'include'
-                });
-                if (!res.ok) throw new Error('Erreur');
-                const services = await res.json();
-                tbody.innerHTML = '';
-                if (!services || services.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore de services.</td></tr>`;
-                    return;
-                }
-                services.forEach(s => {
-                    let statusBadge = '';
-                    let motifHtml = '';
-
-                    if (s.statut === 'accepte') {
-                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">Accepté</span>`;
-                    } else if (s.statut === 'refuse') {
-                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">Refusé</span>`;
-
-                        if (s.motif_refus) {
-                            motifHtml = `<p class="text-[10px] text-red-400 mt-1 italic max-w-[150px]">Motif : ${s.motif_refus}</p>`;
-                        }
-                    } else {
-                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-600">En attente</span>`;
-                    }
-
-                    const tr = document.createElement('tr');
-                    tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${s.nom}</td>
-                        <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate">${s.description}</td>
-                        <td class="py-4 px-4 text-sm font-bold text-[#E1AB2B]">${parseFloat(s.prix).toFixed(2)} €</td>
-                        <td class="py-4 px-4">
-                            ${statusBadge}
-                            ${motifHtml} 
-                        </td>
-                        <td class="py-4 px-4 text-right flex justify-end gap-2">
-                            <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">Modifier</button>
-                            <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">Supprimer</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement.</td></tr>`;
+        const tbody = document.getElementById('services-table-body');
+        try {
+            const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, {
+                credentials: 'include'
+            });
+            
+            if (!res.ok) throw new Error('Erreur API');
+            
+            const services = await res.json();
+            tbody.innerHTML = '';
+            
+            if (!services || services.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore de services.</td></tr>`;
+                return;
             }
+            
+            services.forEach(s => {
+                let statusBadge = '';
+                let motifHtml = '';
+
+                if (s.statut === 'accepte') {
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">Accepté</span>`;
+                } else if (s.statut === 'refuse') {
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">Refusé</span>`;
+
+                    if (s.motif_refus) {
+                        motifHtml = `<p class="text-[10px] text-red-400 mt-1 italic max-w-[150px]">Motif : ${s.motif_refus}</p>`;
+                    }
+                } else {
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-600">En attente</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${s.nom}</td>
+                    <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate">${s.description}</td>
+                    <td class="py-4 px-4 text-sm font-bold text-[#E1AB2B]">${parseFloat(s.prix).toFixed(2)} €</td>
+                    <td class="py-4 px-4">
+                        ${statusBadge}
+                        ${motifHtml} 
+                    </td>
+                    <td class="py-4 px-4 text-right flex justify-end gap-2">
+                        <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">Modifier</button>
+                        <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">Supprimer</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement.</td></tr>`;
         }
+    }
 
         document.getElementById('add-service-form').addEventListener('submit', async (e) => {
             e.preventDefault();

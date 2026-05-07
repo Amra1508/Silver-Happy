@@ -86,14 +86,6 @@
                                 </p>
                             </div>
                         </div>
-
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-                            <div class="bg-purple-100 p-4 rounded-full text-purple-600"></div>
-                            <div>
-                                <p class="text-sm text-gray-500 font-semibold">Votre Tarif (Moy)</p>
-                                <p class="text-2xl font-bold text-gray-800" id="stat-tarif">- € <span class="text-sm font-normal text-gray-400">/h</span></p>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">

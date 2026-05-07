@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  # Base de données MariaDB locale pour le stockage des données
   db-silver-happy:
     image: mariadb:10.11
     container_name: db-silver-happy
@@ -22,11 +21,10 @@ services:
     networks:
       - silver-happy-net
 
-  # Application Frontend (Web) construite localement avec montage du code pour le développement
   web-silver-happy:
     build:
       context: ./web
-      target: builder   # stage builder = config Apache prête, le code arrive via le volume
+      target: builder
     container_name: web-silver-happy
     restart: unless-stopped
     depends_on:
@@ -49,7 +47,6 @@ services:
     networks:
       - silver-happy-net
 
-  # Backend API en Go construit localement et exécuté via 'go run' (mode développement)
   api-silver-happy:
     build:
       context: ./api
@@ -84,7 +81,6 @@ services:
     networks:
       - silver-happy-net
 
-  # Interface graphique d'administration pour la base de données (phpMyAdmin)
   pma-silver-happy:
     image: phpmyadmin:latest
     container_name: pma-silver-happy

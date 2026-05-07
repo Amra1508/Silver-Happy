@@ -98,155 +98,194 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
         </div>
     </div>
 
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
     <script>
-        const zoomLevels = [1, 1.2, 1.4];
-        let currentZoomIndex = 0;
-        function toggleZoom() {
-            currentZoomIndex = (currentZoomIndex + 1) % zoomLevels.length;
-            document.body.style.zoom = zoomLevels[currentZoomIndex];
-        }
-
-        async function changeLanguage(lang) {
-            localStorage.setItem('user_lang', lang);
-            document.documentElement.lang = lang;
-            const flagImg = document.getElementById('current-lang-flag');
-            if (flagImg) flagImg.src = lang === 'fr' ? '/front/icons/france.png' : '/front/icons/angleterre.png';
-
-            try {
-                const response = await fetch(`/locales/${lang}.json`);
-                if (!response.ok && lang === 'fr') return location.reload();
-                const translations = await response.json();
-
-                document.querySelectorAll('[data-i18n]').forEach(el => {
-                    if (translations[el.dataset.i18n]) el.innerHTML = translations[el.dataset.i18n];
-                });
-                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                    if (translations[el.dataset.i18nPlaceholder]) el.placeholder = translations[el.dataset.i18nPlaceholder];
-                });
-            } catch (err) { console.error(err); }
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const savedLang = localStorage.getItem('user_lang');
-            if (savedLang && savedLang !== 'fr') changeLanguage(savedLang);
-
-            const btnUrgence = document.getElementById('btn_urgence');
-            const modalUrgence = document.getElementById('modal_urgence');
-            const btnFermer = document.getElementById('btn_fermer_urgence');
-
-            if(btnUrgence && modalUrgence && btnFermer) {
-                btnUrgence.addEventListener('click', () => modalUrgence.classList.remove('hidden'));
-                btnFermer.addEventListener('click', () => modalUrgence.classList.add('hidden'));
+            const zoomLevels = [1, 1.2, 1.4];
+            let currentZoomIndex = 0;
+            function toggleZoom() {
+                currentZoomIndex = (currentZoomIndex + 1) % zoomLevels.length;
+                document.body.style.zoom = zoomLevels[currentZoomIndex];
             }
 
-            const btnLogout = document.getElementById('btn_logout');
-            if (btnLogout) {
-                btnLogout.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    try {
-                        const res = await fetch(`${window.API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
-                        if (res.ok) window.location.href = "/front/index.php";
-                    } catch (err) { console.error(err); }
-                });
+            async function changeLanguage(lang) {
+                localStorage.setItem('user_lang', lang);
+                document.documentElement.lang = lang;
+                const flagImg = document.getElementById('current-lang-flag');
+                if (flagImg) flagImg.src = lang === 'fr' ? '/front/icons/france.png' : '/front/icons/angleterre.png';
+
+                try {
+                    const response = await fetch(`/locales/${lang}.json`);
+                    if (!response.ok && lang === 'fr') return location.reload();
+                    const translations = await response.json();
+
+                    document.querySelectorAll('[data-i18n]').forEach(el => {
+                        if (translations[el.dataset.i18n]) el.innerHTML = translations[el.dataset.i18n];
+                    });
+                    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                        if (translations[el.dataset.i18nPlaceholder]) el.placeholder = translations[el.dataset.i18nPlaceholder];
+                    });
+                } catch (err) { console.error(err); }
             }
 
-            try {
-                const res = await fetch(`${window.API_BASE_URL}/auth/me`, { credentials: 'include' });
-                if (!res.ok) return;
-                
-                const user = await res.json();
-                if (user.statut === 'admin') return window.location.href = "../../back/dashboard.php";
-                if (user.statut === 'comptable') return window.lication.href = "../../back/comptability/comptability.php"
-                if (user.statut === 'banni') return window.location.href = "/front/ban.php";
+            document.addEventListener('DOMContentLoaded', async () => {
+                const savedLang = localStorage.getItem('user_lang');
+                if (savedLang && savedLang !== 'fr') changeLanguage(savedLang);
 
-                window.userData = user;
-                window.currentUserId = user.id;
-                window.dispatchEvent(new Event('auth_ready'));
-            } catch (err) { console.error(err); }
-        });
+                const btnUrgence = document.getElementById('btn_urgence');
+                const modalUrgence = document.getElementById('modal_urgence');
+                const btnFermer = document.getElementById('btn_fermer_urgence');
 
-        function readALoud() {
-            if ('speechSynthesis' in window) {
-                
-                if (window.speechSynthesis.speaking) {
-                    window.speechSynthesis.cancel();
-                    return;
+                if(btnUrgence && modalUrgence && btnFermer) {
+                    btnUrgence.addEventListener('click', () => modalUrgence.classList.remove('hidden'));
+                    btnFermer.addEventListener('click', () => modalUrgence.classList.add('hidden'));
                 }
 
-
-                let texteALire = document.body.innerText; 
-                
-                let message = new SpeechSynthesisUtterance(texteALire);
-                message.lang = 'fr-FR'; 
-                message.rate = 1;     
-                message.pitch = 1;
-
-                window.speechSynthesis.speak(message);
-                
-            } else {
-                alert("Désolé, votre navigateur ne supporte pas la lecture vocale.");
-            }
-        }
-
-        function speakCommand() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) return alert("Désolé, micro non supporté sur ce navigateur.");
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'fr-FR';
-
-            const btnMicro = document.getElementById('btn_micro');
-            btnMicro.classList.add('bg-red-200', 'rounded-full');
-
-            recognition.start();
-
-            recognition.onresult = function(event) {
-                btnMicro.classList.remove('bg-red-200', 'rounded-full');
-                const commande = event.results[0][0].transcript.toLowerCase();
-
-                let messageReponse = "";
-                let urlRedirection = "";
-
-                if (commande.includes('accueil')) {
-                    messageReponse = "Retour à l'accueil.";
-                    urlRedirection = "/front/index.php";
-                } 
-                else if (commande.includes('activité')) {
-                    messageReponse = "Ouverture des activités.";
-                    urlRedirection = "/front/services/menu_activity.php";
-                } 
-                else if (commande.includes('boutique')) {
-                    messageReponse = "Ouverture de la boutique.";
-                    urlRedirection = "/front/services/products.php";
-                } 
-                else if (commande.includes('messagerie')) {
-                    messageReponse = "Ouverture de vos messages.";
-                    urlRedirection = "/front/communication/list_contact.php";
-                } 
-                else if (commande.includes('connecter')) {
-                    messageReponse = "Page de connexion.";
-                    urlRedirection = "/front/account/signin.php";
-                } 
-                else {
-                    return alert("Désolé, je n'ai pas compris : " + commande + "\n Veuilez réssayer !");
+                const btnLogout = document.getElementById('btn_logout');
+                if (btnLogout) {
+                    btnLogout.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        try {
+                            const res = await fetch(`${window.API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+                            if (res.ok) window.location.href = "/front/index.php";
+                        } catch (err) { console.error(err); }
+                    });
                 }
 
+                try {
+                    const res = await fetch(`${window.API_BASE_URL}/auth/me`, { credentials: 'include' });
+                    if (!res.ok) return;
+                    
+                    const user = await res.json();
+                    if (user.statut === 'admin') return window.location.href = "../../back/dashboard.php";
+                    if (user.statut === 'comptable') return window.location.href = "../../back/comptability/comptability.php";
+                    if (user.statut === 'banni') return window.location.href = "/front/ban.php";
+
+                    window.userData = user;
+                    window.currentUserId = user.id;
+                    window.dispatchEvent(new Event('auth_ready'));
+
+                    initOneSignal();
+
+                } catch (err) { console.error(err); }
+            });
+
+            function initOneSignal() {
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+                OneSignalDeferred.push(async function(OneSignal) {
+                    await OneSignal.init({
+                        appId: "276d5c1b-f761-41f3-bf31-32050748be3d",
+                        notifyButton: {
+                            enable: true,
+                        },
+                    });
+
+                    OneSignal.User.PushSubscription.addEventListener("change", subscription => {
+                        if (subscription.current.optedIn) {
+                            sauvegarderPlayerID(subscription.current.id);
+                        }
+                    });
+
+                    if (OneSignal.User.PushSubscription.optedIn) {
+                        sauvegarderPlayerID(OneSignal.User.PushSubscription.id);
+                    }
+                });
+            }
+
+            function sauvegarderPlayerID(playerID) {
+                const userType = window.userData.statut === 'prestataire' ? 'prestataire' : 'senior';
+
+                fetch(`${window.API_BASE_URL}/users/onesignal`, { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: window.currentUserId,
+                        type_utilisateur: userType,
+                        onesignal_id: playerID
+                    })
+                })
+                .then(response => response.json())
+                .then(data => console.log("ID OneSignal synchronisé :", data))
+                .catch(error => console.error("Erreur sync OneSignal :", error));
+            }
+
+            function readALoud() {
                 if ('speechSynthesis' in window) {
-                    let voix = new SpeechSynthesisUtterance(messageReponse);
-                    voix.lang = 'fr-FR';
-                    window.speechSynthesis.speak(voix);
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                        return;
+                    }
+                    let texteALire = document.body.innerText; 
+                    let message = new SpeechSynthesisUtterance(texteALire);
+                    message.lang = 'fr-FR';     
+                    message.rate = 1;     
+                    message.pitch = 1;
+                    window.speechSynthesis.speak(message);
+                } else {
+                    alert("Désolé, votre navigateur ne supporte pas la lecture vocale.");
                 }
+            }
 
-                window.location.href = urlRedirection;
-            };
+            function speakCommand() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) return alert("Désolé, micro non supporté sur ce navigateur.");
 
-            recognition.onerror = function(event) {
-                btnMicro.classList.remove('bg-red-200', 'rounded-full');
-                if (event.error === 'network') {
-                    alert("Erreur réseau : Le navigateur bloque le micro.");
-                }
-            };
-        }
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
 
+                const btnMicro = document.getElementById('btn_micro');
+                btnMicro.classList.add('bg-red-200', 'rounded-full');
+
+                recognition.start();
+
+                recognition.onresult = function(event) {
+                    btnMicro.classList.remove('bg-red-200', 'rounded-full');
+                    const commande = event.results[0][0].transcript.toLowerCase();
+
+                    let messageReponse = "";
+                    let urlRedirection = "";
+
+                    if (commande.includes('accueil')) {
+                        messageReponse = "Retour à l'accueil.";
+                        urlRedirection = "/front/index.php";
+                    } 
+                    else if (commande.includes('activité')) {
+                        messageReponse = "Ouverture des activités.";
+                        urlRedirection = "/front/services/menu_activity.php";
+                    } 
+                    else if (commande.includes('boutique')) {
+                        messageReponse = "Ouverture de la boutique.";
+                        urlRedirection = "/front/services/products.php";
+                    } 
+                    else if (commande.includes('messagerie')) {
+                        messageReponse = "Ouverture de vos messages.";
+                        urlRedirection = "/front/communication/list_contact.php";
+                    } 
+                    else if (commande.includes('connecter')) {
+                        messageReponse = "Page de connexion.";
+                        urlRedirection = "/front/account/signin.php";
+                    } 
+                    else {
+                        return alert("Désolé, je n'ai pas compris : " + commande + "\n Veuilez réssayer !");
+                    }
+
+                    if ('speechSynthesis' in window) {
+                        let voix = new SpeechSynthesisUtterance(messageReponse);
+                        voix.lang = 'fr-FR';
+                        window.speechSynthesis.speak(voix);
+                    }
+
+                    window.location.href = urlRedirection;
+                };
+
+                recognition.onerror = function(event) {
+                    btnMicro.classList.remove('bg-red-200', 'rounded-full');
+                    if (event.error === 'network') {
+                        alert("Erreur réseau : Le navigateur bloque le micro.");
+                    }
+                };
+            }
     </script>
 </header>

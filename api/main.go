@@ -140,6 +140,9 @@ func main() {
     http.HandleFunc("/auth/me-provider", providers.MePrestataire)
 	http.HandleFunc("/auth/update-provider", providers.UpdatePrestataire)
 
+	providers.StartNotificationCron(db.DB)
+	http.HandleFunc("/users/onesignal", providers.SyncOneSignal(db.DB))
+
 	providers.StartInvoiceCron()
 	http.HandleFunc("/admin/test-virements", providers.TriggerInvoicesManual)
 

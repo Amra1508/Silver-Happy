@@ -13,52 +13,51 @@ import (
 )
 
 func Get_Services_Provider(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	providerID := request.PathValue("id")
+    providerID := request.PathValue("id")
 
-	query := `
-		SELECT id_service, nom, description, id_categorie, prix, statut, motif_refus 
-		FROM SERVICE 
-		WHERE id_prestataire = ?
-		ORDER BY id_service DESC
-	`
+    query := `
+        SELECT id_service, nom, description, prix, statut, motif_refus 
+        FROM SERVICE 
+        WHERE id_prestataire = ?
+        ORDER BY id_service DESC
+    `
 
-	rows, err := db.DB.Query(query, providerID)
-	if err != nil {
-		http.Error(response, "Erreur base de données", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+    rows, err := db.DB.Query(query, providerID)
+    if err != nil {
+        http.Error(response, "Erreur base de données", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
-	var services []models.Service
+    var services []models.Service
 
-	for rows.Next() {
-		var s models.Service
-		var catID sql.NullInt64
-		var motif sql.NullString
+    for rows.Next() {
+        var s models.Service
+        var motif sql.NullString
 
-		if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &catID, &s.Prix, &s.Statut, &motif); err == nil {
-			if catID.Valid {
-				id := int(catID.Int64)
-				s.IDCategorie = &id
-			}
-			s.MotifRefusJS = ""
-			if motif.Valid {
-				s.MotifRefusJS = motif.String
-			}
-			services = append(services, s)
-		}
-	}
+        if err := rows.Scan(&s.ID, &s.Nom, &s.Description, &s.Prix, &s.Statut, &motif); err != nil {
+            fmt.Println("Erreur lors du scan de la ligne :", err)
+            continue
+        }
 
-	if services == nil {
-		services = []models.Service{}
-	}
+        s.MotifRefusJS = ""
+        if motif.Valid {
+            s.MotifRefusJS = motif.String
+        }
+        
+        services = append(services, s)
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(services)
+    if services == nil {
+        services = []models.Service{}
+    }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(services)
 }
 
 func Get_Historique_Services(response http.ResponseWriter, request *http.Request) {
@@ -173,16 +172,8 @@ func Create_Service_Provider(response http.ResponseWriter, request *http.Request
 		return
 	}
 
-	var providerCatID sql.NullInt64
-	err = db.DB.QueryRow("SELECT id_categorie FROM PRESTATAIRE WHERE id_prestataire = ?", providerID).Scan(&providerCatID)
-
-	if err == nil && providerCatID.Valid {
-		id := int(providerCatID.Int64)
-		s.IDCategorie = &id
-	}
-
-	query := `INSERT INTO SERVICE (nom, description, id_categorie, id_prestataire, prix, statut) VALUES (?, ?, ?, ?, ?, 'en_attente')`
-	_, err = db.DB.Exec(query, s.Nom, s.Description, s.IDCategorie, providerID, s.Prix)
+	query := `INSERT INTO SERVICE (nom, description, id_prestataire, prix, statut) VALUES (?, ?, ?, ?, 'en_attente')`
+	_, err = db.DB.Exec(query, s.Nom, s.Description, providerID, s.Prix)
 
 	if err != nil {
 		http.Error(response, "Erreur lors de la création du service", http.StatusInternalServerError)

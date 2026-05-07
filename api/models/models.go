@@ -299,3 +299,17 @@ type Disponibilite struct {
 	DateHeure     string `json:"date_heure"`
 	EstReserve    bool   `json:"est_reserve"`
 }
+
+type OneSignalPayload struct {
+	AppID            string                 `json:"app_id"`
+	IncludePlayerIDs []string               `json:"include_player_ids"`
+	Headings         map[string]string      `json:"headings"`
+	Contents         map[string]string      `json:"contents"`
+	Data             map[string]interface{} `json:"data,omitempty"`
+}
+
+type SyncOneSignalRequest struct {
+	IDUtilisateur   int    `json:"id_utilisateur"`
+	TypeUtilisateur string `json:"type_utilisateur"` 
+	OneSignalID     string `json:"onesignal_id"`
+}
