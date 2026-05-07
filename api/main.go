@@ -65,6 +65,7 @@ func main() {
 
 	http.HandleFunc("/planning", users.Read_User_Planning)
 	http.HandleFunc("/search", users.SearchAll)
+	http.HandleFunc("/admin/search", users.SearchAllAdmin)
 
 	http.HandleFunc("/service/read", services.Read_Service)
 	http.HandleFunc("/service/create", services.Create_Service)
