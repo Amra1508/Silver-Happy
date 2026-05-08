@@ -53,6 +53,7 @@ func InitDB() {
 		description VARCHAR(200),
 		prix DOUBLE,
 		stock INT,
+		statut TINYINT(1)
 		image VARCHAR(250) DEFAULT NULL,
 		date_ajout DATE DEFAULT (CURRENT_DATE)
 	);
