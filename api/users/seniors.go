@@ -500,15 +500,12 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
     userQueries := []string{
         "DELETE FROM COMMANDE WHERE id_utilisateur = ?",
         "DELETE FROM PANIER WHERE id_utilisateur = ?",
-        "DELETE FROM RECEPTION WHERE id_utilisateur = ?",
         "DELETE FROM LIKE_CONSEIL WHERE id_utilisateur = ?",
         "DELETE FROM INSCRIPTION WHERE id_utilisateur = ?",
         "DELETE FROM MESSAGE_PRESTATAIRE WHERE id_utilisateur = ?",
         "DELETE FROM RESERVATION_SERVICE WHERE id_utilisateur = ?",
         "DELETE FROM DOCUMENT_UTILISATEUR WHERE id_utilisateur = ?",
         "DELETE FROM AVIS WHERE id_utilisateur = ?",
-        "DELETE FROM DEVIS WHERE id_utilisateur = ?",
-        "DELETE FROM RESERVE WHERE id_utilisateur = ?",
         "DELETE FROM UTILISATION_PROMO WHERE id_utilisateur = ?",
     }
 

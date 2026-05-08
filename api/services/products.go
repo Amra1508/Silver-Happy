@@ -18,67 +18,68 @@ import (
 )
 
 func Read_Produit(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	query := request.URL.Query()
-	limitStr := query.Get("limit")
-	pageStr := query.Get("page")
-	sort := query.Get("sort")
+    query := request.URL.Query()
+    limitStr := query.Get("limit")
+    pageStr := query.Get("page")
+    sort := query.Get("sort")
 
-	limit := 10
-	offset := 0
-	page := 1
+    limit := 10
+    offset := 0
+    page := 1
 
-	if limitStr != "" {
-		fmt.Sscanf(limitStr, "%d", &limit)
-	}
-	if pageStr != "" {
-		fmt.Sscanf(pageStr, "%d", &page)
-		offset = (page - 1) * limit
-	}
+    if limitStr != "" {
+        fmt.Sscanf(limitStr, "%d", &limit)
+    }
+    if pageStr != "" {
+        fmt.Sscanf(pageStr, "%d", &page)
+        offset = (page - 1) * limit
+    }
 
-	var total int
-	db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT").Scan(&total)
+    var total int
+    db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT WHERE statut = 1").Scan(&total)
 
-	querySQL := `SELECT id_produit, nom, description, prix, stock, image 
-	FROM PRODUIT 
-	ORDER BY 
+    querySQL := `SELECT id_produit, nom, description, prix, stock, image 
+    FROM PRODUIT 
+    WHERE statut = 1
+    ORDER BY 
             CASE WHEN ? = 'price_asc' THEN prix END ASC,
             CASE WHEN ? = 'price_desc' THEN prix END DESC,
             id_produit DESC
-	LIMIT ? OFFSET ?`
+    LIMIT ? OFFSET ?`
 
-	rows, err := db.DB.Query(querySQL, sort, sort, limit, offset)
+    rows, err := db.DB.Query(querySQL, sort, sort, limit, offset)
     if err != nil {
         http.Error(response, "Erreur SQL", 500)
         return
     }
     defer rows.Close()
 
-	var tabProduit []models.Produit
-	for rows.Next() {
-		var produit models.Produit
-		if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
-			continue
-		}
-		tabProduit = append(tabProduit, produit)
-	}
+    var tabProduit []models.Produit
+    for rows.Next() {
+        var produit models.Produit
+        if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
+            continue
+        }
+        tabProduit = append(tabProduit, produit)
+    }
 
-	if tabProduit == nil {
-		tabProduit = []models.Produit{}
-	}
+    if tabProduit == nil {
+        tabProduit = []models.Produit{}
+    }
 
-	dataResponse := map[string]interface{}{
-		"data":        tabProduit,
-		"total":       total,
-		"currentPage": page,
-		"totalPages":  (total + limit - 1) / limit,
-	}
+    dataResponse := map[string]interface{}{
+        "data":        tabProduit,
+        "total":       total,
+        "currentPage": page,
+        "totalPages":  (total + limit - 1) / limit,
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(dataResponse)
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(dataResponse)
 }
 
 func Create_Produit(response http.ResponseWriter, request *http.Request) {
@@ -136,50 +137,38 @@ func Create_Produit(response http.ResponseWriter, request *http.Request) {
 }
 
 func Read_One_Produit(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	id := request.PathValue("id")
-	var produit models.Produit
+    id := request.PathValue("id")
+    var produit models.Produit
 
-	err := db.DB.QueryRow("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT WHERE id_produit = ?", id).Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image)
+    err := db.DB.QueryRow("SELECT id_produit, nom, description, prix, stock, image FROM PRODUIT WHERE id_produit = ? AND statut = 1", id).Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image)
 
-	if err != nil {
-		http.Error(response, "Produit non trouvé", http.StatusNotFound)
-		return
-	}
+    if err != nil {
+        http.Error(response, "Produit non trouvé ou supprimé", http.StatusNotFound)
+        return
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(produit)
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(produit)
 }
 
 func Delete_Produit(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "DELETE") {
-		return
-	}
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
 
-	id := request.PathValue("id")
+    id := request.PathValue("id")
 
-	var imagePath sql.NullString
-	errQuery := db.DB.QueryRow("SELECT image FROM PRODUIT WHERE id_produit = ?", id).Scan(&imagePath)
+    _, errUpdate := db.DB.Exec("UPDATE PRODUIT SET statut = 0 WHERE id_produit = ?", id)
+    if errUpdate != nil {
+        http.Error(response, "Erreur lors de la suppression logique en BDD", http.StatusInternalServerError)
+        return
+    }
 
-	if errQuery != nil && errQuery != sql.ErrNoRows {
-		http.Error(response, "Erreur lors de la recherche du produit", http.StatusInternalServerError)
-		return
-	}
-
-	_, errDelete := db.DB.Exec("DELETE FROM PRODUIT WHERE id_produit = ?", id)
-	if errDelete != nil {
-		http.Error(response, "Erreur lors de la suppression en BDD", http.StatusInternalServerError)
-		return
-	}
-
-	if imagePath.Valid && imagePath.String != "" {
-		os.Remove(imagePath.String)
-	}
-
-	response.WriteHeader(http.StatusNoContent)
+    response.WriteHeader(http.StatusNoContent)
 }
 
 func Update_Produit(response http.ResponseWriter, request *http.Request) {

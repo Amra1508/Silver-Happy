@@ -312,12 +312,7 @@ func InitDB() {
 		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_reduction) REFERENCES CODE_REDUCTION(id_reduction)
 	);
-	CREATE TABLE IF NOT EXISTS NEWSLETTER(
-  		id_newsletter INT AUTO_INCREMENT PRIMARY KEY,
-  		titre VARCHAR(50) NOT NULL,
-  		contenu VARCHAR(200) NOT NULL,
-  		date_creation DATE DEFAULT CURRENT_TIMESTAMP
-	);`
+	`
 
 	_, err = DB.Exec(creationQuery)
 	if err != nil {

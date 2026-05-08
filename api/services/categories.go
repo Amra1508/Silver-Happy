@@ -158,17 +158,39 @@ func Update_Categorie(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Categorie(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "DELETE") {
-		return
-	}
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
 
-	id := request.PathValue("id")
+    id := request.PathValue("id")
 
-	_, err := db.DB.Exec("DELETE FROM CATEGORIE WHERE id_categorie = ?", id)
-	if err != nil {
-		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
-		return
-	}
+    const defaultCategoryID = 1 
 
-	response.WriteHeader(http.StatusNoContent)
+    tx, err := db.DB.Begin()
+    if err != nil {
+        http.Error(response, "Erreur d'initialisation de la transaction", http.StatusInternalServerError)
+        return
+    }
+
+    _, err = tx.Exec("UPDATE PRESTATAIRE SET id_categorie = ? WHERE id_categorie = ?", defaultCategoryID, id)
+    if err != nil {
+        tx.Rollback() 
+        http.Error(response, "Erreur lors de la mise à jour des prestataires", http.StatusInternalServerError)
+        return
+    }
+
+    _, err = tx.Exec("DELETE FROM CATEGORIE WHERE id_categorie = ?", id)
+    if err != nil {
+        tx.Rollback() 
+        http.Error(response, "Erreur lors de la suppression de la catégorie", http.StatusInternalServerError)
+        return
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        http.Error(response, "Erreur lors de la validation en base", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusNoContent)
 }

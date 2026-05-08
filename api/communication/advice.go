@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"main/db"
@@ -18,60 +20,65 @@ func Read_Conseil(response http.ResponseWriter, request *http.Request) {
     }
 
     query := request.URL.Query()
-    limitStr := query.Get("limit")
-    pageStr := query.Get("page")
-    userIdStr := query.Get("user_id")
+    limit, _ := strconv.Atoi(query.Get("limit"))
+    if limit <= 0 { limit = 10 }
+    
+    page, _ := strconv.Atoi(query.Get("page"))
+    if page <= 0 { page = 1 }
+    
+    userId, _ := strconv.Atoi(query.Get("user_id"))
     sort := query.Get("sort")
-
-    limit := 10
-    offset := 0
-    page := 1
-    userId := 0
-
-    if limitStr != "" {
-        fmt.Sscanf(limitStr, "%d", &limit)
-    }
-    if pageStr != "" {
-        fmt.Sscanf(pageStr, "%d", &page)
-        offset = (page - 1) * limit
-    }
-    if userIdStr != "" {
-        fmt.Sscanf(userIdStr, "%d", &userId)
-    }
+    offset := (page - 1) * limit
 
     var total int
     db.DB.QueryRow("SELECT COUNT(*) FROM CONSEIL").Scan(&total)
 
     sqlQuery := `
         SELECT 
-            c.id_conseil, c.titre, c.description, c.date_publication, c.categorie,
-            (SELECT COUNT(*) FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil) AS likes,
-            (SELECT COUNT(*) > 0 FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil AND id_utilisateur = ?) AS is_liked
-        FROM CONSEIL c 
+            c.id_conseil, 
+            COALESCE(c.titre, ''), 
+            COALESCE(c.description, ''), 
+            c.date_publication, 
+            COALESCE(c.categorie, 'Général'),
+            COUNT(l.id_conseil) AS likes,
+            MAX(CASE WHEN l.id_utilisateur = ? THEN 1 ELSE 0 END) AS is_liked
+        FROM CONSEIL c
+        LEFT JOIN LIKE_CONSEIL l ON c.id_conseil = l.id_conseil
+        GROUP BY c.id_conseil
         ORDER BY 
-            CASE WHEN ? = 'likes' THEN (SELECT COUNT(*) FROM LIKE_CONSEIL WHERE id_conseil = c.id_conseil) END DESC,
+            CASE WHEN ? = 'likes' THEN COUNT(l.id_conseil) END DESC,
             CASE WHEN ? = 'date' OR ? = '' THEN c.date_publication END DESC
         LIMIT ? OFFSET ?
     `
 
     rows, err := db.DB.Query(sqlQuery, userId, sort, sort, sort, limit, offset)
     if err != nil {
-        http.Error(response, "Erreur SQL", 500)
+        log.Printf("Erreur SQL: %v", err)
+        http.Error(response, "Erreur serveur", 500)
         return
     }
     defer rows.Close()
 
-    var tabConseil []models.Conseil
+    tabConseil := []models.Conseil{}
     for rows.Next() {
         var conseil models.Conseil
-        if err := rows.Scan(&conseil.ID, &conseil.Titre, &conseil.Description, &conseil.Date, &conseil.Categorie, &conseil.Likes, &conseil.IsLiked); err != nil {
+        var isLikedInt int 
+        
+        err := rows.Scan(
+            &conseil.ID, 
+            &conseil.Titre, 
+            &conseil.Description, 
+            &conseil.Date, 
+            &conseil.Categorie, 
+            &conseil.Likes, 
+            &isLikedInt,
+        )
+        if err != nil {
+            log.Println("Erreur Scan:", err)
             continue
         }
+        conseil.IsLiked = (isLikedInt == 1)
         tabConseil = append(tabConseil, conseil)
-    }
-
-    if tabConseil == nil {
-        tabConseil = []models.Conseil{}
     }
 
     dataResponse := map[string]interface{}{
@@ -162,19 +169,39 @@ func Read_One_Conseil(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Conseil(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "DELETE") {
-		return
-	}
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
 
-	id := request.PathValue("id")
+    id := request.PathValue("id")
 
-	_, err := db.DB.Exec("DELETE FROM CONSEIL WHERE id_conseil = ?", id)
-	if err != nil {
-		http.Error(response, "Erreur lors de la suppression", http.StatusInternalServerError)
-		return
-	}
+    tx, err := db.DB.Begin()
+    if err != nil {
+        http.Error(response, "Erreur d'initialisation de la suppression", http.StatusInternalServerError)
+        return
+    }
 
-	response.WriteHeader(http.StatusNoContent)
+    _, err = tx.Exec("DELETE FROM LIKE_CONSEIL WHERE id_conseil = ?", id)
+    if err != nil {
+        tx.Rollback() 
+        http.Error(response, "Erreur lors de la suppression des likes associés", http.StatusInternalServerError)
+        return
+    }
+
+    _, err = tx.Exec("DELETE FROM CONSEIL WHERE id_conseil = ?", id)
+    if err != nil {
+        tx.Rollback() 
+        http.Error(response, "Erreur lors de la suppression du conseil", http.StatusInternalServerError)
+        return
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        http.Error(response, "Erreur lors de la validation de la suppression", http.StatusInternalServerError)
+        return
+    }
+
+    response.WriteHeader(http.StatusNoContent)
 }
 
 func Update_Conseil(response http.ResponseWriter, request *http.Request) {
