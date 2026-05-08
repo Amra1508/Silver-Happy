@@ -46,9 +46,6 @@
                     Aujourd'hui, Silver Happy est bien plus qu'un site internet : c'est une véritable communauté qui célèbre le bien-être, le partage et la curiosité à tout âge.
                 </p>
             </div>
-            <div class="bg-gray-200 rounded-3xl h-64 md:h-full w-full flex items-center justify-center shadow-inner">
-                <img src="/front/images/team.jpg"/>
-            </div>
         </div>
 
         <div class="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 mb-16">

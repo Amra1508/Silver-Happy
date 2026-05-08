@@ -134,9 +134,6 @@
                                     <a href="https://mail.google.com/mail/?view=cm&fs=1&to=contact@silver-happy.fr" target="_blank" class="w-full bg-white/10 hover:bg-white/20 transition-colors py-3 px-4 rounded-xl flex items-center justify-between text-sm font-semibold">
                                         Nous contacter
                                     </a>
-                                    <button class="w-full bg-white/10 hover:bg-white/20 transition-colors py-3 px-4 rounded-xl flex items-center justify-between text-sm font-semibold">
-                                        Consulter la FAQ Pro
-                                    </button>
                                 </div>
                             </div>
                             <div class="mt-8 pt-6 border-t border-white/20">

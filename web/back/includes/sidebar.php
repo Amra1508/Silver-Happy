@@ -44,11 +44,6 @@
             <span>Messagerie</span>
         </a>
 
-        <a href="/back/communication/newsletter.php" class="sidebar-links">
-            <img src="/back/icons/newsletter.svg" alt="newsletter" class="w-7 h-7 mx-4">
-            <span>Newsletter</span>
-        </a>
-
         <a href="/back/communication/advice.php" class="border-b-2 sidebar-links">
             <img src="/back/icons/conseils.svg" alt="conseils" class="w-7 h-7 mx-4">
             <span>Conseils</span>
