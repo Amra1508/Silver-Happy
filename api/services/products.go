@@ -42,7 +42,7 @@ func Read_Produit(response http.ResponseWriter, request *http.Request) {
     var total int
     db.DB.QueryRow("SELECT COUNT(*) FROM PRODUIT WHERE statut = 1").Scan(&total)
 
-    querySQL := `SELECT id_produit, nom, description, prix, stock, image 
+    querySQL := `SELECT id_produit, nom, description, prix, stock, COALESCE(image, '') 
     FROM PRODUIT 
     WHERE statut = 1
     ORDER BY 
@@ -62,6 +62,7 @@ func Read_Produit(response http.ResponseWriter, request *http.Request) {
     for rows.Next() {
         var produit models.Produit
         if err := rows.Scan(&produit.ID, &produit.Nom, &produit.Description, &produit.Prix, &produit.Stock, &produit.Image); err != nil {
+            fmt.Println("Erreur lors du scan d'un produit :", err) 
             continue
         }
         tabProduit = append(tabProduit, produit)
