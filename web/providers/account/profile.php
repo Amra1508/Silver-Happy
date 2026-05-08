@@ -99,7 +99,7 @@
                                     </div>
                                 </div>
                                 <button type="button" id="btn-buy-boost-services" onclick="acheterBoost('services')" class="text-sm font-bold text-yellow-800 bg-yellow-200 hover:bg-yellow-300 px-5 py-2.5 rounded-xl transition-all border border-yellow-300 shadow-sm whitespace-nowrap">
-                                    ⭐ Booster mes services (10€)
+                                    Booster mes services (10€)
                                 </button>
                             </div>
 
@@ -115,7 +115,7 @@
                                     </div>
                                 </div>
                                 <button type="button" id="btn-buy-boost-profil" onclick="acheterBoost('profil')" class="text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap">
-                                    🚀 Booster mon profil (15€)
+                                    Booster mon profil (15€)
                                 </button>
                             </div>
                             
