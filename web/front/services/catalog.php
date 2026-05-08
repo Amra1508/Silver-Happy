@@ -175,9 +175,15 @@
                 const now = new Date();
 
                 slots.forEach(slot => {
-                    const dateObj = new Date(slot.date_heure);
+                    const formattedDate = slot.date_heure.replace(" ", "T");
+                    const dateObj = new Date(formattedDate);
 
                     if (dateObj <= now) {
+                        return;
+                    }
+
+                    if (isNaN(dateObj.getTime())) {
+                        console.error("Date invalide reçue :", slot.date_heure);
                         return;
                     }
 
@@ -272,20 +278,21 @@
 
             const user = window.userData;
             const hasSubscription = user && user.id_abonnement && user.id_abonnement > 0;
-
             if (!hasSubscription) {
                 showAlert("Vous devez posséder un abonnement Silver Happy pour réserver un service.", false);
                 setTimeout(() => window.location.href = "/front/services/subscription.php", 3000);
                 return;
             }
 
-            const idDisponibilite = parseInt(document.getElementById(`selected-dispo-id-${serviceId}`).value);
+            const idDispoRaw = document.getElementById(`selected-dispo-id-${serviceId}`).value;
             const dateInput = document.getElementById(`selected-dispo-date-${serviceId}`).value;
 
-            if (!idDisponibilite || isNaN(idDisponibilite) || !dateInput) {
+            if (idDispoRaw === "" || !dateInput) {
                 showAlert("Veuillez choisir un jour et cliquer sur une heure !", false);
                 return;
             }
+
+            const idDisponibilite = parseInt(idDispoRaw);
 
             try {
                 const response = await fetch(`${API_BASE}/service/checkout/${serviceId}`, {
@@ -300,24 +307,53 @@
                     }),
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    if (data.url) {
-                        window.location.href = data.url;
-                    } else if (data.isFree) {
-                        showAlert(data.message || "Réservation confirmée !", true);
-                        fetchMyServices();
-
-                        const daySelect = document.getElementById(`day-select-${serviceId}`);
-                        const prestataireId = daySelect.getAttribute('data-prestataire');
-                        loadDisposForService(serviceId, prestataireId);
-                    }
+                let data = null;
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
                 } else {
-                    showAlert("Erreur : " + (data.error || "Paiement impossible"), false);
+                    const text = await response.text();
+                    data = {
+                        error: text.trim()
+                    };
                 }
+
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        showAlert("Ce créneau est déjà pris pour ce prestataire. Choisissez un autre horaire.", false);
+
+                        const timeGrid = document.getElementById(`time-grid-${serviceId}`);
+                        if (timeGrid) {
+                            const allBtns = timeGrid.querySelectorAll(`.time-slot-btn-${serviceId}`);
+                            allBtns.forEach(btn => {
+                                if (btn.classList.contains('bg-[#1C5B8F]') && btn.classList.contains('text-white')) {
+                                    btn.remove();
+                                }
+                            });
+                        }
+
+                        document.getElementById(`selected-dispo-id-${serviceId}`).value = "";
+                        document.getElementById(`selected-dispo-date-${serviceId}`).value = "";
+
+                    } else {
+                        showAlert("Erreur : " + (data.error || "Une erreur est survenue."), false);
+                    }
+                    return;
+                }
+
+                if (data.url) {
+                    window.location.href = data.url;
+                } else if (data.isFree) {
+                    showAlert(data.message || "Réservation confirmée !", true);
+                    fetchMyServices();
+                    const daySelect = document.getElementById(`day-select-${serviceId}`);
+                    const prestataireId = daySelect.getAttribute('data-prestataire');
+                    loadDisposForService(serviceId, prestataireId);
+                }
+
             } catch (err) {
-                showAlert("Impossible de joindre le serveur de paiement.", false);
+                console.error("Erreur fetch bookService:", err);
+                showAlert("Impossible de contacter le serveur. Vérifiez votre connexion.", false);
             }
         }
 

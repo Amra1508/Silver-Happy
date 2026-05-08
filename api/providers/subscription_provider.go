@@ -308,8 +308,13 @@ func Cancel_Subscription_Prestataire(response http.ResponseWriter, request *http
 	queryPurgerPlanning := `
 		DELETE FROM DISPONIBILITE 
 		WHERE id_prestataire = ? 
-		AND date_heure > ? 
-		AND est_reserve = 0
+		AND date_heure_debut > ? 
+		AND NOT EXISTS (
+			SELECT 1 FROM RESERVATION_SERVICE rs
+			JOIN SERVICE s ON rs.id_service = s.id_service
+			WHERE s.id_prestataire = DISPONIBILITE.id_prestataire
+			AND DATE(rs.date_heure) = DATE(DISPONIBILITE.date_heure_debut)
+		)
 	`
 	_, errPurge := db.DB.Exec(queryPurgerPlanning, idProvider, lastDayOfMonth)
 

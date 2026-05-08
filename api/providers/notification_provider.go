@@ -64,11 +64,10 @@ func SyncOneSignal(db *sql.DB) http.HandlerFunc {
 
 func notifyProvidersUpcomingDisponibilites(db *sql.DB) {
 	query := `
-		SELECT d.id_disponibilite, d.date_heure, p.onesignal_player_id
+		SELECT d.id_disponibilite, d.date_heure_debut, p.onesignal_player_id
 		FROM DISPONIBILITE d
 		JOIN PRESTATAIRE p ON d.id_prestataire = p.id_prestataire
-		WHERE d.date_heure BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 2 HOUR)
-		AND d.est_reserve = 1
+		WHERE d.date_heure_debut BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 2 HOUR)
 		AND d.notif_rappel_envoyee = 0
 		AND p.onesignal_player_id IS NOT NULL AND p.onesignal_player_id != ''
 	`

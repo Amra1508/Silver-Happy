@@ -245,7 +245,8 @@
                 });
 
                 if (response.status === 409) {
-                    showAlert("Vous êtes déjà inscrit à un autre événement sur ce créneau horaire.", false);
+                    const errText = await response.text();
+                    showAlert(errText, false);
                     return;
                 }
 

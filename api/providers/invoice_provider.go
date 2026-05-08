@@ -9,6 +9,7 @@ import (
 	"main/utils"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/jung-kurt/gofpdf"
 )
@@ -127,15 +128,19 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 		return
 	}
 
+	moisPourFiltre := moisAnnee
+	if strings.Contains(moisAnnee, "-TEST") {
+		moisPourFiltre = strings.Replace(moisAnnee, "-TEST", "", 1)
+	}
+
 	var details []models.FactureDetail
 
 	rowsServ, err := db.DB.Query(`
-    SELECT s.nom, s.prix, d.date_heure
-    FROM DISPONIBILITE d
-    JOIN SERVICE s ON d.id_prestataire = s.id_prestataire
-    WHERE d.id_prestataire = ? 
-      AND d.est_reserve = 1 
-      AND DATE_FORMAT(d.date_heure, '%Y-%m') = ?`, providerID, moisAnnee)
+        SELECT s.nom, rs.prix_final, rs.date_heure
+        FROM RESERVATION_SERVICE rs
+        JOIN SERVICE s ON rs.id_service = s.id_service
+        WHERE s.id_prestataire = ? 
+          AND DATE_FORMAT(rs.date_heure, '%Y-%m') = ?`, providerID, moisPourFiltre)
 
 	if err != nil {
 		fmt.Println("Erreur SQL Services:", err)
@@ -159,7 +164,7 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
     FROM EVENEMENT e
     JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
     WHERE pe.id_prestataire = ? 
-      AND DATE_FORMAT(e.date_debut, '%Y-%m') = ?`, providerID, moisAnnee)
+      AND DATE_FORMAT(e.date_debut, '%Y-%m') = ?`, providerID, moisPourFiltre)
 
 	if err != nil {
 		fmt.Println("Erreur SQL détaillée Evenements:", err)
@@ -181,6 +186,13 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 	sort.Slice(details, func(i, j int) bool {
         return details[i].Date < details[j].Date
     })
+
+	var totalBrutReel float64 = 0
+    for _, item := range details {
+        totalBrutReel += item.Prix
+    }
+    fraisReels := totalBrutReel * 0.01
+    montantNetReel := totalBrutReel - fraisReels
 
 	pdf := gofpdf.New("P", "mm", "A4", "")
     tr := pdf.UnicodeTranslatorFromDescriptor("")
@@ -266,18 +278,18 @@ func Download_Facture_Mensuelle(response http.ResponseWriter, request *http.Requ
 	pdf.SetX(120)
 	pdf.SetFont("Arial", "B", 10)
 	pdf.CellFormat(40, 8, "Total Brut :", "", 0, "L", false, 0, "")
-	pdf.CellFormat(30, 8, fmt.Sprintf("%.2f EUR", montantBrut), "", 1, "R", false, 0, "")
+	pdf.CellFormat(30, 8, fmt.Sprintf("%.2f EUR", totalBrutReel), "", 1, "R", false, 0, "")
 
 	pdf.SetX(120)
 	pdf.SetTextColor(239, 68, 68) 
 	pdf.CellFormat(40, 8, "Frais Plateforme (1%) :", "", 0, "L", false, 0, "")
-	pdf.CellFormat(30, 8, fmt.Sprintf("- %.2f EUR", frais), "", 1, "R", false, 0, "")
+	pdf.CellFormat(30, 8, fmt.Sprintf("- %.2f EUR", fraisReels), "", 1, "R", false, 0, "")
 
 	pdf.SetX(120)
 	pdf.SetFont("Arial", "B", 12)
 	pdf.SetTextColor(16, 185, 129)
 	pdf.CellFormat(40, 10, "Montant Net Verse :", "T", 0, "L", false, 0, "")
-	pdf.CellFormat(30, 10, fmt.Sprintf("%.2f EUR", montantNet), "T", 1, "R", false, 0, "")
+	pdf.CellFormat(30, 10, fmt.Sprintf("%.2f EUR", montantNetReel), "T", 1, "R", false, 0, "")
 
 	pdf.SetY(-40)
 	pdf.SetFont("Arial", "I", 8)

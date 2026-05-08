@@ -180,7 +180,7 @@ func SearchAllAdmin(response http.ResponseWriter, request *http.Request) {
         }
     }
 
-    rows, _ = db.DB.Query(`SELECT id_senior, nom, prenom FROM SENIOR WHERE nom LIKE ? OR prenom LIKE ? OR email LIKE ?`, searchPattern, searchPattern, searchPattern)
+    rows, _ = db.DB.Query(`SELECT id_utilisateur, nom, prenom FROM UTILISATEUR WHERE nom LIKE ? OR prenom LIKE ? OR email LIKE ?`, searchPattern, searchPattern, searchPattern)
     for rows != nil && rows.Next() {
         var item models.Recherche
         var nom, prenom string

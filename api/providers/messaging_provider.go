@@ -84,9 +84,6 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	fmt.Printf("DEBUG: Exp=%d, Dest=%d, IsPresta=%v\n", 
-               message.ID_Expediteur, message.ID_Destinataire, message.Expediteur)
-
 	var idUser, idPresta int64
     if message.Expediteur { 
         idPresta = message.ID_Expediteur

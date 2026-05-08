@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -60,11 +61,19 @@ type Service struct {
 	IDPrestataire     int64   `json:"id_prestataire"`
 	Prix              float64 `json:"prix"`
 	Statut            string  `json:"statut"`
+	Duree       	  int     `json:"duree"`
 	MotifRefus        sql.NullString  `json:"-"`
 	MotifRefusJS      string  `json:"motif_refus"`
 	IsBoosted         bool    `json:"is_boosted"`
 	PrestataireNom    string  `json:"prestataire_nom"`
 	PrestatairePrenom string  `json:"prestataire_prenom"`
+}
+
+type TimeRange struct {
+        ID         int
+        Start, End time.Time
+        Type       string
+        Data       map[string]interface{}
 }
 
 type UserReservation struct {
@@ -282,7 +291,7 @@ type FactureDetail struct {
 }
 
 type CreationDisponibilite struct {
-	JourSemaine    int    `json:"jour_semaine"`
+	JourSemaine    []int    `json:"jour_semaine"`
 	HeureDebut     string `json:"heure_debut"`
 	HeureFin       string `json:"heure_fin"`
 	DureeMinutes   int    `json:"duree_minutes"`
@@ -296,8 +305,16 @@ type CreationDisponibilite struct {
 type Disponibilite struct {
 	ID            int    `json:"id_disponibilite"`
 	IDPrestataire int    `json:"id_prestataire"`
-	DateHeure     string `json:"date_heure"`
-	EstReserve    bool   `json:"est_reserve"`
+	Debut     	  string `json:"debut"`
+	Fin           string `json:"fin"`
+}
+
+type Block struct {
+    ID    string
+    Type  string 
+    Start time.Time
+    End   time.Time
+    Data  map[string]interface{}
 }
 
 type OneSignalPayload struct {

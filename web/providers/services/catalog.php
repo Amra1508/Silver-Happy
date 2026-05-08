@@ -59,6 +59,8 @@ $is_logged_in = isset($_SESSION['provider_id']);
                                             <tr class="text-gray-400 text-sm border-b border-gray-100">
                                                 <th class="pb-4 font-medium px-4">Nom du Service</th>
                                                 <th class="pb-4 font-medium px-4">Description</th>
+
+                                                <th class="pb-4 font-medium px-4">Durée</th>
                                                 <th class="pb-4 font-medium px-4">Prix</th>
                                                 <th class="pb-4 font-medium px-4">Statut</th>
                                                 <th class="pb-4 font-medium text-right px-4">Actions</th>
@@ -124,6 +126,15 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (€)</label>
                     <input type="number" id="prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1C5B8F] outline-none">
                 </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2">Durée du service</label>
+                    <select id="duree_service" class="w-full p-3 border rounded-xl">
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 heure</option>
+                        <option value="90">1h 30min</option>
+                        <option value="120">2 heures</option>
+                    </select>
+                </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('serviceModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
                     <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#1C5B8F] hover:bg-[#154670] transition-colors shadow-md">Créer le service</button>
@@ -149,6 +160,15 @@ $is_logged_in = isset($_SESSION['provider_id']);
                     <label class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire (€)</label>
                     <input type="number" id="edit_prix_service" step="0.01" min="0" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
                 </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2">Durée du service</label>
+                    <select id="edit_duree_service" class="w-full p-3 border rounded-xl">
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 heure</option>
+                        <option value="90">1h 30min</option>
+                        <option value="120">2 heures</option>
+                    </select>
+                </div>
                 <div class="flex justify-end gap-3 mt-8">
                     <button type="button" onclick="toggleModal('editServiceModal')" class="px-6 py-2.5 rounded-full font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Annuler</button>
                     <button type="submit" class="px-6 py-2.5 rounded-full font-bold text-white bg-[#E1AB2B] hover:bg-[#c99723] transition-colors shadow-md">Sauvegarder</button>
@@ -161,17 +181,17 @@ $is_logged_in = isset($_SESSION['provider_id']);
         <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 m-4">
             <h2 class="text-2xl font-bold text-[#E1AB2B] mb-6">Ajouter des disponibilités</h2>
             <form id="add-dispo-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Jour de la semaine</label>
-                    <select id="jour_semaine" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
-                        <option value="1">Lundi</option>
-                        <option value="2">Mardi</option>
-                        <option value="3">Mercredi</option>
-                        <option value="4">Jeudi</option>
-                        <option value="5">Vendredi</option>
-                        <option value="6">Samedi</option>
-                        <option value="7">Dimanche</option>
-                    </select>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2">Jours de la semaine</label>
+                    <div class="flex flex-wrap gap-2">
+                        <label><input type="checkbox" name="jours" value="1"> Lun</label>
+                        <label><input type="checkbox" name="jours" value="2"> Mar</label>
+                        <label><input type="checkbox" name="jours" value="3"> Mer</label>
+                        <label><input type="checkbox" name="jours" value="4"> Jeu</label>
+                        <label><input type="checkbox" name="jours" value="5"> Ven</label>
+                        <label><input type="checkbox" name="jours" value="6"> Sam</label>
+                        <label><input type="checkbox" name="jours" value="0"> Dim</label>
+                    </div>
                 </div>
                 <div class="flex gap-4">
                     <div class="w-1/2">
@@ -183,16 +203,6 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         <input type="time" id="heure_fin" value="17:00" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Durée d'un rendez-vous</label>
-                    <select id="duree_minutes" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E1AB2B] outline-none">
-                        <option value="30">30 minutes</option>
-                        <option value="60" selected>1 heure</option>
-                        <option value="90">1 heure 30</option>
-                        <option value="120">2 heures</option>
-                    </select>
-                </div>
-
                 <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 mt-2">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Pause / Interruption (Optionnel)</label>
                     <div class="flex gap-4">
@@ -261,59 +271,59 @@ $is_logged_in = isset($_SESSION['provider_id']);
         }
 
         async function loadServices() {
-        const tbody = document.getElementById('services-table-body');
-        try {
-            const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, {
-                credentials: 'include'
-            });
-            
-            if (!res.ok) throw new Error('Erreur API');
-            
-            const services = await res.json();
-            tbody.innerHTML = '';
-            
-            if (!services || services.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore de services.</td></tr>`;
-                return;
-            }
-            
-            services.forEach(s => {
-                let statusBadge = '';
-                let motifHtml = '';
+            const tbody = document.getElementById('services-table-body');
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/get`, {
+                    credentials: 'include'
+                });
 
-                if (s.statut === 'accepte') {
-                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">Accepté</span>`;
-                } else if (s.statut === 'refuse') {
-                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">Refusé</span>`;
+                if (!res.ok) throw new Error('Erreur API');
 
-                    if (s.motif_refus) {
-                        motifHtml = `<p class="text-[10px] text-red-400 mt-1 italic max-w-[150px]">Motif : ${s.motif_refus}</p>`;
-                    }
-                } else {
-                    statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-600">En attente</span>`;
+                const services = await res.json();
+                tbody.innerHTML = '';
+
+                if (!services || services.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-gray-500 font-medium">Vous n'avez pas encore de services.</td></tr>`;
+                    return;
                 }
 
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
-                tr.innerHTML = `
-                    <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${s.nom}</td>
-                    <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate">${s.description}</td>
-                    <td class="py-4 px-4 text-sm font-bold text-[#E1AB2B]">${parseFloat(s.prix).toFixed(2)} €</td>
-                    <td class="py-4 px-4">
-                        ${statusBadge}
-                        ${motifHtml} 
-                    </td>
-                    <td class="py-4 px-4 text-right flex justify-end gap-2">
-                        <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">Modifier</button>
-                        <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">Supprimer</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (err) {
-            tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement.</td></tr>`;
+                services.forEach(s => {
+                    let statusBadge = '';
+                    let motifHtml = '';
+
+                    if (s.statut === 'accepte') {
+                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-600">Accepté</span>`;
+                    } else if (s.statut === 'refuse') {
+                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-600">Refusé</span>`;
+
+                        if (s.motif_refus) {
+                            motifHtml = `<p class="text-[10px] text-red-400 mt-1 italic max-w-[150px]">Motif : ${s.motif_refus}</p>`;
+                        }
+                    } else {
+                        statusBadge = `<span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-600">En attente</span>`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-gray-50 hover:bg-gray-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="py-4 px-4 text-sm font-semibold text-[#1C5B8F]">${s.nom}</td>
+                        <td class="py-4 px-4 text-sm text-gray-600 max-w-xs truncate">${s.description}</td>
+                        <td class="py-4 px-4 text-sm font-bold text-gray-500">${s.duree} min</td> <td class="py-4 px-4 text-sm font-bold text-[#E1AB2B]">${parseFloat(s.prix).toFixed(2)} €</td>
+                        <td class="py-4 px-4">
+                            ${statusBadge}
+                            ${motifHtml} 
+                        </td>
+                        <td class="py-4 px-4 text-right flex justify-end gap-2">
+                            <button onclick="openEditModal(${s.id_service}, '${s.nom.replace(/'/g, "\\'")}', '${s.description.replace(/'/g, "\\'")}', ${s.prix}, ${s.duree})" class="text-[#E1AB2B] hover:text-[#c99723] font-bold text-sm bg-yellow-50 px-3 py-1 rounded-lg transition-colors">Modifier</button>
+                            <button onclick="deleteService(${s.id_service})" class="text-red-500 hover:text-red-700 font-bold text-sm bg-red-50 px-3 py-1 rounded-lg transition-colors">Supprimer</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-red-500 font-medium">Erreur lors du chargement.</td></tr>`;
+            }
         }
-    }
 
         document.getElementById('add-service-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -321,6 +331,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 nom: document.getElementById('nom_service').value,
                 description: document.getElementById('desc_service').value,
                 prix: parseFloat(document.getElementById('prix_service').value),
+                duree: parseInt(document.getElementById('duree_service').value),
                 id_categorie: null
             };
             try {
@@ -343,11 +354,12 @@ $is_logged_in = isset($_SESSION['provider_id']);
             }
         });
 
-        function openEditModal(id, nom, desc, prix) {
+        function openEditModal(id, nom, desc, prix, duree) {
             document.getElementById('edit_id_service').value = id;
             document.getElementById('edit_nom_service').value = nom;
             document.getElementById('edit_desc_service').value = desc;
             document.getElementById('edit_prix_service').value = prix;
+            document.getElementById('edit_duree_service').value = duree;
             toggleModal('editServiceModal');
         }
 
@@ -357,7 +369,8 @@ $is_logged_in = isset($_SESSION['provider_id']);
             const payload = {
                 nom: document.getElementById('edit_nom_service').value,
                 description: document.getElementById('edit_desc_service').value,
-                prix: parseFloat(document.getElementById('edit_prix_service').value)
+                prix: parseFloat(document.getElementById('edit_prix_service').value),
+                duree: parseInt(document.getElementById('edit_duree_service').value)
             };
             try {
                 const res = await fetch(`${window.API_BASE_URL}/prestataire/services/${currentProviderId}/${idService}/update`, {
@@ -414,7 +427,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 const now = new Date();
 
                 dispos.forEach(d => {
-                    const dateObj = new Date(d.date_heure);
+                    const dateObj = new Date(d.time);
 
                     if (dateObj <= now) {
                         return;
@@ -426,7 +439,8 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         month: 'long',
                         year: 'numeric'
                     });
-                    const dateIso = dateObj.toISOString().split('T')[0];
+                    const fullDate = d.time;
+                    const dateIso = fullDate.split('T')[0];
 
                     if (!grouped[dateDisplay]) {
                         grouped[dateDisplay] = {
@@ -439,8 +453,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         time: dateObj.toLocaleTimeString('fr-FR', {
                             hour: '2-digit',
                             minute: '2-digit'
-                        }),
-                        isReserved: d.est_reserve
+                        })
                     });
                 });
 
@@ -461,7 +474,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                             <div class="flex items-center bg-white border border-gray-200 rounded-full pl-4 pr-1 py-1.5 shadow-sm">
                                 <span class="font-bold text-gray-700 text-sm mr-3">${slot.time}</span>
                                 <span class="w-2.5 h-2.5 rounded-full ${statusColor} mr-3"></span>
-                                <button onclick="deleteDispo(${slot.id})" class="text-gray-400 hover:text-red-500 p-1.5 rounded-full transition-colors" title="Supprimer ce créneau">
+                                <button onclick="deleteDispo('${slot.id}')" class="text-gray-400 hover:text-red-500 p-1.5 rounded-full transition-colors" title="Supprimer ce créneau">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
                             </div>
@@ -513,11 +526,15 @@ $is_logged_in = isset($_SESSION['provider_id']);
 
         document.getElementById('add-dispo-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const joursSelectionnes = Array.from(document.querySelectorAll('input[name="jours"]:checked'))
+                .map(cb => parseInt(cb.value));
+
             const payload = {
-                jour_semaine: parseInt(document.getElementById('jour_semaine').value),
+                jour_semaine: joursSelectionnes,
                 heure_debut: document.getElementById('heure_debut').value,
                 heure_fin: document.getElementById('heure_fin').value,
-                duree_minutes: parseInt(document.getElementById('duree_minutes').value),
+                duree_minutes: 30,
                 pause_debut: document.getElementById('pause_debut').value,
                 pause_fin: document.getElementById('pause_fin').value,
                 recurrence_mois: parseInt(document.getElementById('recurrence_mois').value)

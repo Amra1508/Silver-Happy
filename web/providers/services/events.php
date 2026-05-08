@@ -420,6 +420,7 @@
             btn.innerHTML = "Création...";
 
             const formData = new FormData();
+            formData.append('id_prestataire', currentProviderId);
             formData.append('nom', document.getElementById('create-nom').value.trim());
             formData.append('description', document.getElementById('create-desc').value.trim());
             formData.append('lieu', document.getElementById('create-lieu').value.trim());
@@ -445,6 +446,9 @@
                     showAlert("Évènement créé avec succès !", "success");
                     loadUpcomingEvents(currentProviderId);
                 } else {
+                    if (res.status === 409) {
+                        showAlert("Erreur : Vous n'avez pas de plage de disponibilité correspondant à ces horaires.", "error");
+                    }
                     const errorMsg = await res.text();
                     showAlert("Erreur : " + errorMsg, "error");
                 }

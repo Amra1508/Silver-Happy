@@ -1,30 +1,55 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Planning</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/fr.global.min.js'></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
-        
-        .fc-theme-standard .fc-scrollgrid { border-color: #f3f4f6; }
-        .fc-header-toolbar { margin-bottom: 2rem !important; }
-        .fc-button-primary { background-color: #1C5B8F !important; border-color: #1C5B8F !important; border-radius: 0.5rem !important; }
-        .fc-button-primary:hover { background-color: #154670 !important; }
-        .fc-button-active { background-color: #E1AB2B !important; border-color: #E1AB2B !important; }
+
+        .fc-theme-standard .fc-scrollgrid {
+            border-color: #f3f4f6;
+        }
+
+        .fc-header-toolbar {
+            margin-bottom: 2rem !important;
+        }
+
+        .fc-button-primary {
+            background-color: #1C5B8F !important;
+            border-color: #1C5B8F !important;
+            border-radius: 0.5rem !important;
+        }
+
+        .fc-button-primary:hover {
+            background-color: #154670 !important;
+        }
+
+        .fc-button-active {
+            background-color: #E1AB2B !important;
+            border-color: #E1AB2B !important;
+        }
     </style>
 
     <script>
         tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Alata', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Alata', 'sans-serif']
+                    }
+                }
+            }
         }
     </script>
 </head>
+
 <body class="bg-gray-50 text-gray-800">
 
     <div class="flex min-h-screen relative">
@@ -34,7 +59,7 @@
         <div class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto relative">
             <main class="p-8">
                 <div class="max-w-7xl mx-auto">
-                    
+
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
                         <div>
                             <h1 class="text-3xl font-semibold text-[#1C5B8F]">Mon Planning</h1>
@@ -141,8 +166,7 @@
 
     <script>
         const API_URL = window.API_BASE_URL || "http://localhost:8082";
-        const ROUTE_PLANNING = "/prestataire/planning"; 
-        
+        const ROUTE_PLANNING = "/prestataire/planning";
         let calendarInstance = null;
 
         async function loadPlanning() {
@@ -150,70 +174,96 @@
             const calendarEl = document.getElementById('calendar');
             const planningContent = document.getElementById('planning-content');
 
-            statusMessage.classList.remove('hidden');
+            statusMessage.classList.remove('hidden')
             planningContent.classList.add('opacity-50');
 
             try {
                 const planningResponse = await fetch(`${API_URL}${ROUTE_PLANNING}`, {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include'
                 });
 
                 if (planningResponse.ok) {
                     const result = await planningResponse.json();
                     const planningData = result.data || [];
-                    
+                    console.log('🔵 TOUT LE PLANNING:', planningData);
+                    console.log('🔵 RÉSERVATIONS:', planningData.filter(x => x.type === 'service_reserve'));
                     statusMessage.classList.add('hidden');
                     planningContent.classList.remove('hidden', 'opacity-50');
 
                     const currentDate = new Date();
 
-                    const eventsData = planningData.map(item => {
-                        const startStr = item.date_debut.replace(' ', 'T');
-                        const endStr = item.date_fin ? item.date_fin.replace(' ', 'T') : null;
-                        
-                        const startDate = new Date(startStr);
-                        const endDate = endStr ? new Date(endStr) : new Date(startDate.getTime() + (1 * 3600 * 1000));
-                        
-                        const isPast = endDate < currentDate;
+                    const eventsData = planningData
+                        .filter(item => item && item.date_debut)
+                        .map(item => {
+                            const startStr = item.date_debut.replace(' ', 'T');
+                            const startDate = new Date(startStr);
 
-                        let bgColor, borderColor, textColor, displayTitle;
-
-                        if (isPast) {
-                            bgColor = '#F3F4F6'; borderColor = '#D1D5DB'; textColor = '#9CA3AF';
-                            displayTitle = item.nom;
-                        } else if (item.type === 'creneau_libre') {
-                            bgColor = '#ECFDF5'; borderColor = '#34D399'; textColor = '#065F46';
-                            displayTitle = 'Libre';
-                        } else if (item.type === 'service_reserve') {
-                            bgColor = '#1C5B8F'; borderColor = '#154670'; textColor = '#ffffff';
-                            displayTitle = 'Réservé';
-                        } else {
-                            bgColor = '#E1AB2B'; borderColor = '#C99723'; textColor = '#ffffff';
-                            displayTitle = item.nom;
-                        }
-
-                        return {
-                            id: item.id,
-                            title: displayTitle,
-                            start: startStr, 
-                            end: endStr || endDate.toISOString(),
-                            backgroundColor: bgColor, 
-                            borderColor: borderColor,
-                            textColor: textColor, 
-                            extendedProps: {
-                                originalName: item.nom, 
-                                type: item.type,
-                                lieu: item.lieu || 'Non spécifié',
-                                places: item.nombre_place || 0,
-                                isPast: isPast,
-                                client_nom: item.client_nom,
-                                client_tel: item.client_tel,
-                                client_email: item.client_email
+                            let endDate;
+                            if (item.date_fin) {
+                                endDate = new Date(item.date_fin.replace(' ', 'T'));
+                            } else if (item.duree_min) {
+                                endDate = new Date(startDate.getTime() + (item.duree_min * 60 * 1000));
+                            } else {
+                                endDate = new Date(startDate.getTime() + (30 * 60 * 1000));
                             }
-                        };
-                    });
+
+                            const isPast = endDate < new Date();
+                            let bgColor, borderColor, textColor, displayTitle;
+
+                            if (isPast && item.type === 'creneau_libre') {
+                                return null;
+                            } else if (isPast) {
+                                bgColor = '#F3F4F6';
+                                borderColor = '#D1D5DB';
+                                textColor = '#9CA3AF';
+                                displayTitle = item.nom || 'Réservé';
+                            } else if (item.type === 'creneau_libre') {
+                                bgColor = '#ECFDF5';
+                                borderColor = '#34D399';
+                                textColor = '#065F46';
+                                displayTitle = 'Libre';
+                            } else if (item.type === 'service_reserve') {
+                                bgColor = '#1C5B8F';
+                                borderColor = '#154670';
+                                textColor = '#ffffff';
+                                displayTitle = item.nom || 'Réservé';
+                            } else if (item.type === 'evenement') {
+                                bgColor = '#E1AB2B';
+                                borderColor = '#C99723';
+                                textColor = '#ffffff';
+                                displayTitle = item.nom || 'Événement';
+                            } else {
+                                bgColor = '#6B7280';
+                                borderColor = '#4B5563';
+                                textColor = '#ffffff';
+                                displayTitle = item.nom;
+                            }
+
+                            return {
+                                id: item.id ? `${item.type}-${item.id}` : `free-${item.date_debut}`,
+                                title: displayTitle,
+                                start: startStr,
+                                end: endDate.toISOString(),
+                                backgroundColor: bgColor,
+                                borderColor: borderColor,
+                                textColor: textColor,
+                                extendedProps: {
+                                    originalName: item.nom || 'Réservé',
+                                    type: item.type,
+                                    lieu: item.lieu || 'Non spécifié',
+                                    places: item.nombre_place || 0,
+                                    isPast: isPast,
+                                    client_nom: item.client_nom || '',
+                                    client_tel: item.client_tel || '',
+                                    client_email: item.client_email || ''
+                                }
+                            };
+                        })
+                        .filter(e => e !== null);
 
                     if (calendarInstance !== null) {
                         calendarInstance.destroy();
@@ -221,40 +271,51 @@
 
                     calendarInstance = new FullCalendar.Calendar(calendarEl, {
                         initialView: 'timeGridWeek',
+                        slotDuration: '00:15:00',
+                        slotLabelInterval: '01:00',
+                        eventOverlap: false,
+                        slotEventOverlap: false,
+                        eventMinHeight: 20,
                         locale: 'fr',
                         slotMinTime: '08:00:00',
                         slotMaxTime: '20:00:00',
-                        allDaySlot: false,       
+                        allDaySlot: false,
                         expandRows: true,
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',
-                            right: 'timeGridWeek,timeGridDay,dayGridMonth,listMonth' 
+                            right: 'timeGridWeek,timeGridDay,dayGridMonth,listMonth'
                         },
                         events: eventsData,
                         height: 'auto',
                         firstDay: 1,
-                        
+
                         eventClick: function(info) {
                             const evt = info.event;
-                            const options = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
-                            
+
+                            const options = {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            };
+
                             document.getElementById('modalTitle').textContent = evt.extendedProps.originalName;
-                            
-                            document.getElementById('modalStart').textContent = evt.start 
-                                ? evt.start.toLocaleDateString('fr-FR', options).replace(':', 'h') 
-                                : 'Non définie';
-                            
-                            document.getElementById('modalEnd').textContent = evt.end 
-                                ? evt.end.toLocaleDateString('fr-FR', options).replace(':', 'h')
-                                : 'Ponctuel';
-                            
+                            document.getElementById('modalStart').textContent = evt.start ?
+                                evt.start.toLocaleDateString('fr-FR', options).replace(':', 'h') :
+                                'Non définie';
+                            document.getElementById('modalEnd').textContent = evt.end ?
+                                evt.end.toLocaleDateString('fr-FR', options).replace(':', 'h') :
+                                'Ponctuel';
                             document.getElementById('modalLocation').textContent = evt.extendedProps.lieu;
                             document.getElementById('modalPlaces').textContent = evt.extendedProps.places + ' personnes max';
-                            
+
                             const statusContainer = document.getElementById('modalStatusContainer');
                             const statusBadge = document.getElementById('modalStatusBadge');
+
                             statusContainer.classList.remove('hidden');
+
                             if (evt.extendedProps.isPast) {
                                 statusBadge.textContent = "Terminé";
                                 statusBadge.className = "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-gray-200 text-gray-700";
@@ -264,12 +325,18 @@
                             }
 
                             const clientSection = document.getElementById('modalClientSection');
+
                             if (evt.extendedProps.type === 'service_reserve') {
                                 document.getElementById('modalClientNom').textContent = evt.extendedProps.client_nom;
                                 document.getElementById('modalClientTel').textContent = evt.extendedProps.client_tel;
                                 document.getElementById('modalClientEmail').textContent = evt.extendedProps.client_email;
                                 clientSection.classList.remove('hidden');
                                 clientSection.classList.add('flex');
+                            } else if (evt.extendedProps.type === 'evenement') {
+                                document.getElementById('modalLocation').textContent = evt.extendedProps.lieu;
+                                document.getElementById('modalPlaces').textContent = evt.extendedProps.places + ' place(s)';
+                                clientSection.classList.add('hidden');
+                                clientSection.classList.remove('flex');
                             } else {
                                 clientSection.classList.add('hidden');
                                 clientSection.classList.remove('flex');
@@ -278,9 +345,7 @@
                             document.getElementById('eventModal').classList.remove('hidden');
                         }
                     });
-
                     calendarInstance.render();
-
                 } else {
                     statusMessage.textContent = "Impossible de charger le planning.";
                     statusMessage.classList.replace("text-gray-500", "text-red-500");
@@ -292,7 +357,6 @@
                 statusMessage.classList.remove("animate-pulse");
             }
         }
-
         document.addEventListener('DOMContentLoaded', async () => {
             const statusMessage = document.getElementById('status_message');
             const noSubContainer = document.getElementById('no-sub-container');
@@ -300,7 +364,9 @@
             try {
                 const authResponse = await fetch(`${API_URL}/auth/me-provider`, {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include'
                 });
 
@@ -310,11 +376,11 @@
                 }
 
                 const user = await authResponse.json();
-                
+
                 if (!user.status || (user.status.toLowerCase() !== 'validé' && user.status.toLowerCase() !== 'valide')) {
                     statusMessage.classList.add('hidden');
                     noSubContainer.classList.remove('hidden');
-                    noSubContainer.classList.add('flex'); 
+                    noSubContainer.classList.add('flex');
                     return;
                 }
 
@@ -328,4 +394,5 @@
         });
     </script>
 </body>
+
 </html>

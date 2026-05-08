@@ -129,8 +129,8 @@ func InitDB() {
 	CREATE TABLE IF NOT EXISTS DISPONIBILITE (
 		id_disponibilite INT AUTO_INCREMENT PRIMARY KEY,
 		id_prestataire INT NOT NULL,
-		date_heure DATETIME NOT NULL,
-		est_reserve BOOLEAN DEFAULT 0,
+		date_heure_debut DATETIME NOT NULL,
+    	date_heure_fin DATETIME NOT NULL,
 		notif_rappel_envoyee TINYINT(1) DEFAULT 0,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
@@ -202,6 +202,7 @@ func InitDB() {
 		motif_refus VARCHAR(250) DEFAULT NULL,
 		id_prestataire INT NOT NULL,
 		prix DOUBLE NOT NULL DEFAULT 0.0,
+		duree INT NOT NULL,
 		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire) ON DELETE CASCADE
 	);
 	CREATE TABLE IF NOT EXISTS MESSAGE_PRESTATAIRE(

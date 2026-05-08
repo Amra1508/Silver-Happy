@@ -536,7 +536,6 @@ func Delete_User(response http.ResponseWriter, request *http.Request) {
 	}
 
 	response.WriteHeader(http.StatusNoContent)
-	fmt.Println("Utilisateur", id, "et toutes ses traces ont été désintégrés avec succès.")
 }
 
 func Ban_User(response http.ResponseWriter, request *http.Request) {
