@@ -140,6 +140,24 @@
             setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
+        function formatDateFR(dateString) {
+            if (!dateString) return "Aucune date";
+
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+
+            const date = new Date(dateString);
+
+            if (isNaN(date.getTime())) return "Date invalide";
+
+            return new Intl.DateTimeFormat('fr-FR', options).format(date);
+        }
+
         async function fetchCodes(page = 1) {
             try {
                 currentPage = page;
@@ -162,7 +180,7 @@
                             <td class="p-4 font-medium">${c.code}</td>
                             <td class="p-4 text-gray-600 text-sm">${c.valeur}</td>
                             <td class="p-4 font-bold text-[#1C5B8F]">${c.type}</td>
-                            <td class="p-4">${c.date_expiration}</td>
+                            <td class="p-4">${formatDateFR(c.date_expiration)}</td>
                             <td class="p-4 flex justify-center gap-4">
                                 <button onclick="openEditModal(${c.id_reduction}, '${c.code.replace(/'/g, "\\'")}', '${c.valeur}', '${c.type.replace(/'/g, "\\'")}', '${c.date_expiration}')" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-1 rounded-lg font-bold">Modifier</button>
                                 <button onclick="openDeleteModal(${c.id_reduction})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-1 rounded-lg font-bold">Supprimer</button>
