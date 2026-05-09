@@ -356,7 +356,7 @@
                             <td class="p-4 text-sm">${displayFin}</td>
                             <td class="p-4 flex justify-center gap-2">
                                 <button onclick="openLinkModal(${id})" class="text-[#1C5B8F] bg-[#1C5B8F]/10 hover:bg-[#1C5B8F]/20 px-2 py-1 rounded-lg font-bold text-xs">Prestas</button>
-                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', ${prix})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Edit</button>
+                                <button onclick="openEditModal(${id}, '${nom.replace(/'/g, "\\'")}', '${description.replace(/'/g, "\\'")}', '${lieu.replace(/'/g, "\\'")}', ${places}, '${date_debut}', '${date_fin}', ${prix})" class="text-[#E1AB2B] bg-[#E1AB2B]/10 hover:bg-[#E1AB2B]/20 px-2 py-1 rounded-lg font-bold text-xs">Modifier</button>
                                 <button onclick="openDeleteModal(${id})" class="text-[#FF0000] bg-[#FF0000]/10 hover:bg-[#FF0000]/20 px-2 py-1 rounded-lg font-bold text-xs">Suppr</button>
                             </td>
                         </tr>

@@ -207,7 +207,18 @@
                     const description = c.description || c.Description || '';
                     const prix = c.prix !== undefined ? parseFloat(c.prix).toFixed(2) + ' €' : '0.00 €';
                     const idPrestataire = c.id_prestataire || c.IDPrestataire || '';
-                    const prestataireAffiche = idPrestataire ? `Prestataire #${idPrestataire}` : `<span class="text-red-400 italic">Non assigné</span>`;
+                    
+                    const prestataireNom = c.prestataire_nom || '';
+                    const prestatairePrenom = c.prestataire_prenom || '';
+
+                    let prestataireAffiche;
+                    if (prestataireNom || prestatairePrenom) {
+                        prestataireAffiche = `${prestatairePrenom} ${prestataireNom}`.trim();
+                    } else if (idPrestataire) {
+                        prestataireAffiche = `Prestataire #${idPrestataire}`;
+                    } else {
+                        prestataireAffiche = `<span class="text-red-400 italic">Non assigné</span>`;
+                    }
 
                     const statusColors = {
                         'accepte': 'bg-green-100 text-green-700 border-green-200',
@@ -243,7 +254,7 @@
                                     ${actionsHTML}
                             </td>
                         </tr>
-                        `;
+                    `;
                 });
 
             } catch (err) {

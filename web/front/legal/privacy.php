@@ -53,7 +53,7 @@
 
             <section>
                 <h2 class="text-2xl font-bold text-[#E1AB2B] mb-3">3. Vos droits (RGPD)</h2>
-                <p>Conformément à la réglementation européenne (RGPD), vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité de vos données. Vous pouvez exercer ces droits en nous contactant à l'adresse suivante : <strong> contact.silver.happy@gmail.com</strong>.</p>
+                <p>Conformément à la réglementation européenne (RGPD), vous disposez d'un droit d'accès, de rectification, de suppression et de portabilité de vos données. Vous pouvez exercer ces droits en nous contactant à l'adresse suivante : <strong> contact@silverhappy.fr</strong>.</p>
             </section>
 
             <section>

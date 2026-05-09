@@ -149,7 +149,7 @@ func InitDB() {
 		mdp VARCHAR(250),
 		date_naissance DATE,
 		num_telephone VARCHAR(20),
-		statut ENUM('user', 'admin', 'banni') DEFAULT 'user',
+		statut ENUM('user', 'admin', 'banni', 'comptable') DEFAULT 'user',
 		date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
 		premiere_connexion BOOLEAN DEFAULT true,
 		motif_bannissement VARCHAR(100),

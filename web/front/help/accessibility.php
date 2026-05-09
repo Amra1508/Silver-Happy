@@ -73,7 +73,6 @@
                     <p class="text-gray-700 font-medium mb-2">Vous pouvez nous contacter :</p>
                     <ul class="space-y-2 text-[#1C5B8F]">
                         <li><strong class="text-gray-700">Par e-mail :</strong> <a href="mailto:contact@silverhappy.fr" class="hover:text-[#E1AB2B] underline transition">contact@silverhappy.fr</a></li>
-                        <li><strong class="text-gray-700">Par téléphone :</strong> 01 23 45 67 89 (du lundi au vendredi, de 9h à 17h)</li>
                     </ul>
                 </div>
             </section>
