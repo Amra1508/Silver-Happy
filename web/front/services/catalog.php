@@ -434,6 +434,16 @@
                 return;
             }
 
+            const formatDuree = (minutes) => {
+                if (!minutes || minutes <= 0) return 'Durée non spécifiée';
+                const h = Math.floor(minutes / 60);
+                const m = minutes % 60;
+                
+                if (h > 0 && m > 0) return `${h}h${m.toString().padStart(2, '0')}`;
+                if (h > 0) return `${h}h`;
+                return `${m} min`;
+            };
+
             services.forEach(s => {
                 console.log(s);
                 const id = s.id_service || s.ID;
@@ -441,15 +451,16 @@
                 const description = s.description || '';
                 const idPrestataire = s.id_prestataire;
 
-
                 const prixNum = parseFloat(s.prix || 0);
                 const prixHtml = prixNum > 0 ?
-                    `<p class="text-xl font-extrabold text-[#E1AB2B] mb-4">${prixNum.toFixed(2)} €</p>` :
-                    `<p class="text-xl font-extrabold text-green-600 mb-4">Gratuit</p>`;
+                    `<p class="text-xl font-extrabold text-[#E1AB2B] mb-1">${prixNum.toFixed(2)} €</p>` :
+                    `<p class="text-xl font-extrabold text-green-600 mb-1">Gratuit</p>`;
 
                 const isBoosted = s.is_boosted === 1 || s.is_boosted === true || s.IsBoosted === true;
                 const borderClass = isBoosted ? "border-[#E1AB2B] border-2 shadow-[#E1AB2B]/20 shadow-xl" : "border-gray-200 shadow-lg";
                 const badgeBoost = isBoosted ? `<span class="absolute -top-3 -right-3 bg-[#E1AB2B] text-white p-2 rounded-full shadow-md text-xl" title="Prestataire Recommandé">⭐</span>` : "";
+
+                const dureeFormatee = formatDuree(s.duree);
 
                 htmlContent += `
                 <div class="md:max-w-[400px] w-full bg-white ${borderClass} flex flex-col p-8 rounded-[2rem] hover:-translate-y-1 transition-all relative mt-4">
@@ -466,7 +477,18 @@
                     </div>
 
                     <h3 class="text-2xl text-[#1C5B8F] font-bold mt-3 mb-1">${nom}</h3>
-                    ${prixHtml}
+                    
+                    <!-- Affichage du Prix et de la Durée -->
+                    <div class="flex flex-col mb-4">
+                        ${prixHtml}
+                        <div class="flex items-center text-sm font-semibold text-gray-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            ${dureeFormatee}
+                        </div>
+                    </div>
+
                     <p class="text-gray-600 mb-6 flex-grow leading-relaxed line-clamp-3">${description}</p>
                     
                     <div class="mt-auto bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -486,16 +508,16 @@
                             <input type="hidden" id="selected-dispo-date-${id}">
                         </div>
 
-                        <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md">
+                        <button onclick="bookService(${id})" class="w-full rounded-full py-3 px-4 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition-colors shadow-md mb-3">
                             ${prixNum > 0 ? 'Payer & Réserver' : 'Confirmer le RDV'}
                         </button>
                         <button onclick="negocierOffre(${s.id_service}, ${s.id_prestataire}, '${s.nom.replace(/'/g, "\\'")}', '${s.prestataire_nom}', '${s.prestataire_prenom}')" 
-                            class="mb-4 w-full py-2 border-2 border-[#E1AB2B] text-[#E1AB2B] rounded-full font-bold hover:bg-[#E1AB2B] hover:text-white transition-all">
+                            class="w-full py-2 border-2 border-[#E1AB2B] text-[#E1AB2B] rounded-full font-bold hover:bg-[#E1AB2B] hover:text-white transition-all">
                                 Faire une offre
                         </button>
                     </div>
                 </div>
-            `;
+                `;
             });
 
             container.innerHTML = htmlContent;
