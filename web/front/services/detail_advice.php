@@ -64,7 +64,9 @@ $is_logged_in = isset($_COOKIE['session_token']);
             try {
                 const userId = window.currentUserId || 1;
 
-                const response = await fetch(`${API_BASE}/conseil/read-one/${conseilId}?user_id=${userId}`);
+                const response = await fetch(`${API_BASE}/conseil/read-one/${conseilId}?user_id=${userId}`, {
+                    cache: 'no-store'
+                });
                 const result = await response.json();
 
                 const c = result.data || result;
