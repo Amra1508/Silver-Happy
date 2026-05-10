@@ -332,12 +332,12 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
         http.Error(response, "Données manquantes (ID Utilisateur)", http.StatusBadRequest); return
     }
 
-    if payload.IdDisponibilite > 0 {
-        err := db.DB.QueryRow("SELECT date_heure_debut FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite).Scan(&payload.DateHeure)
-        if err != nil {
-            http.Error(response, "Ce créneau n'existe plus ou a déjà été réservé.", http.StatusNotFound); return
-        }
-    }
+    // if payload.IdDisponibilite > 0 {
+    //     err := db.DB.QueryRow("SELECT date_heure_debut FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite).Scan(&payload.DateHeure)
+    //     if err != nil {
+    //         http.Error(response, "Ce créneau n'existe plus ou a déjà été réservé.", http.StatusNotFound); return
+    //     }
+    // }
 
     if payload.DateHeure == "" || payload.DateHeure == "undefined" {
         http.Error(response, "Date manquante ou invalide.", http.StatusBadRequest); return
@@ -357,23 +357,48 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
     cleanDate := CleanDateForMySQL(payload.DateHeure)
 
     var conflictCount int
-    db.DB.QueryRow(`
-        SELECT COUNT(*) FROM RESERVATION_SERVICE rs JOIN SERVICE s ON rs.id_service = s.id_service
-        WHERE s.id_prestataire = ? AND rs.date_heure < DATE_ADD(?, INTERVAL ? MINUTE)
-        AND DATE_ADD(rs.date_heure, INTERVAL s.duree MINUTE) > ?`,
-        idPresta, cleanDate, dureeService, cleanDate).Scan(&conflictCount)
-    if conflictCount > 0 {
-        http.Error(response, "Ce créneau n'est plus disponible : le prestataire a déjà un rendez-vous sur cette plage horaire.", http.StatusConflict); return
-    }
+	db.DB.QueryRow(`
+		SELECT COUNT(*) FROM RESERVATION_SERVICE rs JOIN SERVICE s ON rs.id_service = s.id_service
+		WHERE s.id_prestataire = ? AND rs.date_heure < DATE_ADD(?, INTERVAL ? MINUTE)
+		AND DATE_ADD(rs.date_heure, INTERVAL s.duree MINUTE) > ?`,
+		idPresta, cleanDate, dureeService, cleanDate).Scan(&conflictCount)
+	if conflictCount > 0 {
+		http.Error(response, "Ce créneau n'est plus disponible.", http.StatusConflict); return
+	}
 
     var dispoCount int
-    db.DB.QueryRow(`
-        SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ?
-        AND date_heure_debut <= ? AND date_heure_fin >= DATE_ADD(?, INTERVAL ? MINUTE)`,
-        idPresta, cleanDate, cleanDate, dureeService).Scan(&dispoCount)
-    if dispoCount == 0 {
-        http.Error(response, "Ce créneau dépasse les disponibilités du prestataire.", http.StatusConflict); return
-    }
+	db.DB.QueryRow(`
+		SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ?
+		AND date_heure_debut <= ? 
+		AND date_heure_fin >= DATE_ADD(?, INTERVAL ? MINUTE)`,
+		idPresta, cleanDate, cleanDate, dureeService).Scan(&dispoCount)
+	if dispoCount == 0 {
+		http.Error(response, "Ce créneau dépasse les disponibilités du prestataire.", http.StatusConflict); return
+	}
+
+	var conflictPrestaEvt int
+	db.DB.QueryRow(`
+		SELECT COUNT(*) FROM EVENEMENT e
+		JOIN PRESTATAIRE_EVENEMENT pe ON e.id_evenement = pe.id_evenement
+		WHERE pe.id_prestataire = ?
+		AND e.date_debut < DATE_ADD(?, INTERVAL ? MINUTE)
+		AND e.date_fin > ?`,
+		idPresta, cleanDate, dureeService, cleanDate).Scan(&conflictPrestaEvt)
+	if conflictPrestaEvt > 0 {
+		http.Error(response, "Le prestataire est indisponible : il a un événement sur ce créneau.", http.StatusConflict); return
+	}
+
+	var conflictUserService int
+	db.DB.QueryRow(`
+		SELECT COUNT(*) FROM RESERVATION_SERVICE rs 
+		JOIN SERVICE s ON rs.id_service = s.id_service
+		WHERE rs.id_utilisateur = ? 
+		AND rs.date_heure < DATE_ADD(?, INTERVAL ? MINUTE)
+		AND DATE_ADD(rs.date_heure, INTERVAL s.duree MINUTE) > ?`,
+		payload.IdUtilisateur, cleanDate, dureeService, cleanDate).Scan(&conflictUserService)
+	if conflictUserService > 0 {
+		http.Error(response, "Vous avez déjà un service réservé sur ce créneau.", http.StatusConflict); return
+	}
 
     var conflictEvt int
     db.DB.QueryRow(`
@@ -399,13 +424,13 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 
     if prixFinal <= 0 {
         cleanD := CleanDateForMySQL(payload.DateHeure)
-        if _, err := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)",
-            idService, payload.IdUtilisateur, cleanD); err != nil {
-            http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError); return
-        }
-        if payload.IdDisponibilite > 0 {
-            db.DB.Exec("DELETE FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite)
-        }
+		if _, err := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)",
+			idService, payload.IdUtilisateur, cleanD); err != nil {
+			http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError); return
+		}
+        // if payload.IdDisponibilite > 0 {
+        //     db.DB.Exec("DELETE FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite)
+        // }
         json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Réservation gratuite confirmée !"})
         return
     }
@@ -481,7 +506,6 @@ func Success_Service_Payment(response http.ResponseWriter, request *http.Request
 
 	if idDispoStr != "" && idDispoStr != "0" {
 		if idDispo, _ := strconv.Atoi(idDispoStr); idDispo > 0 {
-			db.DB.Exec("DELETE FROM DISPONIBILITE WHERE id_disponibilite = ?", idDispo)
 			db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET etat_offre = 'paye' WHERE id_utilisateur = ? AND id_disponibilite = ? AND etat_offre = 'accepte' AND id_service = ?",
 				userID, idDispo, serviceID)
 		}

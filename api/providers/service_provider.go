@@ -306,7 +306,7 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
     layout := "2006-01-02 15:04:05"
 
     rowsDispo, err := db.DB.Query(`
-        SELECT date_heure_debut, date_heure_fin 
+        SELECT id_disponibilite, date_heure_debut, date_heure_fin 
         FROM DISPONIBILITE 
         WHERE id_prestataire = ? AND date_heure_debut > NOW()
         ORDER BY date_heure_debut ASC`, providerID)
@@ -316,11 +316,18 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
     }
     defer rowsDispo.Close()
 
-    var openings []models.TimeRange
+    type Opening struct {
+        ID    int
+        Start time.Time
+        End   time.Time
+    }
+
+    var openings []Opening
     for rowsDispo.Next() {
+        var id int        // ← récupérer l'id
         var st, et time.Time
-        if err := rowsDispo.Scan(&st, &et); err == nil {
-            openings = append(openings, models.TimeRange{Start: st, End: et})
+        if err := rowsDispo.Scan(&id, &st, &et); err == nil {
+            openings = append(openings, Opening{ID: id, Start: st, End: et})
         }
     }
 
@@ -354,17 +361,12 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
     slotStep := 30
     now := time.Now()
 
-    for _, open := range openings {
+    for _, open := range openings {      // ← open.ID maintenant disponible
         current := open.Start
-
         for !current.Add(time.Duration(slotStep) * time.Minute).After(open.End) {
-            
             slotEnd := current.Add(time.Duration(slotStep) * time.Minute)
-            
-            if current.Before(now) {
-                current = slotEnd
-                continue
-            }
+
+            if current.Before(now) { current = slotEnd; continue }
 
             isOccupied := false
             for _, occ := range occupations {
@@ -376,13 +378,12 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
 
             if !isOccupied {
                 availableSlots = append(availableSlots, map[string]interface{}{
-                    "id_disponibilite": 0,
+                    "id_disponibilite": open.ID,  // ✅ ID réel
                     "date_heure":       current.Format(layout),
                     "debut":            current.Format(layout),
                     "fin":              slotEnd.Format(layout),
                 })
             }
-
             current = slotEnd
         }
     }

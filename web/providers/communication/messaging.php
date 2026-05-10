@@ -92,9 +92,7 @@
         });
 
         function getApiUrl() {
-            return contactType === 'admin' ?
-                `${window.API_BASE_URL}/message` :
-                `${window.API_BASE_URL}/message/prestataire`;
+            return `${window.API_BASE_URL}/message/prestataire`;
         }
 
         async function modifierEtatOffre(messageId, nouvelEtat) {

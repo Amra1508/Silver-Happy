@@ -187,17 +187,17 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 selectSvc.innerHTML += `<option value="${s.id_service}">${s.nom} (${s.prix}€)</option>`;
             });
 
-            const resDispo = await fetch(`${window.API_BASE_URL}/prestataire/disponibilites/${id2}/get`);
-            const dispos = await resDispo.json();
+            const resDispo = await fetch(`${window.API_BASE_URL}/prestataire/planning/${id2}/available`);
+            const slots = await resDispo.json();
 
             const jourSelect = document.getElementById('offre-jour');
             const timeGrid = document.getElementById('offre-time-grid');
             const now = new Date();
             groupedDispos = {};
 
-            dispos.forEach(d => {
-                const dateDebutObj = new Date(d.date_heure_debut);
-                const dateFinObj = new Date(d.date_heure_fin);
+            slots.forEach(slot => {
+                const formattedDate = slot.date_heure.replace(" ", "T");
+                const dateDebutObj = new Date(formattedDate);
 
                 if (dateDebutObj <= now) return;
 
@@ -214,13 +214,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     };
                 }
 
-                const timeDebutLabel = dateDebutObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                const timeFinLabel = dateFinObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
                 groupedDispos[dateKey].slots.push({
-                    id: d.id_disponibilite,
-                    date_heure: d.date_heure_debut,
-                    timeLabel: `${timeDebutLabel} - ${timeFinLabel}`
+                    id: slot.id_disponibilite,
+                    date_heure: slot.date_heure,
+                    timeLabel: dateDebutObj.toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
                 });
             });
 

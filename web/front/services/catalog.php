@@ -438,7 +438,7 @@
                 if (!minutes || minutes <= 0) return 'Durée non spécifiée';
                 const h = Math.floor(minutes / 60);
                 const m = minutes % 60;
-                
+
                 if (h > 0 && m > 0) return `${h}h${m.toString().padStart(2, '0')}`;
                 if (h > 0) return `${h}h`;
                 return `${m} min`;
@@ -471,7 +471,7 @@
                         <span class="bg-[#E1AB2B]/10 text-[#E1AB2B] border border-[#E1AB2B]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                         ${s.prestataire_prenom} ${s.prestataire_nom}  
                         </span>
-                        <a href="profile_provider.php?id=${idPrestataire}&from=services" class="text-[#1C5B8F] hover:text-[#E1AB2B] text-xs font-bold normal-case">
+                        <a href="/front/services/profile_provider.php?id=${idPrestataire}&from=services" class="text-[#1C5B8F] hover:text-[#E1AB2B] text-xs font-bold normal-case">
                             Voir le profil complet
                         </a>
                     </div>

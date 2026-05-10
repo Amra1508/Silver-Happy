@@ -71,15 +71,20 @@
     </div>
 
     <script>
-        const API_BASE = `${window.API_BASE_URL}/message`;
-
-        let id1 = null;
         const path = window.location.pathname;
         const segments = path.split('/');
-        const id2 = segments.pop();
 
+        let id1 = null;
+        const contactType = segments.pop();
+        const id2 = segments.pop();
         const name = segments[segments.length - 1];
         const firstname = segments[segments.length - 2];
+
+        function getApiUrl() {
+            return contactType === 'prestataire' ?
+                `${window.API_BASE_URL}/message/prestataire` :
+                `${window.API_BASE_URL}/message`;
+        }
 
         window.addEventListener('auth_ready', () => {
             id1 = window.currentUserId;
@@ -89,7 +94,7 @@
         });
 
         async function message() {
-            const response = await fetch(`${API_BASE}/get/${id1}/with/${id2}`);
+            const response = await fetch(`${getApiUrl()}/get/${id1}/with/${id2}`);
 
             if (!response.ok) return;
             let list = await response.json();
@@ -135,7 +140,7 @@
 
             if (contenu === "") return;
 
-            const response = await fetch(`${API_BASE}/add`, {
+            const response = await fetch(`${getApiUrl()}/add`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -154,7 +159,7 @@
         }
 
         async function delete_message(message_id) {
-            const response = await fetch(`${API_BASE}/delete/${message_id}`, {
+            const response = await fetch(`${getApiUrl()}/delete/${message_id}`, {
                 method: "DELETE"
             });
 

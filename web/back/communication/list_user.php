@@ -122,12 +122,14 @@
                 }
 
                 users.forEach(u => {
-                    const id = u.id_utilisateur || u.ID || u.id;
+                    const id = u.id_utilisateur || u.id;
                     const unreadCount = u.est_lu || 0;
 
                     const badgeHtml = unreadCount > 0 ?
                         `<span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">${unreadCount}</span>` :
                         `<span class="text-gray-400 text-sm">0</span>`;
+
+                    const type = currentTab === 'prestataires' ? 'prestataire' : 'senior';
 
                     tbody.innerHTML += `
                         <tr class="hover:bg-gray-50 border-b transition-colors">
@@ -137,7 +139,7 @@
                             <td class="p-4 text-gray-500 text-sm">${u.email}</td>
                             <td class="p-4 text-center">${badgeHtml}</td>
                             <td class="p-4">
-                                <a href="/back/communication/messaging.php/${u.prenom}/${u.nom}/${id}">
+                                <a href="/back/communication/messaging.php/${u.prenom}/${u.nom}/${id}/${type}">
                                     <button class="bg-gray-100 hover:bg-[#1C5B8F] hover:text-white text-[#1C5B8F] px-4 py-2 rounded-full transition-all font-semibold text-sm shadow-sm">
                                         Répondre
                                     </button>
