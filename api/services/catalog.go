@@ -315,114 +315,123 @@ func GetServicesSortedByPrice(response http.ResponseWriter, request *http.Reques
 }
 
 func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "POST") { return }
+    if utils.HandleCORS(response, request, "POST") { return }
 
-	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-	idServiceStr := request.PathValue("id")
+    stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+    idServiceStr := request.PathValue("id")
 
-	var payload struct {
-		IdUtilisateur   int    `json:"id_utilisateur"`
-		DateHeure       string `json:"date_heure"`
-		IdDisponibilite int    `json:"id_disponibilite"`
-	}
-	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
-		http.Error(response, "Format JSON invalide", http.StatusBadRequest); return
-	}
-	if payload.IdUtilisateur == 0 || payload.DateHeure == "" {
-		http.Error(response, "Données manquantes (ID ou Date)", http.StatusBadRequest); return
-	}
+    var payload struct {
+        IdUtilisateur   int    `json:"id_utilisateur"`
+        DateHeure       string `json:"date_heure"`
+        IdDisponibilite int    `json:"id_disponibilite"`
+    }
+    if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+        http.Error(response, "Format JSON invalide", http.StatusBadRequest); return
+    }
+    if payload.IdUtilisateur == 0 {
+        http.Error(response, "Données manquantes (ID Utilisateur)", http.StatusBadRequest); return
+    }
 
-	var nomSvc, statut string
-	var prixStandard, prixFinal float64
-	if err := db.DB.QueryRow("SELECT nom, prix, statut FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&nomSvc, &prixStandard, &statut); err != nil {
-		http.Error(response, "Service introuvable.", http.StatusNotFound); return
-	}
-	if statut != "accepte" {
-		http.Error(response, "Ce service n'est pas encore disponible à la réservation.", http.StatusForbidden); return
-	}
+    if payload.IdDisponibilite > 0 {
+        err := db.DB.QueryRow("SELECT date_heure_debut FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite).Scan(&payload.DateHeure)
+        if err != nil {
+            http.Error(response, "Ce créneau n'existe plus ou a déjà été réservé.", http.StatusNotFound); return
+        }
+    }
 
-	var dureeService, idPresta int
-	db.DB.QueryRow("SELECT duree, id_prestataire FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&dureeService, &idPresta)
-	cleanDate := CleanDateForMySQL(payload.DateHeure)
+    if payload.DateHeure == "" || payload.DateHeure == "undefined" {
+        http.Error(response, "Date manquante ou invalide.", http.StatusBadRequest); return
+    }
 
-	var conflictCount int
-	db.DB.QueryRow(`
-		SELECT COUNT(*) FROM RESERVATION_SERVICE rs JOIN SERVICE s ON rs.id_service = s.id_service
-		WHERE s.id_prestataire = ? AND rs.date_heure < DATE_ADD(?, INTERVAL ? MINUTE)
-		AND DATE_ADD(rs.date_heure, INTERVAL s.duree MINUTE) > ?`,
-		idPresta, cleanDate, dureeService, cleanDate).Scan(&conflictCount)
-	if conflictCount > 0 {
-		http.Error(response, "Ce créneau n'est plus disponible : le prestataire a déjà un rendez-vous sur cette plage horaire.", http.StatusConflict); return
-	}
+    var nomSvc, statut string
+    var prixStandard, prixFinal float64
+    if err := db.DB.QueryRow("SELECT nom, prix, statut FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&nomSvc, &prixStandard, &statut); err != nil {
+        http.Error(response, "Service introuvable.", http.StatusNotFound); return
+    }
+    if statut != "accepte" {
+        http.Error(response, "Ce service n'est pas encore disponible à la réservation.", http.StatusForbidden); return
+    }
 
-	var dispoCount int
-	db.DB.QueryRow(`
-		SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ?
-		AND date_heure_debut <= ? AND date_heure_fin >= DATE_ADD(?, INTERVAL ? MINUTE)`,
-		idPresta, cleanDate, cleanDate, dureeService).Scan(&dispoCount)
-	if dispoCount == 0 {
-		http.Error(response, "Ce créneau dépasse les disponibilités du prestataire.", http.StatusConflict); return
-	}
+    var dureeService, idPresta int
+    db.DB.QueryRow("SELECT duree, id_prestataire FROM SERVICE WHERE id_service = ?", idServiceStr).Scan(&dureeService, &idPresta)
+    cleanDate := CleanDateForMySQL(payload.DateHeure)
 
-	var conflictEvt int
-	db.DB.QueryRow(`
-		SELECT COUNT(*) FROM INSCRIPTION i JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
-		WHERE i.id_utilisateur = ? AND e.date_debut < DATE_ADD(?, INTERVAL ? MINUTE) AND e.date_fin > ?`,
-		payload.IdUtilisateur, cleanDate, dureeService, cleanDate).Scan(&conflictEvt)
-	if conflictEvt > 0 {
-		http.Error(response, "Conflit d'horaire : vous êtes déjà inscrit à un événement sur ce créneau.", http.StatusConflict); return
-	}
+    var conflictCount int
+    db.DB.QueryRow(`
+        SELECT COUNT(*) FROM RESERVATION_SERVICE rs JOIN SERVICE s ON rs.id_service = s.id_service
+        WHERE s.id_prestataire = ? AND rs.date_heure < DATE_ADD(?, INTERVAL ? MINUTE)
+        AND DATE_ADD(rs.date_heure, INTERVAL s.duree MINUTE) > ?`,
+        idPresta, cleanDate, dureeService, cleanDate).Scan(&conflictCount)
+    if conflictCount > 0 {
+        http.Error(response, "Ce créneau n'est plus disponible : le prestataire a déjà un rendez-vous sur cette plage horaire.", http.StatusConflict); return
+    }
 
-	var prixNegocie sql.NullFloat64
-	if err := db.DB.QueryRow(`
-		SELECT prix_propose FROM MESSAGE_PRESTATAIRE 
-		WHERE id_utilisateur = ? AND id_service = ? AND id_disponibilite = ? AND etat_offre = 'accepte'
-		ORDER BY date DESC LIMIT 1`,
-		payload.IdUtilisateur, idServiceStr, payload.IdDisponibilite).Scan(&prixNegocie); err == nil {
-		prixFinal = prixNegocie.Float64
-		db.DB.QueryRow("SELECT date_heure_debut FROM DISPONIBILITE WHERE id_disponibilite = ?",
-			payload.IdDisponibilite).Scan(&payload.DateHeure)
-	} else {
-		prixFinal = prixStandard
-	}
+    var dispoCount int
+    db.DB.QueryRow(`
+        SELECT COUNT(*) FROM DISPONIBILITE WHERE id_prestataire = ?
+        AND date_heure_debut <= ? AND date_heure_fin >= DATE_ADD(?, INTERVAL ? MINUTE)`,
+        idPresta, cleanDate, cleanDate, dureeService).Scan(&dispoCount)
+    if dispoCount == 0 {
+        http.Error(response, "Ce créneau dépasse les disponibilités du prestataire.", http.StatusConflict); return
+    }
 
-	idService, _ := strconv.Atoi(idServiceStr)
+    var conflictEvt int
+    db.DB.QueryRow(`
+        SELECT COUNT(*) FROM INSCRIPTION i JOIN EVENEMENT e ON i.id_evenement = e.id_evenement
+        WHERE i.id_utilisateur = ? AND e.date_debut < DATE_ADD(?, INTERVAL ? MINUTE) AND e.date_fin > ?`,
+        payload.IdUtilisateur, cleanDate, dureeService, cleanDate).Scan(&conflictEvt)
+    if conflictEvt > 0 {
+        http.Error(response, "Conflit d'horaire : vous êtes déjà inscrit à un événement sur ce créneau.", http.StatusConflict); return
+    }
 
-	if prixFinal <= 0 {
-		cleanD := CleanDateForMySQL(payload.DateHeure)
-		if _, err := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)",
-			idService, payload.IdUtilisateur, cleanD); err != nil {
-			http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError); return
-		}
-		if payload.IdDisponibilite > 0 {
-			db.DB.Exec("DELETE FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite)
-		}
-		json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Réservation gratuite confirmée !"})
-		return
-	}
+    var prixNegocie sql.NullFloat64
+    if err := db.DB.QueryRow(`
+        SELECT prix_propose FROM MESSAGE_PRESTATAIRE 
+        WHERE id_utilisateur = ? AND id_service = ? AND id_disponibilite = ? AND etat_offre = 'accepte'
+        ORDER BY date DESC LIMIT 1`,
+        payload.IdUtilisateur, idServiceStr, payload.IdDisponibilite).Scan(&prixNegocie); err == nil {
+        prixFinal = prixNegocie.Float64
+    } else {
+        prixFinal = prixStandard
+    }
 
-	params := &stripe.CheckoutSessionParams{
-		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
-		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
-		ClientReferenceID:  stripe.String(strconv.Itoa(payload.IdUtilisateur)),
-		LineItems: []*stripe.CheckoutSessionLineItemParams{{
-			PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-				Currency:    stripe.String("eur"),
-				ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{Name: stripe.String("Réservation Service : " + nomSvc)},
-				UnitAmount:  stripe.Int64(int64(prixFinal * 100)),
-			},
-			Quantity: stripe.Int64(1),
-		}},
-		SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%d&user_id=%d&date_heure=%s&id_dispo=%d&prix=%f",
-			utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, url.QueryEscape(payload.DateHeure), payload.IdDisponibilite, prixFinal)),
-		CancelURL: stripe.String(utils.GetFrontBaseURL() + "/front/services/catalog.php"),
-	}
+    idService, _ := strconv.Atoi(idServiceStr)
 
-	s, err := session.New(params)
-	if err != nil { http.Error(response, "Erreur Stripe", http.StatusInternalServerError); return }
+    if prixFinal <= 0 {
+        cleanD := CleanDateForMySQL(payload.DateHeure)
+        if _, err := db.DB.Exec("INSERT INTO RESERVATION_SERVICE (id_service, id_utilisateur, date_heure) VALUES (?, ?, ?)",
+            idService, payload.IdUtilisateur, cleanD); err != nil {
+            http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError); return
+        }
+        if payload.IdDisponibilite > 0 {
+            db.DB.Exec("DELETE FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite)
+        }
+        json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Réservation gratuite confirmée !"})
+        return
+    }
 
-	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(map[string]interface{}{"isFree": false, "url": s.URL})
+    params := &stripe.CheckoutSessionParams{
+        PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+        Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
+        ClientReferenceID:  stripe.String(strconv.Itoa(payload.IdUtilisateur)),
+        LineItems: []*stripe.CheckoutSessionLineItemParams{{
+            PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
+                Currency:    stripe.String("eur"),
+                ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{Name: stripe.String("Réservation Service : " + nomSvc)},
+                UnitAmount:  stripe.Int64(int64(prixFinal * 100)),
+            },
+            Quantity: stripe.Int64(1),
+        }},
+        SuccessURL: stripe.String(fmt.Sprintf("%s/success-service?session_id={CHECKOUT_SESSION_ID}&service_id=%d&user_id=%d&date_heure=%s&id_dispo=%d&prix=%f",
+            utils.GetAPIBaseURL(), idService, payload.IdUtilisateur, url.QueryEscape(payload.DateHeure), payload.IdDisponibilite, prixFinal)),
+        CancelURL: stripe.String(utils.GetFrontBaseURL() + "/front/services/catalog.php"),
+    }
+
+    s, err := session.New(params)
+    if err != nil { http.Error(response, "Erreur Stripe", http.StatusInternalServerError); return }
+
+    response.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(response).Encode(map[string]interface{}{"isFree": false, "url": s.URL})
 }
 
 func Success_Service_Payment(response http.ResponseWriter, request *http.Request) {

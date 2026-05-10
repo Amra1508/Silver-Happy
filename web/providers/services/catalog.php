@@ -416,6 +416,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 if (!res.ok) throw new Error('Erreur réseau');
 
                 const dispos = await res.json();
+                console.log(dispos);
                 container.innerHTML = '';
 
                 if (!dispos || dispos.length === 0) {
@@ -427,19 +428,21 @@ $is_logged_in = isset($_SESSION['provider_id']);
                 const now = new Date();
 
                 dispos.forEach(d => {
-                    const dateObj = new Date(d.time);
+                    const dateDebutObj = new Date(d.date_heure_debut);
+                    const dateFinObj = new Date(d.date_heure_fin);
 
-                    if (dateObj <= now) {
+                    if (dateDebutObj <= now) {
                         return;
                     }
 
-                    const dateDisplay = dateObj.toLocaleDateString('fr-FR', {
+                    const dateDisplay = dateDebutObj.toLocaleDateString('fr-FR', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric'
                     });
-                    const fullDate = d.time;
+                    
+                    const fullDate = d.date_heure_debut;
                     const dateIso = fullDate.split('T')[0];
 
                     if (!grouped[dateDisplay]) {
@@ -448,12 +451,14 @@ $is_logged_in = isset($_SESSION['provider_id']);
                             slots: []
                         };
                     }
+
+                    const heureDebut = dateDebutObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    const heureFin = dateFinObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
                     grouped[dateDisplay].slots.push({
                         id: d.id_disponibilite,
-                        time: dateObj.toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })
+                        timeLabel: `${heureDebut} - ${heureFin}`,
+                        isReserved: false
                     });
                 });
 
@@ -472,7 +477,7 @@ $is_logged_in = isset($_SESSION['provider_id']);
                         const statusColor = slot.isReserved ? 'bg-red-500' : 'bg-green-500';
                         pillsHtml += `
                             <div class="flex items-center bg-white border border-gray-200 rounded-full pl-4 pr-1 py-1.5 shadow-sm">
-                                <span class="font-bold text-gray-700 text-sm mr-3">${slot.time}</span>
+                                <span class="font-bold text-gray-700 text-sm mr-3">${slot.timeLabel}</span>
                                 <span class="w-2.5 h-2.5 rounded-full ${statusColor} mr-3"></span>
                                 <button onclick="deleteDispo('${slot.id}')" class="text-gray-400 hover:text-red-500 p-1.5 rounded-full transition-colors" title="Supprimer ce créneau">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>

@@ -195,16 +195,17 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const now = new Date();
             groupedDispos = {};
 
-            dispos.filter(d => !d.est_reserve).forEach(d => {
-                const dateObj = new Date(d.date_heure);
+            dispos.forEach(d => {
+                const dateDebutObj = new Date(d.date_heure_debut);
+                const dateFinObj = new Date(d.date_heure_fin);
 
-                if (dateObj <= now) return;
+                if (dateDebutObj <= now) return;
 
-                const dateKey = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()).toISOString();
+                const dateKey = new Date(dateDebutObj.getFullYear(), dateDebutObj.getMonth(), dateDebutObj.getDate()).toISOString();
 
                 if (!groupedDispos[dateKey]) {
                     groupedDispos[dateKey] = {
-                        label: dateObj.toLocaleDateString('fr-FR', {
+                        label: dateDebutObj.toLocaleDateString('fr-FR', {
                             weekday: 'long',
                             day: 'numeric',
                             month: 'long'
@@ -213,13 +214,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     };
                 }
 
+                const timeDebutLabel = dateDebutObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const timeFinLabel = dateFinObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
                 groupedDispos[dateKey].slots.push({
                     id: d.id_disponibilite,
-                    date_heure: d.date_heure,
-                    timeLabel: dateObj.toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
+                    date_heure: d.date_heure_debut,
+                    timeLabel: `${timeDebutLabel} - ${timeFinLabel}`
                 });
             });
 
@@ -231,7 +232,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 jourSelect.classList.add('hidden');
             } else {
                 sortedKeys.forEach(key => {
-                    jourSelect.innerHTML += `<option value="${key}">${groupedDispos[key].label}</option>`;
+                    const capitalizedLabel = groupedDispos[key].label.charAt(0).toUpperCase() + groupedDispos[key].label.slice(1);
+                    jourSelect.innerHTML += `<option value="${key}">${capitalizedLabel}</option>`;
                 });
                 jourSelect.classList.remove('hidden');
                 timeGrid.innerHTML = '<p class="text-sm text-gray-500 col-span-3 text-center py-2">Sélectionnez un jour ci-dessus</p>';
@@ -376,17 +378,24 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         async function payerOffre(idService, dateHeure, idDispo) {
             try {
+                const payload = {
+                    id_utilisateur: parseInt(id1),
+                    date_heure: dateHeure,
+                    id_disponibilite: parseInt(idDispo)
+                };
+
                 const response = await fetch(`${window.API_BASE_URL}/service/checkout/${idService}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({
-                        id_utilisateur: parseInt(window.currentUserId),
-                        date_heure: dateHeure,
-                        id_disponibilite: parseInt(idDispo)
-                    })
+                    body: JSON.stringify(payload)
                 });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
 
                 const data = await response.json();
 
@@ -396,11 +405,11 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     alert("Réservation confirmée (Gratuit) !");
                     window.location.href = "/front/services/catalog.php?success=1";
                 } else {
-                    alert("Erreur lors de l'initialisation du paiement.");
+                    alert("Erreur inattendue lors de l'initialisation du paiement.");
                 }
             } catch (error) {
                 console.error("Erreur:", error);
-                alert("Impossible de contacter le service de paiement.");
+                alert("Paiement refusé : " + error.message);
             }
         }
 

@@ -291,31 +291,32 @@ func Create_Disponibilite_Slot(response http.ResponseWriter, request *http.Reque
 }
 
 func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "GET") {
-		return
-	}
+    if utils.HandleCORS(response, request, "GET") {
+        return
+    }
 
-	providerID := request.PathValue("id")
+    providerID := request.PathValue("id")
 
-	dureeStr := request.URL.Query().Get("duree")
+    dureeStr := request.URL.Query().Get("duree")
     duree := 0
     if dureeStr != "" {
         fmt.Sscanf(dureeStr, "%d", &duree)
     }
 
-	layout := "2006-01-02 15:04:05"
+    layout := "2006-01-02 15:04:05"
 
-	rowsDispo, err := db.DB.Query(`
+    rowsDispo, err := db.DB.Query(`
         SELECT date_heure_debut, date_heure_fin 
         FROM DISPONIBILITE 
-        WHERE id_prestataire = ? AND date_heure_debut > NOW()`, providerID)
+        WHERE id_prestataire = ? AND date_heure_debut > NOW()
+        ORDER BY date_heure_debut ASC`, providerID)
     if err != nil {
         http.Error(response, "Erreur lors de la récupération des disponibilités", http.StatusInternalServerError)
         return
     }
     defer rowsDispo.Close()
 
-	var openings []models.TimeRange
+    var openings []models.TimeRange
     for rowsDispo.Next() {
         var st, et time.Time
         if err := rowsDispo.Scan(&st, &et); err == nil {
@@ -323,7 +324,7 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
         }
     }
 
-	rowsOcc, err := db.DB.Query(`
+    rowsOcc, err := db.DB.Query(`
         SELECT rs.date_heure, s.duree
         FROM RESERVATION_SERVICE rs
         JOIN SERVICE s ON rs.id_service = s.id_service
@@ -339,7 +340,7 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
     }
     defer rowsOcc.Close()
 
-	var occupations []models.TimeRange
+    var occupations []models.TimeRange
     for rowsOcc.Next() {
         var st time.Time
         var dur int
@@ -349,11 +350,11 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
         }
     }
 
-	var availableSlots []map[string]interface{}
+    var availableSlots []map[string]interface{}
     slotStep := 30
-	now := time.Now()
+    now := time.Now()
 
-	for _, open := range openings {
+    for _, open := range openings {
         current := open.Start
 
         for !current.Add(time.Duration(slotStep) * time.Minute).After(open.End) {
@@ -428,13 +429,18 @@ func Get_Provider_Dispos(response http.ResponseWriter, request *http.Request) {
 
     providerID := request.PathValue("id")
 
-    rows, _ := db.DB.Query(`SELECT id_disponibilite, date_heure_debut, date_heure_fin FROM DISPONIBILITE WHERE id_prestataire = ?`, providerID)
+    rows, _ := db.DB.Query(`
+        SELECT id_disponibilite, date_heure_debut, date_heure_fin 
+        FROM DISPONIBILITE 
+        WHERE id_prestataire = ? 
+        ORDER BY date_heure_debut ASC
+    `, providerID)
     defer rows.Close()
     
     type DispoOut struct {
-        ID   int    `json:"id_disponibilite"`
-        Time string `json:"time"`
-        Fin  string `json:"fin"`
+        ID    int    `json:"id_disponibilite"`
+        Debut string `json:"date_heure_debut"`
+        Fin   string `json:"date_heure_fin"`
     }
 
     var res []DispoOut
@@ -442,7 +448,7 @@ func Get_Provider_Dispos(response http.ResponseWriter, request *http.Request) {
         var id int
         var d, f string
         rows.Scan(&id, &d, &f)
-        res = append(res, DispoOut{ID: id, Time: d, Fin: f})
+        res = append(res, DispoOut{ID: id, Debut: d, Fin: f})
     }
     
     response.Header().Set("Content-Type", "application/json")

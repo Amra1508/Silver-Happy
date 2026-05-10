@@ -478,7 +478,6 @@
 
                     <h3 class="text-2xl text-[#1C5B8F] font-bold mt-3 mb-1">${nom}</h3>
                     
-                    <!-- Affichage du Prix et de la Durée -->
                     <div class="flex flex-col mb-4">
                         ${prixHtml}
                         <div class="flex items-center text-sm font-semibold text-gray-500">
