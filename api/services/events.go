@@ -318,35 +318,46 @@ func Update_Evenement(response http.ResponseWriter, request *http.Request) {
 }
 
 func Delete_Evenement(response http.ResponseWriter, request *http.Request) {
-	if utils.HandleCORS(response, request, "DELETE") {
-		return
-	}
+    if utils.HandleCORS(response, request, "DELETE") {
+        return
+    }
 
-	id := request.PathValue("id")
+    idStr := request.PathValue("id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(response, "ID de l'événement invalide", http.StatusBadRequest)
+        return
+    }
 
-	var imagePath sql.NullString
-	if err := db.DB.QueryRow("SELECT image FROM EVENEMENT WHERE id_evenement = ?", id).Scan(&imagePath); err != nil && err != sql.ErrNoRows {
-		http.Error(response, "Erreur lors de la lecture de l'évènement", http.StatusInternalServerError)
-		return
-	}
+    var imagePath sql.NullString
+    if err := db.DB.QueryRow("SELECT image FROM EVENEMENT WHERE id_evenement = ?", id).Scan(&imagePath); err != nil && err != sql.ErrNoRows {
+        http.Error(response, "Erreur lors de la lecture de l'évènement", http.StatusInternalServerError)
+        return
+    }
 
-	if _, err := db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ?", id); err != nil {
-		http.Error(response, "Erreur lors de la suppression des liens prestataires", http.StatusInternalServerError)
-		return
-	}
-	if _, err := db.DB.Exec("DELETE FROM inscription WHERE id_evenement = ?", id); err != nil {
-		http.Error(response, "Erreur lors de la suppression des inscriptions", http.StatusInternalServerError)
-		return
-	}
-	if _, err := db.DB.Exec("DELETE FROM EVENEMENT WHERE id_evenement = ?", id); err != nil {
-		http.Error(response, "Erreur lors de la suppression de l'évènement", http.StatusInternalServerError)
-		return
-	}
+    if _, err := db.DB.Exec("DELETE FROM PRESTATAIRE_EVENEMENT WHERE id_evenement = ?", id); err != nil {
+        fmt.Println("Erreur PRESTATAIRE_EVENEMENT :", err) 
+        http.Error(response, "Erreur lors de la suppression des liens prestataires", http.StatusInternalServerError)
+        return
+    }
 
-	if imagePath.Valid && imagePath.String != "" {
-		os.Remove(imagePath.String)
-	}
-	response.WriteHeader(http.StatusNoContent)
+    if _, err := db.DB.Exec("DELETE FROM INSCRIPTION WHERE id_evenement = ?", id); err != nil {
+        fmt.Println("Erreur INSCRIPTION :", err)
+        http.Error(response, "Erreur lors de la suppression des inscriptions", http.StatusInternalServerError)
+        return
+    }
+
+    if _, err := db.DB.Exec("DELETE FROM EVENEMENT WHERE id_evenement = ?", id); err != nil {
+        fmt.Println("Erreur EVENEMENT :", err)
+        http.Error(response, "Erreur lors de la suppression de l'évènement", http.StatusInternalServerError)
+        return
+    }
+
+    if imagePath.Valid && imagePath.String != "" {
+        os.Remove(imagePath.String)
+    }
+    
+    response.WriteHeader(http.StatusNoContent)
 }
 
 func Read_User_Evenements(response http.ResponseWriter, request *http.Request) {
