@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.SilverAppy" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/silver_blue</item>
+        <item name="colorPrimaryVariant">@color/silver_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/silver_yellow</item>
+        <item name="colorSecondaryVariant">@color/silver_yellow</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorError">@color/silver_red</item>
+    </style>
+</resources>

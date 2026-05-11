@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:padding="@dimen/margin_large">
+
+    <TextView
+        android:id="@+id/tv_login_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/connexion"
+        android:textColor="@color/silver_blue"
+        android:textSize="@dimen/text_size_title"
+        android:fontFamily="@font/alata"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tv_login_subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/acc_dez_vos_activit_s_et_services_simplement"
+        android:textColor="@color/silver_blue"
+        android:textSize="@dimen/text_size_body"
+        android:fontFamily="@font/alata"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/tv_login_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="@dimen/margin_standard"/>
+
+    <EditText
+        android:id="@+id/et_identifiant"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/adresse_email"
+        android:inputType="textEmailAddress"
+        android:textSize="@dimen/text_size_body"
+        android:fontFamily="@font/alata"
+        android:backgroundTint="@color/silver_blue"
+        app:layout_constraintTop_toBottomOf="@id/tv_login_subtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="48dp"/>
+
+    <EditText
+        android:id="@+id/et_password"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/button_height"
+        android:hint="@string/mot_de_passe"
+        android:inputType="textPassword"
+        android:textSize="@dimen/text_size_body"
+        android:fontFamily="@font/alata"
+        android:backgroundTint="@color/silver_blue"
+        app:layout_constraintTop_toBottomOf="@id/et_identifiant"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="@dimen/margin_standard"/>
+
+    <Button
+        android:id="@+id/btn_login"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/button_height"
+        android:text="@string/se_connecter"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_size_body"
+        android:fontFamily="@font/alata"
+        android:background="@drawable/bg_button_blue"
+        app:layout_constraintTop_toBottomOf="@id/et_password"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tv_create_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/pas_encore_de_compte_s_inscrire"
+        android:textColor="@color/silver_yellow"
+        android:textSize="@dimen/text_size_body"
+        android:fontFamily="@font/alata"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/btn_login"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

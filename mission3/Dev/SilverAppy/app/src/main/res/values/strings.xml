@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Silver-Appy</string>
+    <string name="mon_profil">Mon profil</string>
+    <string name="v_nements">Événements</string>
+    <string name="services">Services</string>
+    <string name="mes_informations">Mes informations</string>
+    <string name="votre_nom_et_pr_nom">Votre nom et prénom</string>
+    <string name="adresse_email">Adresse email</string>
+    <string name="date_de_naissance">Date de naissance</string>
+    <string name="num_ro_de_t_l_phone">Numéro de téléphone</string>
+    <string name="adresse">Adresse</string>
+    <string name="code_postal">Code postal</string>
+    <string name="ville">Ville</string>
+    <string name="pays">Pays</string>
+    <string name="enregistrer">Enregistrer</string>
+    <string name="annuler">Annuler</string>
+    <string name="cr_er_un_compte">Créer un compte</string>
+    <string name="pr_nom">Prénom</string>
+    <string name="nom">Nom</string>
+    <string name="s_inscrire">S\'inscrire</string>
+    <string name="mot_de_passe">Mot de passe</string>
+    <string name="retour">← Retour</string>
+    <string name="modifier_mes_informations">Modifier mes informations</string>
+    <string name="se_d_connecter">Se déconnecter</string>
+    <string name="connexion">Connexion</string>
+    <string name="acc_dez_vos_activit_s_et_services_simplement">Accédez à vos activités et services simplement.</string>
+    <string name="se_connecter">Se connecter</string>
+    <string name="pas_encore_de_compte_s_inscrire">Pas encore de compte ? S\'inscrire</string>
+    <string name="conseils">Conseils</string>
+</resources>
