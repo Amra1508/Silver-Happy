@@ -218,8 +218,6 @@ func InitDB() {
 		id_disponibilite INT,
 		prix_propose DOUBLE,
 		etat_offre ENUM('en_attente', 'accepte', 'refuse', 'expire'),
-		FOREIGN KEY (id_prestataire) REFERENCES PRESTATAIRE(id_prestataire),
-		FOREIGN KEY (id_utilisateur) REFERENCES UTILISATEUR(id_utilisateur),
 		FOREIGN KEY (id_service) REFERENCES SERVICE(id_service),
 		FOREIGN KEY (id_disponibilite) REFERENCES DISPONIBILITE(id_disponibilite)
 	);
