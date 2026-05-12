@@ -561,8 +561,6 @@ ALTER TABLE `MESSAGE_ADMIN`
 --
 ALTER TABLE `MESSAGE_PRESTATAIRE`
   ADD PRIMARY KEY (`id_message`),
-  ADD KEY `id_prestataire` (`id_prestataire`),
-  ADD KEY `id_utilisateur` (`id_utilisateur`),
   ADD KEY `id_service` (`id_service`),
   ADD KEY `id_disponibilite` (`id_disponibilite`);
 
@@ -865,8 +863,6 @@ ALTER TABLE `MESSAGE_ADMIN`
 -- Contraintes pour la table `MESSAGE_PRESTATAIRE`
 --
 ALTER TABLE `MESSAGE_PRESTATAIRE`
-  ADD CONSTRAINT `message_prestataire_ibfk_1` FOREIGN KEY (`id_prestataire`) REFERENCES `PRESTATAIRE` (`id_prestataire`),
-  ADD CONSTRAINT `message_prestataire_ibfk_2` FOREIGN KEY (`id_utilisateur`) REFERENCES `UTILISATEUR` (`id_utilisateur`),
   ADD CONSTRAINT `message_prestataire_ibfk_3` FOREIGN KEY (`id_service`) REFERENCES `SERVICE` (`id_service`),
   ADD CONSTRAINT `message_prestataire_ibfk_4` FOREIGN KEY (`id_disponibilite`) REFERENCES `DISPONIBILITE` (`id_disponibilite`);
 
