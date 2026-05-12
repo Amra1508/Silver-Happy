@@ -107,7 +107,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         <button onclick="toggleModal('modal-offre')" class="flex-1 px-6 py-2 border border-gray-300 rounded-full font-medium hover:bg-gray-50 transition">
                             Annuler
                         </button>
-                        <button onclick="envoyerOffre()" class="flex-1 px-6 py-2 bg-[#E1AB2B] text-white rounded-full font-medium hover:bg-[#c99824] transition">
+                        <button id="btn-envoyer-offre" onclick="envoyerOffre()" class="flex-1 px-6 py-2 bg-[#E1AB2B] text-white rounded-full font-medium hover:bg-[#c99824] transition">
                             Envoyer l'offre
                         </button>
                     </div>
@@ -140,11 +140,11 @@ $is_logged_in = isset($_COOKIE['session_token']);
             `${window.API_BASE_URL}/message` :
             `${window.API_BASE_URL}/message/prestataire`;
 
-        window.addEventListener('auth_ready', () => {
-            const noSubContainer = document.getElementById('no-sub-container');
+        window.addEventListener('auth_ready', async () => {
             const chatContainer = document.getElementById('chat-container');
+            if (!chatContainer) return;
 
-            if (chatContainer) chatContainer.classList.remove('hidden');
+            chatContainer.classList.remove('hidden');
 
             id1 = window.currentUserId;
             document.getElementById('chat-title').innerText = `Discussion avec ${firstname} ${name}`;
@@ -157,16 +157,10 @@ $is_logged_in = isset($_COOKIE['session_token']);
             const serviceAPreremplir = urlParams.get('prefill_service');
 
             if (serviceAPreremplir) {
-                setTimeout(async () => {
-                    await ouvrirModaleOffre();
-
-                    const selectSvc = document.getElementById('offre-service');
-                    if (selectSvc) {
-                        selectSvc.value = serviceAPreremplir;
-                    }
-
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }, 1000);
+                await ouvrirModaleOffre();
+                const selectSvc = document.getElementById('offre-service');
+                if (selectSvc) selectSvc.value = serviceAPreremplir;
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
 
             message();
@@ -272,13 +266,45 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         async function envoyerOffre() {
             const serviceId = document.getElementById('offre-service').value;
-            const dispoId = document.getElementById('selected-offre-dispo-id').value;
+            const dispoId = parseInt(document.getElementById('selected-offre-dispo-id').value);
             const dateHeure = document.getElementById('selected-offre-dispo-date').value;
             const prix = document.getElementById('offre-prix').value;
             const serviceNom = document.getElementById('offre-service').options[document.getElementById('offre-service').selectedIndex].text;
 
-            if (!serviceId || !dispoId || !prix) {
+            if (!serviceId || !dispoId || !prix || !dateHeure) {
                 alert("Veuillez remplir tous les champs");
+                return;
+            }
+
+            const btnEnvoyer = document.getElementById('btn-envoyer-offre');
+            btnEnvoyer.disabled = true;
+            btnEnvoyer.textContent = "Vérification...";
+
+            try {
+                const checkResponse = await fetch(`${window.API_BASE_URL}/service/checkout/${serviceId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        id_utilisateur: parseInt(id1),
+                        date_heure: dateHeure,
+                        id_disponibilite: parseInt(dispoId)
+                    })
+                });
+
+                if (!checkResponse.ok) {
+                    const err = await checkResponse.text();
+                    alert("Ce créneau n'est pas réservable : " + err);
+                    btnEnvoyer.disabled = false;
+                    btnEnvoyer.textContent = "Envoyer l'offre";
+                    return;
+                }
+
+            } catch (e) {
+                alert("Erreur lors de la vérification : " + e.message);
+                btnEnvoyer.disabled = false;
+                btnEnvoyer.textContent = "Envoyer l'offre";
                 return;
             }
 
@@ -286,7 +312,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 Contenu: `PROPOSITION D'OFFRE : ${serviceNom} pour le ${new Date(dateHeure).toLocaleString('fr-FR')} au prix de ${prix}€`,
                 ID_Expediteur: parseInt(id1),
                 ID_Destinataire: parseInt(id2),
-                Expediteur: false,
+                Expediteur: true,
                 id_service: parseInt(serviceId),
                 id_dispo: parseInt(dispoId),
                 prix_propose: parseFloat(prix),
@@ -304,7 +330,13 @@ $is_logged_in = isset($_COOKIE['session_token']);
             if (response.ok) {
                 toggleModal('modal-offre');
                 message();
+            } else {
+                const err = await response.text();
+                alert("Erreur lors de l'envoi : " + err);
             }
+
+            btnEnvoyer.disabled = false;
+            btnEnvoyer.textContent = "Envoyer l'offre";
         }
 
         async function message() {
@@ -342,22 +374,26 @@ $is_logged_in = isset($_COOKIE['session_token']);
                         </button>` : '';
 
                 if (isOffre && msg.etat_offre === 'accepte') {
-                    if (!isMe) {
+                    const isConfirmationPresta = msg.contenu.includes("J'ai accepté votre offre");
+
+                    if (isConfirmationPresta) {
+                        const offreOriginale = list.find(m =>
+                            m.etat_offre === 'accepte' &&
+                            !m.contenu.includes("J'ai accepté votre offre") &&
+                            m.id_service == msg.id_service &&
+                            m.id_dispo == msg.id_dispo
+                        );
+                        const dateHeureOffre = offreOriginale ? offreOriginale.date_heure_creneau : '';
+
                         contenuAffiche = `
-                            <div class="flex flex-col border-l-4 border-green-500 pl-3 py-1">
-                                <span class="text-[10px] font-bold uppercase text-green-600">Offre Acceptée - Paiement</span>
-                                <span class="text-sm font-semibold">${msg.contenu}</span>
-                                <button onclick="payerOffre(${msg.id_service}, '${msg.date_heure}', ${msg.id_dispo})" 
-                                        class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
-                                    Payer ${msg.prix_propose}€
-                                </button>
-                            </div>`;
-                    } else {
-                        contenuAffiche = `
-                            <div class="flex flex-col border-l-4 border-green-500 pl-3 py-1 opacity-70">
-                                <span class="text-[10px] font-bold uppercase text-green-600">Votre offre (Acceptée)</span>
-                                <span class="text-sm">${msg.contenu}</span>
-                            </div>`;
+            <div class="flex flex-col border-l-4 border-green-500 pl-3 py-1">
+                <span class="text-[10px] font-bold uppercase text-green-600">Offre Acceptée - Paiement</span>
+                <span class="text-sm font-semibold">${msg.contenu}</span>
+                <button onclick="payerOffre(${msg.id_service}, ${msg.id_dispo}, ${msg.prix_propose})"
+                        class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-xl transition shadow-md">
+                    Payer ${msg.prix_propose}€
+                </button>
+            </div>`;
                     }
                 }
 
@@ -376,11 +412,22 @@ $is_logged_in = isset($_COOKIE['session_token']);
             container.scrollTop = container.scrollHeight;
         }
 
-        async function payerOffre(idService, dateHeure, idDispo) {
+        async function payerOffre(idService, idDispo, prixNegocie) {
             try {
+                const resDispo = await fetch(`${window.API_BASE_URL}/prestataire/planning/${id2}/available`);
+                if (!resDispo.ok) throw new Error("Impossible de récupérer les créneaux.");
+                const slots = await resDispo.json();
+
+                const slot = slots.find(s => parseInt(s.id_disponibilite) === parseInt(idDispo));
+
+                if (!slot) {
+                    alert("Ce créneau n'est plus disponible à la réservation.");
+                    return;
+                }
+
                 const payload = {
                     id_utilisateur: parseInt(id1),
-                    date_heure: dateHeure,
+                    date_heure: slot.date_heure,
                     id_disponibilite: parseInt(idDispo)
                 };
 
@@ -398,18 +445,15 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 }
 
                 const data = await response.json();
-
                 if (data.url) {
                     window.location.href = data.url;
                 } else if (data.isFree) {
-                    alert("Réservation confirmée (Gratuit) !");
-                    window.location.href = "/front/services/catalog.php?success=1";
-                } else {
-                    alert("Erreur inattendue lors de l'initialisation du paiement.");
+                    alert("Réservation confirmée !");
+                    window.location.href = "/front/services/catalog.php?success=reservation_validee";
                 }
             } catch (error) {
                 console.error("Erreur:", error);
-                alert("Paiement refusé : " + error.message);
+                alert("Erreur : " + error.message);
             }
         }
 

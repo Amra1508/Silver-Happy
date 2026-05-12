@@ -177,7 +177,7 @@ func Accept_Offer(response http.ResponseWriter, request *http.Request) {
     _, errInsert := db.DB.Exec(`
     INSERT INTO MESSAGE_PRESTATAIRE 
     (contenu, id_utilisateur, id_prestataire, expediteur, id_service, id_disponibilite, prix_propose, etat_offre) 
-    VALUES (?, ?, ?, 1, ?, ?, ?, 'accepte')`, 
+    VALUES (?, ?, ?, 0, ?, ?, ?, 'accepte')`, 
     contenuConfirmation, idSenior, idPresta, idService, idDispo, prixNegocie)
 
     if errInsert != nil {
@@ -219,7 +219,7 @@ func Reject_Offer(response http.ResponseWriter, request *http.Request) {
     _, errInsert := db.DB.Exec(`
     INSERT INTO MESSAGE_PRESTATAIRE 
     (contenu, id_utilisateur, id_prestataire, expediteur, id_service, id_disponibilite, prix_propose, etat_offre) 
-    VALUES (?, ?, ?, 1, ?, ?, ?, 'refuse')`, 
+    VALUES (?, ?, ?, 0, ?, ?, ?, 'refuse')`, 
     contenuRefus, idSenior, idPresta, idService, idDispo, prixNegocie)
 
     if errInsert != nil {

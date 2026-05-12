@@ -325,6 +325,7 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
         DateHeure       string `json:"date_heure"`
         IdDisponibilite int    `json:"id_disponibilite"`
     }
+
     if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
         http.Error(response, "Format JSON invalide", http.StatusBadRequest); return
     }
@@ -403,11 +404,12 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
     }
 
     var prixNegocie sql.NullFloat64
-    if err := db.DB.QueryRow(`
-        SELECT prix_propose FROM MESSAGE_PRESTATAIRE 
-        WHERE id_utilisateur = ? AND id_service = ? AND id_disponibilite = ? AND etat_offre = 'accepte'
-        ORDER BY date DESC LIMIT 1`,
-        payload.IdUtilisateur, idServiceStr, payload.IdDisponibilite).Scan(&prixNegocie); err == nil {
+	if err := db.DB.QueryRow(`
+    SELECT prix_propose FROM MESSAGE_PRESTATAIRE 
+    WHERE (id_utilisateur = ? OR id_prestataire = ?) 
+    AND id_service = ? AND id_disponibilite = ? AND etat_offre = 'accepte'
+    ORDER BY date DESC LIMIT 1`,
+    payload.IdUtilisateur, payload.IdUtilisateur, idServiceStr, payload.IdDisponibilite).Scan(&prixNegocie); err == nil {
         prixFinal = prixNegocie.Float64
     } else {
         prixFinal = prixStandard
