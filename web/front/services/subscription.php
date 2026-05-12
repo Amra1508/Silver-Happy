@@ -144,9 +144,9 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
         function showAlert(msg, isSuccess) {
             messageBox.textContent = msg;
-            messageBox.className = `p-4 rounded-lg border text-center font-bold shadow-lg ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
+            messageBox.className = `fixed top-10 left-1/2 transform -translate-x-1/2 z-[60] w-[90%] max-w-xl p-4 rounded-lg border shadow-xl text-center font-bold transition-all duration-300 ${isSuccess ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'}`;
             messageBox.classList.remove('hidden');
-            setTimeout(() => messageBox.classList.add('hidden'), 4000);
+            setTimeout(() => messageBox.classList.add('hidden'), 3500);
         }
 
         function openSubModal() {

@@ -204,7 +204,7 @@ CREATE TABLE `FACTURE` (
   `montant` double DEFAULT NULL,
   `frais_plateforme` double DEFAULT NULL,
   `montant_net` double DEFAULT NULL,
-  `mois_annee` varchar(7) NOT NULL,
+  `mois_annee` varchar(12) NOT NULL,
   `date` datetime DEFAULT current_timestamp(),
   `statut` enum('en_attente','paye','annule') DEFAULT 'en_attente',
   `id_prestataire` int(11) NOT NULL,

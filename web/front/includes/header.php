@@ -26,10 +26,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             </a>
         <?php endif; ?>
 
-        <button id="btn_urgence" class="bg-red-600 text-white px-4 py-1.5 rounded-full font-bold ml-2 hover:bg-red-700">
-            Urgence
-        </button>
-
         <button onclick="toggleZoom()" class="header-button transition-all group ml-2" title="Modifier la taille du texte">
             <img src="/front/icons/zoom.svg" alt="zoom" class="w-7 h-7 object-contain transition-all group-hover:brightness-0 group-hover:invert">
         </button>
@@ -85,19 +81,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
         </div>
     </div>
 
-    <div id="modal_urgence" class="hidden fixed inset-0 bg-black bg-opacity-60 z-[200] flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-lg w-full max-w-md border-2 border-red-500 text-center">
-            <h2 class="text-2xl font-bold text-red-600 mb-2">Besoin d'aide ?</h2>
-            <p class="mb-6 text-gray-600">Appelez les secours immédiatement :</p>
-            <div class="flex flex-col gap-3">
-                <a href="tel:15" class="bg-blue-100 border border-blue-400 text-blue-800 text-xl font-bold py-3 rounded hover:bg-blue-200">🚑 15 - SAMU</a>
-                <a href="tel:18" class="bg-red-100 border border-red-400 text-red-800 text-xl font-bold py-3 rounded hover:bg-red-200">🚒 18 - Pompiers</a>
-                <a href="tel:112" class="bg-gray-100 border border-gray-400 text-gray-800 text-xl font-bold py-3 rounded hover:bg-gray-200">📞 112 - Urgences</a>
-            </div>
-            <button id="btn_fermer_urgence" class="mt-6 px-6 py-2 bg-gray-200 text-gray-800 rounded font-bold hover:bg-gray-300">Annuler</button>
-        </div>
-    </div>
-
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
     <script>
@@ -131,15 +114,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
             document.addEventListener('DOMContentLoaded', async () => {
                 const savedLang = localStorage.getItem('user_lang');
                 if (savedLang && savedLang !== 'fr') changeLanguage(savedLang);
-
-                const btnUrgence = document.getElementById('btn_urgence');
-                const modalUrgence = document.getElementById('modal_urgence');
-                const btnFermer = document.getElementById('btn_fermer_urgence');
-
-                if(btnUrgence && modalUrgence && btnFermer) {
-                    btnUrgence.addEventListener('click', () => modalUrgence.classList.remove('hidden'));
-                    btnFermer.addEventListener('click', () => modalUrgence.classList.add('hidden'));
-                }
 
                 const btnLogout = document.getElementById('btn_logout');
                 if (btnLogout) {

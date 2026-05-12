@@ -245,6 +245,15 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                         plugins: {
                             legend: {
                                 position: 'bottom'
+                            },
+                            // AJOUT DU TOOLTIP ICI
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let valeur = context.parsed.y;
+                                        return `${context.dataset.label}: ${valeur} €`;
+                                    }
+                                }
                             }
                         }
                     }
