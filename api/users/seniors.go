@@ -287,17 +287,36 @@ func Read_Admin(response http.ResponseWriter, request *http.Request) {
 	var total int
 	db.DB.QueryRow("SELECT COUNT(*) FROM UTILISATEUR WHERE statut = 'admin'").Scan(&total)
 
-	query := `
-		SELECT u.id_utilisateur, u.nom, u.prenom, u.email, 
-			   u.num_telephone,
-			   COALESCE(SUM(CASE WHEN m.est_lu = 0 AND m.id_utilisateur2 = ? AND m.id_utilisateur1 = u.id_utilisateur THEN 1 ELSE 0 END), 0) AS est_lu
-		FROM UTILISATEUR u
-		LEFT JOIN MESSAGE_ADMIN m ON u.id_utilisateur = m.id_utilisateur1
-		WHERE u.statut = 'admin'
-		GROUP BY u.id_utilisateur, u.nom, u.prenom, u.email, u.num_telephone
-		ORDER BY est_lu DESC, u.id_utilisateur ASC
-		LIMIT ? OFFSET ?
-	`
+	var statut string
+	db.DB.QueryRow("SELECT statut FROM UTILISATEUR WHERE id_utilisateur = ?", userId).Scan(&statut)
+
+	query := ""
+	if statut == "user" {
+        query = `
+        SELECT 
+            u.id_utilisateur, u.nom, u.prenom, u.email, u.num_telephone,
+            (SELECT COUNT(*) FROM MESSAGE_ADMIN 
+             WHERE id_utilisateur2 = ?     
+             AND id_utilisateur1 = u.id_utilisateur
+             AND est_lu = 0) as est_lu
+        FROM UTILISATEUR u
+        WHERE u.statut = 'admin'
+        GROUP BY u.id_utilisateur, u.nom, u.prenom, u.email, u.num_telephone
+        ORDER BY est_lu DESC, u.id_utilisateur ASC
+        LIMIT ? OFFSET ?`
+    } else {
+        query = `
+        SELECT 
+            u.id_utilisateur, u.nom, u.prenom, u.email, u.num_telephone,
+            COUNT(CASE WHEN m.est_lu = 0 AND m.expediteur = 0 THEN 1 END) AS est_lu
+        FROM UTILISATEUR u
+        LEFT JOIN MESSAGE_PRESTATAIRE m ON u.id_utilisateur = m.id_utilisateur AND m.id_prestataire = ?
+        WHERE u.statut = 'admin'
+        GROUP BY u.id_utilisateur, u.nom, u.prenom, u.email, u.num_telephone
+        ORDER BY est_lu DESC, u.id_utilisateur ASC
+        LIMIT ? OFFSET ?`
+    }
+
 	rows, err := db.DB.Query(query, userId, limit, offset)
 	if err != nil {
 		http.Error(response, "Erreur serveur", http.StatusInternalServerError)

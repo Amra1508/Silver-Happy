@@ -324,7 +324,7 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
 
     var openings []Opening
     for rowsDispo.Next() {
-        var id int        // ← récupérer l'id
+        var id int      
         var st, et time.Time
         if err := rowsDispo.Scan(&id, &st, &et); err == nil {
             openings = append(openings, Opening{ID: id, Start: st, End: et})
@@ -361,7 +361,7 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
     slotStep := 30
     now := time.Now()
 
-    for _, open := range openings {      // ← open.ID maintenant disponible
+    for _, open := range openings {      
         current := open.Start
         for !current.Add(time.Duration(slotStep) * time.Minute).After(open.End) {
             slotEnd := current.Add(time.Duration(slotStep) * time.Minute)
@@ -378,7 +378,7 @@ func Get_Available_Slots(response http.ResponseWriter, request *http.Request) {
 
             if !isOccupied {
                 availableSlots = append(availableSlots, map[string]interface{}{
-                    "id_disponibilite": open.ID,  // ✅ ID réel
+                    "id_disponibilite": open.ID, 
                     "date_heure":       current.Format(layout),
                     "debut":            current.Format(layout),
                     "fin":              slotEnd.Format(layout),

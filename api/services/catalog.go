@@ -332,13 +332,6 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
         http.Error(response, "Données manquantes (ID Utilisateur)", http.StatusBadRequest); return
     }
 
-    // if payload.IdDisponibilite > 0 {
-    //     err := db.DB.QueryRow("SELECT date_heure_debut FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite).Scan(&payload.DateHeure)
-    //     if err != nil {
-    //         http.Error(response, "Ce créneau n'existe plus ou a déjà été réservé.", http.StatusNotFound); return
-    //     }
-    // }
-
     if payload.DateHeure == "" || payload.DateHeure == "undefined" {
         http.Error(response, "Date manquante ou invalide.", http.StatusBadRequest); return
     }
@@ -428,9 +421,6 @@ func CreateServiceCheckoutSession(response http.ResponseWriter, request *http.Re
 			idService, payload.IdUtilisateur, cleanD); err != nil {
 			http.Error(response, "Erreur lors de la réservation.", http.StatusInternalServerError); return
 		}
-        // if payload.IdDisponibilite > 0 {
-        //     db.DB.Exec("DELETE FROM DISPONIBILITE WHERE id_disponibilite = ?", payload.IdDisponibilite)
-        // }
         json.NewEncoder(response).Encode(map[string]interface{}{"isFree": true, "message": "Réservation gratuite confirmée !"})
         return
     }

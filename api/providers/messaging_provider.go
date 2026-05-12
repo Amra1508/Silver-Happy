@@ -20,8 +20,16 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 	id1 := request.PathValue("id1")
 	id2 := request.PathValue("id2")
 
-	_, errUpdate := db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 WHERE id_utilisateur = ? AND id_prestataire = ? AND expediteur = 0 AND est_lu = 0", id2, id1)
-	if errUpdate != nil {
+	_, errUpdate1 := db.DB.Exec("UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 WHERE id_utilisateur = ? AND id_prestataire = ? AND expediteur = 0 AND est_lu = 0", id2, id1)
+	if errUpdate1 != nil {
+		fmt.Printf("Erreur lors de la mise à jour de est_lu")
+	}
+
+    _, errUpdate2 := db.DB.Exec(`UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 
+        WHERE id_utilisateur = ? AND id_prestataire = ? AND expediteur = 1 AND est_lu = 0`,
+        id1, id2)
+    
+    if errUpdate2 != nil {
 		fmt.Printf("Erreur lors de la mise à jour de est_lu")
 	}
 
@@ -229,29 +237,16 @@ func Count_Message(response http.ResponseWriter, request *http.Request) {
 
     prestaID := request.PathValue("id")
 
-    var countPresta, countAdmin, count int
+    var count int
 
-	queryPresta := `SELECT COUNT(id_message)
-              FROM MESSAGE_PRESTATAIRE 
+    query := `SELECT COUNT(id_message) FROM MESSAGE_PRESTATAIRE 
               WHERE id_prestataire = ? AND expediteur = 0 AND est_lu = 0`
 
-    errPresta := db.DB.QueryRow(queryPresta, prestaID).Scan(&countPresta)
-    if errPresta != nil {
-        http.Error(response, "Erreur SQL", http.StatusInternalServerError)
-        return
-    }
-
-    queryAdmin := `SELECT COUNT(id_message)
-              FROM MESSAGE_ADMIN 
-              WHERE id_utilisateur2 = ? AND est_lu = 0`
-
-    err := db.DB.QueryRow(queryAdmin, prestaID).Scan(&countAdmin)
+    err := db.DB.QueryRow(query, prestaID).Scan(&count)
     if err != nil {
         http.Error(response, "Erreur SQL", http.StatusInternalServerError)
         return
     }
-
-    count = countPresta + countAdmin;
 
 	response.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(response).Encode(map[string]int{"count": count})

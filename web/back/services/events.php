@@ -527,7 +527,7 @@
                 const res = await fetch(`${API_BASE}/prestataires/read?limit=100&status=validé`);
                 const data = await res.json();
                 const select = document.getElementById('link-provider-select');
-                select.innerHTML = '<option value="">-- Sélectionner un prestataire à ajouter --</option>';
+                select.innerHTML = '<option value="">Sélectionner un prestataire à ajouter</option>';
 
                 if (data.data && data.data.length > 0) {
                     data.data.forEach(p => {

@@ -112,6 +112,7 @@ type Prestataire struct {
 	DateFinBoost       string `json:"date_fin_boost"`
 	DateFinBoostProfil string `json:"date_fin_boost_profil"`
 	IdStripeAccount    string `json:"stripe_account_id"`
+	EstLu             int    `json:"est_lu"`
 }
 
 type Document struct {

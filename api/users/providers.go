@@ -29,10 +29,12 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	limitStr := query.Get("limit")
 	pageStr := query.Get("page")
 	statusFilter := query.Get("status")
+	userIdStr := query.Get("user_id")
 
 	limit := 10
 	offset := 0
 	page := 1
+	var userId int
 
 	if limitStr != "" {
 		fmt.Sscanf(limitStr, "%d", &limit)
@@ -41,6 +43,7 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 		fmt.Sscanf(pageStr, "%d", &page)
 		offset = (page - 1) * limit
 	}
+	if userIdStr != "" { fmt.Sscanf(userIdStr, "%d", &userId) }
 
 	whereClause := ""
 	var argsCount []interface{}
@@ -62,38 +65,50 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 	argsQuery = append(argsQuery, limit, offset)
 
 	sqlQuery := `
-		SELECT 
-			p.id_prestataire, 
-			COALESCE(p.siret, ''), 
-			COALESCE(p.prenom, ''), 
-			COALESCE(p.nom, ''), 
-			COALESCE(p.email, ''), 
-			COALESCE(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
-			COALESCE(p.num_telephone, ''), 
-			COALESCE(p.status, 'en attente'), 
-			COALESCE(p.motif_refus, ''), 
-			COALESCE(DATE_FORMAT(p.date_creation, '%d/%m/%Y %H:%i:%s'), ''), 
-			COALESCE(p.id_abonnement, 0), 
-			COALESCE(p.id_categorie, 0), 
-			COALESCE(c.nom, '') 
-		FROM PRESTATAIRE p
-		LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
-		` + whereClause + `
-		LIMIT ? OFFSET ?
-	`
+        SELECT 
+            COUNT(*) OVER() AS total_count,
+            p.id_prestataire, 
+            COALESCE(p.siret, ''), 
+            COALESCE(p.prenom, ''), 
+            COALESCE(p.nom, ''), 
+            COALESCE(p.email, ''), 
+            COALESCE(DATE_FORMAT(p.date_naissance, '%Y-%m-%d'), ''), 
+            COALESCE(p.num_telephone, ''), 
+            COALESCE(p.status, 'en attente'), 
+            COALESCE(p.motif_refus, ''), 
+            COALESCE(DATE_FORMAT(p.date_creation, '%d/%m/%Y %H:%i:%s'), ''), 
+            COALESCE(p.id_abonnement, 0), 
+            COALESCE(p.id_categorie, 0), 
+            COALESCE(c.nom, ''),
+            COALESCE(SUM(CASE 
+                WHEN m.est_lu = 0 AND m.id_utilisateur = ? AND m.expediteur = 1 
+                THEN 1 ELSE 0 END), 0) AS est_lu
+        FROM PRESTATAIRE p
+        LEFT JOIN CATEGORIE c ON p.id_categorie = c.id_categorie
+        LEFT JOIN MESSAGE_PRESTATAIRE m ON m.id_prestataire = p.id_prestataire
+        WHERE (? = 'tous' OR ? = '' OR p.status = ?)
+        GROUP BY p.id_prestataire, p.siret, p.prenom, p.nom, p.email,
+                 p.date_naissance, p.num_telephone, p.status, p.motif_refus,
+                 p.date_creation, p.id_abonnement, p.id_categorie, c.nom
+        ORDER BY est_lu DESC, p.id_prestataire ASC
+        LIMIT ? OFFSET ?
+    `
 
-	rows, err := db.DB.Query(sqlQuery, argsQuery...)
-	if err != nil {
-		http.Error(response, "Erreur BDD lors de la récupération", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
+	rows, err := db.DB.Query(sqlQuery, userId, statusFilter, statusFilter, statusFilter, limit, offset)
+    if err != nil {
+        http.Error(response, "Erreur BDD lors de la récupération", http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
 
 	var list []models.Prestataire
 	for rows.Next() {
 		var p models.Prestataire
+		var estLu int
+		var totalCount int
 
 		errScan := rows.Scan(
+			&totalCount,
 			&p.ID,
 			&p.Siret,
 			&p.Prenom,
@@ -107,13 +122,14 @@ func Read_Prestataire(response http.ResponseWriter, request *http.Request) {
 			&p.IdAbonnement,
 			&p.IdCategorie,
 			&p.CategorieNom,
+			&estLu,
 		)
 
 		if errScan != nil {
 			fmt.Println("Ligne ignorée ! Erreur de Scan sur le Prestataire :", errScan)
 			continue
 		}
-
+		p.EstLu = estLu
 		list = append(list, p)
 	}
 

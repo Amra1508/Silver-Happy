@@ -246,7 +246,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/includes/config.php');
                             legend: {
                                 position: 'bottom'
                             },
-                            // AJOUT DU TOOLTIP ICI
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
