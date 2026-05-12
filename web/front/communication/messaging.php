@@ -308,11 +308,14 @@ $is_logged_in = isset($_COOKIE['session_token']);
                 return;
             }
 
+            // Détermine dynamiquement qui est l'expéditeur (true = Client, false = Prestataire)
+            const isClientSending = (contactType === 'presta');
+
             const payload = {
                 Contenu: `PROPOSITION D'OFFRE : ${serviceNom} pour le ${new Date(dateHeure).toLocaleString('fr-FR')} au prix de ${prix}€`,
                 ID_Expediteur: parseInt(id1),
                 ID_Destinataire: parseInt(id2),
-                Expediteur: true,
+                Expediteur: isClientSending, 
                 id_service: parseInt(serviceId),
                 id_dispo: parseInt(dispoId),
                 prix_propose: parseFloat(prix),
@@ -463,6 +466,8 @@ $is_logged_in = isset($_COOKIE['session_token']);
 
             if (contenu === "") return;
 
+            const isClientSending = (contactType === 'presta');
+
             const response = await fetch(`${API_BASE}/add`, {
                 method: "POST",
                 headers: {
@@ -472,7 +477,7 @@ $is_logged_in = isset($_COOKIE['session_token']);
                     Contenu: contenu,
                     ID_Expediteur: parseInt(id1),
                     ID_Destinataire: parseInt(id2),
-                    Expediteur: false
+                    Expediteur: isClientSending
                 })
             });
 

@@ -25,11 +25,11 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 		fmt.Printf("Erreur lors de la mise à jour de est_lu")
 	}
 
-    _, errUpdate2 := db.DB.Exec(`UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 
+	_, errUpdate2 := db.DB.Exec(`UPDATE MESSAGE_PRESTATAIRE SET est_lu = 1 
         WHERE id_utilisateur = ? AND id_prestataire = ? AND expediteur = 1 AND est_lu = 0`,
-        id1, id2)
-    
-    if errUpdate2 != nil {
+		id1, id2)
+
+	if errUpdate2 != nil {
 		fmt.Printf("Erreur lors de la mise à jour de est_lu")
 	}
 
@@ -39,12 +39,12 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
               WHERE (id_utilisateur = ? AND id_prestataire = ?) 
                  OR (id_utilisateur = ? AND id_prestataire = ?)`
 
-    rows, err := db.DB.Query(query, id1, id2, id2, id1)
-    if err != nil {
-        http.Error(response, "Erreur SQL", http.StatusInternalServerError)
-        return
-    }
-    defer rows.Close()
+	rows, err := db.DB.Query(query, id1, id2, id2, id1)
+	if err != nil {
+		http.Error(response, "Erreur SQL", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
 
 	tabMessage := []models.Message{}
 	for rows.Next() {
@@ -53,19 +53,21 @@ func Get_Message(response http.ResponseWriter, request *http.Request) {
 		var exp bool
 
 		err := rows.Scan(
-            &message.ID, &message.Contenu, &message.Date, &idU, &idP, &exp, &message.Est_Lu,
-            &message.ID_Service, &message.ID_Dispo, &message.Prix_Propose, &message.Etat_Offre,
-        )
-		if err != nil { continue }
+			&message.ID, &message.Contenu, &message.Date, &idU, &idP, &exp, &message.Est_Lu,
+			&message.ID_Service, &message.ID_Dispo, &message.Prix_Propose, &message.Etat_Offre,
+		)
+		if err != nil {
+			continue
+		}
 
 		if exp {
-            message.ID_Expediteur = idP
-            message.ID_Destinataire = idU
-        } else {
-            message.ID_Expediteur = idU
-            message.ID_Destinataire = idP
-        }
-		
+			message.ID_Expediteur = idU
+			message.ID_Destinataire = idP
+		} else { 
+			message.ID_Expediteur = idP
+			message.ID_Destinataire = idU
+		}
+
 		tabMessage = append(tabMessage, message)
 	}
 
@@ -93,30 +95,38 @@ func Add_Message(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var idUser, idPresta int64
-    if message.Expediteur { 
-        idPresta = message.ID_Expediteur
-        idUser = message.ID_Destinataire
-    } else { 
-        idUser = message.ID_Expediteur
-        idPresta = message.ID_Destinataire
-    }
+	if message.Expediteur {
+		idUser = message.ID_Expediteur
+		idPresta = message.ID_Destinataire
+	} else {
+		idPresta = message.ID_Expediteur
+		idUser = message.ID_Destinataire
+	}
+
+	var idService, idDispo, prixPropose, etatOffre interface{}
+
+	if message.ID_Service != nil { idService = *message.ID_Service }
+	if message.ID_Dispo != nil { idDispo = *message.ID_Dispo }
+	if message.Prix_Propose != nil { prixPropose = *message.Prix_Propose }
+	if message.Etat_Offre != nil { etatOffre = *message.Etat_Offre }
 
 	query := `INSERT INTO MESSAGE_PRESTATAIRE 
               (contenu, id_utilisateur, id_prestataire, expediteur, id_service, id_disponibilite, prix_propose, etat_offre) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
-	res, errorCreate := db.DB.Exec(query, 
-        message.Contenu, 
-        idUser, 
-        idPresta, 
-        message.Expediteur, 
-        message.ID_Service,
-        message.ID_Dispo,
-        message.Prix_Propose,
-        message.Etat_Offre,
-    )
+	res, errorCreate := db.DB.Exec(query,
+		message.Contenu,
+		idUser,
+		idPresta,
+		message.Expediteur,
+		idService,
+		idDispo,
+		prixPropose,
+		etatOffre,
+	)
 
 	if errorCreate != nil {
+		fmt.Printf("Erreur SQL lors de l'insertion : %v\n", errorCreate)
 		http.Error(response, "Erreur lors de l'insertion", http.StatusInternalServerError)
 		return
 	}
