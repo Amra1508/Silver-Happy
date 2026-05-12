@@ -18,6 +18,29 @@ if (!isset($_COOKIE['session_token'])) {
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alata&display=swap');
+
+        .fc-theme-standard .fc-scrollgrid {
+            border-color: #f3f4f6;
+        }
+
+        .fc-header-toolbar {
+            margin-bottom: 2rem !important;
+        }
+
+        .fc-button-primary {
+            background-color: #1C5B8F !important;
+            border-color: #1C5B8F !important;
+            border-radius: 0.5rem !important;
+        }
+
+        .fc-button-primary:hover {
+            background-color: #154670 !important;
+        }
+
+        .fc-button-active {
+            background-color: #E1AB2B !important;
+            border-color: #E1AB2B !important;
+        }
     </style>
 
     <script>
@@ -27,50 +50,53 @@ if (!isset($_COOKIE['session_token'])) {
     </script>
 </head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-50 min-h-screen flex flex-col text-gray-800">
 
     <?php include("../includes/header.php") ?>
 
     <main class="flex-grow">
-        <div class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+        <div class="max-w-7xl mx-auto px-6 pt-10 pb-16">
 
-            <div class="p-3 flex justify-between items-center mb-6">
+            <div class="flex justify-between items-center mb-6">
                 <a href="/front/account/profile.php">
                     <button class="flex items-center rounded-full px-6 py-2 bg-[#1C5B8F] text-white font-bold hover:bg-[#154670] transition">
-                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2"> Revenir a mon profil
+                        <img src="/front/icons/fleche_gauche.svg" alt="fleche" class="w-7 h-7 mr-2 brightness-0 invert"> Revenir à mon profil
                     </button>
                 </a>
             </div>
             
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-4xl font-bold text-[#1C5B8F]">
-                    Mon Calendrier
-                </h2>
+            <div class="flex flex-col justify-between items-start mb-8">
+                <h2 class="text-3xl font-bold text-[#1C5B8F]">Mon Planning</h2>
+                <p class="text-gray-500 mt-1">Consultez vos événements et vos prestations de services réservées.</p>
             </div>
 
-            <div id="no-sub-container" class="hidden flex flex-col items-center justify-center py-20 rounded-[2.5rem] shadow-xl shadow-blue-900/10 bg-white">
+            <div id="no-sub-container" class="hidden flex flex-col items-center justify-center py-20 rounded-3xl shadow-sm border border-gray-100 bg-white fade-in">
                 <p class="text-center font-semibold text-[#1C5B8F] text-2xl mb-8 px-4">
                     Vous devez être abonné(e) pour consulter votre planning d'activités.
                 </p>
-                <a class="rounded-full px-8 py-3 bg-[#1C5B8F] text-white font-bold text-lg hover:bg-[#154670] transition" href="/front/services/subscription.php">
+                <a class="rounded-xl px-8 py-3 bg-[#1C5B8F] text-white font-bold text-lg hover:bg-[#154670] transition" href="/front/services/subscription.php">
                     Je m'abonne
                 </a>
             </div>
 
-            <div id="planning-content" class="hidden">
-                <div class="flex gap-6 mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-flex">
-                    <span class="flex items-center text-sm font-bold text-gray-700">
-                        <div class="w-5 h-5 rounded-full bg-[#E1AB2B] mr-3 shadow-inner"></div> Événements
+            <div id="planning-content" class="hidden fade-in">
+                
+                <div class="flex flex-wrap gap-4 mb-6">
+                    <span class="flex items-center text-sm font-bold text-yellow-800 bg-yellow-50 px-4 py-2 rounded-xl border border-yellow-200">
+                        <div class="w-3 h-3 rounded-full bg-[#E1AB2B] mr-2"></div> Événements
                     </span>
-                    <span class="flex items-center text-sm font-bold text-gray-700">
-                        <div class="w-5 h-5 rounded-full bg-[#1C5B8F] mr-3 shadow-inner"></div> Prestations de services
+                    <span class="flex items-center text-sm font-bold text-[#1C5B8F] bg-blue-50 px-4 py-2 rounded-xl border border-blue-200">
+                        <div class="w-3 h-3 rounded-full bg-[#1C5B8F] mr-2"></div> Prestations de services
+                    </span>
+                    <span class="flex items-center text-sm font-bold text-gray-600 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
+                        <div class="w-3 h-3 rounded-full bg-gray-400 mr-2"></div> Terminé
                     </span>
                 </div>
 
-                <div id="calendar" class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[600px]"></div>
+                <div id="calendar" class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 min-h-[600px]"></div>
             </div>
 
-            <div id="status_message" class="text-center text-xl text-gray-500 font-bold py-20 animate-pulse">
+            <div id="status_message" class="text-center text-xl text-gray-500 font-bold py-20 bg-white rounded-3xl border border-gray-100 shadow-sm animate-pulse">
                 Chargement de votre planning...
             </div>
 
@@ -79,19 +105,52 @@ if (!isset($_COOKIE['session_token'])) {
 
     <?php include("../includes/footer.php") ?>
 
-    <div id="eventModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all">
-            <h3 id="modalTitle" class="text-2xl font-bold text-[#1C5B8F] mb-6 border-b pb-4"></h3>
-            <div class="space-y-4 text-gray-700">
-                <p class="flex items-center"><span class="text-xl mr-3">📅</span> <strong class="w-20">Début :</strong> <span id="modalStart" class="font-medium"></span></p>
-                <p class="flex items-center"><span class="text-xl mr-3">🏁</span> <strong class="w-20">Fin :</strong> <span id="modalEnd" class="font-medium"></span></p>
-                <p class="flex items-start"><span class="text-xl mr-3">📍</span> <strong class="w-20">Lieu :</strong> <span id="modalLocation" class="font-medium"></span></p>
-                <div class="pt-4 border-t mt-6">
-                    <p class="text-sm text-gray-600 font-medium leading-relaxed" id="modalDescription"></p>
+    <div id="eventModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4 fade-in">
+        <div class="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="bg-[#1C5B8F] px-6 py-4 flex justify-between items-center text-white shrink-0">
+                <h3 id="modalTitle" class="text-xl font-bold truncate pr-4"></h3>
+                <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="text-white hover:text-red-300 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div id="modalStatusContainer" class="hidden mb-2">
+                    <span id="modalStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"></span>
+                </div>
+                
+                <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span class="text-2xl mr-4"></span>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Début</p>
+                        <p id="modalStart" class="font-bold text-[#1C5B8F]"></p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span class="text-2xl mr-4"></span>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Fin</p>
+                        <p id="modalEnd" class="font-bold text-[#1C5B8F]"></p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span class="text-2xl mr-4"></span>
+                    <div class="min-w-0">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Lieu</p>
+                        <p id="modalLocation" class="font-bold text-gray-800 break-words"></p>
+                    </div>
+                </div>
+
+                <div class="flex items-start text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100 mt-2">
+                    <span class="text-2xl mr-4"></span>
+                    <div class="min-w-0 w-full">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Description</p>
+                        <p id="modalDescription" class="font-medium text-gray-600 text-sm mt-1 leading-relaxed"></p>
+                    </div>
                 </div>
             </div>
-            <div class="mt-8 flex justify-center">
-                <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="px-8 py-3 bg-gray-100 text-gray-700 rounded-full font-bold hover:bg-gray-200 transition-colors w-full">
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-200 shrink-0">
+                <button onclick="document.getElementById('eventModal').classList.add('hidden')" class="bg-[#1C5B8F] text-white font-bold px-6 py-2.5 rounded-xl hover:bg-blue-800 transition shadow-md w-full">
                     Fermer
                 </button>
             </div>
@@ -140,26 +199,56 @@ if (!isset($_COOKIE['session_token'])) {
                     statusMessage.classList.add('hidden');
                     planningContent.classList.remove('hidden');
 
-                    const eventsData = planningData.map(item => ({
-                        id: item.id,
-                        title: item.titre,
-                        start: item.debut, 
-                        end: item.fin || undefined,
-                        backgroundColor: item.couleur,
-                        borderColor: item.couleur,
-                        extendedProps: {
-                            description: item.description || 'Aucune description fournie.',
-                            lieu: item.lieu || 'Lieu non spécifié' 
+                    const currentDate = new Date();
+
+                    const eventsData = planningData.map(item => {
+                        const startDate = new Date(item.debut);
+                        const endDate = item.fin ? new Date(item.fin) : new Date(startDate.getTime() + (60 * 60 * 1000));
+                        
+                        const isPast = endDate < currentDate;
+                        
+                        let bgColor = item.couleur || '#1C5B8F';
+                        let borderColor = item.couleur || '#154670';
+                        let textColor = '#ffffff';
+
+                        if (isPast) {
+                            bgColor = '#F3F4F6';
+                            borderColor = '#D1D5DB';
+                            textColor = '#6B7280';
                         }
-                    }));
+
+                        return {
+                            id: item.id,
+                            title: item.titre,
+                            start: item.debut, 
+                            end: item.fin || undefined,
+                            backgroundColor: bgColor,
+                            borderColor: borderColor,
+                            textColor: textColor,
+                            extendedProps: {
+                                description: item.description || 'Aucune description fournie.',
+                                lieu: item.lieu || 'Lieu non spécifié',
+                                isPast: isPast
+                            }
+                        };
+                    });
 
                     const calendar = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
+                        initialView: 'timeGridWeek',
+                        slotDuration: '00:15:00',
+                        slotLabelInterval: '01:00',
+                        eventOverlap: false,
+                        slotEventOverlap: false,
+                        eventMinHeight: 20,
                         locale: 'fr',
+                        slotMinTime: '08:00:00',
+                        slotMaxTime: '20:00:00',
+                        allDaySlot: false,
+                        expandRows: true,
                         headerToolbar: {
                             left: 'prev,next today',
                             center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay' 
+                            right: 'timeGridWeek,timeGridDay,dayGridMonth,listMonth' 
                         },
                         events: eventsData,
                         height: 'auto',
@@ -183,6 +272,19 @@ if (!isset($_COOKIE['session_token'])) {
                             
                             document.getElementById('modalLocation').textContent = eventObj.extendedProps.lieu;
                             document.getElementById('modalDescription').textContent = eventObj.extendedProps.description;
+
+                            const statusContainer = document.getElementById('modalStatusContainer');
+                            const statusBadge = document.getElementById('modalStatusBadge');
+
+                            statusContainer.classList.remove('hidden');
+
+                            if (eventObj.extendedProps.isPast) {
+                                statusBadge.textContent = "Terminé";
+                                statusBadge.className = "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-gray-200 text-gray-700";
+                            } else {
+                                statusBadge.textContent = "À venir";
+                                statusBadge.className = "text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-yellow-100 text-yellow-800";
+                            }
                             
                             document.getElementById('eventModal').classList.remove('hidden');
                         }
