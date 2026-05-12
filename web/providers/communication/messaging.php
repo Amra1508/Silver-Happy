@@ -202,13 +202,11 @@
                 return;
             }
 
-            const isProvider = window.location.pathname.includes('/providers/');
-
             const bodyData = {
                 Contenu: contenu,
                 ID_Expediteur: parseInt(id1),
                 ID_Destinataire: parseInt(id2),
-                Expediteur: true
+                Expediteur: false 
             };
 
             const response = await fetch(`${getApiUrl()}/add`, {
@@ -222,6 +220,9 @@
             if (response.ok) {
                 input.value = "";
                 await message();
+            } else {
+                const err = await response.text();
+                alert("Erreur lors de l'envoi : " + err);
             }
         }
 
